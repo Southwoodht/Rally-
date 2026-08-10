@@ -1,0 +1,343 @@
+"use client";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
+import { storage } from "@/lib/storage";
+import { HeadToHead } from "@/components/compare/HeadToHead";
+import { History } from "@/components/games/History";
+import { LogResult } from "@/components/games/LogResult";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { GroupSheet } from "@/components/layout/GroupSheet";
+import { SubHeader } from "@/components/layout/SubHeader";
+import { MyProfile } from "@/components/profile/MyProfile";
+import { ProfileModal } from "@/components/profile/ProfileModal";
+import { ProfileScreen } from "@/components/profile/ProfileScreen";
+import { Onboarding } from "@/components/settings/Onboarding";
+import { SettingsTab } from "@/components/settings/SettingsTab";
+import { LeagueHome } from "@/components/table/LeagueHome";
+import { START_ELO } from "@/core/constants";
+import { computeStats } from "@/core/elo";
+import { computeOfficial } from "@/core/official";
+import { gkey } from "@/data/seed";
+import { uid, winPct } from "@/lib/format";
+import { BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display, fontImport, menuRow, mono, wrap } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
+import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
+
+type LeagueData = {
+  players: any[];
+  matches: any[];
+  me: any;
+  fixtures?: any[];
+  posts?: any[];
+};
+
+const emptyLeagueData: LeagueData = { players: [], matches: [], fixtures: [], posts: [], me: null };
+
+export default function RallyApp({ leagueId, leagueName, displayName }: any) {
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
+  const [gid, setGid] = useState(null);
+  const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
+  const [rankingMode, setRankingMode] = useState("overall");
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("ladder");
+  const [profileId, setProfileId] = useState(null);
+  const [groupSheet, setGroupSheet] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [onboarded, setOnboarded] = useState(true);
+  const [toast, setToast] = useState("");
+  const importAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // One real league, from Supabase. No demo data — a new league starts empty.
+        const cur = leagueId;
+        const gs = [{ id: leagueId, name: leagueName || "League", ownerId: null }];
+        let st: any = null;
+        try { const r = await storage.get("settings_" + leagueId, true); st = r ? JSON.parse(r.value) : null; } catch {}
+            let data: LeagueData = { ...emptyLeagueData };
+            try { const r = await storage.get(gkey(cur), true); const loaded = r ? JSON.parse(r.value) : null; if (loaded && Array.isArray(loaded.players) && Array.isArray(loaded.matches)) data = loaded as LeagueData; } catch {}
+
+            // If this league has no players yet, or the current authenticated user
+            // doesn't have a linked player, create one for them. We try to link
+            // using the Supabase auth user id (stored as `auth_id` on the player).
+            let nameToUse = displayName;
+            let authId = null;
+            let matchedExistingPlayer: any = null;
+            if (typeof window !== 'undefined' && supabase) {
+              try {
+                const { data: userData } = await supabase.auth.getUser();
+                const u = (userData as any)?.user;
+                authId = u?.id || null;
+                nameToUse = nameToUse || (u?.user_metadata?.full_name) || (u?.email?.split("@")[0]) || nameToUse;
+              } catch {}
+            }
+
+            let createdNewForAuth = false;
+            let createdInit: any = null;
+            const claimCandidate = authId && nameToUse ? (data.players || []).find((p) => !p.auth_id && normalizePlayerName(p.name || "") === normalizePlayerName(nameToUse)) : null;
+            if (authId && nameToUse) {
+              matchedExistingPlayer = (data.players || []).find((p) => normalizePlayerName(p.name || "") === normalizePlayerName(nameToUse));
+            }
+            if (claimCandidate && typeof window !== "undefined" && window.confirm(`Is this you? ${claimCandidate.name}`)) {
+              claimCandidate.auth_id = authId;
+              data.me = claimCandidate.id;
+            }
+
+            if (!data.players || data.players.length === 0) {
+              const init = { id: uid(), name: nameToUse || "player", level: null, avatar: null, auth_id: authId };
+              data.players = [init];
+              data.me = init.id;
+              createdNewForAuth = Boolean(authId);
+              createdInit = init;
+              try { await storage.set(gkey(cur), JSON.stringify(data), true); } catch {}
+
+              // dev-only: write a diagnostic flag into localStorage so tests can see it
+              try {
+                if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
+                  try { window.localStorage.setItem('rally:diag_seed', JSON.stringify({ init: createdInit, league: cur })); } catch {}
+                }
+              } catch {}
+            } else {
+              // If players exist but none belong to the current auth user, add one
+              // for them and set it as `me`. If the user already has a player, use that.
+              if (authId) {
+                const existing = (data.players || []).find((p) => p.auth_id === authId);
+                if (existing) {
+                  data.me = existing.id;
+                } else if (matchedExistingPlayer) {
+                  matchedExistingPlayer.auth_id = authId;
+                  data.me = matchedExistingPlayer.id;
+                } else {
+                  // create a new player linked to this auth user
+                  const init = { id: uid(), name: nameToUse || "player", level: null, avatar: null, auth_id: authId };
+                  data.players = [...(data.players || []), init];
+                  data.me = init.id;
+                  createdNewForAuth = true;
+                  createdInit = init;
+                  try { await storage.set(gkey(cur), JSON.stringify(data), true); } catch {}
+
+                  try {
+                    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
+                      try { window.localStorage.setItem('rally:diag_seed', JSON.stringify({ init: createdInit, league: cur })); } catch {}
+                    }
+                  } catch {}
+                }
+              } else {
+                // no auth id available — keep existing behaviour
+                if (!data.me && data.players.length > 0) data.me = data.players[0].id;
+              }
+
+              if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
+                try { window.localStorage.setItem('rally:diag_existing', JSON.stringify({ count: (data.players || []).length, league: cur })); } catch {}
+              }
+            }
+
+            const historyImportKey = `rally:historyImportDone:${cur}`;
+            if (typeof window !== "undefined" && !importAttemptedRef.current && !window.localStorage.getItem(historyImportKey)) {
+              importAttemptedRef.current = true;
+              try {
+                const result = await importHistoricalMatches(cur, { userName: nameToUse || displayName || "Sam" });
+                data = result.data;
+                try { window.localStorage.setItem(historyImportKey, "1"); } catch {}
+              } catch {}
+            }
+
+            const nextGroup = { ...gs[0], ownerId: (st?.ownerId || data.me || null) };
+            setGroups([nextGroup]); setGid(cur); setGdata(data);
+        setRankingMode(st?.rankingMode || "overall");
+        setOnboarded(st ? (st.onboarded ?? false) : false);
+      } finally { setLoading(false); }
+    })();
+  }, []);
+
+  const flash = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2200); };
+  const persistSettings = async (extra) => { try { await storage.set("settings_" + gid, JSON.stringify({ currentGroupId: gid, rankingMode, onboarded, ...extra }), true); } catch {} };
+  const saveGroups = async (n) => { setGroups(n); try { await storage.set("groups_" + gid, JSON.stringify(n), true); } catch { flash("Couldn't save"); } };
+  const saveData = async (n) => { setGdata(n); try { await storage.set(gkey(gid), JSON.stringify(n), true); } catch { flash("Couldn't save"); } };
+  const importHistoricalResults = async () => {
+    try {
+      const result = await importHistoricalMatches(leagueId, { userName: displayName || me?.name || "Sam" });
+      await saveData({ ...gdata, players: result.data.players, matches: result.data.matches, me: result.data.me || gdata.me, fixtures: result.data.fixtures || gdata.fixtures, posts: result.data.posts || gdata.posts });
+      flash(`${result.imported} historical matches imported${result.skipped ? `, ${result.skipped} already present` : ""}`);
+    } catch (error) {
+      console.error(error);
+      flash("Import failed");
+    }
+  };
+
+  const setPlayers = (np) => saveData({ ...gdata, players: np });
+  const setMatches = (nm) => saveData({ ...gdata, matches: nm });
+  const setMe = (mid) => {
+    if (!mid || mid !== gdata.me) {
+      flash("Your account stays linked to one player profile.");
+      return;
+    }
+    saveData({ ...gdata, me: mid });
+  };
+  const editMatch = (id, patch) => saveData({ ...gdata, matches: gdata.matches.map((m) => m.id === id ? { ...m, ...patch } : m) });
+  const setMode = (m) => { setRankingMode(m); persistSettings({ rankingMode: m }); };
+  const fixtures = gdata.fixtures || [];
+  const generateFixtures = (rounds = 1) => {
+    const ps = gdata.players; const fx: Array<{ id: string; p1: string; p2: string; done: boolean }> = [];
+    for (let r = 0; r < rounds; r++) for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) fx.push({ id: uid(), p1: ps[i].id, p2: ps[j].id, done: false });
+    saveData({ ...gdata, fixtures: fx });
+    flash(fx.length + " fixtures created");
+  };
+  const clearFixtures = () => saveData({ ...gdata, fixtures: [] });
+  const posts = gdata.posts || [];
+  const addPost = (text) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now() }] });
+  const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
+  const addFixture = (p1, p2) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false }] });
+  const removeFixture = (id) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
+  const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
+  const resolveFixture = (fx, winner, score) => {
+    if (winner === null) {
+      saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== fx.matchId), fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: false, winner: undefined, matchId: undefined } : f) });
+      return;
+    }
+    const mid = uid();
+    const match = { id: mid, date: Date.now(), p1: fx.p1, p2: fx.p2, winner, score: score || "", status: "confirmed", reportedBy: gdata.me };
+    saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
+  };
+
+  const switchGroup = async (id) => {
+    let data: LeagueData | null = null;
+    try { const r = await storage.get(gkey(id), true); data = r ? JSON.parse(r.value) : null; } catch {}
+    if (data && (!Array.isArray(data.players) || !Array.isArray(data.matches))) data = null;
+    if (!data || !data.players || !data.players.length) {
+      data = { ...emptyLeagueData };
+      try { await storage.set(gkey(id), JSON.stringify(data), true); } catch {}
+    }
+    setGid(id); setGdata(data); setGroupSheet(false); setProfileId(null); setTab("ladder");
+    try { await storage.set("settings_c5", JSON.stringify({ currentGroupId: id, rankingMode, onboarded }), true); } catch {}
+  };
+  const addGroup = async (name) => {
+    const id = "g_" + uid(); const g = { id, name };
+    try { await storage.set(gkey(id), JSON.stringify({ players: [], matches: [], me: null }), true); } catch {}
+    await saveGroups([...groups, g]); switchGroup(id);
+  };
+  const renameGroup = (id, name) => saveGroups(groups.map((g) => g.id === id ? { ...g, name } : g));
+  const deleteGroup = async (id) => {
+    if (groups.length <= 1) return flash("Keep at least one league");
+    const next = groups.filter((g) => g.id !== id);
+    await saveGroups(next);
+    if (gid === id) switchGroup(next[0].id);
+  };
+
+  const players = gdata.players, matches = gdata.matches;
+  const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, matches), [players, matches]);
+  const nameOf = (id) => players.find((p) => p.id === id)?.name || "—";
+  const confirmMatch = (id) => setMatches(matches.map((m) => m.id === id ? { ...m, status: "confirmed" } : m));
+  const disputeMatch = (id) => setMatches(matches.filter((m) => m.id !== id));
+  const updateGroup = (id, patch) => saveGroups(groups.map((g) => g.id === id ? { ...g, ...patch } : g));
+  const removePlayer = (id) => saveData({ ...gdata, players: gdata.players.filter((p) => p.id !== id), matches: gdata.matches.filter((m) => m.p1 !== id && m.p2 !== id) });
+  const ranked = useMemo(() => {
+    const arr = players.filter((p) => !p.inactive);
+    const avgOpp = {};
+    players.forEach((p) => { avgOpp[p.id] = { sum: 0, n: 0 }; });
+    matches.filter((m) => m.status !== "pending").forEach((m) => {
+      if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; }
+      if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; }
+    });
+    const recScore = (p) => {
+      const r = wdl[p.id] || { w: 0, d: 0, l: 0, gp: 0 };
+      if (!r.gp) return -1;
+      const activity = r.gp / (r.gp + 5);
+      const ao = avgOpp[p.id].n ? avgOpp[p.id].sum / avgOpp[p.id].n : 0;
+      const oppFactor = Math.max(0.5, Math.min(2, 1 + ao / 200));
+      return winPct(r) * activity * oppFactor;
+    };
+    if (rankingMode === "elo") arr.sort((a, b) => (elo[b.id] ?? START_ELO) - (elo[a.id] ?? START_ELO));
+    else if (rankingMode === "record") arr.sort((a, b) => recScore(b) - recScore(a) || (wdl[b.id]?.w ?? 0) - (wdl[a.id]?.w ?? 0));
+    else { const off = computeOfficial(players, matches, wdl); arr.sort((a, b) => ((off[b.id] ?? -1e9) - (off[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0))); }
+    return arr;
+  }, [players, elo, wdl, matches, rankingMode]);
+
+  if (loading) return <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}><div style={{ color: MUTED, fontFamily: body }}>Loading…</div></div>;
+
+  const group = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null };
+  const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
+  const canManageMatches = !!group?.ownerId && !!meId && group.ownerId === meId;
+  const me = players.find((p) => p.id === meId);
+  const finishOnboarding = (hist) => {
+    if (hist && meId) {
+      // `hist` may be either the previous array form or the new object form
+      // { levelHistory, initialRecord, initialElo } — handle both.
+      if (Array.isArray(hist)) {
+        const last = hist[hist.length - 1];
+        setPlayers(players.map((p) => p.id === meId ? { ...p, levelHistory: hist, level: last ? { cat: last.cat, sub: last.sub } : p.level } : p));
+      } else {
+        const last = (hist.levelHistory || []).slice(-1)[0];
+        setPlayers(players.map((p) => p.id === meId ? {
+          ...p,
+          levelHistory: hist.levelHistory || p.levelHistory,
+          level: last ? { cat: last.cat, sub: last.sub } : p.level,
+          initialRecord: hist.initialRecord || p.initialRecord,
+          initialElo: hist.initialElo || p.initialElo,
+        } : p));
+      }
+    }
+    setOnboarded(true); persistSettings({ onboarded: true });
+  };
+  const pendingForMe = matches.filter((m) => m.status === "pending" && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).length;
+  const profilePlayer = players.find((p) => p.id === profileId);
+  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: setProfileId };
+  const main = tab === "ladder" || tab === "add" || tab === "history" || tab === "profile";
+
+  return (
+    <div style={wrap}>
+      <style>{fontImport}</style>
+      <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
+        {main && (
+          <header style={{ marginBottom: 18 }}>
+            <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "1px solid " + LINE, borderRadius: 999, padding: "5px 12px", cursor: "pointer", color: BALL, fontFamily: mono, fontSize: 11, letterSpacing: 1, textTransform: "uppercase" }}>
+              {group?.name || "League"} <ChevronDown size={13} />
+            </button>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
+              <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "8px 0 0", fontSize: 38, lineHeight: 0.95, textTransform: "uppercase", letterSpacing: -0.5 }}>
+                {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "history" ? "Games" : "Profile"}
+              </h1>
+              {tab === "profile" && (
+                <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 10, padding: "9px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3.5, flexShrink: 0 }}>
+                  {[0, 1, 2].map((i) => <span key={i} style={{ display: "block", width: 17, height: 2, background: BALL, borderRadius: 2 }} />)}
+                </button>
+              )}
+            </div>
+          </header>
+        )}
+
+        {tab === "ladder" && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 10, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
+        {tab === "ladder" && <LeagueHome players={players} matches={matches} group={group} fixtures={fixtures} mode={rankingMode} onMode={setMode} onOpen={setProfileId} requireSetup={group?.requireSetup} nameOf={nameOf} />}
+        {tab === "add" && <LogResult players={players} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash("Logged — awaiting opponent's OK"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} />}
+        {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} />}
+        {tab === "h2h" && <SubHeader title="Compare" onBack={() => setTab("profile")} />}
+        {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={setProfileId} />}
+        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} />}
+        {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
+        {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
+        {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
+        {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} />}
+      </div>
+
+      {menuOpen && (
+        <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 96 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "1px solid " + LINE, padding: "18px 16px 36px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED }}>Menu</span>
+              <button onClick={() => setMenuOpen(false)} style={{ background: "transparent", border: "1px solid " + LINE, color: MUTED, borderRadius: 6, padding: "4px 10px", fontFamily: mono, fontSize: 12, cursor: "pointer" }}>Close</button>
+            </div>
+            <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={menuRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
+            <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={menuRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
+            <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={menuRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
+          </div>
+        </div>
+      )}
+      {profilePlayer && <ProfileModal player={profilePlayer} {...shared} onClose={() => setProfileId(null)} />}
+      {groupSheet && <GroupSheet groups={groups} currentId={gid} onSwitch={switchGroup} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
+      {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
+      <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />
+      {toast && <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", background: BALL, color: COURT, fontFamily: body, fontWeight: 700, padding: "10px 18px", borderRadius: 999, fontSize: 13, boxShadow: "0 8px 24px rgba(0,0,0,.4)", zIndex: 80 }}>{toast}</div>}
+    </div>
+  );
+}
