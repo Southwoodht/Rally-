@@ -2,7 +2,7 @@
 import React from "react";
 import { RecordBody } from "@/components/profile/RecordBody";
 import { Empty } from "@/components/ui/atoms";
-import { MUTED, card, display, miniInput, mono } from "@/lib/theme";
+import { MUTED, card, display, miniInput, mono, body} from "@/lib/theme";
 
 export function ProfileScreen({ players, meId, shared, onSetMe, goH2H, goSettings, goEdit }: any) {
   const me = players.find((p) => p.id === meId);
