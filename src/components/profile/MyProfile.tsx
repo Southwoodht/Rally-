@@ -1,16 +1,29 @@
 "use client";
-import React from "react";
+import React, { useRef } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
-import { AVATARS, BALL, CHALK, LINE, MUTED, NICKS, PANEL2, body, card, display, input, miniInput, mono, wrap } from "@/lib/theme";
+import { readPhotoAsDataUrl } from "@/lib/photo";
+import { BALL, CHALK, MUTED, NICKS, body, card, display, input, miniInput, mono, wrap } from "@/lib/theme";
+
+const PHOTO_SIZE = 160;
 
 export function MyProfile({ players, meId, setPlayers, flash }: any) {
   const me = players.find((p) => p.id === meId);
+  const fileRef = useRef<HTMLInputElement>(null);
   if (!me) return <Empty msg="Pick who you are first." />;
   const setField = (key, val) => setPlayers(players.map((p) => p.id === meId ? { ...p, [key]: val } : p));
   const setLevel = (cat, sub) => setPlayers(players.map((p) => p.id === meId ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
   const L = ({ children }: any) => <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
+  const onPickPhoto = async (file: File) => {
+    try {
+      const dataUrl = await readPhotoAsDataUrl(file, PHOTO_SIZE);
+      setField("avatarUrl", dataUrl);
+    } catch {
+      flash && flash("Couldn't read that photo — try a different one (HEIC photos from iPhone sometimes don't work; try a JPEG or screenshot)");
+    }
+  };
   return (
     <div style={card}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
@@ -19,6 +32,12 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
           <div style={{ fontFamily: display, fontSize: 22, fontWeight: 800, color: CHALK, textTransform: "uppercase", letterSpacing: -0.4 }}>{me.name}{me.nick ? " \u201C" + me.nick + "\u201D" : ""}{me.last ? " " + me.last : ""}</div>
           <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>This is how you appear to everyone.</div>
         </div>
+      </div>
+      <L>Profile picture</L>
+      <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickPhoto(f); e.target.value = ""; }} />
+      <div style={{ display: "flex", gap: 6 }}>
+        <button onClick={() => fileRef.current?.click()} style={{ ...miniInput, cursor: "pointer", color: BALL, textAlign: "center" as const }}>{me.avatarUrl ? "Change photo" : "Upload from camera roll"}</button>
+        {me.avatarUrl && <button onClick={() => setField("avatarUrl", null)} style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 11px", color: MUTED }}>Remove</button>}
       </div>
       <L>Name</L>
       <div style={{ display: "flex", gap: 6 }}>
@@ -41,10 +60,8 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
         <select value={me.level?.cat || ""} onChange={(e) => setLevel(e.target.value, me.level?.sub)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}><option value="">No level</option>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
         <select value={me.level?.sub || "Medium"} disabled={!me.level} onChange={(e) => setLevel(me.level?.cat, e.target.value)} style={{ ...miniInput, flex: 1, opacity: me.level ? 1 : 0.4, boxSizing: "border-box" as const }}>{SUBS.map((x) => <option key={x} value={x}>{x}</option>)}</select>
       </div>
-      <L>Avatar colour</L>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-        {AVATARS.map((av) => <button key={av} onClick={() => setField("avatar", av)} style={{ fontSize: 20, padding: "5px 7px", borderRadius: 8, cursor: "pointer", background: me.avatar === av ? PANEL2 : "transparent", border: "1px solid " + (me.avatar === av ? BALL : LINE) }}>{av}</button>)}
-      </div>
+      <L>Avatar</L>
+      <AvatarPicker value={me.avatar} onChange={(av) => setField("avatar", av)} />
       <L>Rating</L>
       <div style={{ display: "flex", gap: 6 }}>
         <input value={me.initialElo ?? ""} onChange={(e) => setField("initialElo", e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="ELO" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />

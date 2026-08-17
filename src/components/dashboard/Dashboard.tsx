@@ -44,7 +44,7 @@ export default function Dashboard({ session }: { session: Session }) {
   // If running in dev with ?__dev_auto=1, mount a debug league immediately
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
-      setActive({ id: 'g_debug', name: 'Dev League', join_code: 'DBG', created_by: 'dev-user' } as any);
+      setActive({ id: 'g_debug', name: 'Dev League', join_code: 'DBG', created_by: 'dev-user', role: 'owner' } as any);
       setView('app');
     }
   }, []);
@@ -102,7 +102,7 @@ export default function Dashboard({ session }: { session: Session }) {
           </div>
           <button onClick={() => setView(leagues.length > 1 ? "picker" : "empty")} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 8, padding: "7px 10px", cursor: "pointer" }}>Leagues</button>
         </div>
-        <RallyApp leagueId={active.id} leagueName={active.name} displayName={displayName} />
+        <RallyApp leagueId={active.id} leagueName={active.name} leagueRole={active.role} displayName={displayName} />
       </div>
     );
   }

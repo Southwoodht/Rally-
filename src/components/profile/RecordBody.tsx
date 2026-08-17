@@ -1,35 +1,51 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { H2HRow } from "@/components/profile/H2HRow";
 import { Avatar } from "@/components/ui/Avatar";
 import { FormRow } from "@/components/ui/FormRow";
 import { LevelBadge } from "@/components/ui/LevelBadge";
+import { SeasonSummary } from "@/components/profile/SeasonSummary";
+import { TrophyWall } from "@/components/profile/TrophyWall";
+import { VerifiedTrophies } from "@/components/profile/VerifiedTrophies";
 import { Empty, Stat, StreakTile } from "@/components/ui/atoms";
 import { START_ELO } from "@/core/constants";
+import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
+import { computeRivalries } from "@/core/rivalries";
 import { D, fmtDate, winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, display, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, display, miniInput, mono } from "@/lib/theme";
 
-export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen }: any) {
-  const r = wdl[player.id] || { w: 0, d: 0, l: 0, gp: 0 };
+export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, meId, onProposeEdit, onOpenMatch, initialYear }: any) {
+  const [yr, setYr] = useState<"all" | number>(initialYear ?? "all");
+  const [showSeason, setShowSeason] = useState(false);
+  const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
+  const scopedMatches = useMemo(() => (yr === "all" ? matches : matches.filter((m) => new Date(m.date).getFullYear() === yr)), [matches, yr]);
+  const yearStats = useMemo(() => (yr === "all" ? null : computeStats(players, scopedMatches)), [yr, players, scopedMatches]);
+  const activeElo = yr === "all" ? elo : yearStats!.elo;
+  const activeWdl = yr === "all" ? wdl : yearStats!.wdl;
+  const activeForm = yr === "all" ? form : yearStats!.form;
+  const activeDeltas = yr === "all" ? deltas : yearStats!.deltas;
+
+  const r = activeWdl[player.id] || { w: 0, d: 0, l: 0, gp: 0 };
   const rank = ranked.findIndex((p) => p.id === player.id) + 1;
-  const rating = Math.round(elo[player.id] ?? START_ELO);
-  const offMap = computeOfficial(players, matches, wdl);
+  const rating = Math.round(activeElo[player.id] ?? START_ELO);
+  const offMap = computeOfficial(players, scopedMatches, activeWdl);
   const byOff = ranked.filter((p) => (wdl[p.id]?.gp || 0) > 0).sort((a, b) => (offMap[b.id] ?? -1e9) - (offMap[a.id] ?? -1e9));
   const offIdx = byOff.findIndex((p) => p.id === player.id);
   const above = offIdx > 0 ? byOff[offIdx - 1] : null;
   const gap = above ? Math.max(1, Math.round((offMap[above.id] ?? 0) - (offMap[player.id] ?? 0))) : null;
   const isTop = offIdx === 0;
   const pct = r.gp ? Math.round(winPct(r) * 100) : null;
-  const last = (form[player.id] || []).slice(-5);
-  const bouts = matches.filter((m) => m.p1 === player.id || m.p2 === player.id).sort((a, b) => b.date - a.date);
+  const last = (activeForm[player.id] || []).slice(-5);
+  const [resultFilter, setResultFilter] = useState<"W" | "D" | "L" | null>(null);
+  const [openVs, setOpenVs] = useState<string | null>(null);
+  const bouts = scopedMatches.filter((m) => m.p1 === player.id || m.p2 === player.id).sort((a, b) => b.date - a.date);
   const resultFor = (m) => m.winner === "draw" ? "D" : ((m.winner === "p1" && m.p1 === player.id) || (m.winner === "p2" && m.p2 === player.id)) ? "W" : "L";
   const oppId = (m) => m.p1 === player.id ? m.p2 : m.p1;
-  const oppOf = (m) => nameOf(oppId(m));
   const byId = {}; (players || []).forEach((p) => { byId[p.id] = p; });
-  const wins = bouts.filter((m) => resultFor(m) === "W" && m.status !== "pending").map((m) => { const oid = oppId(m); const lvAt = levelAt(byId[oid], m.date); const oppLv = levelVal(lvAt) ?? 0; const myLv = levelVal(levelAt(player, m.date)) ?? 0; const upset = Math.max(0, oppLv - myLv); return { oid, lvAt, upset, q: (oppLv + upset) * 1000 + (elo[oid] ?? 0), year: new Date(m.date).getFullYear() }; });
+  const wins = bouts.filter((m) => resultFor(m) === "W" && m.status !== "pending").map((m) => { const oid = oppId(m); const lvAt = levelAt(byId[oid], m.date); const oppLv = levelVal(lvAt) ?? 0; const myLv = levelVal(levelAt(player, m.date)) ?? 0; const upset = Math.max(0, oppLv - myLv); return { oid, lvAt, upset, q: (oppLv + upset) * 1000 + (activeElo[oid] ?? 0), year: new Date(m.date).getFullYear() }; });
   const bestWins = [...wins].sort((a, b) => b.q - a.q).slice(0, 3);
   const chrono = [...bouts].filter((m) => m.status !== "pending").sort((a, b) => a.date - b.date);
   let currentStreak = 0; for (let i = chrono.length - 1; i >= 0; i--) { if (resultFor(chrono[i]) === "W") currentStreak++; else break; }
@@ -43,7 +59,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const bestRun = runs.reduce((b, run) => run.length > b.length ? run : b, [] as any[]);
   const toughStreak = impRun ? (impRun as any[]).length : 0;
   const h2h = {};
-  chrono.forEach((m) => { const oid = oppId(m); const res = resultFor(m); const yr = new Date(m.date).getFullYear(); if (!h2h[oid]) h2h[oid] = { w: 0, d: 0, l: 0, minY: yr, maxY: yr }; if (res === "W") h2h[oid].w++; else if (res === "L") h2h[oid].l++; else h2h[oid].d++; h2h[oid].minY = Math.min(h2h[oid].minY, yr); h2h[oid].maxY = Math.max(h2h[oid].maxY, yr); });
+  chrono.forEach((m) => { const oid = oppId(m); const res = resultFor(m); const year = new Date(m.date).getFullYear(); if (!h2h[oid]) h2h[oid] = { w: 0, d: 0, l: 0, minY: year, maxY: year }; if (res === "W") h2h[oid].w++; else if (res === "L") h2h[oid].l++; else h2h[oid].d++; h2h[oid].minY = Math.min(h2h[oid].minY, year); h2h[oid].maxY = Math.max(h2h[oid].maxY, year); });
   const h2hList = Object.keys(h2h).map((oid) => ({ oid, ...h2h[oid], net: h2h[oid].w - h2h[oid].l }));
   const winningVs = h2hList.filter((x) => x.net > 0).sort((a, b) => b.net - a.net);
   const evenVs = h2hList.filter((x) => x.net === 0);
@@ -51,8 +67,10 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const recStr2 = (x) => (x.d > 0 ? x.w + "-" + x.d + "-" + x.l : x.w + "-" + x.l);
   const yrStr = (x) => x.minY === x.maxY ? String(x.minY) : x.minY + "–" + x.maxY;
   const nm = (oid) => byId[oid]?.name ? (byId[oid].name + (byId[oid].last ? " " + byId[oid].last : "")) : nameOf(oid);
+  const vsMatches = (oid) => chrono.filter((m) => oppId(m) === oid).slice().sort((a, b) => b.date - a.date);
   const ranks = rankMaps(players, matches, elo, wdl);
   const [openStreak, setOpenStreak] = useState<"now" | "best" | "tough" | null>(null);
+  const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
@@ -72,23 +90,60 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           )}
         </div>
       </div>
-      {showElo && r.gp > 0 && !player.inactive && (isTop || (above && gap !== null)) && (
+      {showElo && yr === "all" && r.gp > 0 && !player.inactive && (isTop || (above && gap !== null)) && (
         <div style={{ background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "10px 12px", marginBottom: 4, fontFamily: body, fontSize: 13, color: CHALK }}>
           {isTop ? <><strong style={{ color: BALL }}>Top of the table.</strong> Nobody above — keep winning to stay there.</>
                  : <><strong style={{ color: BALL }}>{gap} pts</strong> behind {above.name}{above.last ? " " + above.last : ""} — beat good players to close the gap.</>}
         </div>
       )}
-      <div style={{ display: "flex", gap: 10, margin: "16px 0 18px" }}>
-        <Stat n={r.w} label="Won" c={BALL} /><Stat n={r.d} label="Drawn" c={MUTED} /><Stat n={r.l} label="Lost" c={CLAY} /><Stat n={pct === null ? "–" : pct + "%"} label="Win rate" c={BALL} />
+      {years.length > 0 && (
+        <div style={{ display: "flex", gap: 6, margin: "12px 0 0" }}>
+          <select value={String(yr)} onChange={(e) => { setYr(e.target.value === "all" ? "all" : Number(e.target.value)); setResultFilter(null); setOpenVs(null); }} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }}>
+            <option value="all">All Time</option>
+            {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
+          </select>
+          {yr !== "all" && <button onClick={() => setShowSeason(true)} style={{ ...miniInput, cursor: "pointer", color: BALL, flexShrink: 0, whiteSpace: "nowrap" as const }}>Season summary</button>}
+        </div>
+      )}
+      {showSeason && yr !== "all" && <SeasonSummary player={player} players={players} matches={matches} year={yr} fixtures={fixtures} group={group} nameOf={nameOf} onOpenMatch={onOpenMatch} onClose={() => setShowSeason(false)} />}
+      <div style={{ display: "flex", gap: 10, margin: "16px 0", marginBottom: resultFilter ? 10 : 18 }}>
+        <Stat n={r.w} label="Won" c={BALL} onClick={() => setResultFilter(resultFilter === "W" ? null : "W")} active={resultFilter === "W"} />
+        <Stat n={r.d} label="Drawn" c={MUTED} onClick={() => setResultFilter(resultFilter === "D" ? null : "D")} active={resultFilter === "D"} />
+        <Stat n={r.l} label="Lost" c={CLAY} onClick={() => setResultFilter(resultFilter === "L" ? null : "L")} active={resultFilter === "L"} />
+        <Stat n={pct === null ? "–" : pct + "%"} label="Win rate" c={BALL} />
       </div>
+      {resultFilter && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+            <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL }}>{resultFilter === "W" ? "Wins" : resultFilter === "D" ? "Draws" : "Losses"}</div>
+            <button onClick={() => setResultFilter(null)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>All ✕</button>
+          </div>
+          <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 8, padding: "2px 12px" }}>
+            {bouts.filter((m) => resultFor(m) === resultFilter).length
+              ? bouts.filter((m) => resultFor(m) === resultFilter).map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
+              : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>No matches in this category yet.</div>}
+          </div>
+        </div>
+      )}
       {last.length > 0 && <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}><span style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: MUTED }}>Recent form</span><FormRow items={last} /></div>}
+      {rivalries.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 6 }}>Rivalries</div>
+          {rivalries.slice(0, 3).map((rv) => (
+            <div key={rv.oid}>
+              <RivalryRow rivalry={rv} name={nm(rv.oid)} onClick={() => setOpenVs(openVs === rv.oid ? null : rv.oid)} />
+              {openVs === rv.oid && <VsMatches oid={rv.oid} matches={vsMatches(rv.oid)} resultFor={resultFor} onOpen={onOpen} />}
+            </div>
+          ))}
+        </div>
+      )}
       {r.gp > 0 && bestWins.length > 0 && (
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 6 }}>Best wins</div>
           {bestWins.map((w, i) => (
             <button key={i} onClick={() => onOpen && onOpen(w.oid)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
               <span style={{ fontSize: 16 }}>{["🥇", "🥈", "🥉"][i]}</span>
-              <span style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{byId[w.oid]?.name || nameOf(w.oid)}{w.lvAt ? <span style={{ color: MUTED }}> ({w.lvAt.cat})</span> : null}</span>
+              <span style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nm(w.oid)}{w.lvAt ? <span style={{ color: MUTED }}> ({w.lvAt.cat})</span> : null}</span>
               <span style={{ marginLeft: "auto", fontFamily: mono, fontSize: 11, color: MUTED }}>{w.year}</span>
               <span style={{ fontFamily: mono, fontSize: 12, color: MUTED }}>›</span>
             </button>
@@ -123,35 +178,133 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           {winningVs.length > 0 && (
             <div>
               <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 4 }}>Winning records</div>
-              {winningVs.map((x) => <H2HRow key={x.oid} name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={BALL} onClick={() => onOpen && onOpen(x.oid)} />)}
+              {winningVs.map((x) => (
+                <div key={x.oid}>
+                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={BALL} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
+                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
+                </div>
+              ))}
             </div>
           )}
           {evenVs.length > 0 && (
             <div>
               <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, margin: "12px 0 4px" }}>Even</div>
-              {evenVs.map((x) => <H2HRow key={x.oid} name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={MUTED} onClick={() => onOpen && onOpen(x.oid)} />)}
+              {evenVs.map((x) => (
+                <div key={x.oid}>
+                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={MUTED} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
+                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
+                </div>
+              ))}
             </div>
           )}
           {losingVs.length > 0 && (
             <div>
               <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: CLAY, margin: "12px 0 4px" }}>Losing records</div>
-              {losingVs.map((x) => <H2HRow key={x.oid} name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={CLAY} onClick={() => onOpen && onOpen(x.oid)} />)}
+              {losingVs.map((x) => (
+                <div key={x.oid}>
+                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={CLAY} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
+                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
+      <VerifiedTrophies player={player} meId={meId} />
+      {r.gp > 0 && <TrophyWall player={player} players={players} matches={matches} fixtures={fixtures} group={group} />}
       <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>Record</div>
-      {bouts.length ? bouts.map((m) => {
-        const res = resultFor(m);
-        const dv = deltas ? deltas[m.id]?.[player.id] : null;
-        return (
-          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "1px solid " + LINE }}>
-            <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
-            <div style={{ flex: 1 }}><div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppOf(m)}</strong></div><div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div></div>
-            {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
-          </div>
-        );
-      }) : <Empty msg="No matches logged yet." />}
+      {bouts.length
+        ? bouts.map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
+        : <Empty msg="No matches logged yet." />}
     </>
+  );
+}
+
+function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId, onProposeEdit, onOpenMatch }: any) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<any>(null);
+  const res = resultFor(m);
+  const dv = activeDeltas ? activeDeltas[m.id]?.[playerId] : null;
+  const canEdit = !!(onProposeEdit && meId && (m.p1 === meId || m.p2 === meId));
+  const oppPlayer = (players || []).find((p: any) => p.id === (m.p1 === playerId ? m.p2 : m.p1));
+  const needsApproval = !!(oppPlayer && oppPlayer.auth_id);
+
+  const beginEdit = () => {
+    setDraft({ date: new Date(m.date).toISOString().slice(0, 10), score: m.score || "", result: res });
+    setEditing(true);
+  };
+  const save = () => {
+    if (!draft) return;
+    const winner = draft.result === "D" ? "draw" : draft.result === "W" ? (playerId === m.p1 ? "p1" : "p2") : (playerId === m.p1 ? "p2" : "p1");
+    onProposeEdit(m.id, { date: draft.date ? new Date(draft.date).getTime() : m.date, score: draft.score.trim(), winner });
+    setEditing(false);
+    setDraft(null);
+  };
+
+  if (editing) {
+    return (
+      <div style={{ padding: "11px 0", borderTop: "1px solid " + LINE }}>
+        <div style={{ display: "grid", gap: 6 }}>
+          <input type="date" value={draft.date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDraft({ ...draft, date: e.target.value })} style={{ ...miniInput, colorScheme: "dark", boxSizing: "border-box" as const }} />
+          <input value={draft.score} onChange={(e) => setDraft({ ...draft, score: e.target.value })} placeholder="Score (optional)" style={{ ...miniInput, boxSizing: "border-box" as const }} />
+          <div style={{ display: "flex", gap: 6 }}>
+            {(["W", "D", "L"] as const).map((r) => (
+              <button key={r} onClick={() => setDraft({ ...draft, result: r })} style={{ flex: 1, fontFamily: mono, fontSize: 11, textTransform: "uppercase", padding: "8px 6px", borderRadius: 6, cursor: "pointer", border: "1px solid " + (draft.result === r ? BALL : LINE), background: draft.result === r ? BALL : "transparent", color: draft.result === r ? COURT : MUTED, fontWeight: 700 }}>{r === "W" ? "Won" : r === "D" ? "Drew" : "Lost"}</button>
+            ))}
+          </div>
+          <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{needsApproval ? `${oppName} has a Rally account — this change needs their agreement before it counts.` : "They don't have an account, so this updates straight away."}</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={save} style={{ fontFamily: mono, fontSize: 10, color: COURT, background: BALL, border: "none", borderRadius: 5, padding: "6px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>Save</button>
+            <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "6px 10px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "1px solid " + LINE }}>
+      <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
+      <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
+        <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
+        <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+      </button>
+      {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
+      {canEdit && <button onClick={beginEdit} style={{ fontFamily: mono, fontSize: 10, color: BALL, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "5px 8px", cursor: "pointer", textTransform: "uppercase", flexShrink: 0 }}>Edit</button>}
+    </div>
+  );
+}
+
+function RivalryRow({ rivalry, name, onClick }: any) {
+  const recStr = rivalry.d > 0 ? `${rivalry.w}-${rivalry.d}-${rivalry.l}` : `${rivalry.w}-${rivalry.l}`;
+  const streakText = rivalry.streak.holder === "me" ? `W${rivalry.streak.count}` : rivalry.streak.holder === "opp" ? `L${rivalry.streak.count}` : null;
+  return (
+    <button onClick={onClick} style={{ display: "block", width: "100%", background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "10px 12px", marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <span style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>🔥 {name}</span>
+        <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: BALL }}>{recStr}</span>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 3, fontFamily: mono, fontSize: 10.5, color: MUTED }}>
+        <span>{rivalry.total} matches{streakText ? " · streak " + streakText : ""}</span>
+        <span>Last {fmtDate(rivalry.lastMeeting)}</span>
+      </div>
+    </button>
+  );
+}
+
+function VsMatches({ oid, matches, resultFor, onOpen }: any) {
+  return (
+    <div style={{ background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "8px 10px", margin: "2px 0 8px" }}>
+      {matches.length ? matches.map((m, i) => {
+        const res = resultFor(m);
+        return (
+          <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
+            <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
+          </button>
+        );
+      }) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED, padding: "4px 0" }}>No matches to show.</div>}
+    </div>
   );
 }

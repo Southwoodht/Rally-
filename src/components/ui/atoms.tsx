@@ -2,16 +2,24 @@
 import React from "react";
 import { BALL, CHALK, COURT, LINE, MUTED, PANEL, PANEL2, body, display, input, mono } from "@/lib/theme";
 
-export function Stat({ n, label, c }: any) {
-  return <div style={{ flex: 1, background: PANEL2, borderRadius: 10, padding: "12px 8px", textAlign: "center", border: "1px solid " + LINE }}><div style={{ fontFamily: mono, fontSize: 24, fontWeight: 700, color: c }}>{n}</div><div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginTop: 2 }}>{label}</div></div>;
+export function Stat({ n, label, c, onClick, active }: any) {
+  const style: any = { flex: 1, background: active ? PANEL : PANEL2, borderRadius: 10, padding: "12px 8px", textAlign: "center", border: "1px solid " + (active ? BALL : LINE) };
+  const content = (
+    <>
+      <div style={{ fontFamily: mono, fontSize: 24, fontWeight: 700, color: c }}>{n}</div>
+      <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginTop: 2 }}>{label}{onClick ? <span style={{ color: BALL }}> {active ? "▾" : "›"}</span> : null}</div>
+    </>
+  );
+  if (onClick) return <button onClick={onClick} style={{ ...style, cursor: "pointer" }}>{content}</button>;
+  return <div style={style}>{content}</div>;
 }
 
 export function StreakTile({ n, label, c, active, onClick }: any) {
   return <button onClick={onClick} style={{ flex: 1, background: active ? PANEL : PANEL2, borderRadius: 10, padding: "12px 8px", textAlign: "center", border: "1px solid " + (active ? BALL : LINE), cursor: "pointer" }}><div style={{ fontFamily: mono, fontSize: 24, fontWeight: 700, color: c }}>{n}</div><div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginTop: 2 }}>{label} <span style={{ color: BALL }}>{active ? "▾" : "›"}</span></div></button>;
 }
 
-export function Toggle({ on, onClick, label }: any) {
-  return <button onClick={onClick} style={{ flex: 1, fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, padding: "10px 6px", borderRadius: 8, cursor: "pointer", border: "1px solid " + (on ? BALL : LINE), background: on ? BALL : "transparent", color: on ? COURT : MUTED, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</button>;
+export function Toggle({ on, onClick, label, icon, emphasize, big }: any) {
+  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: mono, fontSize: big ? 12.5 : 11, textTransform: "uppercase", letterSpacing: 0.6, padding: big ? "11px 6px" : "10px 6px", borderRadius: 8, cursor: "pointer", border: "1px solid " + (on ? BALL : emphasize ? BALL : LINE), background: on ? BALL : "transparent", color: on ? COURT : emphasize ? BALL : MUTED, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{icon ? icon + " " : ""}{label}</button>;
 }
 
 export function Tally({ name, n, lead }: any) {

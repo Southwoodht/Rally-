@@ -1,13 +1,15 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Empty, Select } from "@/components/ui/atoms";
+import { Empty } from "@/components/ui/atoms";
+import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
-import { predictProb } from "@/core/predict";
+import { explainFactors, predictProb } from "@/core/predict";
+import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput, mono } from "@/lib/theme";
 
-export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen }: any) {
+export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreatePlayer }: any) {
   const [a, setA] = useState(""); const [b, setB] = useState("");
   const [yr, setYr] = useState("all");
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
@@ -15,6 +17,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen }: any) 
   const scoped = useMemo(() => yr === "all" ? matches : matches.filter((m) => new Date(m.date).getFullYear() === Number(yr)), [matches, yr]);
   const nm = (id) => byId[id] ? byId[id].name + (byId[id].last ? " " + byId[id].last : "") : nameOf(id);
   const games = useMemo(() => { if (!a || !b) return []; return scoped.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a)).sort((x, y) => y.date - x.date); }, [a, b, scoped]);
+  const rivalry = useMemo(() => (a && b ? computeRivalry(a, b, scoped) : null), [a, b, scoped]);
   let aw = 0, bw = 0, d = 0;
   games.forEach((m) => { if (m.winner === "draw") d++; else if ((m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a)) aw++; else bw++; });
   const statsFor = (pid) => {
@@ -49,12 +52,37 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen }: any) 
   const ra = wdlS[a] || { w: 0, d: 0, l: 0, gp: 0 }, rb = wdlS[b] || { w: 0, d: 0, l: 0, gp: 0 };
   const sa = a ? statsFor(a) : null, sb = b ? statsFor(b) : null;
   const pctA = a && b ? Math.round(predictProb(a, b, scoped, eloS, players) * 100) : 50;
+  const explanation = useMemo(() => {
+    if (!a || !b) return "";
+    const f = explainFactors(a, b, scoped, eloS, players);
+    const favored = pctA >= 50 ? "A" : "B";
+    const favoredName = favored === "A" ? nm(a) : nm(b);
+    const otherName = favored === "A" ? nm(b) : nm(a);
+    const reasons: { text: string; weight: number }[] = [];
+    const eloDiff = favored === "A" ? f.eloDiff : -f.eloDiff;
+    if (eloDiff >= 8) reasons.push({ text: `a ${eloDiff}-point ELO edge`, weight: eloDiff });
+    const favH2H = favored === "A" ? f.h2h.aw : f.h2h.bw, othH2H = favored === "A" ? f.h2h.bw : f.h2h.aw;
+    if (f.h2h.n > 0 && favH2H !== othH2H) reasons.push({ text: `a ${favH2H}-${othH2H}${f.h2h.d ? "-" + f.h2h.d : ""} head-to-head lead`, weight: (favH2H - othH2H) * 20 });
+    const favForm = favored === "A" ? f.formA : f.formB, othForm = favored === "A" ? f.formB : f.formA;
+    const favNet = favForm.w - favForm.l, othNet = othForm.w - othForm.l;
+    if (favForm.n > 0 && favNet > othNet) reasons.push({ text: `better recent form (${favForm.w}-${favForm.l} in their last ${favForm.n})`, weight: (favNet - othNet) * 10 });
+    const favLv = favored === "A" ? f.levelA : f.levelB, othLv = favored === "A" ? f.levelB : f.levelA;
+    if (favLv != null && othLv != null && favLv > othLv) reasons.push({ text: "plays at a higher level", weight: (favLv - othLv) * 5 });
+    reasons.sort((x, y) => y.weight - x.weight);
+    const top = reasons.slice(0, 2).map((r) => r.text);
+    if (!top.length) {
+      return f.h2h.n === 0
+        ? `${favoredName} and ${otherName} haven't played each other yet — this leans on overall form and level, and it's close.`
+        : `This one's close — ${favoredName} has the slightest edge overall.`;
+    }
+    return `Rally favours ${favoredName} — ${top.join(" and ")}.`;
+  }, [a, b, scoped, eloS, players, pctA]);
   return (
     <div style={card}>
       <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 12 }}>Pick any two players — works even if they've never played each other.</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <div style={{ flex: 1 }}><Select value={a} onChange={setA} players={players} exclude={b} placeholder="Player A" /></div>
-        <div style={{ flex: 1 }}><Select value={b} onChange={setB} players={players} exclude={a} placeholder="Player B" /></div>
+        <div style={{ flex: 1 }}><PlayerPicker value={a} onChange={setA} players={players} exclude={b} placeholder="Player A" onCreatePlayer={onCreatePlayer} /></div>
+        <div style={{ flex: 1 }}><PlayerPicker value={b} onChange={setB} players={players} exclude={a} placeholder="Player B" onCreatePlayer={onCreatePlayer} /></div>
       </div>
       <select value={yr} onChange={(e) => setYr(e.target.value)} style={{ ...miniInput, width: "100%", marginBottom: 16, boxSizing: "border-box" as const }}>
         <option value="all">All-time</option>
@@ -66,8 +94,21 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen }: any) 
             <span style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>{nm(a)}</span>
             <span style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>{nm(b)}</span>
           </div>
+          {rivalry && (() => {
+            const leader = rivalry.w > rivalry.l ? nm(a) : rivalry.l > rivalry.w ? nm(b) : null;
+            const leadRec = rivalry.w >= rivalry.l ? `${rivalry.w}-${rivalry.d}-${rivalry.l}` : `${rivalry.l}-${rivalry.d}-${rivalry.w}`;
+            const streakName = rivalry.streak.holder === "me" ? nm(a) : rivalry.streak.holder === "opp" ? nm(b) : null;
+            return (
+              <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 8, padding: "10px 12px", marginBottom: 14 }}>
+                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 4 }}>🔥 Rivalry · {rivalry.total} matches</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 2 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
+                <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
+              </div>
+            );
+          })()}
           <div style={{ display: "flex", justifyContent: "space-between", fontFamily: mono, fontSize: 15, fontWeight: 700, marginBottom: 4 }}><span style={{ color: pctA >= 50 ? BALL : MUTED }}>{pctA}%</span><span style={{ fontSize: 9, color: MUTED, letterSpacing: 1, alignSelf: "center" }}>PREDICTED WIN</span><span style={{ color: pctA < 50 ? BALL : MUTED }}>{100 - pctA}%</span></div>
-          <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: PANEL2, marginBottom: 16 }}><div style={{ width: pctA + "%", background: BALL }} /><div style={{ width: (100 - pctA) + "%", background: MUTED }} /></div>
+          <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: PANEL2, marginBottom: 10 }}><div style={{ width: pctA + "%", background: BALL }} /><div style={{ width: (100 - pctA) + "%", background: MUTED }} /></div>
+          {explanation && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.4, marginBottom: 16 }}>{explanation}</div>}
           <Row label="Head to head" av={aw + "-" + d + "-" + bw} bv={bw + "-" + d + "-" + aw} hiA={aw > bw} hiB={bw > aw} />
           <Row label="Record" av={ra.w + "-" + ra.d + "-" + ra.l} bv={rb.w + "-" + rb.d + "-" + rb.l} />
           <Row label="Win rate" av={ra.gp ? Math.round(winPct(ra) * 100) + "%" : "–"} bv={rb.gp ? Math.round(winPct(rb) * 100) + "%" : "–"} hiA={ra.gp && rb.gp && winPct(ra) > winPct(rb)} hiB={ra.gp && rb.gp && winPct(rb) > winPct(ra)} />
@@ -85,7 +126,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen }: any) 
               <div key={i} style={{ flex: 1, minWidth: 0, paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "1px solid " + LINE : "none" }}>
                 <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6, textAlign: i ? "right" : "left" }}>Best wins</div>
                 {s.top3.length ? s.top3.map((w, j) => (
-                  <div key={j} style={{ fontFamily: body, fontSize: 12, color: CHALK, padding: "3px 0", textAlign: i ? "right" : "left" }}>{["🥇", "🥈", "🥉"][j]} {byId[w.oid]?.name || nameOf(w.oid)} <span style={{ color: MUTED }}>{w.yr}</span></div>
+                  <div key={j} style={{ fontFamily: body, fontSize: 12, color: CHALK, padding: "3px 0", textAlign: i ? "right" : "left" }}>{["🥇", "🥈", "🥉"][j]} {nm(w.oid)} <span style={{ color: MUTED }}>{w.yr}</span></div>
                 )) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED, textAlign: i ? "right" : "left" }}>None yet</div>}
               </div>
             ))}
@@ -99,7 +140,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen }: any) 
                 return (
                   <button onClick={() => onOpen && onOpen(e.oid)} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", textAlign: i ? "right" : "left" }}>
                     <div style={{ display: "flex", flexDirection: i ? "row-reverse" : "row", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>
-                      <span style={{ fontFamily: body, fontSize: 13, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{byId[e.oid]?.name || nameOf(e.oid)}</span>
+                      <span style={{ fontFamily: body, fontSize: 13, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(e.oid)}</span>
                       <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 700, color: BALL }}>{e.w}-{e.l}</span>
                     </div>
                     <div style={{ fontFamily: mono, fontSize: 9.5, color: MUTED, letterSpacing: 0.5, marginTop: 1 }}>{lvl ? lvl.cat.slice(0, 3).toUpperCase() + " · " : ""}{o.w}-{o.l}</div>

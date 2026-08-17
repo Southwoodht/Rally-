@@ -7,14 +7,17 @@ import { predictProb } from "@/core/predict";
 import { fmtDate, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, display, input, miniInput, mono, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onOpenMatch }: any) {
   const [scope, setScope] = useState("feed");
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<any>(null);
   const [feedFilter, setFeedFilter] = useState("league");
   const [customSel, setCustomSel] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
+  const [asAnnouncement, setAsAnnouncement] = useState(false);
+  const announcements = useMemo(() => (posts || []).filter((p) => p.isAnnouncement).sort((a, b) => b.date - a.date), [posts]);
   const pending = useMemo(() => matches.filter((m) => m.status === "pending").sort((a, b) => b.date - a.date), [matches]);
+  const pendingEdits = useMemo(() => matches.filter((m) => m.pendingEdit).sort((a, b) => (b.pendingEdit?.proposedAt || 0) - (a.pendingEdit?.proposedAt || 0)), [matches]);
   const confirmed = useMemo(() => matches.filter((m) => m.status !== "pending").sort((a, b) => b.date - a.date), [matches]);
   const events = useMemo(() => buildEvents(players, matches, null), [players, matches]);
   const feedList = useMemo(() => {
@@ -26,17 +29,17 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   const nm = (id) => { const p = players.find((x) => x.id === id); return p ? p.name + (p.last ? " " + p.last : "") : nameOf(id); };
   const beginEdit = (m: any) => {
     setEditingMatchId(m.id);
-    setEditDraft({ date: m.date ? new Date(m.date).toISOString().slice(0, 10) : "", p1: m.p1, p2: m.p2, winner: m.winner || "draw" });
+    setEditDraft({ date: m.date ? new Date(m.date).toISOString().slice(0, 10) : "", p1: m.p1, p2: m.p2, winner: m.winner || "draw", score: m.score || "" });
   };
   const saveEdit = (m: any) => {
     if (!editDraft || !onEditMatch) return;
-    onEditMatch(m.id, { date: editDraft.date ? new Date(editDraft.date).getTime() : m.date, p1: editDraft.p1, p2: editDraft.p2, winner: editDraft.winner });
+    onEditMatch(m.id, { date: editDraft.date ? new Date(editDraft.date).getTime() : m.date, p1: editDraft.p1, p2: editDraft.p2, winner: editDraft.winner, score: editDraft.score.trim() });
     setEditingMatchId(null);
     setEditDraft(null);
   };
   return (
     <div>
-      {pending.length > 0 && (
+      {(pending.length > 0 || pendingEdits.length > 0) && (
         <div style={{ marginBottom: 22 }}>
           <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 10 }}>Awaiting confirmation</div>
           {pending.map((m) => {
@@ -52,6 +55,29 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onConfirm(m.id)} color={BALL}>Agree</BigBtn><BigBtn onClick={() => onDispute(m.id)} color={CLAY}>Dispute</BigBtn></div>
                 ) : iReported ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree…</span><button onClick={() => onDispute(m.id)} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "5px 8px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button></div>
+                ) : (
+                  <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree.</span>
+                )}
+              </div>
+            );
+          })}
+          {pendingEdits.map((m) => {
+            const edit = m.pendingEdit;
+            const iAmIn = m.p1 === meId || m.p2 === meId;
+            const proposedByMe = edit.proposedBy === meId;
+            const canRespond = iAmIn && !proposedByMe;
+            const other = nameOf(m.p1 === meId ? m.p2 : m.p1);
+            const before = { winner: m.winner, score: m.score, date: m.date };
+            const after = { winner: edit.winner, score: edit.score, date: edit.date };
+            return (
+              <div key={m.id + "-edit"} style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nameOf(edit.proposedBy) || "Someone"} wants to change a result:</div>
+                <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, margin: "4px 0" }}>Was: {winnerLabel({ ...m, ...before }, nameOf)}{before.score ? " · " + before.score : ""} · {fmtDate(before.date)}</div>
+                <div style={{ fontFamily: mono, fontSize: 11, color: BALL, marginBottom: 10 }}>Now: {winnerLabel({ ...m, ...after }, nameOf)}{after.score ? " · " + after.score : ""} · {fmtDate(after.date)}</div>
+                {canRespond ? (
+                  <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onApproveEdit(m.id)} color={BALL}>Agree</BigBtn><BigBtn onClick={() => onRejectEdit(m.id)} color={CLAY}>Reject</BigBtn></div>
+                ) : proposedByMe ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree…</span><button onClick={() => onRejectEdit(m.id)} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "5px 8px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button></div>
                 ) : (
                   <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree.</span>
                 )}
@@ -83,6 +109,20 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               </div>
             </div>
           )}
+          {announcements.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 8 }}>📌 Announcements</div>
+              {announcements.map((p) => (
+                <div key={p.id} style={{ display: "flex", gap: 10, background: PANEL, border: "1px solid " + BALL, borderRadius: 10, padding: 12, marginBottom: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{p.text}</div>
+                    <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 2 }}>{nm(p.by)} · {fmtDate(p.date)}</div>
+                  </div>
+                  {(p.by === meId || canEditMatches) && <button onClick={() => onRemovePost(p.id)} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "4px 7px", cursor: "pointer", flexShrink: 0, alignSelf: "flex-start" }}>&#10005;</button>}
+                </div>
+              ))}
+            </div>
+          )}
           {(() => {
             const s = new Set(customSel);
             const up = (fixtures || []).filter((f) => !f.done && f.booked).filter((f) => feedFilter === "mine" ? (f.p1 === meId || f.p2 === meId) : feedFilter === "custom" ? (s.has(f.p1) && s.has(f.p2)) : true);
@@ -103,17 +143,23 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               </div>
             );
           })()}
-          <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: canEditMatches ? 8 : 14 }}>
             <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="What's on your mind?" style={{ ...miniInput, flex: 1, fontFamily: body, fontSize: 14, padding: "10px 11px", boxSizing: "border-box" as const }} />
-            <BigBtn onClick={() => { const t = draft.trim(); if (t) { onPost(t); setDraft(""); } }} color={BALL} grow={false}>Post</BigBtn>
+            <BigBtn onClick={() => { const t = draft.trim(); if (t) { onPost(t, asAnnouncement); setDraft(""); setAsAnnouncement(false); } }} color={BALL} grow={false}>Post</BigBtn>
           </div>
+          {canEditMatches && (
+            <button onClick={() => setAsAnnouncement(!asAnnouncement)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", padding: 0, marginBottom: 14, cursor: "pointer" }}>
+              <span style={{ width: 14, height: 14, borderRadius: 3, border: "1px solid " + (asAnnouncement ? BALL : LINE), background: asAnnouncement ? BALL : "transparent" }} />
+              <span style={{ fontFamily: mono, fontSize: 10.5, color: asAnnouncement ? BALL : MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>📌 Post as announcement</span>
+            </button>
+          )}
           {(() => {
             const s2 = new Set(customSel);
             const inScope = (ids) => feedFilter === "mine" ? ids.includes(meId) : feedFilter === "custom" ? (s2.size >= 2 && ids.every((i) => s2.has(i))) : true;
             const items = [
               ...feedList.map((m) => ({ kind: "result", date: m.date, key: m.id, m })),
               ...events.filter((e) => true).map((e) => ({ kind: "event", date: e.date, key: e.id, e })),
-              ...(posts || []).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),
+              ...(posts || []).filter((p) => !p.isAnnouncement).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),
             ].sort((a, b) => b.date - a.date);
             if (!items.length) return null;
             return items.map((it) => {
@@ -141,23 +187,27 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                 <div key={it.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: "1px solid " + LINE }}>
                   <span style={{ fontSize: 17 }}>{m.winner === "draw" ? "\uD83E\uDD1D" : "\uD83C\uDFBE"}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><strong>{winnerLabel(m, nameOf)}</strong></div>
-                    <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " \u00b7 " + m.score : ""}</div>                    {canEditMatches && (
+                    <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
+                      <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><strong>{winnerLabel(m, nameOf)}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "\uD83D\uDCAC" : ""}{m.photoUrl ? "\uD83D\uDCF7" : ""}</span>}</div>
+                      <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " \u00b7 " + m.score : ""}</div>
+                    </button>
+                    {canEditMatches && (
                       <div style={{ marginTop: 8 }}>
                         {editingMatchId === m.id ? (
                           <div style={{ display: "grid", gap: 6 }}>
                             <input type="date" value={editDraft?.date || ""} onChange={(e) => setEditDraft({ ...editDraft, date: e.target.value })} style={{ ...miniInput, boxSizing: "border-box" as const }} />
                             <select value={editDraft?.p1 || ""} onChange={(e) => setEditDraft({ ...editDraft, p1: e.target.value })} style={{ ...miniInput, boxSizing: "border-box" as const }}>
-                              {players.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              {players.map((p: any) => <option key={p.id} value={p.id}>{p.name}{p.last ? " " + p.last : ""}</option>)}
                             </select>
                             <select value={editDraft?.p2 || ""} onChange={(e) => setEditDraft({ ...editDraft, p2: e.target.value })} style={{ ...miniInput, boxSizing: "border-box" as const }}>
-                              {players.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                              {players.map((p: any) => <option key={p.id} value={p.id}>{p.name}{p.last ? " " + p.last : ""}</option>)}
                             </select>
                             <select value={editDraft?.winner || "draw"} onChange={(e) => setEditDraft({ ...editDraft, winner: e.target.value })} style={{ ...miniInput, boxSizing: "border-box" as const }}>
                               <option value="p1">Player 1 wins</option>
                               <option value="p2">Player 2 wins</option>
                               <option value="draw">Draw</option>
                             </select>
+                            <input value={editDraft?.score || ""} onChange={(e) => setEditDraft({ ...editDraft, score: e.target.value })} placeholder="Score (optional), e.g. 6–4" style={{ ...miniInput, boxSizing: "border-box" as const }} />
                             <div style={{ display: "flex", gap: 8 }}>
                               <button onClick={() => saveEdit(m)} style={{ fontFamily: mono, fontSize: 10, color: COURT, background: BALL, border: "none", borderRadius: 5, padding: "5px 8px", cursor: "pointer", textTransform: "uppercase" }}>Save</button>
                               <button onClick={() => { setEditingMatchId(null); setEditDraft(null); }} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "5px 8px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>

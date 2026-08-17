@@ -1,21 +1,28 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import { LegacyTable } from "@/components/table/LegacyTable";
 import { PredictionCard } from "@/components/table/PredictionCard";
 import { Rankings } from "@/components/table/Rankings";
 import { RecapCard } from "@/components/table/RecapCard";
-import { Toggle } from "@/components/ui/atoms";
+import { Empty, Toggle } from "@/components/ui/atoms";
 import { START_ELO } from "@/core/constants";
 import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, display, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, display, miniInput, mono } from "@/lib/theme";
 
-export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, requireSetup, nameOf }: any) {
+const ACTIVE_WINDOW_MS = 365 * 86400000;
+
+export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, requireSetup, nameOf }: any) {
+  const [view, setView] = useState<"active" | "legacy">("active");
   const season = group?.season;
   const [scope, setScope] = useState("season");
   const inSeason = !!(season && scope === "season");
-  const filtered = useMemo(() => inSeason ? matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end)) : matches, [matches, inSeason, season]);
+  const [tableYr, setTableYr] = useState<"all" | number>("all");
+  const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
+  const seasonFiltered = useMemo(() => inSeason ? matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end)) : matches, [matches, inSeason, season]);
+  const filtered = useMemo(() => tableYr === "all" ? seasonFiltered : seasonFiltered.filter((m) => new Date(m.date).getFullYear() === tableYr), [seasonFiltered, tableYr]);
   const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, filtered), [players, filtered]);
   const officialMap = useMemo(() => computeOfficial(players, filtered, wdl), [players, filtered, wdl]);
   const ranked = useMemo(() => {
@@ -23,11 +30,29 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     const avgOpp = {}; players.forEach((p) => { avgOpp[p.id] = { sum: 0, n: 0 }; });
     filtered.filter((m) => m.status !== "pending").forEach((m) => { if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; } if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; } });
     const rec = (p) => { const r = wdl[p.id] || { gp: 0 }; if (!r.gp) return -1; const act = r.gp / (r.gp + 5); const ao = avgOpp[p.id].n ? avgOpp[p.id].sum / avgOpp[p.id].n : 0; const of = Math.max(0.5, Math.min(2, 1 + ao / 200)); return winPct(r) * act * of; };
+    const formScoreOf = (p) => (form[p.id] || []).slice(-5).reduce((s, x) => s + (x === "W" ? 1 : x === "L" ? -1 : 0), 0);
     if (mode === "elo") arr.sort((a, b) => (elo[b.id] ?? START_ELO) - (elo[a.id] ?? START_ELO));
     else if (mode === "record") arr.sort((a, b) => rec(b) - rec(a) || (wdl[b.id]?.w ?? 0) - (wdl[a.id]?.w ?? 0));
+    else if (mode === "winpct") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return winPct(rb) - winPct(ra) || rb.gp - ra.gp; });
+    else if (mode === "form") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return formScoreOf(b) - formScoreOf(a) || (rb.w ?? 0) - (ra.w ?? 0); });
     else arr.sort((a, b) => ((officialMap[b.id] ?? -1e9) - (officialMap[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0)));
     return arr;
-  }, [players, filtered, elo, wdl, mode, officialMap]);
+  }, [players, filtered, elo, wdl, form, mode, officialMap]);
+
+  // Active view only ever hides rows from this same ranked list — it never
+  // changes anyone's actual rating or official position, just which of them
+  // show up here. Someone who was brilliant three years ago and hasn't
+  // played since shouldn't sit above people playing right now.
+  const recentlyActiveIds = useMemo(() => {
+    const cutoff = Date.now() - ACTIVE_WINDOW_MS;
+    const ids = new Set<string>();
+    matches.filter((m) => m.status !== "pending" && m.date >= cutoff).forEach((m) => { ids.add(m.p1); ids.add(m.p2); });
+    return ids;
+  }, [matches]);
+  const activeRanked = useMemo(() => ranked.filter((p) => recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
+  const nonActiveRanked = useMemo(() => ranked.filter((p) => !recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
+  const [activeScope, setActiveScope] = useState<"active" | "nonactive" | "all">("active");
+  const scopedRanked = activeScope === "active" ? activeRanked : activeScope === "nonactive" ? nonActiveRanked : ranked;
 
   const prediction = useMemo(() => {
     const cont = players.filter((p) => (wdl[p.id]?.gp || 0) > 0 && !p.inactive);
@@ -58,6 +83,18 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
 
   return (
     <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+        <Toggle on={view === "active"} onClick={() => setView("active")} label="Active" icon="🟢" emphasize />
+        <Toggle on={view === "legacy"} onClick={() => setView("legacy")} label="Legacy" icon="🏛️" />
+      </div>
+      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>
+        {view === "active" ? "Active rankings measure current form." : "Legacy ranks by career impact — everyone who's ever played."}
+      </div>
+
+      {view === "legacy" ? (
+        <LegacyTable players={players} matches={matches} onOpen={onOpenLegacy} />
+      ) : (
+        <>
       {season && (
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
           <Toggle on={scope === "season"} onClick={() => setScope("season")} label={season.name || "Season"} />
@@ -106,14 +143,31 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
               </div>
             ))}
             {players.filter((p) => !(fxWdl[p.id]?.gp)).length > 0 && (
-              <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.4 }}>Didn't play: {players.filter((p) => !(fxWdl[p.id]?.gp)).map((p) => p.name).join(", ")}</div>
+              <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.4 }}>Didn't play: {players.filter((p) => !(fxWdl[p.id]?.gp)).map((p) => p.name + (p.last ? " " + p.last : "")).join(", ")}</div>
             )}
           </div>
         );
       })()}
       {inSeason && prediction.length > 0 && <PredictionCard prediction={prediction} />}
       {inSeason && recap && <RecapCard recap={recap} nameOf={nameOf} leagueName={group.name} />}
-      <Rankings ranked={ranked} elo={elo} wdl={wdl} form={form} official={officialMap} mode={mode} onMode={onMode} onOpen={onOpen} requireSetup={requireSetup} />
+      {years.length > 0 && (
+        <select value={String(tableYr)} onChange={(e) => setTableYr(e.target.value === "all" ? "all" : Number(e.target.value))} style={{ ...miniInput, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
+          <option value="all">All Time</option>
+          {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
+      )}
+      <select value={activeScope} onChange={(e) => setActiveScope(e.target.value as any)} style={{ ...miniInput, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
+        <option value="active">Active — last 12 months</option>
+        <option value="nonactive">Non-active</option>
+        <option value="all">All players</option>
+      </select>
+      {players.length > 0 && scopedRanked.length === 0 ? (
+        <Empty msg={activeScope === "active" ? "No one's played in the last 12 months. Check Legacy for career history." : activeScope === "nonactive" ? "Everyone's played in the last 12 months." : "No players yet."} />
+      ) : (
+        <Rankings ranked={scopedRanked} elo={elo} wdl={wdl} form={form} official={officialMap} mode={mode} onMode={onMode} onOpen={(id) => onOpen(id, tableYr)} requireSetup={requireSetup} />
+      )}
+        </>
+      )}
     </div>
   );
 }

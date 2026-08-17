@@ -70,8 +70,8 @@ const canonicalPlayerKey = (value: string) => {
 
 const buildWinnerForRow = (row: HistoricalImportMatch) => {
   if (row.winner === "D") return "draw";
-  if (row.winner === "W") return row.p1 === "Sam" ? "p1" : "p2";
-  return row.p1 === "Sam" ? "p1" : "p2"
+  if (row.winner === "W") return "p1";
+  return "p2";
 };
 
 const mergeDuplicatePlayers = (players: any[], matches: any[]) => {

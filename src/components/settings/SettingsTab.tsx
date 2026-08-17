@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { TimelineEditor } from "@/components/settings/TimelineEditor";
 import { Avatar } from "@/components/ui/Avatar";
+import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { fmtDate, uid } from "@/lib/format";
-import { AVATARS, BALL, CHALK, CLAY, COURT, LINE, MUTED, NICKS, PANEL2, avCell, body, card, display, input, miniInput, mono, wrap } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, NICKS, PANEL2, body, card, display, input, miniInput, mono, wrap } from "@/lib/theme";
 
 export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash }: any) {
   const [name, setName] = useState("");
@@ -23,7 +24,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
   const remove = (id) => { onRemovePlayer(id); setConfirmRemove(null); flash("Player removed"); };
   const setLevel = (id, cat, sub) => setPlayers(players.map((p) => p.id === id ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
   const setField = (id, key, val) => setPlayers(players.map((p) => p.id === id ? { ...p, [key]: val } : p));
-  const setAvatar = (id, av) => { setPlayers(players.map((p) => p.id === id ? { ...p, avatar: av } : p)); setAvOpen(null); };
+  const setAvatar = (id, av) => setPlayers(players.map((p) => p.id === id ? { ...p, avatar: av } : p));
   const addPeriod = (id, per) => setPlayers(players.map((p) => p.id === id ? { ...p, levelHistory: [...(p.levelHistory || []), per].sort((a, b) => (a.from || 0) - (b.from || 0)) } : p));
   const removePeriod = (id, i) => setPlayers(players.map((p) => p.id === id ? { ...p, levelHistory: (p.levelHistory || []).filter((_, idx) => idx !== i) } : p));
   return (
@@ -84,7 +85,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
             {fixtures && fixtures.length > 0 && (
               <div style={{ marginTop: 16 }}>
                 <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>{fixtures.length} fixtures</div>
-                {fixtures.map((f) => { const n = (id) => { const p = players.find((x) => x.id === id); return p ? p.name : id; }; return (
+                {fixtures.map((f) => { const n = (id) => { const p = players.find((x) => x.id === id); return p ? p.name + (p.last ? " " + p.last : "") : id; }; return (
                   <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid " + LINE }}>
                     <span style={{ flex: 1, fontFamily: body, fontSize: 13, color: f.done ? MUTED : CHALK }}>{n(f.p1)} v {n(f.p2)}{f.done ? " ✓" : ""}</span>
                     <button onClick={() => onRemoveFixture(f.id)} style={{ fontFamily: mono, fontSize: 10, color: CLAY, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "3px 7px", cursor: "pointer" }}>✕</button>
@@ -115,7 +116,12 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
             <div key={p.id} style={{ padding: "10px 0", borderTop: "1px solid " + LINE }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <button onClick={() => setAvOpen(avOpen === p.id ? null : p.id)} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}><Avatar player={p} size={36} /></button>
-                <span style={{ flex: 1, fontFamily: body, color: CHALK, fontSize: 15 }}>{p.name}<span style={{ color: MUTED, fontSize: 12, marginLeft: 8, fontFamily: mono }}>{played} played</span></span>
+                {p.auth_id ? (
+                  <span style={{ flex: 1, fontFamily: body, color: CHALK, fontSize: 15 }}>{p.name}{p.last ? " " + p.last : ""}<span style={{ color: MUTED, fontSize: 11, marginLeft: 8, fontFamily: mono, textTransform: "uppercase" }}>🔒 account</span></span>
+                ) : (
+                  <input value={p.name} onChange={(e) => setField(p.id, "name", e.target.value)} placeholder="First name" style={{ ...miniInput, flex: 1, fontFamily: body, fontSize: 15, padding: "7px 8px", boxSizing: "border-box" as const }} />
+                )}
+                <span style={{ color: MUTED, fontSize: 11, fontFamily: mono, marginRight: 2, whiteSpace: "nowrap" }}>{played} played</span>
                 <button onClick={() => setField(p.id, "inactive", !p.inactive)} title={p.inactive ? "Bring back into the league" : "Mark as not currently playing"} style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "4px 7px", cursor: "pointer", color: p.inactive ? MUTED : BALL, marginRight: 6 }}>{p.inactive ? "Inactive" : "Active"}</button>
                 {confirmRemove === p.id ? (
                   <span style={{ display: "flex", gap: 6 }}>
@@ -127,9 +133,8 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
                 )}
               </div>
               {avOpen === p.id && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "4px 0 10px" }}>
-                  <button onClick={() => setAvatar(p.id, null)} style={avCell(!p.avatar)}><span style={{ fontFamily: mono, fontSize: 10, color: MUTED }}>A–Z</span></button>
-                  {AVATARS.map((a) => <button key={a} onClick={() => setAvatar(p.id, a)} style={avCell(p.avatar === a)}><span style={{ fontSize: 18 }}>{a}</span></button>)}
+                <div style={{ padding: "4px 0 10px" }}>
+                  <AvatarPicker value={p.avatar} onChange={(av) => setAvatar(p.id, av)} />
                 </div>
               )}
               <div style={{ display: "flex", gap: 6 }}>

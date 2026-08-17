@@ -28,3 +28,30 @@ export function predictProb(a, b, matches, elo, players) {
   const p = eloWeight * eloExp + h2hWeight * h2hRate + formWeight * formExp + levelWeight * levelExp + rest * eloExp;
   return Math.max(0.05, Math.min(0.95, p));
 }
+
+// Raw factors behind predictProb, for building a human-readable explanation.
+// Deliberately returns numbers/facts only — no text — so callers can phrase it.
+export function explainFactors(a, b, matches, elo, players) {
+  const eA = (elo && elo[a]) || 0, eB = (elo && elo[b]) || 0;
+  const confirmed = matches.filter((m) => m.status !== "pending");
+  const h2h = confirmed.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a));
+  let aw = 0, bw = 0, d = 0;
+  h2h.forEach((m) => { if (m.winner === "draw") d++; else if ((m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a)) aw++; else bw++; });
+  const formOf = (pid) => {
+    const gs = confirmed.filter((m) => m.p1 === pid || m.p2 === pid).sort((x, y) => y.date - x.date).slice(0, 5);
+    let w = 0, l = 0;
+    gs.forEach((m) => { if (m.winner === "draw") return; const won = (m.winner === "p1" && m.p1 === pid) || (m.winner === "p2" && m.p2 === pid); if (won) w++; else l++; });
+    return { w, l, n: gs.length };
+  };
+  const find = (id) => (players || []).find((p) => p.id === id);
+  const lvA = levelVal(levelAt(find(a), Date.now()));
+  const lvB = levelVal(levelAt(find(b), Date.now()));
+  return {
+    eloDiff: Math.round(eA - eB),
+    h2h: { aw, bw, d, n: h2h.length },
+    formA: formOf(a),
+    formB: formOf(b),
+    levelA: lvA,
+    levelB: lvB,
+  };
+}

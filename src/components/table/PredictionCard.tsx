@@ -12,7 +12,7 @@ export function PredictionCard({ prediction }: any) {
       {top.map((x, i) => (
         <div key={x.p.id} style={{ marginBottom: 11 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-            <span style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase", letterSpacing: -0.3, display: "flex", alignItems: "center", gap: 8 }}><Avatar player={x.p} size={22} />{x.p.name}</span>
+            <span style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase", letterSpacing: -0.3, display: "flex", alignItems: "center", gap: 8 }}><Avatar player={x.p} size={22} />{x.p.name}{x.p.last ? " " + x.p.last : ""}</span>
             <span style={{ fontFamily: mono, fontSize: 16, fontWeight: 700, color: i === 0 ? BALL : CHALK }}>{x.pct}%</span>
           </div>
           <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden" }}><div style={{ width: x.pct + "%", height: "100%", background: i === 0 ? BALL : MUTED }} /></div>

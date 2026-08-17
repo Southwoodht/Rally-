@@ -1,3 +1,4 @@
+import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { winPct } from "@/lib/format";
 
@@ -19,4 +20,38 @@ export function currentStreakOf(pid, matches) {
   let s = 0;
   for (let i = gs.length - 1; i >= 0; i--) { const m = gs[i]; const won = (m.winner === "p1" && m.p1 === pid) || (m.winner === "p2" && m.p2 === pid); if (m.winner !== "draw" && won) s++; else break; }
   return s;
+}
+
+const rankFromOfficial = (players, offMap, wdl) => {
+  const played = players.filter((p) => (wdl[p.id]?.gp || 0) > 0 && !p.inactive);
+  const sorted = [...played].sort((a, b) => (offMap[b.id] ?? -1e9) - (offMap[a.id] ?? -1e9));
+  const m: Record<string, number> = {};
+  sorted.forEach((p, i) => { m[p.id] = i + 1; });
+  return m;
+};
+
+// Reconstructs ELO and Official rank exactly as they stood immediately before
+// and after one specific match, by replaying the confirmed match history up
+// to that point. Only meaningful for confirmed matches — a still-pending
+// result hasn't been folded into anyone's rating yet, so this returns null
+// rather than showing a number that doesn't reflect reality.
+export function matchContext(players, matches, target) {
+  if (!target || target.status === "pending") return null;
+  const confirmed = [...matches].filter((m) => m.status !== "pending").sort((a, b) => a.date - b.date);
+  const idx = confirmed.findIndex((m) => m.id === target.id);
+  if (idx === -1) return null;
+  const before = confirmed.slice(0, idx);
+  const upTo = confirmed.slice(0, idx + 1);
+  const statsBefore = computeStats(players, before);
+  const statsAfter = computeStats(players, upTo);
+  const offBefore = computeOfficial(players, before, statsBefore.wdl);
+  const offAfter = computeOfficial(players, upTo, statsAfter.wdl);
+  const rankBefore = rankFromOfficial(players, offBefore, statsBefore.wdl);
+  const rankAfter = rankFromOfficial(players, offAfter, statsAfter.wdl);
+  return {
+    eloBefore: { p1: statsBefore.elo[target.p1] ?? null, p2: statsBefore.elo[target.p2] ?? null },
+    eloAfter: { p1: statsAfter.elo[target.p1] ?? null, p2: statsAfter.elo[target.p2] ?? null },
+    rankBefore: { p1: rankBefore[target.p1] ?? null, p2: rankBefore[target.p2] ?? null },
+    rankAfter: { p1: rankAfter[target.p1] ?? null, p2: rankAfter[target.p2] ?? null },
+  };
 }
