@@ -43,7 +43,7 @@ const emptyLeagueData: LeagueData = { players: [], matches: [], fixtures: [], po
 
 export default function RallyApp({ leagueId, leagueName, leagueRole, displayName }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
-  const [gid, setGid] = useState(null);
+  const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
   const [rankingMode, setRankingMode] = useState("overall");
   const [loading, setLoading] = useState(true);
@@ -338,7 +338,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
     );
   }
 
-  const group = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null };
+  const group = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null, requireSetup: undefined, season: undefined };
   const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
   // Gated on the real league_members.role from Postgres, not the group's
   // ownerId field — that field is never actually persisted anywhere, so it
