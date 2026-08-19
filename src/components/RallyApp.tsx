@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
+import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check, HelpCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { HeadToHead } from "@/components/compare/HeadToHead";
+import { HelpGuide } from "@/components/help/HelpGuide";
 import { History } from "@/components/games/History";
 import { LogResult } from "@/components/games/LogResult";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -210,7 +211,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
   };
   const approveEdit = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => { if (m.id !== id || !m.pendingEdit) return m; const { proposedBy, proposedAt, ...patch } = m.pendingEdit; return { ...m, ...patch, pendingEdit: null }; }) });
   const rejectEdit = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => m.id === id ? { ...m, pendingEdit: null } : m) });
-  const deleteBetween = (a, b) => saveData({ ...gdata, matches: gdata.matches.filter((m) => !((m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a))) });
+  const deleteBetween = (a, b, year?: number) => saveData({ ...gdata, matches: gdata.matches.filter((m) => { const between = (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a); if (!between) return true; if (year == null) return false; return new Date(m.date).getFullYear() !== year; }) });
   const setMode = (m) => { setRankingMode(m); persistSettings({ rankingMode: m }); };
   const fixtures = gdata.fixtures || [];
   const generateFixtures = (rounds = 1) => {
@@ -400,7 +401,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
 
         {tab === "ladder" && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 10, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <LeagueHome players={players} matches={matches} group={group} fixtures={fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={group?.requireSetup} nameOf={nameOf} />}
-        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b) => { deleteBetween(a, b); flash("Cleared"); } : null} />}
+        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onOpenMatch={setMatchDetailId} />}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => setTab("profile")} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} />}
@@ -411,6 +412,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
         {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
+        {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
+        {tab === "help" && <HelpGuide />}
       </div>
 
       {menuOpen && (
@@ -424,6 +427,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
             <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={menuRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
             <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={menuRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
             {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={menuRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>}
+            <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={menuRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
           </div>
         </div>
       )}
