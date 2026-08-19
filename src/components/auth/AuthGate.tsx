@@ -17,8 +17,10 @@ export default function AuthGate() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // support a dev-only override to fake a session for end-to-end checks
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
+    // support a dev-only override to fake a session for end-to-end checks —
+    // never live in production, so this can't become a public login bypass
+    // on the deployed URL.
+    if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
       setSession({ user: { id: 'dev-user', email: 'dev@local', user_metadata: { full_name: 'Dev Tester' } } } as any);
       setLoading(false);
       return;
