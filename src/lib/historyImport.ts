@@ -74,44 +74,29 @@ const buildWinnerForRow = (row: HistoricalImportMatch) => {
   return "p2";
 };
 
-const mergeDuplicatePlayers = (players: any[], matches: any[]) => {
-  const groups = new Map<string, any[]>();
+// Players are NEVER auto-merged by name — that silently rewrote real match
+// history between two different people who happened to share a first name
+// (this is the exact bug that corrupted production data). Same-first-name
+// players are only ever detected and flagged for a human to look at; their
+// IDs and existing matches are left completely untouched here.
+export interface DuplicateNameGroup {
+  key: string;
+  playerIds: string[];
+}
+
+export const detectDuplicateNamedPlayers = (players: any[]): DuplicateNameGroup[] => {
+  const groups = new Map<string, string[]>();
   players.forEach((player: any) => {
     const key = canonicalPlayerKey(player.name || "");
+    if (!key) return;
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(player);
+    groups.get(key)!.push(player.id);
   });
-
-  const mergedPlayers: any[] = [];
-  const idRewrites = new Map<string, string>();
-  groups.forEach((group) => {
-    if (!group.length) return;
-    const canonical = { ...group[0] } as any;
-    group.forEach((player: any) => {
-      if (!canonical.avatar && player.avatar) canonical.avatar = player.avatar;
-      if (!canonical.level && player.level) canonical.level = player.level;
-      if (!canonical.levelHistory && player.levelHistory) canonical.levelHistory = player.levelHistory;
-      if (!canonical.initialRecord && player.initialRecord) canonical.initialRecord = player.initialRecord;
-      if (typeof canonical.initialElo !== "number" && typeof player.initialElo === "number") canonical.initialElo = player.initialElo;
-      if (!canonical.auth_id && player.auth_id) canonical.auth_id = player.auth_id;
-      if (!canonical.last && player.last) canonical.last = player.last;
-      if (!canonical.age && player.age) canonical.age = player.age;
-      if (!canonical.home && player.home) canonical.home = player.home;
-      if (!canonical.nick && player.nick) canonical.nick = player.nick;
-      if (!canonical.inactive && player.inactive) canonical.inactive = player.inactive;
-      if (player.id !== canonical.id) idRewrites.set(player.id, canonical.id);
-    });
-    mergedPlayers.push(canonical);
+  const duplicates: DuplicateNameGroup[] = [];
+  groups.forEach((playerIds, key) => {
+    if (playerIds.length > 1) duplicates.push({ key, playerIds });
   });
-
-  const rewrittenMatches = (matches || []).map((match: any) => {
-    const next = { ...match };
-    if (idRewrites.has(next.p1)) next.p1 = idRewrites.get(next.p1)!;
-    if (idRewrites.has(next.p2)) next.p2 = idRewrites.get(next.p2)!;
-    return next;
-  });
-
-  return { players: mergedPlayers, matches: rewrittenMatches };
+  return duplicates;
 };
 
 export async function importHistoricalMatches(leagueId: string, options?: { userName?: string }) {
@@ -122,9 +107,13 @@ export async function importHistoricalMatches(leagueId: string, options?: { user
     data = { players: [], matches: [], me: null, fixtures: [], posts: [] };
   }
 
-  const merged = mergeDuplicatePlayers(data.players || [], data.matches || []);
-  data.players = merged.players;
-  data.matches = merged.matches;
+  // Detection only — never rewrites a player ID or a match. If this finds
+  // anything, it's surfaced on the result for a human to review; nothing
+  // here silently touches existing data.
+  const duplicateNamedPlayers = detectDuplicateNamedPlayers(data.players || []);
+  if (duplicateNamedPlayers.length && typeof console !== "undefined") {
+    console.warn("[Rally] Possible duplicate-named players — not merged, needs human review:", duplicateNamedPlayers);
+  }
 
   const existingPlayers = data.players || [];
   const playerIndex = new Map<string, any>();
@@ -204,5 +193,5 @@ export async function importHistoricalMatches(leagueId: string, options?: { user
   data.players = existingPlayers;
   data.matches = data.matches.sort((a: any, b: any) => a.date - b.date);
   await storage.set(storageKey, JSON.stringify(data), true);
-  return { imported, skipped, data };
+  return { imported, skipped, data, duplicateNamedPlayers };
 }
