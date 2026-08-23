@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check, HelpCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
@@ -57,7 +57,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
   const [menuOpen, setMenuOpen] = useState(false);
   const [onboarded, setOnboarded] = useState(true);
   const [toast, setToast] = useState("");
-  const importAttemptedRef = useRef(false);
   const [claimUI, setClaimUI] = useState<{ candidate: any; others: any[]; authId: string; nameToUse: string; data: LeagueData; cur: any; gs: any[]; st: any } | null>(null);
   const [declinedCandidate, setDeclinedCandidate] = useState(false);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
@@ -67,16 +66,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
   }, []);
 
   const finishBoot = async (data: LeagueData, cur: any, gs: any[], st: any) => {
-    const historyImportKey = `rally:historyImportDone:${cur}`;
-    if (typeof window !== "undefined" && !importAttemptedRef.current && !window.localStorage.getItem(historyImportKey)) {
-      importAttemptedRef.current = true;
-      try {
-        const mePlayer = (data.players || []).find((p) => p.id === data.me);
-        const result = await importHistoricalMatches(cur, { userName: displayName || mePlayer?.name || "Sam" });
-        data = result.data;
-        try { window.localStorage.setItem(historyImportKey, "1"); } catch {}
-      } catch {}
-    }
     const nextGroup = { ...gs[0], ownerId: (st?.ownerId || data.me || null) };
     setGroups([nextGroup]); setGid(cur); setGdata(data);
     setRankingMode(st?.rankingMode || "overall");

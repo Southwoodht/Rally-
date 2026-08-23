@@ -142,7 +142,7 @@ export async function importHistoricalMatches(leagueId: string, options?: { user
   };
 
   const mePlayer = ensurePlayer(options?.userName || "Sam", "🟢", "sam");
-  data.me = mePlayer.id;
+  if (!data.me) data.me = mePlayer.id;
 
   PLAYER_DEFS.forEach((def) => {
     ensurePlayer(def.name, def.avatar, def.preferredId);
