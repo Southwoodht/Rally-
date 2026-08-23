@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supabase";
 import { COURT, PANEL, CHALK, BALL, MUTED, LINE, display, body, mono } from "@/lib/theme";
 import Welcome from "@/components/auth/Welcome";
+import UpdatePassword from "@/components/auth/UpdatePassword";
 import Dashboard from "@/components/dashboard/Dashboard";
 
 /**
@@ -15,6 +16,7 @@ import Dashboard from "@/components/dashboard/Dashboard";
 export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
     // support a dev-only override to fake a session for end-to-end checks —
@@ -42,7 +44,10 @@ export default function AuthGate() {
     };
 
     loadSession();
-    const { data: sub } = client.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = client.auth.onAuthStateChange((event, s) => {
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
+      setSession(s);
+    });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -55,6 +60,8 @@ export default function AuthGate() {
       </div>
     );
   }
+
+  if (recovery) return <UpdatePassword onDone={() => setRecovery(false)} />;
 
   return session ? <Dashboard session={session} /> : <Welcome />;
 }

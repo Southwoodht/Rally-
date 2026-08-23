@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { COURT, PANEL, PANEL2, CHALK, BALL, CLAY, MUTED, LINE, display, body, mono } from "@/lib/theme";
 
-type Mode = "welcome" | "signup" | "login";
+type Mode = "welcome" | "signup" | "login" | "reset";
 
 export default function Welcome() {
   const [mode, setMode] = useState<Mode>("welcome");
@@ -53,6 +53,18 @@ export default function Welcome() {
     if (error) setError(error.message);
   };
 
+  const sendReset = async () => {
+    reset();
+    if (!email) { setError("Enter your email first."); return; }
+    setBusy(true);
+    const { error } = await supabase!.auth.resetPasswordForEmail(email, {
+      redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+    });
+    setBusy(false);
+    if (error) { setError(error.message); return; }
+    setNotice("Check your email for a link to reset your password.");
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: COURT, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
@@ -72,7 +84,7 @@ export default function Welcome() {
             </>
           )}
 
-          {mode !== "welcome" && (
+          {(mode === "signup" || mode === "login") && (
             <>
               <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
                 {mode === "signup" ? "Create your account" : "Welcome back"}
@@ -91,6 +103,15 @@ export default function Welcome() {
                 {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
               </button>
 
+              {mode === "login" && (
+                <button
+                  style={{ ...secondary, background: "transparent", border: "none", color: MUTED, fontSize: 12, marginTop: 12 }}
+                  onClick={() => { reset(); setPassword(""); setMode("reset"); }}
+                >
+                  Forgot password?
+                </button>
+              )}
+
               <button
                 style={{ ...secondary, background: "transparent", border: "none", color: MUTED, fontSize: 12 }}
                 onClick={() => { reset(); setMode(mode === "signup" ? "login" : "signup"); }}
@@ -102,6 +123,31 @@ export default function Welcome() {
                 onClick={() => { reset(); setMode("welcome"); }}
               >
                 Back
+              </button>
+            </>
+          )}
+
+          {mode === "reset" && (
+            <>
+              <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+                Reset your password
+              </div>
+              <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 12, lineHeight: 1.5 }}>
+                Enter the email on your account and we&apos;ll send you a link to set a new password.
+              </div>
+              <input style={field} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" autoComplete="email" inputMode="email" />
+
+              {error && <div style={{ fontFamily: body, fontSize: 13, color: CLAY, marginBottom: 10 }}>{error}</div>}
+              {notice && <div style={{ fontFamily: body, fontSize: 13, color: BALL, marginBottom: 10 }}>{notice}</div>}
+
+              <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={sendReset}>
+                {busy ? "Sending…" : "Send reset link"}
+              </button>
+              <button
+                style={{ ...secondary, background: "transparent", border: "none", color: MUTED, fontSize: 12 }}
+                onClick={() => { reset(); setMode("login"); }}
+              >
+                Back to log in
               </button>
             </>
           )}
