@@ -8,11 +8,12 @@ import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, display, miniInput
 
 const PHOTO_SIZE = 480;
 
-export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, groupName, season }: any) {
+export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onDeleteMatch, groupName, season }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
   const [venueDraft, setVenueDraft] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [flash, setFlash] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +52,8 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
     setEditing(false);
     setDraft(null);
   };
+
+  const confirmedDelete = () => { onDeleteMatch && onDeleteMatch(match.id); onClose && onClose(); };
 
   const saveNotes = () => { if (notesDraft === null) return; onUpdateExtras && onUpdateExtras(match.id, { notes: notesDraft.trim() || undefined }); setNotesDraft(null); };
   const saveVenue = () => { if (venueDraft === null) return; onUpdateExtras && onUpdateExtras(match.id, { venue: venueDraft.trim() || undefined }); setVenueDraft(null); };
@@ -194,8 +197,20 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
                   <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "7px 10px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>
                 </div>
               </div>
+            ) : confirmDelete ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ fontFamily: display, fontSize: 15, fontWeight: 800, color: CHALK, textTransform: "uppercase" }}>Delete this match?</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>This match will be permanently deleted. This cannot be undone.</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: mono, fontSize: 11, color: COURT, background: CLAY, border: "none", borderRadius: 6, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>Delete</button>
+                  <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, fontFamily: mono, fontSize: 11, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 6, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>
+                </div>
+              </div>
             ) : (
-              <button onClick={beginEdit} style={{ fontFamily: mono, fontSize: 10, color: BALL, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "7px 10px", cursor: "pointer", textTransform: "uppercase" }}>Edit result</button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={beginEdit} style={{ fontFamily: mono, fontSize: 10, color: BALL, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "7px 10px", cursor: "pointer", textTransform: "uppercase" }}>Edit result</button>
+                {onDeleteMatch && <button onClick={() => setConfirmDelete(true)} style={{ fontFamily: mono, fontSize: 10, color: CLAY, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "7px 10px", cursor: "pointer", textTransform: "uppercase" }}>Delete match</button>}
+              </div>
             )}
           </div>
         )}

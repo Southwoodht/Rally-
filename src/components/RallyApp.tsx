@@ -201,6 +201,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
   const approveEdit = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => { if (m.id !== id || !m.pendingEdit) return m; const { proposedBy, proposedAt, ...patch } = m.pendingEdit; return { ...m, ...patch, pendingEdit: null }; }) });
   const rejectEdit = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => m.id === id ? { ...m, pendingEdit: null } : m) });
   const deleteBetween = (a, b, year?: number) => saveData({ ...gdata, matches: gdata.matches.filter((m) => { const between = (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a); if (!between) return true; if (year == null) return false; return new Date(m.date).getFullYear() !== year; }) });
+  const deleteMatch = (id) => saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== id) });
   const setMode = (m) => { setRankingMode(m); persistSettings({ rankingMode: m }); };
   const fixtures = gdata.fixtures || [];
   const generateFixtures = (rounds = 1) => {
@@ -422,7 +423,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
       )}
       {profilePlayer && <ProfileModal player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)} />}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
-      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
+      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onDeleteMatch={deleteMatch} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && <GroupSheet groups={groups} currentId={gid} onSwitch={switchGroup} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
       <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />
