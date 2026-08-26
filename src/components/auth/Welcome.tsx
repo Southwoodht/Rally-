@@ -15,17 +15,17 @@ export default function Welcome() {
   const [notice, setNotice] = useState("");
 
   const field: React.CSSProperties = {
-    width: "100%", boxSizing: "border-box", background: PANEL2, border: "1px solid " + LINE,
-    borderRadius: 10, padding: "13px 14px", color: CHALK, fontFamily: body, fontSize: 15,
+    width: "100%", boxSizing: "border-box", background: PANEL2, border: "none",
+    borderRadius: 14, padding: "13px 14px", color: CHALK, fontFamily: body, fontSize: 15,
     marginBottom: 10, outline: "none",
   };
   const primary: React.CSSProperties = {
-    width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 10,
+    width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 14,
     padding: "14px 16px", fontFamily: mono, fontSize: 13, fontWeight: 700, letterSpacing: 1,
     textTransform: "uppercase", cursor: "pointer",
   };
   const secondary: React.CSSProperties = {
-    ...primary, background: "transparent", color: CHALK, border: "1px solid " + LINE, marginTop: 10,
+    ...primary, background: "transparent", color: CHALK, border: "none", marginTop: 10,
   };
 
   const reset = () => { setError(""); setNotice(""); };
@@ -73,7 +73,7 @@ export default function Welcome() {
           <div style={{ fontFamily: body, fontSize: 14, color: MUTED, marginTop: 8 }}>Head-to-head rankings for racket sports.</div>
         </div>
 
-        <div style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 16, padding: 20 }}>
+        <div style={{ background: PANEL, border: "none", borderRadius: 16, padding: 20 }}>
           {mode === "welcome" && (
             <>
               <button style={primary} onClick={() => { reset(); setMode("signup"); }}>Create account</button>

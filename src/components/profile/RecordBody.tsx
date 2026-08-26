@@ -15,7 +15,7 @@ import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { computeRivalries } from "@/core/rivalries";
 import { D, fmtDate, winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, display, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
 
 export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, meId, onProposeEdit, onOpenMatch, initialYear }: any) {
   const [yr, setYr] = useState<"all" | number>(initialYear ?? "all");
@@ -77,12 +77,12 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         <Avatar player={player} size={48} />
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <h2 style={{ fontFamily: display, fontSize: 32, fontWeight: 800, color: CHALK, textTransform: "uppercase", letterSpacing: -0.5, margin: 0 }}>{player.name}{player.nick ? " \u201C" + player.nick + "\u201D" : ""}{player.last ? " " + player.last : ""}</h2>
+            <h2 style={{ fontFamily: body, fontSize: 26, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.nick ? " \u201C" + player.nick + "\u201D" : ""}{player.last ? " " + player.last : ""}</h2>
             <LevelBadge level={player.level} />
           </div>
           {(player.age || player.home) && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 3 }}>{[player.age ? player.age + " yrs" : null, player.home || null].filter(Boolean).join(" · ")}</div>}
           {player.inactive ? (
-            <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 3, textTransform: "uppercase", letterSpacing: 1 }}>Not active in this league · record kept</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginTop: 3 }}>Not active in this league · record kept</div>
           ) : r.gp > 0 ? (
             <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}><span style={{ color: BALL, fontWeight: 700, fontSize: 14 }}>#{ranks.off[player.id]}</span> Official <span style={{ color: LINE }}>·</span> #{ranks.el[player.id]} ELO <span style={{ color: LINE }}>·</span> #{ranks.rec[player.id]} Record</div>
           ) : (
@@ -91,7 +91,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         </div>
       </div>
       {showElo && yr === "all" && r.gp > 0 && !player.inactive && (isTop || (above && gap !== null)) && (
-        <div style={{ background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "10px 12px", marginBottom: 4, fontFamily: body, fontSize: 13, color: CHALK }}>
+        <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 4, fontFamily: body, fontSize: 13, color: CHALK }}>
           {isTop ? <><strong style={{ color: BALL }}>Top of the table.</strong> Nobody above — keep winning to stay there.</>
                  : <><strong style={{ color: BALL }}>{gap} pts</strong> behind {above.name}{above.last ? " " + above.last : ""} — beat good players to close the gap.</>}
         </div>
@@ -115,20 +115,20 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       {resultFilter && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-            <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL }}>{resultFilter === "W" ? "Wins" : resultFilter === "D" ? "Draws" : "Losses"}</div>
-            <button onClick={() => setResultFilter(null)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>All ✕</button>
+            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL }}>{resultFilter === "W" ? "Wins" : resultFilter === "D" ? "Draws" : "Losses"}</div>
+            <button onClick={() => setResultFilter(null)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>All ✕</button>
           </div>
-          <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 8, padding: "2px 12px" }}>
+          <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "2px 12px" }}>
             {bouts.filter((m) => resultFor(m) === resultFilter).length
               ? bouts.filter((m) => resultFor(m) === resultFilter).map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
               : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>No matches in this category yet.</div>}
           </div>
         </div>
       )}
-      {last.length > 0 && <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}><span style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: MUTED }}>Recent form</span><FormRow items={last} /></div>}
+      {last.length > 0 && <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}><span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>Recent form</span><FormRow items={last} /></div>}
       {rivalries.length > 0 && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 6 }}>Rivalries</div>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6 }}>Rivalries</div>
           {rivalries.slice(0, 3).map((rv) => (
             <div key={rv.oid}>
               <RivalryRow rivalry={rv} name={nm(rv.oid)} onClick={() => setOpenVs(openVs === rv.oid ? null : rv.oid)} />
@@ -139,7 +139,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       )}
       {r.gp > 0 && bestWins.length > 0 && (
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 6 }}>Best wins</div>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6 }}>Best wins</div>
           {bestWins.map((w, i) => (
             <button key={i} onClick={() => onOpen && onOpen(w.oid)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
               <span style={{ fontSize: 16 }}>{["🥇", "🥈", "🥉"][i]}</span>
@@ -162,8 +162,8 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         const title = openStreak === "now" ? "Current streak" : openStreak === "best" ? "Best streak" : "Toughest streak";
         if (!run || !run.length) return <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 20 }}>No streak to show yet.</div>;
         return (
-          <div style={{ background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "10px 12px", marginBottom: 20 }}>
-            <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: BALL, marginBottom: 6 }}>{title} · {run.length} {run.length === 1 ? "win" : "wins"}</div>
+          <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 20 }}>
+            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 6 }}>{title} · {run.length} {run.length === 1 ? "win" : "wins"}</div>
             {run.map((m, i) => (
               <button key={i} onClick={() => onOpen && onOpen(oppId(m))} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontFamily: body, fontSize: 13, color: CHALK }}>def. {nm(oppId(m))}</span>
@@ -177,7 +177,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         <div style={{ marginBottom: 20 }}>
           {winningVs.length > 0 && (
             <div>
-              <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 4 }}>Winning records</div>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 4 }}>Winning records</div>
               {winningVs.map((x) => (
                 <div key={x.oid}>
                   <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={BALL} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
@@ -188,7 +188,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           )}
           {evenVs.length > 0 && (
             <div>
-              <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, margin: "12px 0 4px" }}>Even</div>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, margin: "12px 0 4px" }}>Even</div>
               {evenVs.map((x) => (
                 <div key={x.oid}>
                   <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={MUTED} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
@@ -199,7 +199,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           )}
           {losingVs.length > 0 && (
             <div>
-              <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: CLAY, margin: "12px 0 4px" }}>Losing records</div>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: CLAY, margin: "12px 0 4px" }}>Losing records</div>
               {losingVs.map((x) => (
                 <div key={x.oid}>
                   <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={CLAY} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
@@ -212,7 +212,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       )}
       <VerifiedTrophies player={player} meId={meId} />
       {r.gp > 0 && <TrophyWall player={player} players={players} matches={matches} fixtures={fixtures} group={group} />}
-      <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>Record</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Record</div>
       {bouts.length
         ? bouts.map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
         : <Empty msg="No matches logged yet." />}
@@ -243,19 +243,19 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
 
   if (editing) {
     return (
-      <div style={{ padding: "11px 0", borderTop: "1px solid " + LINE }}>
+      <div style={{ padding: "11px 0", borderTop: "none" }}>
         <div style={{ display: "grid", gap: 6 }}>
           <input type="date" value={draft.date} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDraft({ ...draft, date: e.target.value })} style={{ ...miniInput, colorScheme: "dark", boxSizing: "border-box" as const }} />
           <input value={draft.score} onChange={(e) => setDraft({ ...draft, score: e.target.value })} placeholder="Score (optional)" style={{ ...miniInput, boxSizing: "border-box" as const }} />
           <div style={{ display: "flex", gap: 6 }}>
             {(["W", "D", "L"] as const).map((r) => (
-              <button key={r} onClick={() => setDraft({ ...draft, result: r })} style={{ flex: 1, fontFamily: mono, fontSize: 11, textTransform: "uppercase", padding: "8px 6px", borderRadius: 6, cursor: "pointer", border: "1px solid " + (draft.result === r ? BALL : LINE), background: draft.result === r ? BALL : "transparent", color: draft.result === r ? COURT : MUTED, fontWeight: 700 }}>{r === "W" ? "Won" : r === "D" ? "Drew" : "Lost"}</button>
+              <button key={r} onClick={() => setDraft({ ...draft, result: r })} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "9px 6px", borderRadius: 10, cursor: "pointer", border: "none", background: draft.result === r ? BALL : PANEL2, color: draft.result === r ? COURT : MUTED, fontWeight: 600 }}>{r === "W" ? "Won" : r === "D" ? "Drew" : "Lost"}</button>
             ))}
           </div>
           <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{needsApproval ? `${oppName} has a Rally account — this change needs their agreement before it counts.` : "They don't have an account, so this updates straight away."}</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={save} style={{ fontFamily: mono, fontSize: 10, color: COURT, background: BALL, border: "none", borderRadius: 5, padding: "6px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>Save</button>
-            <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "6px 10px", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>
+            <button onClick={save} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: COURT, background: BALL, border: "none", borderRadius: 10, padding: "7px 12px", cursor: "pointer" }}>Save</button>
+            <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "7px 12px", cursor: "pointer" }}>Cancel</button>
           </div>
         </div>
       </div>
@@ -263,14 +263,14 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "1px solid " + LINE }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "none" }}>
       <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
       <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
         <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
         <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
       </button>
       {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
-      {canEdit && <button onClick={beginEdit} style={{ fontFamily: mono, fontSize: 10, color: BALL, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "5px 8px", cursor: "pointer", textTransform: "uppercase", flexShrink: 0 }}>Edit</button>}
+      {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
     </div>
   );
 }
@@ -279,7 +279,7 @@ function RivalryRow({ rivalry, name, onClick }: any) {
   const recStr = rivalry.d > 0 ? `${rivalry.w}-${rivalry.d}-${rivalry.l}` : `${rivalry.w}-${rivalry.l}`;
   const streakText = rivalry.streak.holder === "me" ? `W${rivalry.streak.count}` : rivalry.streak.holder === "opp" ? `L${rivalry.streak.count}` : null;
   return (
-    <button onClick={onClick} style={{ display: "block", width: "100%", background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "10px 12px", marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+    <button onClick={onClick} style={{ display: "block", width: "100%", background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
         <span style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>🔥 {name}</span>
         <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: BALL }}>{recStr}</span>
@@ -294,7 +294,7 @@ function RivalryRow({ rivalry, name, onClick }: any) {
 
 function VsMatches({ oid, matches, resultFor, onOpen }: any) {
   return (
-    <div style={{ background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "8px 10px", margin: "2px 0 8px" }}>
+    <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "8px 10px", margin: "2px 0 8px" }}>
       {matches.length ? matches.map((m, i) => {
         const res = resultFor(m);
         return (

@@ -91,7 +91,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
       ) : (
         <>
           {p1 && p2 && existingBetween.length > 0 && onDeleteBetween && (
-            <div style={{ background: "rgba(203,109,71,.12)", border: "1px solid " + CLAY, borderRadius: 8, padding: "10px 12px", marginBottom: 14 }}>
+            <div style={{ background: "rgba(203,109,71,.12)", border: "1px solid " + CLAY, borderRadius: 12, padding: "10px 12px", marginBottom: 14 }}>
               <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: confirmClear ? 8 : 0 }}>
                 You already have <strong style={{ color: CLAY }}>{existingBetween.length}</strong> match{existingBetween.length === 1 ? "" : "es"} logged between {n1} and {n2}. Adding more stacks on top of these — to redo part or all of this record, clear it first.
               </div>
@@ -102,20 +102,20 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                 </select>
               )}
               {confirmClear ? (
-                <div style={{ background: COURT, border: "1px solid " + CLAY, borderRadius: 8, padding: "12px 12px" }}>
-                  <div style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase", letterSpacing: -0.2, marginBottom: 6 }}>
+                <div style={{ background: COURT, border: "1px solid " + CLAY, borderRadius: 12, padding: "12px 12px" }}>
+                  <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, marginBottom: 6 }}>
                     Delete {clearYear === "all" ? "entire" : clearYear} record vs {n2}?
                   </div>
                   <div style={{ fontFamily: body, fontSize: 13, color: CLAY, lineHeight: 1.4, marginBottom: 12 }}>
                     {toClear.length} match{toClear.length === 1 ? "" : "es"} will be permanently deleted. This cannot be undone.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setConfirmClear(false)} style={{ flex: 1, fontFamily: mono, fontSize: 11, color: CHALK, background: "transparent", border: "1px solid " + LINE, borderRadius: 6, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>Cancel</button>
-                    <button onClick={clearExisting} disabled={!toClear.length} style={{ flex: 1, fontFamily: mono, fontSize: 11, color: COURT, background: CLAY, border: "none", borderRadius: 6, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700, opacity: toClear.length ? 1 : 0.5 }}>Delete</button>
+                    <button onClick={() => setConfirmClear(false)} style={{ flex: 1, fontFamily: mono, fontSize: 11, color: CHALK, background: "transparent", border: "none", borderRadius: 10, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>Cancel</button>
+                    <button onClick={clearExisting} disabled={!toClear.length} style={{ flex: 1, fontFamily: mono, fontSize: 11, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700, opacity: toClear.length ? 1 : 0.5 }}>Delete</button>
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setConfirmClear(true)} style={{ marginTop: existingYears.length > 1 ? 0 : 8, fontFamily: mono, fontSize: 10, color: CLAY, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "6px 10px", cursor: "pointer", textTransform: "uppercase" }}>Clear {clearYear === "all" ? "existing record" : clearYear + " record"} vs {n2}</button>
+                <button onClick={() => setConfirmClear(true)} style={{ marginTop: existingYears.length > 1 ? 0 : 8, fontFamily: mono, fontSize: 10, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "6px 10px", cursor: "pointer", textTransform: "uppercase" }}>Clear {clearYear === "all" ? "existing record" : clearYear + " record"} vs {n2}</button>
               )}
             </div>
           )}

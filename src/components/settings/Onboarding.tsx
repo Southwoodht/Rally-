@@ -4,7 +4,7 @@ import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, Chevr
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS, START_ELO } from "@/core/constants";
-import { BALL, CHALK, COURT, LINE, MUTED, body, card, display, fontImport, input, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, COURT, LINE, MUTED, body, card, fontImport, input, miniInput, mono } from "@/lib/theme";
 
 export function Onboarding({ me, onFinish }: any) {
   const yearNow = new Date().getFullYear();
@@ -30,8 +30,8 @@ export function Onboarding({ me, onFinish }: any) {
     <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 100, overflowY: "auto" }}>
       <style>{fontImport}</style>
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "40px 20px 60px" }}>
-        <div style={{ fontFamily: mono, letterSpacing: 3, color: BALL, fontSize: 11, textTransform: "uppercase" }}>Welcome{me ? ", " + me.name : ""}</div>
-        <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "6px 0 22px", fontSize: 40, lineHeight: 0.95, textTransform: "uppercase", letterSpacing: -0.5 }}>Set up your ladder</h1>
+        <div style={{ fontFamily: body, fontWeight: 600, color: BALL, fontSize: 13 }}>Welcome{me ? ", " + me.name : ""}</div>
+        <h1 style={{ fontFamily: body, fontWeight: 700, color: CHALK, margin: "6px 0 22px", fontSize: 28, lineHeight: 1.2 }}>Set up your ladder</h1>
 
         {step === 0 && (
           <div style={card}>
@@ -44,14 +44,14 @@ export function Onboarding({ me, onFinish }: any) {
           <div style={card}>
             <div style={{ fontFamily: body, fontSize: 14, color: CHALK, marginBottom: 6 }}>Map how your level changed over the years?</div>
             <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>Recommended — it makes old results fair, so beating a strong player counts more than beating a beginner. Takes a minute. Skip and we'll just assume you started as a Beginner.</div>
-            <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6 }}>Block size</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginBottom: 6 }}>Block size</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               {[1, 3, 5].map((g) => <Toggle key={g} on={gap === g} onClick={() => setGap(g)} label={"Every " + g + " yr"} />)}
             </div>
             <BigBtn onClick={() => setStep(2)} color={BALL}>Map my levels</BigBtn>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22, paddingTop: 14, borderTop: "1px solid " + LINE }}>
-              <button onClick={() => setStep(0)} style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", color: MUTED, fontFamily: mono, fontSize: 12, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1 }}><ChevronLeft size={15} /> Back</button>
-              <button onClick={finishSkip} style={{ background: "transparent", border: "1px solid " + LINE, borderRadius: 8, padding: "8px 12px", color: MUTED, fontFamily: mono, fontSize: 11, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1 }}>Skip — assume Beginner</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22, paddingTop: 14, borderTop: "none" }}>
+              <button onClick={() => setStep(0)} style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}><ChevronLeft size={15} /> Back</button>
+              <button onClick={finishSkip} style={{ background: "transparent", border: "none", borderRadius: 12, padding: "8px 12px", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Skip — assume Beginner</button>
             </div>
           </div>
         )}
@@ -60,10 +60,10 @@ export function Onboarding({ me, onFinish }: any) {
           <div style={card}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <span style={{ fontFamily: body, fontSize: 13, color: MUTED }}>What level were you in each block?</span>
-              <button onClick={() => setGuide(true)} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: BALL, background: "transparent", border: "1px solid " + LINE, borderRadius: 6, padding: "5px 9px", cursor: "pointer" }}>What's my level?</button>
+              <button onClick={() => setGuide(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "5px 9px", cursor: "pointer" }}>What's my level?</button>
             </div>
             {blocks.map((b, i) => (
-              <div key={i} style={{ padding: "10px 0", borderTop: "1px solid " + LINE }}>
+              <div key={i} style={{ padding: "10px 0", borderTop: "none" }}>
                 <div style={{ fontFamily: mono, fontSize: 12, color: BALL, marginBottom: 6 }}>{b.from}{b.to ? "–" + b.to : "–now"}</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <select value={levels[i]?.cat || "Beginner"} onChange={(e) => setBlock(i, e.target.value, undefined)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
@@ -73,7 +73,7 @@ export function Onboarding({ me, onFinish }: any) {
             ))}
             <div style={{ height: 16 }} />
             <BigBtn onClick={finishMapped} color={BALL}>Next — record & rating</BigBtn>
-            <button onClick={() => setStep(1)} style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", color: MUTED, fontFamily: mono, fontSize: 12, cursor: "pointer", textTransform: "uppercase", letterSpacing: 1, marginTop: 16 }}><ChevronLeft size={15} /> Back</button>
+            <button onClick={() => setStep(1)} style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", marginTop: 16 }}><ChevronLeft size={15} /> Back</button>
           </div>
         )}
       </div>
@@ -88,12 +88,12 @@ export function Onboarding({ me, onFinish }: any) {
                 <input value={losses} onChange={(e) => setLosses(Number(e.target.value.replace(/[^0-9]/g, "")) || 0)} placeholder="Losses" inputMode="numeric" style={{ ...miniInput, flex: 1 }} />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, marginBottom: 6 }}>Starting rating (ELO)</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginBottom: 6 }}>Starting rating (ELO)</div>
                 <input value={initialElo} onChange={(e) => setInitialElo(Number(e.target.value.replace(/[^0-9]/g, "")) || START_ELO)} inputMode="numeric" style={{ ...input, width: 140 }} />
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <BigBtn onClick={finishAll} color={BALL}>Finish</BigBtn>
-                <button onClick={() => setStep(2)} style={{ background: "transparent", border: "1px solid " + LINE, borderRadius: 8, padding: "8px 12px", color: MUTED, fontFamily: mono, fontSize: 11 }}>Back</button>
+                <button onClick={() => setStep(2)} style={{ background: "transparent", border: "none", borderRadius: 12, padding: "8px 12px", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13 }}>Back</button>
               </div>
             </div>
           </div>

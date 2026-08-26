@@ -27,7 +27,7 @@ import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { gkey } from "@/data/seed";
 import { uid, winPct } from "@/lib/format";
-import { BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display, fontImport, menuRow, mono, wrap } from "@/lib/theme";
+import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, wrap } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
 
@@ -330,7 +330,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
       <div style={{ textAlign: "center", maxWidth: 300 }}>
         <div style={{ color: CHALK, fontFamily: body, fontSize: 15, marginBottom: 6 }}>Couldn&apos;t load this league</div>
         <div style={{ color: MUTED, fontFamily: body, fontSize: 13, marginBottom: 16 }}>Your data is safe — this was just a connection problem. Nothing was changed.</div>
-        <button onClick={() => boot()} style={{ background: BALL, color: COURT, border: "none", borderRadius: 10, padding: "10px 18px", fontFamily: mono, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>Try again</button>
+        <button onClick={() => boot()} style={{ background: BALL, color: COURT, border: "none", borderRadius: 12, padding: "11px 20px", fontFamily: body, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Try again</button>
       </div>
     </div>
   );
@@ -345,17 +345,19 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
           <PlayerClaim player={claimUI.candidate} onClaim={() => resolveClaim(claimUI.candidate)} onNotMe={() => setDeclinedCandidate(true)} />
         ) : (
           <div style={{ maxWidth: 620, margin: "0 auto", padding: "40px 20px 60px" }}>
-            <div style={{ fontFamily: mono, letterSpacing: 3, color: BALL, fontSize: 11, textTransform: "uppercase" }}>Welcome{claimUI.nameToUse ? ", " + claimUI.nameToUse : ""}</div>
-            <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "6px 0 16px", fontSize: 32, lineHeight: 1, textTransform: "uppercase", letterSpacing: -0.5 }}>Is one of these you?</h1>
+            <div style={{ fontFamily: body, fontWeight: 600, color: BALL, fontSize: 13 }}>Welcome{claimUI.nameToUse ? ", " + claimUI.nameToUse : ""}</div>
+            <h1 style={{ fontFamily: body, fontWeight: 700, color: CHALK, margin: "6px 0 16px", fontSize: 26, lineHeight: 1.2 }}>Is one of these you?</h1>
             <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 18, lineHeight: 1.5 }}>Pick your existing player to inherit its history — nothing gets claimed automatically, you choose. Or start a brand new profile.</div>
-            {claimUI.others.filter((p) => !claimUI.candidate || p.id !== claimUI.candidate.id).map((p) => (
-              <button key={p.id} onClick={() => resolveClaim(p)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: PANEL, border: "1px solid " + LINE, borderRadius: 10, padding: "12px 14px", marginBottom: 10, cursor: "pointer", textAlign: "left" }}>
-                <Avatar player={p} size={36} />
-                <span style={{ flex: 1, fontFamily: body, fontSize: 15, color: CHALK, fontWeight: 600 }}>{p.name}{p.last ? " " + p.last : ""}</span>
-                <span style={{ color: BALL, fontFamily: mono, fontSize: 12 }}>Claim ›</span>
-              </button>
-            ))}
-            <button onClick={() => resolveClaim(null)} style={{ width: "100%", background: "transparent", border: "1px solid " + LINE, borderRadius: 10, padding: "12px 14px", marginTop: 8, cursor: "pointer", color: MUTED, fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={listCard}>
+              {claimUI.others.filter((p) => !claimUI.candidate || p.id !== claimUI.candidate.id).map((p) => (
+                <button key={p.id} onClick={() => resolveClaim(p)} style={listRow}>
+                  <Avatar player={p} size={36} />
+                  <span style={{ flex: 1, fontFamily: body, fontSize: 15, color: CHALK, fontWeight: 600 }}>{p.name}{p.last ? " " + p.last : ""}</span>
+                  <span style={{ color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13 }}>Claim ›</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={() => resolveClaim(null)} style={{ width: "100%", background: "transparent", border: "none", borderRadius: 12, padding: "13px 14px", marginTop: 12, cursor: "pointer", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13 }}>
               None of these — create a new profile
             </button>
           </div>
@@ -406,7 +408,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
-            <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "1px solid " + LINE, borderRadius: 999, padding: "5px 12px", cursor: "pointer", color: BALL, fontFamily: mono, fontSize: 11, letterSpacing: 1, textTransform: "uppercase" }}>
+            <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "none", borderRadius: 999, padding: "6px 13px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13 }}>
               {group?.name || "League"} <ChevronDown size={13} />
             </button>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
@@ -416,7 +418,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                 <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} />
                 {tab === "profile" && (
-                  <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 10, padding: "9px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3.5, flexShrink: 0 }}>
+                  <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3.5, flexShrink: 0 }}>
                     {[0, 1, 2].map((i) => <span key={i} style={{ display: "block", width: 17, height: 2, background: BALL, borderRadius: 2 }} />)}
                   </button>
                 )}
@@ -425,7 +427,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
           </header>
         )}
 
-        {tab === "ladder" && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 10, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
+        {tab === "ladder" && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <LeagueHome players={players} matches={matches} group={group} fixtures={fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onOpenMatch={setMatchDetailId} />}
@@ -444,16 +446,18 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
 
       {menuOpen && (
         <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 96 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "1px solid " + LINE, padding: "18px 16px 36px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED }}>Menu</span>
-              <button onClick={() => setMenuOpen(false)} style={{ background: "transparent", border: "1px solid " + LINE, color: MUTED, borderRadius: 6, padding: "4px 10px", fontFamily: mono, fontSize: 12, cursor: "pointer" }}>Close</button>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: "18px 16px 36px", boxShadow: "0 -8px 30px rgba(0,0,0,0.35)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>Menu</span>
+              <button onClick={() => setMenuOpen(false)} style={{ background: PANEL, border: "none", color: MUTED, borderRadius: 14, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
             </div>
-            <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={menuRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
-            <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={menuRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
-            <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={menuRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
-            {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={menuRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>}
-            <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={menuRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED, fontFamily: mono }}>\u203A</span></button>
+            <div style={listCard}>
+              <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>\u203A</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>\u203A</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>\u203A</span></button>
+              {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED }}>\u203A</span></button>}
+              <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>\u203A</span></button>
+            </div>
           </div>
         </div>
       )}

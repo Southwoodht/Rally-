@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { BALL, CHALK, LINE, MUTED, PANEL2, body, display, mono } from "@/lib/theme";
+import { BALL, CHALK, MUTED, PANEL2, body, listCard, mono } from "@/lib/theme";
 
 interface Point { label: string; text: string; }
 interface Sect { id: string; icon: string; title: string; points: Point[]; }
@@ -96,17 +96,17 @@ const SECTIONS: Sect[] = [
 
 function Section({ s, open, onToggle }: { s: Sect; open: boolean; onToggle: () => void }) {
   return (
-    <div style={{ borderTop: "1px solid " + LINE }}>
-      <button onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "14px 2px", cursor: "pointer", textAlign: "left" }}>
+    <div>
+      <button onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "14px 16px", cursor: "pointer", textAlign: "left" }}>
         <span style={{ fontSize: 18, flexShrink: 0 }}>{s.icon}</span>
-        <span style={{ flex: 1, fontFamily: display, fontSize: 18, fontWeight: 700, color: CHALK, textTransform: "uppercase", letterSpacing: -0.2 }}>{s.title}</span>
+        <span style={{ flex: 1, fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>{s.title}</span>
         <span style={{ fontFamily: mono, fontSize: 12, color: BALL, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>▾</span>
       </button>
       {open && (
-        <div style={{ paddingBottom: 16 }}>
+        <div style={{ padding: "0 16px 16px" }}>
           {s.points.map((p) => (
-            <div key={p.label} style={{ background: PANEL2, borderRadius: 8, padding: "10px 12px", marginBottom: 8 }}>
-              <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: BALL, marginBottom: 4 }}>{p.label}</div>
+            <div key={p.label} style={{ background: PANEL2, borderRadius: 12, padding: "10px 12px", marginBottom: 8 }}>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 12.5, color: BALL, marginBottom: 4 }}>{p.label}</div>
               <div style={{ fontFamily: body, fontSize: 13, color: CHALK, lineHeight: 1.5 }}>{p.text}</div>
             </div>
           ))}
@@ -120,12 +120,14 @@ export function HelpGuide() {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <div>
-      <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 6, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 14, lineHeight: 1.5 }}>
         A quick guide to how Rally works. Tap a section to open it.
       </div>
-      {SECTIONS.map((s) => (
-        <Section key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} />
-      ))}
+      <div style={listCard}>
+        {SECTIONS.map((s) => (
+          <Section key={s.id} s={s} open={openId === s.id} onToggle={() => setOpenId(openId === s.id ? null : s.id)} />
+        ))}
+      </div>
     </div>
   );
 }

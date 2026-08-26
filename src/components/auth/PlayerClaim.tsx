@@ -71,7 +71,7 @@ export default function PlayerClaim({
             padding: "14px 16px",
             marginBottom: 10,
             border: 0,
-            borderRadius: 10,
+            borderRadius: 14,
             cursor: busy ? "default" : "pointer",
             fontWeight: 700,
           }}
@@ -85,7 +85,7 @@ export default function PlayerClaim({
           style={{
             width: "100%",
             padding: "14px 16px",
-            borderRadius: 10,
+            borderRadius: 14,
             cursor: busy ? "default" : "pointer",
             fontWeight: 700,
           }}

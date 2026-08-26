@@ -52,7 +52,7 @@ export function VerifiedTrophies({ player, meId }: any) {
       {approved.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: pending.length ? 8 : 0 }}>
           {approved.map((t) => (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: PANEL2, border: "1px solid " + BALL, borderRadius: 8, padding: "10px 12px" }}>
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "10px 12px" }}>
               <span style={{ fontSize: 20 }}>🏆</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
@@ -65,13 +65,13 @@ export function VerifiedTrophies({ player, meId }: any) {
       {isOwn && pending.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {pending.map((t) => (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "1px dashed " + LINE, borderRadius: 8, padding: "10px 12px" }}>
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "1px dashed " + LINE, borderRadius: 12, padding: "10px 12px" }}>
               <span style={{ fontSize: 20, opacity: 0.5 }}>🏆</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
                 <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · Pending review</div>
               </div>
-              <button onClick={() => withdraw(t.id)} style={{ background: "transparent", border: "1px solid " + LINE, color: MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: mono, fontSize: 10, cursor: "pointer", textTransform: "uppercase", flexShrink: 0 }}>Withdraw</button>
+              <button onClick={() => withdraw(t.id)} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: mono, fontSize: 10, cursor: "pointer", textTransform: "uppercase", flexShrink: 0 }}>Withdraw</button>
             </div>
           ))}
         </div>

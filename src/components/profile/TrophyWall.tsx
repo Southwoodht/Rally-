@@ -15,7 +15,7 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
       {trophies.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
           {trophies.map((t, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: PANEL2, border: "1px solid " + BALL, borderRadius: 8, padding: "10px 12px" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "10px 12px" }}>
               <span style={{ fontSize: 22 }}>{medalIcon[t.medal]}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{t.competition}</div>
@@ -27,7 +27,7 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
       )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
         {achievements.map((a) => (
-          <div key={a.id} style={{ background: a.achieved ? PANEL2 : "transparent", opacity: a.achieved ? 1 : 0.4, border: "1px solid " + (a.achieved ? BALL : LINE), borderRadius: 8, padding: "10px 6px", textAlign: "center" }}>
+          <div key={a.id} style={{ background: a.achieved ? PANEL2 : "transparent", opacity: a.achieved ? 1 : 0.4, border: "1px solid " + (a.achieved ? BALL : LINE), borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
             <div style={{ fontSize: 18 }}>{a.icon}</div>
             <div style={{ fontFamily: mono, fontSize: 8.5, color: a.achieved ? CHALK : MUTED, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.3, lineHeight: 1.3 }}>{a.label}</div>
             {a.achieved && a.date != null && <div style={{ fontFamily: mono, fontSize: 8, color: MUTED, marginTop: 2 }}>{new Date(a.date).getFullYear()}</div>}

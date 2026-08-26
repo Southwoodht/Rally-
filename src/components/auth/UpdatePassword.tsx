@@ -10,12 +10,12 @@ export default function UpdatePassword({ onDone }: { onDone: () => void }) {
   const [error, setError] = useState("");
 
   const field: React.CSSProperties = {
-    width: "100%", boxSizing: "border-box", background: PANEL2, border: "1px solid " + LINE,
-    borderRadius: 10, padding: "13px 14px", color: CHALK, fontFamily: body, fontSize: 15,
+    width: "100%", boxSizing: "border-box", background: PANEL2, border: "none",
+    borderRadius: 14, padding: "13px 14px", color: CHALK, fontFamily: body, fontSize: 15,
     marginBottom: 10, outline: "none",
   };
   const primary: React.CSSProperties = {
-    width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 10,
+    width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 14,
     padding: "14px 16px", fontFamily: mono, fontSize: 13, fontWeight: 700, letterSpacing: 1,
     textTransform: "uppercase", cursor: "pointer",
   };
@@ -37,7 +37,7 @@ export default function UpdatePassword({ onDone }: { onDone: () => void }) {
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontFamily: display, fontSize: 54, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -1, lineHeight: 1 }}>Rally</div>
         </div>
-        <div style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 16, padding: 20 }}>
+        <div style={{ background: PANEL, border: "none", borderRadius: 16, padding: 20 }}>
           <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
             Set a new password
           </div>

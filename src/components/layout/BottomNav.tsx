@@ -14,7 +14,7 @@ export function BottomNav({ tab, setTab }: any) {
     );
   };
   return (
-    <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: PANEL, borderTop: "1px solid " + LINE, display: "flex", alignItems: "center", maxWidth: 620, margin: "0 auto", paddingBottom: "env(safe-area-inset-bottom)", zIndex: 55 }}>
+    <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: PANEL, borderTop: "none", display: "flex", alignItems: "center", maxWidth: 620, margin: "0 auto", paddingBottom: "env(safe-area-inset-bottom)", zIndex: 55 }}>
       {item("ladder", Trophy, "Table")}
       {item("h2h", Swords, "Compare")}
       <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>

@@ -40,7 +40,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     return { cur, best, top3, winning, losing, even };
   };
   const Row = ({ label, av, bv, hiA, hiB }: any) => (
-    <div style={{ display: "flex", alignItems: "center", padding: "9px 0", borderTop: "1px solid " + LINE }}>
+    <div style={{ display: "flex", alignItems: "center", padding: "9px 0", borderTop: "none" }}>
       <span style={{ flex: 1, fontFamily: mono, fontSize: 12.5, fontWeight: 700, color: hiA ? BALL : CHALK, textAlign: "left" }}>{av}</span>
       <span style={{ width: 108, textAlign: "center", fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED }}>{label}</span>
       <span style={{ flex: 1, fontFamily: mono, fontSize: 12.5, fontWeight: 700, color: hiB ? BALL : CHALK, textAlign: "right" }}>{bv}</span>
@@ -91,15 +91,15 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
       {a && b ? (
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>{nm(a)}</span>
-            <span style={{ fontFamily: display, fontSize: 17, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>{nm(b)}</span>
+            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{nm(a)}</span>
+            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{nm(b)}</span>
           </div>
           {rivalry && (() => {
             const leader = rivalry.w > rivalry.l ? nm(a) : rivalry.l > rivalry.w ? nm(b) : null;
             const leadRec = rivalry.w >= rivalry.l ? `${rivalry.w}-${rivalry.d}-${rivalry.l}` : `${rivalry.l}-${rivalry.d}-${rivalry.w}`;
             const streakName = rivalry.streak.holder === "me" ? nm(a) : rivalry.streak.holder === "opp" ? nm(b) : null;
             return (
-              <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 8, padding: "10px 12px", marginBottom: 14 }}>
+              <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "10px 12px", marginBottom: 14 }}>
                 <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 4 }}>🔥 Rivalry · {rivalry.total} matches</div>
                 <div style={{ fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 2 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
@@ -158,7 +158,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             })}
           </div>
           <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, margin: "20px 0 6px" }}>Their matches</div>
-          {games.length ? games.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: "1px solid " + LINE, fontFamily: body, fontSize: 13, color: CHALK }}><span style={{ color: MUTED, fontFamily: mono, fontSize: 11 }}>{fmtDate(m.date)}</span><span>{winnerLabel(m, nameOf)}{m.score ? <span style={{ color: MUTED }}> · {m.score}</span> : null}</span></div>) : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
+          {games.length ? games.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: "none", fontFamily: body, fontSize: 13, color: CHALK }}><span style={{ color: MUTED, fontFamily: mono, fontSize: 11 }}>{fmtDate(m.date)}</span><span>{winnerLabel(m, nameOf)}{m.score ? <span style={{ color: MUTED }}> · {m.score}</span> : null}</span></div>) : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
         </>
       ) : <Empty msg="Pick two players to compare." />}
     </div>

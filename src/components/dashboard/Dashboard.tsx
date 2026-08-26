@@ -75,32 +75,32 @@ export default function Dashboard({ session }: { session: Session }) {
   };
 
   const field: React.CSSProperties = {
-    width: "100%", boxSizing: "border-box", background: PANEL2, border: "1px solid " + LINE,
-    borderRadius: 10, padding: "13px 14px", color: CHALK, fontFamily: body, fontSize: 15,
+    width: "100%", boxSizing: "border-box", background: PANEL2, border: "none",
+    borderRadius: 14, padding: "13px 14px", color: CHALK, fontFamily: body, fontSize: 15,
     marginBottom: 10, outline: "none",
   };
   const primary: React.CSSProperties = {
-    width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 10,
-    padding: "14px 16px", fontFamily: mono, fontSize: 13, fontWeight: 700, letterSpacing: 1,
-    textTransform: "uppercase", cursor: "pointer",
+    width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 14,
+    padding: "14px 16px", fontFamily: body, fontSize: 15, fontWeight: 600,
+    cursor: "pointer",
   };
   const ghost: React.CSSProperties = {
-    ...primary, background: "transparent", color: MUTED, border: "none", fontSize: 12, marginTop: 8,
+    ...primary, background: "transparent", color: MUTED, border: "none", fontSize: 13, marginTop: 8,
   };
   const tile: React.CSSProperties = {
-    flex: 1, background: PANEL, border: "1px solid " + LINE, borderRadius: 14,
+    flex: 1, background: PANEL, border: "none", borderRadius: 14,
     padding: "22px 16px", cursor: "pointer", textAlign: "left",
   };
 
   if (view === "app" && active) {
     return (
       <div>
-        <div style={{ background: PANEL, borderBottom: "1px solid " + LINE, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ background: PANEL, borderBottom: "none", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontFamily: display, fontSize: 16, fontWeight: 700, color: CHALK, textTransform: "uppercase", letterSpacing: -0.2 }}>{active.name}</div>
-            <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, letterSpacing: 1 }}>CODE {active.join_code}</div>
+            <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>{active.name}</div>
+            <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Code <span style={{ fontFamily: mono }}>{active.join_code}</span></div>
           </div>
-          <button onClick={() => setView(leagues.length > 1 ? "picker" : "empty")} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 8, padding: "7px 10px", cursor: "pointer" }}>Leagues</button>
+          <button onClick={() => setView(leagues.length > 1 ? "picker" : "empty")} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Leagues</button>
         </div>
         <RallyApp leagueId={active.id} leagueName={active.name} leagueRole={active.role} displayName={displayName} />
       </div>
@@ -115,22 +115,22 @@ export default function Dashboard({ session }: { session: Session }) {
             <div style={{ fontFamily: display, fontSize: 34, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -0.5, lineHeight: 1 }}>Rally</div>
             <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6 }}>Welcome, {displayName}.</div>
           </div>
-          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: mono, fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 8, padding: "7px 10px", cursor: "pointer" }}>Log out</button>
+          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Log out</button>
         </div>
         {error && <div style={{ fontFamily: body, fontSize: 13, color: CLAY, marginBottom: 12 }}>{error}</div>}
         {children}
-        <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, letterSpacing: 1, textTransform: "uppercase", marginTop: 30, textAlign: "center" }}>Rally v1.0 Foundation</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 30, textAlign: "center" }}>Rally v1.0 Foundation</div>
       </div>
     </div>
   );
 
   if (view === "loading") return shell(
-    <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, textAlign: "center", padding: 30 }}>Loading…</div>
+    <div style={{ fontFamily: body, fontSize: 14, color: MUTED, textAlign: "center", padding: 30 }}>Loading…</div>
   );
 
   if (view === "create") return shell(
-    <div style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 14, padding: 20 }}>
-      <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>Create a league</div>
+    <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Create a league</div>
       <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="League name, e.g. Seacourt Ladder" />
       <input style={field} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location (optional)" />
       <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>{busy ? "Creating…" : "Create league"}</button>
@@ -139,8 +139,8 @@ export default function Dashboard({ session }: { session: Session }) {
   );
 
   if (view === "join") return shell(
-    <div style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 14, padding: 20 }}>
-      <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>Join a league</div>
+    <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Join a league</div>
       <input style={{ ...field, fontFamily: mono, letterSpacing: 3, textTransform: "uppercase" }} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC123" maxLength={8} />
       <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? "Joining…" : "Join league"}</button>
       <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Ask whoever set the league up for the code — it&apos;s shown at the top of their screen.</div>
@@ -150,36 +150,36 @@ export default function Dashboard({ session }: { session: Session }) {
 
   if (view === "picker") return shell(
     <div>
-      <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 10 }}>Your leagues</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 10 }}>Your leagues</div>
       {leagues.map((l) => (
         <button key={l.id} onClick={() => { setActive(l); setView("app"); }} style={{ ...tile, width: "100%", marginBottom: 8, display: "block" }}>
-          <div style={{ fontFamily: display, fontSize: 19, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>{l.name}</div>
-          <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, letterSpacing: 1, marginTop: 3 }}>{l.location ? l.location + " · " : ""}CODE {l.join_code}{l.role === "owner" ? " · OWNER" : ""}</div>
+          <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{l.name}</div>
+          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{l.location ? l.location + " · " : ""}Code <span style={{ fontFamily: mono }}>{l.join_code}</span>{l.role === "owner" ? " · Owner" : ""}</div>
         </button>
       ))}
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-        <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: display, fontSize: 16, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>➕ Create</div></button>
-        <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: display, fontSize: 16, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>🔑 Join</div></button>
+        <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>➕ Create</div></button>
+        <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>🔑 Join</div></button>
       </div>
     </div>
   );
 
   return shell(
     <>
-      <div style={{ background: PANEL2, border: "1px solid " + LINE, borderRadius: 14, padding: 20, marginBottom: 18, textAlign: "center" }}>
+      <div style={{ background: PANEL2, border: "none", borderRadius: 14, padding: 20, marginBottom: 18, textAlign: "center" }}>
         <div style={{ fontSize: 30 }}>🎾</div>
-        <div style={{ fontFamily: display, fontSize: 22, fontWeight: 700, color: CHALK, textTransform: "uppercase", letterSpacing: -0.3, marginTop: 8 }}>No leagues yet</div>
+        <div style={{ fontFamily: body, fontSize: 19, fontWeight: 700, color: CHALK, marginTop: 8 }}>No leagues yet</div>
         <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6, lineHeight: 1.5 }}>Start one for your club or mates, or join an existing league with a code.</div>
       </div>
       <div style={{ display: "flex", gap: 12 }}>
         <button style={tile} onClick={() => { setError(""); setView("create"); }}>
           <div style={{ fontSize: 20 }}>➕</div>
-          <div style={{ fontFamily: display, fontSize: 18, fontWeight: 700, color: CHALK, textTransform: "uppercase", marginTop: 8 }}>Create league</div>
+          <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, marginTop: 8 }}>Create league</div>
           <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, lineHeight: 1.4 }}>Set up a ladder and invite players.</div>
         </button>
         <button style={tile} onClick={() => { setError(""); setView("join"); }}>
           <div style={{ fontSize: 20 }}>🔑</div>
-          <div style={{ fontFamily: display, fontSize: 18, fontWeight: 700, color: CHALK, textTransform: "uppercase", marginTop: 8 }}>Join league</div>
+          <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, marginTop: 8 }}>Join league</div>
           <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, lineHeight: 1.4 }}>Enter a code from the organiser.</div>
         </button>
       </div>

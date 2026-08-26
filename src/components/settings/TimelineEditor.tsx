@@ -13,7 +13,7 @@ export function TimelineEditor({ player, onAdd, onRemove }: any) {
       {hist.length ? hist.map((h, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0" }}>
           <span style={{ fontFamily: body, fontSize: 12, color: CHALK }}>{h.cat} · {h.sub} <span style={{ color: MUTED, fontFamily: mono }}>{h.from || "…"}–{h.to || "now"}</span></span>
-          <button onClick={() => onRemove(i)} style={{ fontFamily: mono, fontSize: 12, color: CLAY, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "2px 8px", cursor: "pointer" }}>×</button>
+          <button onClick={() => onRemove(i)} style={{ fontFamily: mono, fontSize: 12, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "2px 8px", cursor: "pointer" }}>×</button>
         </div>
       )) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 6 }}>No timeline yet — add periods so old games judge this player at their level back then.</div>}
       <div style={{ display: "flex", gap: 6, marginTop: 8 }}>

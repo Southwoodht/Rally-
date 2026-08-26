@@ -31,12 +31,12 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, onResol
       <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden", marginBottom: 16 }}><div style={{ width: (total ? (done / total) * 100 : 0) + "%", height: "100%", background: BALL }} /></div>
       {shown.length === 0 && <Empty msg="No fixtures match that search." />}
       {shown.map((f) => (
-        <div key={f.id} style={{ padding: "10px 0", borderBottom: "1px solid " + LINE }}>
+        <div key={f.id} style={{ padding: "10px 0", borderBottom: "none" }}>
           {f.done ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 14 }}>✓</span>
               <span style={{ flex: 1, fontFamily: body, fontSize: 13, color: CHALK, opacity: 0.7 }}>{f.winner === "draw" ? nm(f.p1) + " drew " + nm(f.p2) : nm(f.winner === "p1" ? f.p1 : f.p2) + " beat " + nm(f.winner === "p1" ? f.p2 : f.p1)}{f.score ? " " + f.score : ""}</span>
-              <button onClick={() => onResolve(f, null)} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "4px 8px", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1 }}>Undo</button>
+              <button onClick={() => onResolve(f, null)} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 8px", cursor: "pointer", textTransform: "uppercase", letterSpacing: 1 }}>Undo</button>
             </div>
           ) : (
             <div>
@@ -54,13 +54,13 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, onResol
                 <div style={{ fontFamily: mono, fontSize: 10, color: BALL, marginTop: 5, textTransform: "uppercase", letterSpacing: 1 }}>{open === f.id ? "▾ close" : "tap to set a game or enter result"}</div>
               </button>
               {open === f.id && (
-                <div style={{ marginTop: 12, background: PANEL2, borderRadius: 8, padding: 12 }}>
+                <div style={{ marginTop: 12, background: PANEL2, borderRadius: 12, padding: 12 }}>
                   <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 6 }}>Set a game</div>
                   <div style={{ display: "flex", gap: 6, marginBottom: f.booked ? 6 : 16 }}>
                     <input value={whenText} onChange={(e) => setWhenText(e.target.value)} placeholder="When? e.g. Saturday 2pm" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
                     <BigBtn onClick={() => onBook(f.id, whenText.trim())} color={BALL} grow={false}>Book</BigBtn>
                   </div>
-                  {f.booked && <button onClick={() => onBook(f.id, "")} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "1px solid " + LINE, borderRadius: 5, padding: "4px 8px", cursor: "pointer", textTransform: "uppercase", marginBottom: 16 }}>Clear booking</button>}
+                  {f.booked && <button onClick={() => onBook(f.id, "")} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 8px", cursor: "pointer", textTransform: "uppercase", marginBottom: 16 }}>Clear booking</button>}
                   <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 6 }}>Enter result</div>
                   <input value={scoreText} onChange={(e) => setScoreText(e.target.value)} placeholder="Score, e.g. 6-3 (optional)" style={{ ...miniInput, width: "100%", marginBottom: 8, boxSizing: "border-box" as const }} />
                   <div style={{ display: "flex", gap: 6 }}>

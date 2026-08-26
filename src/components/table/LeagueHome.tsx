@@ -10,7 +10,7 @@ import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, display, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, mono } from "@/lib/theme";
 
 const ACTIVE_WINDOW_MS = 365 * 86400000;
 
@@ -109,7 +109,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
         return (
           <div style={{ marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-              <span style={{ fontFamily: display, fontSize: 15, fontWeight: 700, color: CHALK, textTransform: "uppercase" }}>{season.name}</span>
+              <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{season.name}</span>
               <span style={{ fontFamily: mono, fontSize: 12, color: left <= 30 ? CLAY : BALL }}>{left > 0 ? left + " days left" : "Season over"}</span>
             </div>
             <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden" }}><div style={{ width: pctDone + "%", height: "100%", background: BALL }} /></div>
@@ -131,14 +131,14 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
         const medals = ["🏆", "🥈", "🥉"], labels = ["Champion", "Runner-up", "Third"];
         return (
           <div style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 4 }}>{ended ? "Season finished" : "All fixtures played"}{useFx ? " · fixture league only" : ""}</div>
-            <div style={{ fontFamily: display, fontSize: 22, fontWeight: 800, color: CHALK, textTransform: "uppercase", letterSpacing: -0.5, marginBottom: 12 }}>{season.name} results</div>
+            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 12.5, color: BALL, marginBottom: 4 }}>{ended ? "Season finished" : "All fixtures played"}{useFx ? " · fixture league only" : ""}</div>
+            <div style={{ fontFamily: body, fontSize: 19, fontWeight: 800, color: CHALK, marginBottom: 12 }}>{season.name} results</div>
             {podium.map((p, i) => (
               <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: i ? "1px solid " + LINE : "none" }}>
                 <span style={{ fontSize: 22 }}>{medals[i]}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: display, fontSize: 18, fontWeight: 700, color: i === 0 ? BALL : CHALK, textTransform: "uppercase", letterSpacing: -0.3 }}>{p.name}{p.last ? " " + p.last : ""}</div>
-                  <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{labels[i]} · {(fxWdl[p.id]?.w ?? 0)}-{(fxWdl[p.id]?.d ?? 0)}-{(fxWdl[p.id]?.l ?? 0)}</div>
+                  <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: i === 0 ? BALL : CHALK }}>{p.name}{p.last ? " " + p.last : ""}</div>
+                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>{labels[i]} · {(fxWdl[p.id]?.w ?? 0)}-{(fxWdl[p.id]?.d ?? 0)}-{(fxWdl[p.id]?.l ?? 0)}</div>
                 </div>
               </div>
             ))}

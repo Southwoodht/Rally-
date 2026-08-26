@@ -5,7 +5,7 @@ import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { readPhotoAsDataUrl } from "@/lib/photo";
-import { BALL, CHALK, MUTED, NICKS, body, card, display, input, miniInput, mono, wrap } from "@/lib/theme";
+import { BALL, CHALK, MUTED, NICKS, body, card, miniInput } from "@/lib/theme";
 
 const PHOTO_SIZE = 160;
 
@@ -15,7 +15,7 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
   if (!me) return <Empty msg="Pick who you are first." />;
   const setField = (key, val) => setPlayers(players.map((p) => p.id === meId ? { ...p, [key]: val } : p));
   const setLevel = (cat, sub) => setPlayers(players.map((p) => p.id === meId ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
-  const L = ({ children }: any) => <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
+  const L = ({ children }: any) => <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
   const onPickPhoto = async (file: File) => {
     try {
       const dataUrl = await readPhotoAsDataUrl(file, PHOTO_SIZE);
@@ -29,7 +29,7 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Avatar player={me} size={44} />
         <div>
-          <div style={{ fontFamily: display, fontSize: 22, fontWeight: 800, color: CHALK, textTransform: "uppercase", letterSpacing: -0.4 }}>{me.name}{me.nick ? " \u201C" + me.nick + "\u201D" : ""}{me.last ? " " + me.last : ""}</div>
+          <div style={{ fontFamily: body, fontSize: 19, fontWeight: 800, color: CHALK }}>{me.name}{me.nick ? " \u201C" + me.nick + "\u201D" : ""}{me.last ? " " + me.last : ""}</div>
           <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>This is how you appear to everyone.</div>
         </div>
       </div>

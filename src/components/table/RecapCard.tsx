@@ -4,14 +4,14 @@ import { BALL, CHALK, LINE, MUTED, PANEL, body, display, mono } from "@/lib/them
 
 export function RecapCard({ recap, nameOf, leagueName }: any) {
   const Row = ({ icon, label, value }: any) => value ? (
-    <div style={{ display: "flex", gap: 10, padding: "8px 0", borderTop: "1px solid " + LINE, alignItems: "center" }}>
+    <div style={{ display: "flex", gap: 10, padding: "8px 0", borderTop: "none", alignItems: "center" }}>
       <span style={{ fontSize: 15 }}>{icon}</span>
       <span style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: MUTED, width: 96 }}>{label}</span>
       <span style={{ flex: 1, fontFamily: body, fontSize: 13, color: CHALK }}>{value}</span>
     </div>
   ) : null;
   return (
-    <div style={{ background: PANEL, border: "1px solid " + LINE, borderRadius: 12, padding: 16, marginBottom: 14 }}>
+    <div style={{ background: PANEL, border: "none", borderRadius: 12, padding: 16, marginBottom: 14 }}>
       <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 6 }}>This week at {leagueName}</div>
       <Row icon="🏆" label="Top winner" value={recap.topGain && recap.topGv > 0 ? nameOf(recap.topGain) + " (+" + recap.topGv.toFixed(0) + " ELO)" : null} />
       <Row icon="🔥" label="On a streak" value={recap.strV >= 2 ? nameOf(recap.strP) + " (" + recap.strV + " wins)" : null} />

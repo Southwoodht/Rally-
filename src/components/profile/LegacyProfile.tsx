@@ -6,7 +6,7 @@ import { Stat } from "@/components/ui/atoms";
 import { computeLegacyProfile } from "@/core/legacy";
 import { fmtDate } from "@/lib/format";
 import { listMyTrophies, Trophy } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, display, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, mono } from "@/lib/theme";
 
 const SPLIT_LABEL: Record<string, string> = { higher: "Against higher-rated players", similar: "Against similar-level players", lower: "Against lower-rated players" };
 
@@ -32,24 +32,24 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
   useEffect(() => { reloadStartClaim(); /* eslint-disable-next-line */ }, [player.id, player.auth_id, isOwn]);
 
   const Row = ({ label, children }: any) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "9px 0", borderTop: "1px solid " + LINE, gap: 12 }}>
-      <span style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: MUTED }}>{label}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "9px 0", borderTop: "none", gap: 12 }}>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>{label}</span>
       <span style={{ fontFamily: body, fontSize: 14, color: CHALK, textAlign: "right" }}>{children}</span>
     </div>
   );
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "1px solid " + LINE, padding: "20px 18px 40px" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: BALL }}>🏛️ Rally Legacy</div>
-          <button onClick={onClose} style={{ background: "transparent", border: "1px solid " + LINE, color: MUTED, borderRadius: 6, padding: "4px 10px", fontFamily: mono, fontSize: 12, cursor: "pointer" }}>Close</button>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL }}>🏛️ Rally Legacy</div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <Avatar player={player} size={48} />
           <div>
-            <h2 style={{ fontFamily: display, fontSize: 28, fontWeight: 800, color: CHALK, textTransform: "uppercase", letterSpacing: -0.5, margin: 0 }}>{player.name}{player.last ? " " + player.last : ""}</h2>
+            <h2 style={{ fontFamily: body, fontSize: 24, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.last ? " " + player.last : ""}</h2>
             {legacy.firstYear != null && <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}>{legacy.firstYear}–{legacy.lastYear}{legacy.activeThisYear ? <span style={{ color: BALL }}> · active</span> : null}</div>}
           </div>
         </div>
@@ -64,7 +64,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
               <Stat n={legacy.record.l} label="Lost" c={CLAY} />
               <Stat n={legacy.winPct == null ? "–" : Math.round(legacy.winPct * 100) + "%"} label="Win rate" c={BALL} />
             </div>
-            <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 4, marginTop: 4 }}>Career</div>
+            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6, marginTop: 4 }}>Career</div>
             <Row label="Span">{legacy.firstYear} – {legacy.lastYear}</Row>
             <Row label="Matches recorded">{legacy.matches} <span style={{ color: MUTED, fontFamily: mono, fontSize: 10 }}>· Rally verified</span></Row>
             <Row label="Pace">~{legacy.matchesPerYear} matches/year</Row>
@@ -86,7 +86,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.timeline.length > 1 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>🌎 Career highlights</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>🌎 Career highlights</div>
                 {legacy.timeline.map((t, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0" }}>
                     <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 700, color: BALL, width: 42, flexShrink: 0 }}>{t.year}</span>
@@ -98,9 +98,9 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.bestWins.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>👑 Best wins</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>👑 Best wins</div>
                 {legacy.bestWins.map((w, i) => (
-                  <button key={i} onClick={() => onOpenMatch && onOpenMatch(w.match.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: PANEL2, border: "1px solid " + LINE, borderRadius: 8, padding: "10px 12px", marginBottom: 6, cursor: onOpenMatch ? "pointer" : "default", textAlign: "left" }}>
+                  <button key={i} onClick={() => onOpenMatch && onOpenMatch(w.match.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 6, cursor: onOpenMatch ? "pointer" : "default", textAlign: "left" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 800, color: BALL }}>{i + 1}.</span>
                       <span style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{nm(w.oid)}</span>
@@ -114,7 +114,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.splits.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>📊 Playing profile</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>📊 Playing profile</div>
                 {legacy.splits.map((s) => {
                   const pct = s.n ? Math.round(((s.w + s.d * 0.5) / s.n) * 100) : 0;
                   return (
@@ -133,7 +133,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.topOpponents.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>Most played</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Most played</div>
                 {legacy.topOpponents.map((o) => (
                   <div key={o.oid} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontFamily: body, fontSize: 13, color: CHALK }}>
                     <span>{nm(o.oid)}</span>
@@ -145,7 +145,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.yearlyRecord.length > 1 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>By year</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>By year</div>
                 {legacy.yearlyRecord.map((y) => (
                   <div key={y.year} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
                     <span style={{ fontFamily: mono, fontSize: 12, color: MUTED, width: 42, flexShrink: 0 }}>{y.year}</span>

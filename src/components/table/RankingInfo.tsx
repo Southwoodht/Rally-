@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { BALL, CHALK, COURT, LINE, MUTED, body, display, mono } from "@/lib/theme";
+import { BALL, CHALK, COURT, MUTED, body } from "@/lib/theme";
 
 export function RankingInfo({ onClose }: any) {
   const items = [
@@ -12,14 +12,14 @@ export function RankingInfo({ onClose }: any) {
   ];
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "1px solid " + LINE, padding: "20px 18px 40px" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED }}>The rankings</div>
-          <button onClick={onClose} style={{ background: "transparent", border: "1px solid " + LINE, color: MUTED, borderRadius: 6, padding: "4px 10px", fontFamily: mono, fontSize: 12, cursor: "pointer" }}>Close</button>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>The rankings</div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
         {items.map(([t, d]) => (
-          <div key={t} style={{ padding: "12px 0", borderTop: "1px solid " + LINE }}>
-            <div style={{ fontFamily: display, fontSize: 20, fontWeight: 700, color: BALL, textTransform: "uppercase", letterSpacing: -0.3 }}>{t}</div>
+          <div key={t} style={{ padding: "12px 0", borderTop: "none" }}>
+            <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: BALL }}>{t}</div>
             <div style={{ fontFamily: body, fontSize: 13, color: CHALK, marginTop: 4, lineHeight: 1.5 }}>{d}</div>
           </div>
         ))}
