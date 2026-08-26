@@ -15,6 +15,14 @@ export interface StorageRecord {
 
 const PREFIX = "rally:";
 
+// Distinct from "the row doesn't exist" — withSupabaseTimeout can't tell us
+// that on its own, since a fallback value and a real empty result look the
+// same to callers. A load that failed must never be mistaken for a load
+// that succeeded and found nothing, because callers treat "nothing" as
+// license to seed fresh data and write it back over whatever's really there.
+const READ_FAILED = Symbol("storage-read-failed");
+const WRITE_UNCONFIRMED = Symbol("storage-write-unconfirmed");
+
 function available(): boolean {
   return typeof window !== "undefined" && !!window.localStorage;
 }
@@ -37,11 +45,14 @@ export const storage = {
     if (!supabase) return readLocal(key);
 
     if (shared) {
-      const { data, error } = await withSupabaseTimeout(
+      const result = await withSupabaseTimeout(
         supabase.from("shared_storage").select("key, value").eq("key", key).maybeSingle(),
-        null as any,
+        READ_FAILED as any,
       );
-      if (error || !data) return null;
+      if (result === (READ_FAILED as any)) throw new Error(`Timed out loading "${key}" from Supabase.`);
+      const { data, error } = result;
+      if (error) throw error;
+      if (!data) return null;
       return { key: data.key, value: data.value, shared: true };
     }
 
@@ -52,11 +63,14 @@ export const storage = {
     const uid = userData.user?.id;
     if (!uid) return readLocal(key);
 
-    const { data, error } = await withSupabaseTimeout(
+    const result = await withSupabaseTimeout(
       supabase.from("user_storage").select("key, value").eq("user_id", uid).eq("key", key).maybeSingle(),
-      null as any,
+      READ_FAILED as any,
     );
-    if (error || !data) return null;
+    if (result === (READ_FAILED as any)) throw new Error(`Timed out loading "${key}" from Supabase.`);
+    const { data, error } = result;
+    if (error) throw error;
+    if (!data) return null;
     return { key: data.key, value: data.value, shared: false };
   },
 
@@ -64,10 +78,15 @@ export const storage = {
     if (!supabase) return writeLocal(key, value);
 
     if (shared) {
-      const { error } = await withSupabaseTimeout(
+      const result = await withSupabaseTimeout(
         supabase.from("shared_storage").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" }),
-        { error: null } as any,
+        WRITE_UNCONFIRMED as any,
       );
+      // A timeout here means we genuinely don't know whether the upsert
+      // landed — never report that as success. Fall back to local same as
+      // a confirmed error, rather than telling the caller the shared write
+      // happened when it might still be in flight or may never land.
+      const error = result === (WRITE_UNCONFIRMED as any) ? new Error(`Timed out saving "${key}" to Supabase.`) : result.error;
       if (!error) return { key, value, shared: true };
       return writeLocal(key, value);
     }
@@ -79,10 +98,11 @@ export const storage = {
     const uid = userData.user?.id;
     if (!uid) return writeLocal(key, value);
 
-    const { error } = await withSupabaseTimeout(
+    const result = await withSupabaseTimeout(
       supabase.from("user_storage").upsert({ user_id: uid, key, value, updated_at: new Date().toISOString() }, { onConflict: "user_id,key" }),
-      { error: null } as any,
+      WRITE_UNCONFIRMED as any,
     );
+    const error = result === (WRITE_UNCONFIRMED as any) ? new Error(`Timed out saving "${key}" to Supabase.`) : result.error;
     if (!error) return { key, value, shared: false };
     return writeLocal(key, value);
   },

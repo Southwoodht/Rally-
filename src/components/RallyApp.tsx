@@ -47,6 +47,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
   const [rankingMode, setRankingMode] = useState("overall");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [tab, setTab] = useState("ladder");
   const [profileId, setProfileId] = useState(null);
   const [matchDetailId, setMatchDetailId] = useState(null);
@@ -96,16 +97,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
     await finishBoot(next, cur, gs, st);
   };
 
-  useEffect(() => {
-    (async () => {
+  const boot = async () => {
+     setLoading(true);
+     setLoadError(false);
      try {
       // One real league, from Supabase. No demo data — a new league starts empty.
       const cur = leagueId;
       const gs = [{ id: leagueId, name: leagueName || "League", ownerId: null }];
       let st: any = null;
       try { const r = await storage.get("settings_" + leagueId, true); st = r ? JSON.parse(r.value) : null; } catch {}
-      let data: LeagueData = { ...emptyLeagueData };
-      try { const r = await storage.get(gkey(cur), true); const loaded = r ? JSON.parse(r.value) : null; if (loaded && Array.isArray(loaded.players) && Array.isArray(loaded.matches)) data = loaded as LeagueData; } catch {}
+
+      // A thrown error here means the load failed (timeout, network, RLS) —
+      // that must never be treated the same as "this league has no data
+      // yet." Bail out without touching storage rather than falling through
+      // to the fresh-league path below and writing empty state over
+      // whatever's actually there.
+      let data: LeagueData;
+      try {
+        const r = await storage.get(gkey(cur), true);
+        const loaded = r ? JSON.parse(r.value) : null;
+        data = (loaded && Array.isArray(loaded.players) && Array.isArray(loaded.matches)) ? loaded as LeagueData : { ...emptyLeagueData };
+      } catch (e) {
+        console.error("Failed to load league data — refusing to seed a fresh league over it.", e);
+        setLoadError(true);
+        setLoading(false);
+        return;
+      }
 
       // Link the signed-in account to a player using the Supabase auth user id
       // (stored as `auth_id`). Never by name alone: a name match only ever
@@ -151,8 +168,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
       console.error(e);
       setLoading(false);
      }
-    })();
-  }, []);
+  };
+
+  useEffect(() => { boot(); /* eslint-disable-next-line */ }, []);
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2200); };
   const persistSettings = async (extra) => { try { await storage.set("settings_" + gid, JSON.stringify({ currentGroupId: gid, rankingMode, onboarded, ...extra }), true); } catch {} };
@@ -229,7 +247,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
 
   const switchGroup = async (id) => {
     let data: LeagueData | null = null;
-    try { const r = await storage.get(gkey(id), true); data = r ? JSON.parse(r.value) : null; } catch {}
+    try {
+      const r = await storage.get(gkey(id), true);
+      data = r ? JSON.parse(r.value) : null;
+    } catch (e) {
+      // Load failed — don't guess. Leave the current league on screen rather
+      // than seeding and saving an empty one over real data we just couldn't reach.
+      console.error("Failed to load league to switch to — leaving current league in place.", e);
+      flash("Couldn't load that league — try again");
+      return;
+    }
     if (data && (!Array.isArray(data.players) || !Array.isArray(data.matches))) data = null;
     if (!data || !data.players || !data.players.length) {
       data = { ...emptyLeagueData };
@@ -298,6 +325,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
     return arr;
   }, [players, elo, wdl, form, matches, rankingMode]);
 
+  if (loadError) return (
+    <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}>
+      <div style={{ textAlign: "center", maxWidth: 300 }}>
+        <div style={{ color: CHALK, fontFamily: body, fontSize: 15, marginBottom: 6 }}>Couldn&apos;t load this league</div>
+        <div style={{ color: MUTED, fontFamily: body, fontSize: 13, marginBottom: 16 }}>Your data is safe — this was just a connection problem. Nothing was changed.</div>
+        <button onClick={() => boot()} style={{ background: BALL, color: COURT, border: "none", borderRadius: 10, padding: "10px 18px", fontFamily: mono, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}>Try again</button>
+      </div>
+    </div>
+  );
   if (loading) return <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}><div style={{ color: MUTED, fontFamily: body }}>Loading…</div></div>;
 
   if (claimUI) {
