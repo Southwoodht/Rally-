@@ -90,6 +90,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const vsMatches = (oid) => chrono.filter((m) => oppId(m) === oid).slice().sort((a, b) => b.date - a.date);
   const ranks = rankMaps(players, matches, elo, wdl);
   const [openStreak, setOpenStreak] = useState<"now" | "best" | "tough" | null>(null);
+  const [showKey, setShowKey] = useState(false);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   return (
     <>
@@ -233,7 +234,11 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       )}
       <VerifiedTrophies player={player} meId={meId} />
       {r.gp > 0 && <TrophyWall player={player} players={players} matches={matches} fixtures={fixtures} group={group} />}
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Record</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED }}>Record</div>
+        <button onClick={() => setShowKey(!showKey)} style={{ width: 18, height: 18, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.08)", color: MUTED, fontFamily: "Georgia, serif", fontStyle: "italic", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "grid", placeItems: "center" }}>i</button>
+      </div>
+      {showKey && <DifficultyKey />}
       {bouts.length
         ? bouts.map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
         : <Empty msg="No matches logged yet." />}
@@ -290,10 +295,37 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
       <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
       <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
         <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
-        <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{rating && <span style={{ fontFamily: body }}> · {rating.icon} {rating.note}</span>}</div>
+        <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{rating && <span title={rating.note} style={{ marginLeft: 5 }}>{rating.icon}</span>}</div>
       </button>
       {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
       {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
+    </div>
+  );
+}
+
+function DifficultyKey() {
+  const rows: Array<[string, string]> = [
+    ["🥇", "Big win — well above your level at the time"],
+    ["🔵", "Strong win — above your level"],
+    ["🟢", "Fair win — about your level"],
+    ["🟡", "Solid, but expected — below your level"],
+    ["🔴", "Doesn't say much — a win well below your level, or a loss to someone well below you"],
+  ];
+  return (
+    <div style={{ background: PANEL2, borderRadius: 12, padding: "12px 14px", marginBottom: 10 }}>
+      <div style={{ display: "grid", gap: 4, marginBottom: 8 }}>
+        {rows.map(([icon, text]) => (
+          <div key={icon} style={{ display: "flex", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
+            <span>{icon}</span><span style={{ color: MUTED }}>{text}</span>
+          </div>
+        ))}
+        <div style={{ display: "flex", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
+          <span style={{ width: 15, textAlign: "center" }}>•</span><span style={{ color: MUTED }}>A loss, not highlighted — losing to someone above you is how you climb, not a bad result</span>
+        </div>
+      </div>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
+        A respectable record leans 🥇🔵🟢 — mostly wins above or around your level. A pile of 🟡 wins doesn't prove much on its own, and 🔴 is the only one worth questioning.
+      </div>
     </div>
   );
 }
@@ -324,7 +356,7 @@ function VsMatches({ oid, matches, resultFor, onOpen, selfPlayer, oppPlayer }: a
         return (
           <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}{rating && <span style={{ fontFamily: body }}> · {rating.icon} {rating.note}</span>}</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}{rating && <span title={rating.note} style={{ marginLeft: 5 }}>{rating.icon}</span>}</span>
             <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
           </button>
         );
