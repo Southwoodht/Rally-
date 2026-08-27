@@ -15,6 +15,7 @@ import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { computeRivalries } from "@/core/rivalries";
 import { ratingForMatch } from "@/core/difficulty";
+import { findMemory } from "@/core/memories";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
 import { D, fmtDate, winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
@@ -48,6 +49,11 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const activeForm = yr === "all" ? form : yearStats!.form;
   const activeDeltas = yr === "all" ? deltas : yearStats!.deltas;
 
+  // Player-reported, from onboarding's "when did you start playing?" — not
+  // Rally's own records, which is why LegacyProfile keeps it separately
+  // labelled from firstYear elsewhere. Just a nice, low-stakes fact here.
+  const tennisStart: number | null = player.levelHistory?.[0]?.from ?? null;
+  const tennisYears = tennisStart != null ? new Date().getFullYear() - tennisStart : null;
   const r = activeWdl[player.id] || { w: 0, d: 0, l: 0, gp: 0 };
   const rank = ranked.findIndex((p) => p.id === player.id) + 1;
   const rating = Math.round(activeElo[player.id] ?? START_ELO);
@@ -92,8 +98,15 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const [openStreak, setOpenStreak] = useState<"now" | "best" | "tough" | null>(null);
   const [showKey, setShowKey] = useState(false);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
+  const memory = useMemo(() => findMemory(player.id, matches, nameOf), [player.id, matches, nameOf]);
   return (
     <>
+      {memory && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: PANEL2, borderRadius: 12, padding: "10px 12px", marginBottom: 10 }}>
+          <span style={{ fontSize: 16 }}>🕰️</span>
+          <span style={{ fontFamily: body, fontSize: 13, color: CHALK, lineHeight: 1.4 }}>{memory.text}</span>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         <Avatar player={player} size={48} enlargeable />
         <div style={{ flex: 1 }}>
@@ -101,7 +114,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
             <h2 style={{ fontFamily: body, fontSize: 26, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.nick ? " \u201C" + player.nick + "\u201D" : ""}{player.last ? " " + player.last : ""}</h2>
             <LevelBadge level={player.level} />
           </div>
-          {(player.age || player.home) && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 3 }}>{[player.age ? player.age + " yrs" : null, player.home || null].filter(Boolean).join(" · ")}</div>}
+          {(player.age || player.home || tennisYears != null) && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 3 }}>{[player.age ? player.age + " yrs" : null, player.home || null, tennisYears != null ? "🎾 " + (tennisYears <= 0 ? "started this year" : tennisYears + " year" + (tennisYears === 1 ? "" : "s") + " playing") : null].filter(Boolean).join(" · ")}</div>}
           {player.inactive ? (
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginTop: 3 }}>Not active in this league · record kept</div>
           ) : r.gp > 0 ? (

@@ -17,7 +17,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   const [showMore, setShowMore] = useState(false);
   const [notes, setNotes] = useState(""); const [venue, setVenue] = useState(""); const [category, setCategory] = useState("");
   const [w1, setW1] = useState(""); const [dr, setDr] = useState(""); const [w2, setW2] = useState("");
-  const [fromY, setFromY] = useState(""); const [toY, setToY] = useState("");
+  const [fromDate, setFromDate] = useState(""); const [toDate, setToDate] = useState(todayStr());
   const [confirmClear, setConfirmClear] = useState(false);
   const [clearYear, setClearYear] = useState<"all" | number>("all");
   const fullName = (p: any) => p ? p.name + (p.last ? " " + p.last : "") : null;
@@ -43,7 +43,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     if (p1 === p2) return setErr("Pick two different players.");
     const W = parseInt(w1) || 0, Dn = parseInt(dr) || 0, L = parseInt(w2) || 0;
     if (W + Dn + L === 0) return setErr("Enter at least one result.");
-    setErr(""); onSaveMany(buildBulk(p1, p2, W, Dn, L, fromY, toY));
+    setErr(""); onSaveMany(buildBulk(p1, p2, W, Dn, L, fromDate, toDate));
   };
   const existingBetween = (matches || []).filter((m) => (m.p1 === p1 && m.p2 === p2) || (m.p1 === p2 && m.p2 === p1));
   const existingYears: number[] = (Array.from(new Set(existingBetween.map((m) => new Date(m.date).getFullYear()))) as number[]).sort((a, b) => b - a);
@@ -125,12 +125,12 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <div style={{ flex: 1 }}><Field label={n2 + " wins"}>{numIn(w2, setW2, "0")}</Field></div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <div style={{ flex: 1 }}><Field label="From year">{numIn(fromY, setFromY, "2016")}</Field></div>
-            <div style={{ flex: 1 }}><Field label="To year">{numIn(toY, setToY, "2020")}</Field></div>
+            <div style={{ flex: 1 }}><Field label="From date"><input type="date" value={fromDate} max={toDate || todayStr()} onChange={(e) => setFromDate(e.target.value)} style={{ ...input, colorScheme: "dark", boxSizing: "border-box" as const }} /></Field></div>
+            <div style={{ flex: 1 }}><Field label="To date"><input type="date" value={toDate} min={fromDate || undefined} max={todayStr()} onChange={(e) => setToDate(e.target.value)} style={{ ...input, colorScheme: "dark", boxSizing: "border-box" as const }} /></Field></div>
           </div>
           {err && <div style={{ color: CLAY, fontFamily: body, fontSize: 13, marginBottom: 10 }}>{err}</div>}
           <BigBtn onClick={submitBulk} color={BALL}>Add whole record</BigBtn>
-          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Enter a full past record in one go — e.g. you vs Cheese, 101–10 from 2016 to 2020. These go straight in as confirmed history, spread across the dates.</div>
+          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Enter a full past record in one go — e.g. you vs Cheese, 101–10 between two dates. These go straight in as confirmed history, spread evenly across that range — pick the exact months it happened in, not the whole year.</div>
         </>
       )}
     </div>
