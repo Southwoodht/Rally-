@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check, HelpCircle } from "lucide-react";
+import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, Check, HelpCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -15,6 +15,7 @@ import { MyProfile } from "@/components/profile/MyProfile";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { MatchDetail } from "@/components/games/MatchDetail";
 import { NotificationBell } from "@/components/layout/NotificationBell";
+import { Friends } from "@/components/social/Friends";
 import { LegacyProfile } from "@/components/profile/LegacyProfile";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
@@ -42,7 +43,7 @@ type LeagueData = {
 
 const emptyLeagueData: LeagueData = { players: [], matches: [], fixtures: [], posts: [], me: null };
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, displayName }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -464,6 +465,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
         {tab === "help" && <HelpGuide />}
+        {tab === "friends" && <SubHeader title="Friends" onBack={() => setTab("profile")} />}
+        {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} />}
       </div>
 
       {menuOpen && (
@@ -475,6 +478,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
             </div>
             <div style={listCard}>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>\u203A</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>\u203A</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>\u203A</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>\u203A</span></button>
               {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED }}>\u203A</span></button>}

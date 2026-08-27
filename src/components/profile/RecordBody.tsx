@@ -74,7 +74,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-        <Avatar player={player} size={48} />
+        <Avatar player={player} size={48} enlargeable />
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <h2 style={{ fontFamily: body, fontSize: 26, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.nick ? " \u201C" + player.nick + "\u201D" : ""}{player.last ? " " + player.last : ""}</h2>

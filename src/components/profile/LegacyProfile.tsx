@@ -47,7 +47,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-          <Avatar player={player} size={48} />
+          <Avatar player={player} size={48} enlargeable />
           <div>
             <h2 style={{ fontFamily: body, fontSize: 24, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.last ? " " + player.last : ""}</h2>
             {legacy.firstYear != null && <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}>{legacy.firstYear}–{legacy.lastYear}{legacy.activeThisYear ? <span style={{ color: BALL }}> · active</span> : null}</div>}

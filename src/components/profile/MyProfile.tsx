@@ -27,7 +27,7 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
   return (
     <div style={card}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-        <Avatar player={me} size={44} />
+        <Avatar player={me} size={44} enlargeable />
         <div>
           <div style={{ fontFamily: body, fontSize: 19, fontWeight: 800, color: CHALK }}>{me.name}{me.nick ? " \u201C" + me.nick + "\u201D" : ""}{me.last ? " " + me.last : ""}</div>
           <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>This is how you appear to everyone.</div>

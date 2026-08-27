@@ -102,7 +102,7 @@ export default function Dashboard({ session }: { session: Session }) {
           </div>
           <button onClick={() => setView(leagues.length > 1 ? "picker" : "empty")} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Leagues</button>
         </div>
-        <RallyApp leagueId={active.id} leagueName={active.name} leagueRole={active.role} displayName={displayName} />
+        <RallyApp leagueId={active.id} leagueName={active.name} leagueRole={active.role} leagueJoinCode={active.join_code} displayName={displayName} />
       </div>
     );
   }
