@@ -9,15 +9,31 @@ export function predictProb(a, b, matches, elo, players) {
   const nH2H = h2h.length;
   const h2hRate = wSum > 0 ? (aScore + 1) / (wSum + 2) : 0.5;
   const h2hWeight = (Math.min(nH2H, 6) / 6) * 0.45;
+  const find = (id) => (players || []).find((p) => p.id === id);
+  // Recent form is only meaningful relative to who it was against — beating
+  // weaker players over and over says little about how you'll do against
+  // someone tougher. Each result is weighted by the level gap (opponent
+  // minus you, at the time) as well as recency, so a win over someone above
+  // you counts for more than a win over someone well below you, and vice
+  // versa for a loss. Unrated matches fall back to an even weight.
   const formRate = (pid) => {
     const gs = matches.filter((m) => m.status !== "pending" && (m.p1 === pid || m.p2 === pid)).sort((x, y) => y.date - x.date).slice(0, 8);
-    let sc = 0, n = 0; gs.forEach((m) => { if (m.winner === "draw") sc += 0.5; else { const won = (m.winner === "p1" && m.p1 === pid) || (m.winner === "p2" && m.p2 === pid); sc += won ? 1 : 0; } n++; });
-    return n > 0 ? (sc + 1) / (n + 2) : 0.5;
+    const me = find(pid);
+    let sc = 0, wSum = 0;
+    gs.forEach((m, i) => {
+      const oppId = m.p1 === pid ? m.p2 : m.p1;
+      const myLv = levelVal(levelAt(me, m.date));
+      const oppLv = levelVal(levelAt(find(oppId), m.date));
+      const gap = myLv != null && oppLv != null ? Math.max(-3, Math.min(3, oppLv - myLv)) : 0;
+      const w = Math.pow(0.85, i) * Math.pow(1.15, gap);
+      let s; if (m.winner === "draw") s = 0.5; else { const won = (m.winner === "p1" && m.p1 === pid) || (m.winner === "p2" && m.p2 === pid); s = won ? 1 : 0; }
+      sc += w * s; wSum += w;
+    });
+    return wSum > 0 ? (sc + 1) / (wSum + 2) : 0.5;
   };
   const fA = formRate(a), fB = formRate(b);
   const formExp = (fA + fB) > 0 ? fA / (fA + fB) : 0.5;
   const formWeight = 0.15;
-  const find = (id) => (players || []).find((p) => p.id === id);
   const lvA = levelVal(levelAt(find(a), Date.now()));
   const lvB = levelVal(levelAt(find(b), Date.now()));
   const haveLevels = lvA != null && lvB != null;
