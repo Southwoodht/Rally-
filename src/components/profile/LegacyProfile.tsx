@@ -4,6 +4,7 @@ import { ClaimLegacyFactForm } from "@/components/profile/ClaimLegacyFactForm";
 import { Avatar } from "@/components/ui/Avatar";
 import { Stat } from "@/components/ui/atoms";
 import { computeLegacyProfile } from "@/core/legacy";
+import { yearOf } from "@/core/levels";
 import { fmtDate } from "@/lib/format";
 import { listMyTrophies, Trophy } from "@/lib/trophies";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, mono } from "@/lib/theme";
@@ -16,7 +17,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
   // The onboarding "when did you start playing?" year is a player-reported
   // fact — it can predate Rally's own records entirely. Never conflated with
   // firstYear below, which is only ever what Rally actually has a match for.
-  const reportedStart: number | null = player.levelHistory?.[0]?.from ?? null;
+  const reportedStart: number | null = yearOf(player.levelHistory?.[0]?.from ?? null);
   const isOwn = player.id === meId;
   const [startClaim, setStartClaim] = useState<Trophy | null>(null);
   const [claiming, setClaiming] = useState(false);

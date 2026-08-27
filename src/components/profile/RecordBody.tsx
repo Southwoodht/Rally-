@@ -10,7 +10,7 @@ import { VerifiedTrophies } from "@/components/profile/VerifiedTrophies";
 import { Empty, Stat, StreakTile } from "@/components/ui/atoms";
 import { START_ELO } from "@/core/constants";
 import { computeStats } from "@/core/elo";
-import { levelAt, levelVal } from "@/core/levels";
+import { levelAt, levelVal, yearOf } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { computeRivalries } from "@/core/rivalries";
@@ -52,7 +52,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   // Player-reported, from onboarding's "when did you start playing?" — not
   // Rally's own records, which is why LegacyProfile keeps it separately
   // labelled from firstYear elsewhere. Just a nice, low-stakes fact here.
-  const tennisStart: number | null = player.levelHistory?.[0]?.from ?? null;
+  const tennisStart = yearOf(player.levelHistory?.[0]?.from ?? null);
   const tennisYears = tennisStart != null ? new Date().getFullYear() - tennisStart : null;
   const r = activeWdl[player.id] || { w: 0, d: 0, l: 0, gp: 0 };
   const rank = ranked.findIndex((p) => p.id === player.id) + 1;

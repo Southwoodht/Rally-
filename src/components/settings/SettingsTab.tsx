@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
+import { startIndex } from "@/core/levels";
 import { fmtDate, uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput, mono } from "@/lib/theme";
 
@@ -25,7 +26,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
   const setLevel = (id, cat, sub) => setPlayers(players.map((p) => p.id === id ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
   const setField = (id, key, val) => setPlayers(players.map((p) => p.id === id ? { ...p, [key]: val } : p));
   const setAvatar = (id, av) => setPlayers(players.map((p) => p.id === id ? { ...p, avatar: av } : p));
-  const addPeriod = (id, per) => setPlayers(players.map((p) => p.id === id ? { ...p, levelHistory: [...(p.levelHistory || []), per].sort((a, b) => (a.from || 0) - (b.from || 0)) } : p));
+  const addPeriod = (id, per) => setPlayers(players.map((p) => p.id === id ? { ...p, levelHistory: [...(p.levelHistory || []), per].sort((a, b) => startIndex(a.from) - startIndex(b.from)) } : p));
   const removePeriod = (id, i) => setPlayers(players.map((p) => p.id === id ? { ...p, levelHistory: (p.levelHistory || []).filter((_, idx) => idx !== i) } : p));
   return (
     <div style={card}>
