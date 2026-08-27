@@ -200,7 +200,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
               <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 4 }}>Winning records</div>
               {winningVs.map((x) => (
                 <div key={x.oid}>
-                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={BALL} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
+                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={BALL} level={byId[x.oid]?.level} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
                   {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
                 </div>
               ))}
@@ -211,7 +211,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
               <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, margin: "12px 0 4px" }}>Even</div>
               {evenVs.map((x) => (
                 <div key={x.oid}>
-                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={MUTED} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
+                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={MUTED} level={byId[x.oid]?.level} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
                   {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
                 </div>
               ))}
@@ -222,7 +222,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
               <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: CLAY, margin: "12px 0 4px" }}>Losing records</div>
               {losingVs.map((x) => (
                 <div key={x.oid}>
-                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={CLAY} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
+                  <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={CLAY} level={byId[x.oid]?.level} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
                   {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
                 </div>
               ))}
