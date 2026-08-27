@@ -1,8 +1,12 @@
 import { D, uid } from "@/lib/format";
 
 export function buildBulk(p1, p2, w, d, l, fromY, toY) {
-  const start = fromY ? D(fromY + "-01-01") : Date.now() - 86400000 * 365;
-  const end = toY ? D(toY + "-12-31") : Date.now();
+  const now = Date.now();
+  const start = Math.min(fromY ? D(fromY + "-01-01") : now - 86400000 * 365, now);
+  // Never generate a match dated after today — a bulk range ending "this
+  // year" shouldn't be able to invent results for months that haven't
+  // happened yet.
+  const end = Math.min(toY ? D(toY + "-12-31") : now, now);
   const results: Array<"p1" | "draw" | "p2"> = [];
   for (let i = 0; i < w; i++) results.push("p1");
   for (let i = 0; i < d; i++) results.push("draw");
