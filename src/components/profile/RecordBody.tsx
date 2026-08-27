@@ -255,7 +255,7 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
   const selfPlayer = (players || []).find((p: any) => p.id === playerId);
   const oppPlayer = (players || []).find((p: any) => p.id === (m.p1 === playerId ? m.p2 : m.p1));
   const needsApproval = !!(oppPlayer && oppPlayer.auth_id);
-  const rating = res !== "D" ? ratingForMatch(selfPlayer, oppPlayer, m.date, res === "W") : null;
+  const rating = ratingForMatch(selfPlayer, oppPlayer, m.date);
 
   const beginEdit = () => {
     setDraft({ date: new Date(m.date).toISOString().slice(0, 10), score: m.score || "", result: res });
@@ -305,26 +305,26 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
 
 function DifficultyKey() {
   const rows: Array<[string, string]> = [
-    ["🥇", "Big win — well above your level at the time"],
-    ["🔵", "Strong win — above your level"],
-    ["🟢", "Fair win — about your level"],
-    ["🟡", "Solid, but expected — below your level"],
-    ["🔴", "Doesn't say much — a win well below your level, or a loss to someone well below you"],
+    ["🥇", "Opponent well above your level at the time"],
+    ["🔵", "Opponent above your level"],
+    ["🟢", "Same level as you"],
+    ["🟡", "Opponent below your level"],
+    ["🔴", "Opponent well below your level"],
   ];
   return (
     <div style={{ background: PANEL2, borderRadius: 12, padding: "12px 14px", marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 8, lineHeight: 1.45 }}>
+        The colour is how tough the opponent was, at their level then — not whether you won. Beating or losing to someone is a different story depending who they were.
+      </div>
       <div style={{ display: "grid", gap: 4, marginBottom: 8 }}>
         {rows.map(([icon, text]) => (
           <div key={icon} style={{ display: "flex", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
             <span>{icon}</span><span style={{ color: MUTED }}>{text}</span>
           </div>
         ))}
-        <div style={{ display: "flex", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
-          <span style={{ width: 15, textAlign: "center" }}>•</span><span style={{ color: MUTED }}>A loss, not highlighted — losing to someone above you is how you climb, not a bad result</span>
-        </div>
       </div>
       <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
-        A respectable record leans 🥇🔵🟢 — mostly wins above or around your level. A pile of 🟡 wins doesn't prove much on its own, and 🔴 is the only one worth questioning.
+        A respectable record is mostly 🟢🔵, maybe some 🥇, with the odd 🟡. Wall-to-wall 🔴 — win or lose — means the competition wasn't testing them.
       </div>
     </div>
   );
@@ -352,7 +352,7 @@ function VsMatches({ oid, matches, resultFor, onOpen, selfPlayer, oppPlayer }: a
     <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "8px 10px", margin: "2px 0 8px" }}>
       {matches.length ? matches.map((m, i) => {
         const res = resultFor(m);
-        const rating = res !== "D" ? ratingForMatch(selfPlayer, oppPlayer, m.date, res === "W") : null;
+        const rating = ratingForMatch(selfPlayer, oppPlayer, m.date);
         return (
           <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
