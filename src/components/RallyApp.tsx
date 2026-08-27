@@ -30,6 +30,7 @@ import { uid, winPct } from "@/lib/format";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, wrap } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
+import { fetchLeagueData, insertPlayerRow, syncFixtures, syncMatches, syncPlayers, syncPosts, updatePlayerRow } from "@/lib/leagueData";
 
 type LeagueData = {
   players: any[];
@@ -80,7 +81,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
     let next: LeagueData;
     if (chosenPlayer) {
       // Explicit, user-picked claim — never inferred from a name match alone.
-      next = { ...data, players: (data.players || []).map((p) => p.id === chosenPlayer.id ? { ...p, auth_id: authId, claimedAt: Date.now() } : p), me: chosenPlayer.id };
+      const patch = { auth_id: authId, claimedAt: Date.now() };
+      next = { ...data, players: (data.players || []).map((p) => p.id === chosenPlayer.id ? { ...p, ...patch } : p), me: chosenPlayer.id };
+      try { await updatePlayerRow(chosenPlayer.id, { ...chosenPlayer, ...patch }); } catch (e) { console.error("Failed to persist claim", e); }
     } else {
       const init = { id: uid(), name: nameToUse || "player", level: null, avatar: null, auth_id: authId };
       next = { ...data, players: [...(data.players || []), init], me: init.id };
@@ -89,8 +92,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
           window.localStorage.setItem('rally:diag_seed', JSON.stringify({ init, league: cur }));
         }
       } catch {}
+      try { await insertPlayerRow(cur, init); } catch (e) { console.error("Failed to persist new player", e); }
     }
-    try { await storage.set(gkey(cur), JSON.stringify(next), true); } catch {}
     setClaimUI(null);
     setDeclinedCandidate(false);
     setLoading(true);
@@ -114,9 +117,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
       // whatever's actually there.
       let data: LeagueData;
       try {
-        const r = await storage.get(gkey(cur), true);
-        const loaded = r ? JSON.parse(r.value) : null;
-        data = (loaded && Array.isArray(loaded.players) && Array.isArray(loaded.matches)) ? loaded as LeagueData : { ...emptyLeagueData };
+        const fetched = await fetchLeagueData(cur);
+        data = { ...fetched, me: null };
       } catch (e) {
         console.error("Failed to load league data — refusing to seed a fresh league over it.", e);
         setLoadError(true);
@@ -157,7 +159,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
       const init = { id: uid(), name: nameToUse || "player", level: null, avatar: null, auth_id: authId };
       data.players = [...(data.players || []), init];
       data.me = init.id;
-      try { await storage.set(gkey(cur), JSON.stringify(data), true); } catch {}
+      try { await insertPlayerRow(cur, init); } catch (e) { console.error("Failed to persist new player", e); }
       try {
         if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
           window.localStorage.setItem('rally:diag_seed', JSON.stringify({ init, league: cur }));
@@ -175,11 +177,31 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2200); };
   const persistSettings = async (extra) => { try { await storage.set("settings_" + gid, JSON.stringify({ currentGroupId: gid, rankingMode, onboarded, ...extra }), true); } catch {} };
   const saveGroups = async (n) => { setGroups(n); try { await storage.set("groups_" + gid, JSON.stringify(n), true); } catch { flash("Couldn't save"); } };
-  const saveData = async (n) => { setGdata(n); try { await storage.set(gkey(gid), JSON.stringify(n), true); } catch { flash("Couldn't save"); } };
+  // Every mutation funnels through here. gdata is updated immediately for a
+  // responsive UI, then only the players/matches/fixtures/posts that
+  // actually differ from what we had a moment ago are synced to their
+  // tables — never a full-blob rewrite, so one bad save can only ever touch
+  // the rows it actually changed.
+  const saveData = async (n: LeagueData) => {
+    const prev = gdata;
+    setGdata(n);
+    if (!gid) return;
+    try {
+      await Promise.all([
+        syncPlayers(gid, prev.players, n.players),
+        syncMatches(gid, prev.matches, n.matches),
+        syncFixtures(gid, prev.fixtures || [], n.fixtures || []),
+        syncPosts(gid, prev.posts || [], n.posts || []),
+      ]);
+    } catch (e) {
+      console.error(e);
+      flash("Couldn't save");
+    }
+  };
   const importHistoricalResults = async () => {
     try {
-      const result = await importHistoricalMatches(leagueId, { userName: displayName || me?.name || "Sam" });
-      await saveData({ ...gdata, players: result.data.players, matches: result.data.matches, me: result.data.me || gdata.me, fixtures: result.data.fixtures || gdata.fixtures, posts: result.data.posts || gdata.posts });
+      const result = await importHistoricalMatches({ players: gdata.players, matches: gdata.matches }, { userName: displayName || me?.name || "Sam" });
+      await saveData({ ...gdata, players: result.data.players, matches: result.data.matches, fixtures: gdata.fixtures, posts: gdata.posts });
       flash(`${result.imported} historical matches imported${result.skipped ? `, ${result.skipped} already present` : ""}`);
     } catch (error) {
       console.error(error);
@@ -437,7 +459,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, displayName
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
-        {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} />}
+        {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}

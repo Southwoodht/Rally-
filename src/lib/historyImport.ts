@@ -1,6 +1,4 @@
-import { gkey } from "@/data/seed";
 import { uid } from "@/lib/format";
-import { storage } from "@/lib/storage";
 
 export interface HistoricalImportMatch {
   date: string;
@@ -99,13 +97,11 @@ export const detectDuplicateNamedPlayers = (players: any[]): DuplicateNameGroup[
   return duplicates;
 };
 
-export async function importHistoricalMatches(leagueId: string, options?: { userName?: string }) {
-  const storageKey = gkey(leagueId);
-  const record = await storage.get(storageKey, true);
-  let data: any = record ? JSON.parse(record.value) : null;
-  if (!data || !Array.isArray(data.players) || !Array.isArray(data.matches)) {
-    data = { players: [], matches: [], me: null, fixtures: [], posts: [] };
-  }
+export async function importHistoricalMatches(current: { players: any[]; matches: any[] }, options?: { userName?: string }) {
+  const data: any = {
+    players: Array.isArray(current?.players) ? [...current.players] : [],
+    matches: Array.isArray(current?.matches) ? [...current.matches] : [],
+  };
 
   // Detection only — never rewrites a player ID or a match. If this finds
   // anything, it's surfaced on the result for a human to review; nothing
@@ -142,7 +138,6 @@ export async function importHistoricalMatches(leagueId: string, options?: { user
   };
 
   const mePlayer = ensurePlayer(options?.userName || "Sam", "🟢", "sam");
-  if (!data.me) data.me = mePlayer.id;
 
   PLAYER_DEFS.forEach((def) => {
     ensurePlayer(def.name, def.avatar, def.preferredId);
@@ -192,6 +187,5 @@ export async function importHistoricalMatches(leagueId: string, options?: { user
 
   data.players = existingPlayers;
   data.matches = data.matches.sort((a: any, b: any) => a.date - b.date);
-  await storage.set(storageKey, JSON.stringify(data), true);
   return { imported, skipped, data, duplicateNamedPlayers };
 }

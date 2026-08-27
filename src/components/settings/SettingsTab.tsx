@@ -9,7 +9,7 @@ import { LEVELS, SUBS } from "@/core/constants";
 import { fmtDate, uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput, mono } from "@/lib/theme";
 
-export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash }: any) {
+export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId }: any) {
   const [name, setName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState(null);
   const [fxP1, setFxP1] = useState("");
@@ -112,10 +112,14 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
         </div>
         {players.map((p) => {
           const played = matches.filter((m) => m.p1 === p.id || m.p2 === p.id).length;
+          // Once a player is claimed by a real account, their profile is
+          // theirs — nobody else can edit it, only view it. The shared
+          // match/competition data below (in Games) is unaffected.
+          const locked = !!p.auth_id && p.id !== meId;
           return (
             <div key={p.id} style={{ padding: "10px 0", borderTop: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <button onClick={() => setAvOpen(avOpen === p.id ? null : p.id)} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}><Avatar player={p} size={36} /></button>
+                <button onClick={() => !locked && setAvOpen(avOpen === p.id ? null : p.id)} style={{ background: "transparent", border: "none", padding: 0, cursor: locked ? "default" : "pointer" }}><Avatar player={p} size={36} /></button>
                 {p.auth_id ? (
                   <span style={{ flex: 1, fontFamily: body, color: CHALK, fontSize: 15 }}>{p.name}{p.last ? " " + p.last : ""}<span style={{ color: MUTED, fontSize: 11, marginLeft: 8, fontFamily: body, fontWeight: 600 }}>🔒 account</span></span>
                 ) : (
@@ -123,7 +127,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
                 )}
                 <span style={{ color: MUTED, fontSize: 11, fontFamily: mono, marginRight: 2, whiteSpace: "nowrap" }}>{played} played</span>
                 <button onClick={() => setField(p.id, "inactive", !p.inactive)} title={p.inactive ? "Bring back into the league" : "Mark as not currently playing"} style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, background: "transparent", border: "none", borderRadius: 8, padding: "4px 7px", cursor: "pointer", color: p.inactive ? MUTED : BALL, marginRight: 6 }}>{p.inactive ? "Inactive" : "Active"}</button>
-                {confirmRemove === p.id ? (
+                {locked ? null : confirmRemove === p.id ? (
                   <span style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => remove(p.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: CLAY, border: "none", borderRadius: 8, padding: "5px 9px", cursor: "pointer" }}>{played > 0 ? "Remove + " + played + " games" : "Confirm"}</button>
                     <button onClick={() => setConfirmRemove(null)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 9px", cursor: "pointer" }}>Keep</button>
@@ -132,27 +136,36 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
                   <button onClick={() => setConfirmRemove(p.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: CLAY, background: "transparent", border: "none", borderRadius: 8, padding: "5px 9px", cursor: "pointer" }}>Remove</button>
                 )}
               </div>
-              {avOpen === p.id && (
+              {avOpen === p.id && !locked && (
                 <div style={{ padding: "4px 0 10px" }}>
                   <AvatarPicker value={p.avatar} onChange={(av) => setAvatar(p.id, av)} />
                 </div>
               )}
-              <div style={{ display: "flex", gap: 6 }}>
-                <input value={p.last || ""} onChange={(e) => setField(p.id, "last", e.target.value)} placeholder="Surname" style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }} />
-                <input value={p.age || ""} onChange={(e) => setField(p.id, "age", e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="Age" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
-                <input value={p.home || ""} onChange={(e) => setField(p.id, "home", e.target.value)} placeholder="Home ground" style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }} />
-              </div>
-              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                <input value={p.nick || ""} onChange={(e) => setField(p.id, "nick", e.target.value)} placeholder="Nickname (optional)" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
-                <button onClick={() => setField(p.id, "nick", NICKS[Math.floor(Math.random() * NICKS.length)])} title="Random nickname" style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 10px", color: BALL, boxSizing: "border-box" as const }}>&#127922;</button>
-                {p.nick ? <button onClick={() => setField(p.id, "nick", "")} style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 10px", color: MUTED, boxSizing: "border-box" as const }}>&#10005;</button> : null}
-              </div>
-              <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                <select value={p.level?.cat || ""} onChange={(e) => setLevel(p.id, e.target.value, p.level?.sub)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}><option value="">No level</option>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
-                <select value={p.level?.sub || "Medium"} disabled={!p.level} onChange={(e) => setLevel(p.id, p.level?.cat, e.target.value)} style={{ ...miniInput, flex: 1, opacity: p.level ? 1 : 0.4, boxSizing: "border-box" as const }}>{SUBS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
-              </div>
-              <button onClick={() => setTlOpen(tlOpen === p.id ? null : p.id)} style={{ marginTop: 8, fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "5px 9px", cursor: "pointer" }}>Level timeline{p.levelHistory?.length ? " (" + p.levelHistory.length + ")" : ""}</button>
-              {tlOpen === p.id && <TimelineEditor player={p} onAdd={(per) => addPeriod(p.id, per)} onRemove={(i) => removePeriod(p.id, i)} />}
+              {locked ? (
+                <div style={{ fontFamily: body, fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
+                  {[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}
+                  {p.level && <div>{p.level.cat} · {p.level.sub}</div>}
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input value={p.last || ""} onChange={(e) => setField(p.id, "last", e.target.value)} placeholder="Surname" style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }} />
+                    <input value={p.age || ""} onChange={(e) => setField(p.id, "age", e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="Age" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
+                    <input value={p.home || ""} onChange={(e) => setField(p.id, "home", e.target.value)} placeholder="Home ground" style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                    <input value={p.nick || ""} onChange={(e) => setField(p.id, "nick", e.target.value)} placeholder="Nickname (optional)" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
+                    <button onClick={() => setField(p.id, "nick", NICKS[Math.floor(Math.random() * NICKS.length)])} title="Random nickname" style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 10px", color: BALL, boxSizing: "border-box" as const }}>&#127922;</button>
+                    {p.nick ? <button onClick={() => setField(p.id, "nick", "")} style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 10px", color: MUTED, boxSizing: "border-box" as const }}>&#10005;</button> : null}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                    <select value={p.level?.cat || ""} onChange={(e) => setLevel(p.id, e.target.value, p.level?.sub)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}><option value="">No level</option>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
+                    <select value={p.level?.sub || "Medium"} disabled={!p.level} onChange={(e) => setLevel(p.id, p.level?.cat, e.target.value)} style={{ ...miniInput, flex: 1, opacity: p.level ? 1 : 0.4, boxSizing: "border-box" as const }}>{SUBS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+                  </div>
+                  <button onClick={() => setTlOpen(tlOpen === p.id ? null : p.id)} style={{ marginTop: 8, fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "5px 9px", cursor: "pointer" }}>Level timeline{p.levelHistory?.length ? " (" + p.levelHistory.length + ")" : ""}</button>
+                  {tlOpen === p.id && <TimelineEditor player={p} onAdd={(per) => addPeriod(p.id, per)} onRemove={(i) => removePeriod(p.id, i)} />}
+                </>
+              )}
             </div>
           );
         })}
