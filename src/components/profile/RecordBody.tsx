@@ -14,6 +14,7 @@ import { levelAt, levelVal } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { computeRivalries } from "@/core/rivalries";
+import { ratingForMatch } from "@/core/difficulty";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
 import { D, fmtDate, winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
@@ -152,7 +153,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           {rivalries.slice(0, 3).map((rv) => (
             <div key={rv.oid}>
               <RivalryRow rivalry={rv} name={nm(rv.oid)} onClick={() => setOpenVs(openVs === rv.oid ? null : rv.oid)} />
-              {openVs === rv.oid && <VsMatches oid={rv.oid} matches={vsMatches(rv.oid)} resultFor={resultFor} onOpen={onOpen} />}
+              {openVs === rv.oid && <VsMatches oid={rv.oid} matches={vsMatches(rv.oid)} resultFor={resultFor} onOpen={onOpen} selfPlayer={player} oppPlayer={byId[rv.oid]} />}
             </div>
           ))}
         </div>
@@ -201,7 +202,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
               {winningVs.map((x) => (
                 <div key={x.oid}>
                   <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={BALL} level={byId[x.oid]?.level} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
-                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
+                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} selfPlayer={player} oppPlayer={byId[x.oid]} />}
                 </div>
               ))}
             </div>
@@ -212,7 +213,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
               {evenVs.map((x) => (
                 <div key={x.oid}>
                   <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={MUTED} level={byId[x.oid]?.level} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
-                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
+                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} selfPlayer={player} oppPlayer={byId[x.oid]} />}
                 </div>
               ))}
             </div>
@@ -223,7 +224,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
               {losingVs.map((x) => (
                 <div key={x.oid}>
                   <H2HRow name={nm(x.oid)} rec={recStr2(x)} yr={yrStr(x)} c={CLAY} level={byId[x.oid]?.level} onClick={() => setOpenVs(openVs === x.oid ? null : x.oid)} />
-                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} />}
+                  {openVs === x.oid && <VsMatches oid={x.oid} matches={vsMatches(x.oid)} resultFor={resultFor} onOpen={onOpen} selfPlayer={player} oppPlayer={byId[x.oid]} />}
                 </div>
               ))}
             </div>
@@ -246,8 +247,10 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
   const res = resultFor(m);
   const dv = activeDeltas ? activeDeltas[m.id]?.[playerId] : null;
   const canEdit = !!(onProposeEdit && meId && (m.p1 === meId || m.p2 === meId));
+  const selfPlayer = (players || []).find((p: any) => p.id === playerId);
   const oppPlayer = (players || []).find((p: any) => p.id === (m.p1 === playerId ? m.p2 : m.p1));
   const needsApproval = !!(oppPlayer && oppPlayer.auth_id);
+  const rating = res !== "D" ? ratingForMatch(selfPlayer, oppPlayer, m.date, res === "W") : null;
 
   const beginEdit = () => {
     setDraft({ date: new Date(m.date).toISOString().slice(0, 10), score: m.score || "", result: res });
@@ -287,7 +290,7 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
       <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
       <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
         <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
-        <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+        <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{rating && <span style={{ fontFamily: body }}> · {rating.icon} {rating.note}</span>}</div>
       </button>
       {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
       {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
@@ -312,15 +315,16 @@ function RivalryRow({ rivalry, name, onClick }: any) {
   );
 }
 
-function VsMatches({ oid, matches, resultFor, onOpen }: any) {
+function VsMatches({ oid, matches, resultFor, onOpen, selfPlayer, oppPlayer }: any) {
   return (
     <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "8px 10px", margin: "2px 0 8px" }}>
       {matches.length ? matches.map((m, i) => {
         const res = resultFor(m);
+        const rating = res !== "D" ? ratingForMatch(selfPlayer, oppPlayer, m.date, res === "W") : null;
         return (
           <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
             <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}{rating && <span style={{ fontFamily: body }}> · {rating.icon} {rating.note}</span>}</span>
             <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
           </button>
         );

@@ -1,18 +1,21 @@
 "use client";
 import React from "react";
-import { LevelBadge } from "@/components/ui/LevelBadge";
+import { shortTier } from "@/lib/format";
 import { CHALK, MUTED, body, mono } from "@/lib/theme";
 
-// `level` is the opponent's level right now, not at the time of those
-// matches — the point is judging the record against who they are today
-// (a winning record against someone now Advanced reads differently than
-// against someone still Beginner), same idea Compare already shows.
+// `level` is the opponent's level right now — just background on who they
+// are today, deliberately small and quiet. It says nothing about how hard
+// the wins in `rec` actually were, since that record can span matches from
+// years apart at very different levels — see the per-match rating instead
+// (core/difficulty.ts) for that, which uses their level at the time.
 export function H2HRow({ name, rec, yr, c, level, onClick }: any) {
   return (
-    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", width: "100%", background: "transparent", border: "none", borderBottom: "none", cursor: "pointer", textAlign: "left" }}>
-      <span style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{name}</span>
-      {level && <LevelBadge level={level} small />}
-      <span style={{ marginLeft: "auto", fontFamily: mono, fontSize: 13, fontWeight: 700, color: c }}>{rec}</span>
+    <button onClick={onClick} style={{ display: "flex", alignItems: "center", padding: "7px 0", width: "100%", background: "transparent", border: "none", borderBottom: "none", cursor: "pointer", textAlign: "left" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{name}</div>
+        {level && <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 1 }}>currently {shortTier(level)}</div>}
+      </div>
+      <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: c }}>{rec}</span>
       <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, width: 78, textAlign: "right" }}>{yr}</span>
       <span style={{ fontFamily: mono, fontSize: 12, color: MUTED }}>›</span>
     </button>
