@@ -71,6 +71,19 @@ export async function listOutgoingRequests(): Promise<FriendWithProfile[]> {
   return withOtherProfiles((rows as FriendRow[]) || [], myId);
 }
 
+// The single relationship row (in either direction) between the current
+// user and one other account, or null if there isn't one yet.
+export async function getFriendshipWith(otherId: string): Promise<FriendRow | null> {
+  if (!supabase) return null;
+  const myId = await currentUserId();
+  if (!myId) return null;
+  const rows = await run(
+    supabase.from("friends").select("*").or(`and(requester_id.eq.${myId},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${myId})`),
+    "checking friendship status",
+  );
+  return ((rows as FriendRow[]) || [])[0] || null;
+}
+
 export async function sendFriendRequest(addresseeId: string): Promise<void> {
   if (!supabase) return;
   const myId = await currentUserId();

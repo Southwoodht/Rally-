@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { H2HRow } from "@/components/profile/H2HRow";
 import { Avatar } from "@/components/ui/Avatar";
 import { FormRow } from "@/components/ui/FormRow";
@@ -14,10 +14,29 @@ import { levelAt, levelVal } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { computeRivalries } from "@/core/rivalries";
+import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
 import { D, fmtDate, winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
 
-export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, meId, onProposeEdit, onOpenMatch, initialYear }: any) {
+// Only ever rendered for someone else's claimed profile, never your own.
+// Friendship is between accounts (auth ids), not league players, so this
+// looks nothing up from the league's player list.
+function FriendAction({ theirAuthId, myAuthId }: { theirAuthId: string; myAuthId: string }) {
+  const [row, setRow] = useState<FriendRow | null | "loading">("loading");
+  const load = () => { setRow("loading"); getFriendshipWith(theirAuthId).then(setRow).catch(() => setRow(null)); };
+  useEffect(load, [theirAuthId, myAuthId]);
+
+  if (row === "loading") return null;
+  const btn = (label: string, onClick: () => void, color = BALL, textColor = COURT) => (
+    <button onClick={onClick} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: textColor, background: color, border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}>{label}</button>
+  );
+  if (!row) return btn("Add friend", async () => { try { await sendFriendRequest(theirAuthId); load(); } catch {} });
+  if (row.status === "accepted") return btn("Friends ✓", async () => { try { await removeFriendship(row.id); load(); } catch {} }, PANEL2, CHALK);
+  if (row.requester_id === myAuthId) return btn("Request sent", async () => { try { await removeFriendship(row.id); load(); } catch {} }, PANEL2, MUTED);
+  return btn("Accept friend request", async () => { try { await acceptFriendRequest(row.id); load(); } catch {} });
+}
+
+export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, meId, myAuthId, onProposeEdit, onOpenMatch, initialYear }: any) {
   const [yr, setYr] = useState<"all" | number>(initialYear ?? "all");
   const [showSeason, setShowSeason] = useState(false);
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
@@ -75,7 +94,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         <Avatar player={player} size={48} enlargeable />
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <h2 style={{ fontFamily: body, fontSize: 26, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.nick ? " \u201C" + player.nick + "\u201D" : ""}{player.last ? " " + player.last : ""}</h2>
             <LevelBadge level={player.level} />
@@ -89,6 +108,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
             <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}>Unranked</div>
           )}
         </div>
+        {player.auth_id && myAuthId && player.auth_id !== myAuthId && <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />}
       </div>
       {showElo && yr === "all" && r.gp > 0 && !player.inactive && (isTop || (above && gap !== null)) && (
         <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 4, fontFamily: body, fontSize: 13, color: CHALK }}>

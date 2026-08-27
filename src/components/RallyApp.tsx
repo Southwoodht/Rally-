@@ -63,6 +63,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [claimUI, setClaimUI] = useState<{ candidate: any; others: any[]; authId: string; nameToUse: string; data: LeagueData; cur: any; gs: any[]; st: any } | null>(null);
   const [declinedCandidate, setDeclinedCandidate] = useState(false);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
+  const [myAuthId, setMyAuthId] = useState<string | null>(null);
 
   useEffect(() => {
     listMyAdminClubs().then((cs) => setIsClubAdmin(cs.length > 0)).catch(() => {});
@@ -140,6 +141,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           nameToUse = nameToUse || (u?.user_metadata?.full_name) || (u?.email?.split("@")[0]) || nameToUse;
         } catch {}
       }
+      setMyAuthId(authId);
 
       const alreadyLinked = authId ? (data.players || []).find((p) => p.auth_id === authId) : null;
       if (alreadyLinked) {
@@ -422,7 +424,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
-  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, meId, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, meId, myAuthId, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   const main = tab === "ladder" || tab === "add" || tab === "history" || tab === "profile";
 
   return (
@@ -456,7 +458,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onOpenMatch={setMatchDetailId} />}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => setTab("profile")} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} />}
-        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} />}
+        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
