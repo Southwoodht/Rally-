@@ -45,6 +45,41 @@ export function predictProb(a, b, matches, elo, players) {
   return Math.max(0.05, Math.min(0.95, p));
 }
 
+// Every distinct venue recorded on any match — used to offer a venue picker
+// only when there's actually more than one place people have logged games,
+// rather than cluttering Compare with a picker that has nothing to pick.
+export function venuesFor(matches: any[]): string[] {
+  const set = new Set<string>();
+  (matches || []).forEach((m) => { const v = (m.venue || "").trim(); if (v) set.add(v); });
+  return Array.from(set).sort((x, y) => x.localeCompare(y));
+}
+
+const MIN_VENUE_GAMES = 3;
+
+// A venue-conditioned prediction, deliberately conservative: it only nudges
+// away from the overall prediction once both players have a real sample of
+// games at that specific venue, and even then the venue signal is a minor
+// blend on top of the real prediction, never the whole story. With a thin
+// sample it just returns the ordinary prediction with confident: false, so
+// callers can say "not enough data" instead of inventing a home advantage.
+export function predictProbAtVenue(a, b, matches, elo, players, venue: string): { pct: number; confident: boolean } {
+  const basePct = Math.round(predictProb(a, b, matches, elo, players) * 100);
+  const v = (venue || "").trim().toLowerCase();
+  if (!v) return { pct: basePct, confident: false };
+  const atVenue = (pid) => (matches || []).filter((m) => m.status !== "pending" && (m.p1 === pid || m.p2 === pid) && (m.venue || "").trim().toLowerCase() === v);
+  const gA = atVenue(a), gB = atVenue(b);
+  if (gA.length < MIN_VENUE_GAMES || gB.length < MIN_VENUE_GAMES) return { pct: basePct, confident: false };
+  const rate = (games, pid) => {
+    let sc = 0;
+    games.forEach((m) => { if (m.winner === "draw") sc += 0.5; else { const won = (m.winner === "p1" && m.p1 === pid) || (m.winner === "p2" && m.p2 === pid); sc += won ? 1 : 0; } });
+    return (sc + 1) / (games.length + 2);
+  };
+  const rA = rate(gA, a), rB = rate(gB, b);
+  const venuePct = (rA + rB) > 0 ? (rA / (rA + rB)) * 100 : 50;
+  const blended = basePct * 0.7 + venuePct * 0.3;
+  return { pct: Math.round(Math.max(5, Math.min(95, blended))), confident: true };
+}
+
 // Raw factors behind predictProb, for building a human-readable explanation.
 // Deliberately returns numbers/facts only — no text — so callers can phrase it.
 export function explainFactors(a, b, matches, elo, players) {

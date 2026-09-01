@@ -4,7 +4,7 @@ import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
-import { explainFactors, predictProb } from "@/core/predict";
+import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/core/predict";
 import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput, mono } from "@/lib/theme";
@@ -12,6 +12,7 @@ import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput,
 export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreatePlayer }: any) {
   const [a, setA] = useState(""); const [b, setB] = useState("");
   const [yr, setYr] = useState("all");
+  const [venue, setVenue] = useState("");
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((x: any, y: any) => y - x), [matches]);
   const scoped = useMemo(() => yr === "all" ? matches : matches.filter((m) => new Date(m.date).getFullYear() === Number(yr)), [matches, yr]);
@@ -51,7 +52,9 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   const eloS = scopedStats.elo, wdlS = scopedStats.wdl;
   const ra = wdlS[a] || { w: 0, d: 0, l: 0, gp: 0 }, rb = wdlS[b] || { w: 0, d: 0, l: 0, gp: 0 };
   const sa = a ? statsFor(a) : null, sb = b ? statsFor(b) : null;
-  const pctA = a && b ? Math.round(predictProb(a, b, scoped, eloS, players) * 100) : 50;
+  const venues = useMemo(() => venuesFor(scoped), [scoped]);
+  const venuePrediction = useMemo(() => (a && b && venue ? predictProbAtVenue(a, b, scoped, eloS, players, venue) : null), [a, b, scoped, eloS, players, venue]);
+  const pctA = a && b ? (venuePrediction ? venuePrediction.pct : Math.round(predictProb(a, b, scoped, eloS, players) * 100)) : 50;
   const explanation = useMemo(() => {
     if (!a || !b) return "";
     const f = explainFactors(a, b, scoped, eloS, players);
@@ -84,10 +87,16 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
         <div style={{ flex: 1 }}><PlayerPicker value={a} onChange={setA} players={players} exclude={b} placeholder="Player A" onCreatePlayer={onCreatePlayer} /></div>
         <div style={{ flex: 1 }}><PlayerPicker value={b} onChange={setB} players={players} exclude={a} placeholder="Player B" onCreatePlayer={onCreatePlayer} /></div>
       </div>
-      <select value={yr} onChange={(e) => setYr(e.target.value)} style={{ ...miniInput, width: "100%", marginBottom: 16, boxSizing: "border-box" as const }}>
+      <select value={yr} onChange={(e) => setYr(e.target.value)} style={{ ...miniInput, width: "100%", marginBottom: venues.length ? 8 : 16, boxSizing: "border-box" as const }}>
         <option value="all">All-time</option>
         {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
       </select>
+      {venues.length > 0 && (
+        <select value={venue} onChange={(e) => setVenue(e.target.value)} style={{ ...miniInput, width: "100%", marginBottom: 16, boxSizing: "border-box" as const }}>
+          <option value="">Any venue</option>
+          {venues.map((v) => <option key={v} value={v}>At {v}</option>)}
+        </select>
+      )}
       {a && b ? (
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -108,6 +117,11 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
           })()}
           <div style={{ display: "flex", justifyContent: "space-between", fontFamily: mono, fontSize: 15, fontWeight: 700, marginBottom: 4 }}><span style={{ color: pctA >= 50 ? BALL : MUTED }}>{pctA}%</span><span style={{ fontSize: 9, color: MUTED, letterSpacing: 1, alignSelf: "center" }}>PREDICTED WIN</span><span style={{ color: pctA < 50 ? BALL : MUTED }}>{100 - pctA}%</span></div>
           <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: PANEL2, marginBottom: 10 }}><div style={{ width: pctA + "%", background: BALL }} /><div style={{ width: (100 - pctA) + "%", background: MUTED }} /></div>
+          {venue && (
+            <div style={{ fontFamily: body, fontSize: 12, color: venuePrediction?.confident ? BALL : MUTED, marginBottom: 12 }}>
+              {venuePrediction?.confident ? `Factoring in results at ${venue}.` : `Not enough games at ${venue} yet to say — showing the overall prediction.`}
+            </div>
+          )}
           {explanation && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.4, marginBottom: 16 }}>{explanation}</div>}
           <Row label="Head to head" av={aw + "-" + d + "-" + bw} bv={bw + "-" + d + "-" + aw} hiA={aw > bw} hiB={bw > aw} />
           <Row label="Record" av={ra.w + "-" + ra.d + "-" + ra.l} bv={rb.w + "-" + rb.d + "-" + rb.l} />
