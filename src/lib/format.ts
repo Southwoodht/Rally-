@@ -26,3 +26,13 @@ export const autoConfirmNote = (loggedAt: number | undefined | null) => {
   const hrs = Math.ceil(remaining / 3600000);
   return hrs <= 1 ? "auto-confirms within the hour" : hrs < 24 ? `auto-confirms in ~${hrs}h` : "auto-confirms in ~1 day";
 };
+
+// Same shape as autoConfirmNote, for a pending delete request instead of a
+// pending new result — "deletes automatically" rather than "confirms".
+export const deleteTimeoutNote = (requestedAt: number | undefined | null) => {
+  if (!requestedAt) return null;
+  const remaining = requestedAt + 24 * 3600 * 1000 - Date.now();
+  if (remaining <= 0) return "deleting automatically now…";
+  const hrs = Math.ceil(remaining / 3600000);
+  return hrs <= 1 ? "deletes automatically within the hour" : hrs < 24 ? `deletes automatically in ~${hrs}h` : "deletes automatically in ~1 day";
+};

@@ -333,11 +333,11 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
 
   return (
     <div style={{ display: "flex", alignItems: "stretch", gap: 10, padding: "11px 0" }}>
-      <div title={`Difficulty: ${rating.note}`} style={{ width: 4, borderRadius: 2, background: rating.color, flexShrink: 0 }} />
+      <div title={`Difficulty: ${rating.note}`} style={{ width: 6, borderRadius: 2, background: rating.color, flexShrink: 0 }} />
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
         <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
+          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
           <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
         </button>
         {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
@@ -364,7 +364,7 @@ function DifficultyKey() {
       <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
         {rows.map(([tier, text]) => (
           <div key={tier} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
-            <span style={{ width: 4, height: 14, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
+            <span style={{ width: 5, height: 14, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
             <span style={{ color: MUTED }}>{text}</span>
           </div>
         ))}
@@ -386,7 +386,7 @@ function QualityTierRow({ tier, matches, resultFor, nm, oppId, onOpenMatch, open
   return (
     <div>
       <button onClick={onClick} disabled={!matches.length} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "7px 0", cursor: matches.length ? "pointer" : "default", textAlign: "left" }}>
-        <span style={{ width: 4, height: 18, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
+        <span style={{ width: 6, height: 18, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
         <span style={{ fontFamily: body, fontSize: 14, color: matches.length ? CHALK : MUTED, flex: 1 }}>{TIER_LABEL[tier]}</span>
         <span style={{ fontFamily: mono, fontSize: 13, color: MUTED }}>{rec}</span>
       </button>
@@ -434,7 +434,7 @@ function VsMatches({ oid, matches, resultFor, onOpen, selfPlayer, oppPlayer }: a
         const rating = ratingForMatch(selfPlayer, oppPlayer, m.date);
         return (
           <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "stretch", width: "100%", background: "transparent", border: "none", padding: 0, borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
-            <span title={`Difficulty: ${rating.note}`} style={{ width: 3, borderRadius: 2, background: rating.color, flexShrink: 0, marginRight: 8 }} />
+            <span title={`Difficulty: ${rating.note}`} style={{ width: 4, borderRadius: 2, background: rating.color, flexShrink: 0, marginRight: 8 }} />
             <span style={{ display: "flex", alignItems: "center", flex: 1, padding: "5px 0" }}>
               <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
               <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}</span>

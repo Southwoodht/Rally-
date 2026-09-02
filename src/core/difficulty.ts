@@ -19,8 +19,11 @@ export const TIER_COLOR: Record<Tier, string> = {
   silver: "#a7b4bf",
   blue: "#5b93c9",
   green: "#8fd19e",
-  orange: "#cb6d47",
-  red: "#c94f4f",
+  // Orange pushed warmer/more amber and red pushed darker/cooler so the two
+  // separate by brightness as well as hue on a thin bar — the previous pair
+  // (#cb6d47 / #c94f4f) were nearly the same lightness and read as one blur.
+  orange: "#d98a2b",
+  red: "#9c3b4a",
   muted: "#5c6b7a",
 };
 

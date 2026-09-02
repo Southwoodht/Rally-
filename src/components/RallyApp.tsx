@@ -244,7 +244,29 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const approveEdit = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => { if (m.id !== id || !m.pendingEdit) return m; const { proposedBy, proposedAt, ...patch } = m.pendingEdit; return { ...m, ...patch, pendingEdit: null }; }) });
   const rejectEdit = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => m.id === id ? { ...m, pendingEdit: null } : m) });
   const deleteBetween = (a, b, year?: number) => saveData({ ...gdata, matches: gdata.matches.filter((m) => { const between = (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a); if (!between) return true; if (year == null) return false; return new Date(m.date).getFullYear() !== year; }) });
+  // The actual removal — used for the shell-opponent instant path below, for
+  // the other participant agreeing, for the 24h timeout sweep, and (via
+  // History's "Undo") for league staff correcting a match outright.
   const deleteMatch = (id) => saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== id) });
+  // Deleting a match you played: same shape as proposeEdit above — a real
+  // opponent has to agree (or 24h has to pass) before it actually goes,
+  // never a unilateral removal of a match that's on their record too.
+  const proposeDelete = (id) => {
+    const m = gdata.matches.find((x) => x.id === id);
+    if (!m) return;
+    const actingId = players.some((p) => p.id === gdata.me) ? gdata.me : null;
+    const oppId = actingId ? (m.p1 === actingId ? m.p2 : m.p2 === actingId ? m.p1 : null) : null;
+    const opp = oppId ? players.find((p) => p.id === oppId) : null;
+    if (opp && opp.auth_id) {
+      saveData({ ...gdata, matches: gdata.matches.map((x) => x.id === id ? { ...x, deleteRequestedBy: actingId, deleteRequestedAt: Date.now() } : x) });
+      flash("Delete requested — waiting for them to agree");
+    } else {
+      deleteMatch(id);
+      flash("Deleted");
+    }
+  };
+  const agreeDelete = (id) => deleteMatch(id);
+  const cancelDeleteRequest = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => m.id === id ? { ...m, deleteRequestedBy: null, deleteRequestedAt: null } : m) });
   const setMode = (m) => { setRankingMode(m); persistSettings({ rankingMode: m }); };
   const fixtures = gdata.fixtures || [];
   const generateFixtures = (rounds = 1) => {
@@ -319,6 +341,17 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     if (stale.length) {
       const ids = new Set(stale.map((m) => m.id));
       setMatches(matches.map((m) => (ids.has(m.id) ? { ...m, status: "confirmed" } : m)));
+    }
+  }, [matches]);
+  // A delete request goes through 24h after it's made, if nobody's acted on
+  // it — same silent-timeout shape as the pending-match sweep above.
+  useEffect(() => {
+    const DAY = 24 * 3600 * 1000;
+    const now = Date.now();
+    const due = matches.filter((m) => m.deleteRequestedAt && now - m.deleteRequestedAt > DAY);
+    if (due.length) {
+      const ids = new Set(due.map((m) => m.id));
+      setMatches(matches.filter((m) => !ids.has(m.id)));
     }
   }, [matches]);
   const confirmMatch = (id) => setMatches(matches.map((m) => m.id === id ? { ...m, status: "confirmed" } : m));
@@ -455,7 +488,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "ladder" && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <LeagueHome players={players} matches={matches} group={group} fixtures={fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
-        {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onOpenMatch={setMatchDetailId} />}
+        {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} />}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => setTab("profile")} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} />}
         {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} />}
@@ -491,7 +524,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       )}
       {profilePlayer && <ProfileModal player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)} />}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
-      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onDeleteMatch={deleteMatch} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
+      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && <GroupSheet groups={groups} currentId={gid} onSwitch={switchGroup} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
       <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />

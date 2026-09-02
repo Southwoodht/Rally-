@@ -90,6 +90,8 @@ const matchToRow = (leagueId: string, m: any) => ({
   photo_url: m.photoUrl ?? null,
   category: m.category ?? null,
   pending_edit: m.pendingEdit ?? null,
+  delete_requested_by: m.deleteRequestedBy ?? null,
+  delete_requested_at: m.deleteRequestedAt ? new Date(m.deleteRequestedAt).toISOString() : null,
 });
 
 const rowToMatch = (r: any) => ({
@@ -112,6 +114,8 @@ const rowToMatch = (r: any) => ({
   // entirely by this mapping before, which is why auto-confirm stopped
   // working the moment matches moved off the blob and onto this table.
   loggedAt: r.created_at ? new Date(r.created_at).getTime() : undefined,
+  deleteRequestedBy: r.delete_requested_by ?? undefined,
+  deleteRequestedAt: r.delete_requested_at ? new Date(r.delete_requested_at).getTime() : undefined,
 });
 
 const fixtureToRow = (leagueId: string, f: any) => ({

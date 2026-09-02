@@ -2,13 +2,13 @@
 import React, { useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { matchContext } from "@/core/rank";
-import { autoConfirmNote, fmtDate } from "@/lib/format";
+import { autoConfirmNote, deleteTimeoutNote, fmtDate } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
 
 const PHOTO_SIZE = 480;
 
-export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onDeleteMatch, groupName, season }: any) {
+export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, groupName, season }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
@@ -53,7 +53,16 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
     setDraft(null);
   };
 
-  const confirmedDelete = () => { onDeleteMatch && onDeleteMatch(match.id); onClose && onClose(); };
+  // needsApproval (above) already answers "does the other side have an
+  // account" — an instant delete has nothing left to show, so close; a
+  // requested one updates match.deleteRequestedBy and stays open to show it.
+  const confirmedDelete = () => {
+    onProposeDelete && onProposeDelete(match.id);
+    setConfirmDelete(false);
+    if (!needsApproval) onClose && onClose();
+  };
+  const iRequestedDelete = !!match.deleteRequestedBy && match.deleteRequestedBy === meId;
+  const theyRequestedDelete = !!match.deleteRequestedBy && match.deleteRequestedBy !== meId;
 
   const saveNotes = () => { if (notesDraft === null) return; onUpdateExtras && onUpdateExtras(match.id, { notes: notesDraft.trim() || undefined }); setNotesDraft(null); };
   const saveVenue = () => { if (venueDraft === null) return; onUpdateExtras && onUpdateExtras(match.id, { venue: venueDraft.trim() || undefined }); setVenueDraft(null); };
@@ -100,6 +109,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         <div style={{ textAlign: "center", fontFamily: mono, fontSize: 12, color: MUTED, marginBottom: 4 }}>{fmtDate(match.date)}{match.score ? " · " + match.score : ""}</div>
         {match.status === "pending" && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</div>}
         {match.pendingEdit && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Edit pending agreement</div>}
+        {match.deleteRequestedBy && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: CLAY, marginBottom: 10 }}>Delete pending agreement</div>}
 
         <Row label="Competition">{inSeason ? season.name : (groupName || "—")}</Row>
         {match.category && <Row label="Category">{match.category}</Row>}
@@ -197,19 +207,32 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
                   <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Cancel</button>
                 </div>
               </div>
+            ) : theyRequestedDelete ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                <div style={{ fontFamily: body, fontSize: 13, color: CHALK }}>{nm(match.p1 === meId ? match.p2 : match.p1)} wants to delete this match.{deleteTimeoutNote(match.deleteRequestedAt) ? ` If you don't respond, it ${deleteTimeoutNote(match.deleteRequestedAt)}.` : ""}</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => { onAgreeDelete && onAgreeDelete(match.id); onClose && onClose(); }} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Agree & delete</button>
+                  <button onClick={() => onCancelDelete && onCancelDelete(match.id)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Keep it</button>
+                </div>
+              </div>
+            ) : iRequestedDelete ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED }}>Waiting for them to agree{deleteTimeoutNote(match.deleteRequestedAt) ? ` — ${deleteTimeoutNote(match.deleteRequestedAt)}` : ""}</span>
+                <button onClick={() => onCancelDelete && onCancelDelete(match.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "6px 10px", cursor: "pointer", flexShrink: 0 }}>Cancel</button>
+              </div>
             ) : confirmDelete ? (
               <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Delete this match?</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>This match will be permanently deleted. This cannot be undone.</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{needsApproval ? "They have a Rally account — this needs their agreement, or 24h with no response." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Delete</button>
+                  <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>{needsApproval ? "Request delete" : "Delete"}</button>
                   <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Cancel</button>
                 </div>
               </div>
             ) : (
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Edit result</button>
-                {onDeleteMatch && <button onClick={() => setConfirmDelete(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: CLAY, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Delete match</button>}
+                {onProposeDelete && <button onClick={() => setConfirmDelete(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: CLAY, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Delete match</button>}
               </div>
             )}
           </div>

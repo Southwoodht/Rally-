@@ -4,10 +4,10 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
-import { autoConfirmNote, fmtDate, winnerLabel } from "@/lib/format";
+import { autoConfirmNote, deleteTimeoutNote, fmtDate, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, mono, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onOpenMatch }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch }: any) {
   const [scope, setScope] = useState("feed");
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<any>(null);
@@ -18,6 +18,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   const announcements = useMemo(() => (posts || []).filter((p) => p.isAnnouncement).sort((a, b) => b.date - a.date), [posts]);
   const pending = useMemo(() => matches.filter((m) => m.status === "pending").sort((a, b) => b.date - a.date), [matches]);
   const pendingEdits = useMemo(() => matches.filter((m) => m.pendingEdit).sort((a, b) => (b.pendingEdit?.proposedAt || 0) - (a.pendingEdit?.proposedAt || 0)), [matches]);
+  const pendingDeletes = useMemo(() => matches.filter((m) => m.deleteRequestedBy).sort((a, b) => (b.deleteRequestedAt || 0) - (a.deleteRequestedAt || 0)), [matches]);
   const confirmed = useMemo(() => matches.filter((m) => m.status !== "pending").sort((a, b) => b.date - a.date), [matches]);
   const events = useMemo(() => buildEvents(players, matches, null), [players, matches]);
   const feedList = useMemo(() => {
@@ -39,7 +40,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   };
   return (
     <div>
-      {(pending.length > 0 || pendingEdits.length > 0) && (
+      {(pending.length > 0 || pendingEdits.length > 0 || pendingDeletes.length > 0) && (
         <div style={{ marginBottom: 22 }}>
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 10 }}>Awaiting confirmation</div>
           {pending.map((m) => {
@@ -84,6 +85,29 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree…</span><button onClick={() => onRejectEdit(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
                 ) : (
                   <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree.</span>
+                )}
+              </div>
+            );
+          })}
+          {pendingDeletes.map((m) => {
+            const iAmIn = m.p1 === meId || m.p2 === meId;
+            const requestedByMe = m.deleteRequestedBy === meId;
+            const canRespond = iAmIn && !requestedByMe;
+            const other = nameOf(m.p1 === meId ? m.p2 : m.p1);
+            const note = deleteTimeoutNote(m.deleteRequestedAt);
+            return (
+              <div key={m.id + "-delete"} style={{ background: PANEL, border: "1px solid " + CLAY, borderRadius: 14, padding: 12, marginBottom: 8 }}>
+                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nameOf(m.deleteRequestedBy) || "Someone"} wants to delete a result:</div>
+                <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{winnerLabel(m, nameOf)}{m.score ? " · " + m.score : ""} · {fmtDate(m.date)}</div>
+                {canRespond ? (
+                  <>
+                    <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onAgreeDelete(m.id)} color={CLAY}>Agree & delete</BigBtn><BigBtn onClick={() => onCancelDelete(m.id)} color={BALL}>Keep it</BigBtn></div>
+                    {note && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
+                  </>
+                ) : requestedByMe ? (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onCancelDelete(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
+                ) : (
+                  <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree{note ? ` — ${note}` : "."}</span>
                 )}
               </div>
             );
