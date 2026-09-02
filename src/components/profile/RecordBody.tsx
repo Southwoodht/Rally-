@@ -14,7 +14,7 @@ import { levelAt, levelVal, yearOf } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { computeRivalries } from "@/core/rivalries";
-import { ratingForMatch } from "@/core/difficulty";
+import { ratingForMatch, ratingNow, TIER_COLOR, TIER_LABEL, TIER_RANK, type Tier } from "@/core/difficulty";
 import { findMemory } from "@/core/memories";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
 import { D, fmtDate, winPct } from "@/lib/format";
@@ -87,9 +87,11 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const h2h = {};
   chrono.forEach((m) => { const oid = oppId(m); const res = resultFor(m); const year = new Date(m.date).getFullYear(); if (!h2h[oid]) h2h[oid] = { w: 0, d: 0, l: 0, minY: year, maxY: year }; if (res === "W") h2h[oid].w++; else if (res === "L") h2h[oid].l++; else h2h[oid].d++; h2h[oid].minY = Math.min(h2h[oid].minY, year); h2h[oid].maxY = Math.max(h2h[oid].maxY, year); });
   const h2hList = Object.keys(h2h).map((oid) => ({ oid, ...h2h[oid], net: h2h[oid].w - h2h[oid].l }));
-  const winningVs = h2hList.filter((x) => x.net > 0).sort((a, b) => b.net - a.net);
-  const evenVs = h2hList.filter((x) => x.net === 0);
-  const losingVs = h2hList.filter((x) => x.net < 0).sort((a, b) => a.net - b.net);
+  const tierRankOf = (oid: string) => TIER_RANK[ratingNow(player, byId[oid]).tier];
+  const byToughness = (a: { oid: string }, b: { oid: string }) => tierRankOf(a.oid) - tierRankOf(b.oid);
+  const winningVs = h2hList.filter((x) => x.net > 0).sort(byToughness);
+  const evenVs = h2hList.filter((x) => x.net === 0).sort(byToughness);
+  const losingVs = h2hList.filter((x) => x.net < 0).sort(byToughness);
   const recStr2 = (x) => (x.d > 0 ? x.w + "-" + x.d + "-" + x.l : x.w + "-" + x.l);
   const yrStr = (x) => x.minY === x.maxY ? String(x.minY) : x.minY + "–" + x.maxY;
   const nm = (oid) => byId[oid]?.name ? (byId[oid].name + (byId[oid].last ? " " + byId[oid].last : "")) : nameOf(oid);
@@ -97,8 +99,23 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const ranks = rankMaps(players, matches, elo, wdl);
   const [openStreak, setOpenStreak] = useState<"now" | "best" | "tough" | null>(null);
   const [showKey, setShowKey] = useState(false);
+  const [showQuality, setShowQuality] = useState(false);
+  const [openTier, setOpenTier] = useState<Tier | null>(null);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   const memory = useMemo(() => findMemory(player.id, matches, nameOf), [player.id, matches, nameOf]);
+  // Same underlying matches as the winning/losing lists above — grouped by
+  // opponent difficulty tier instead of by opponent. Uses ratingForMatch (the
+  // opponent's level at the time), same as each individual bout row.
+  const qualityTiers: Tier[] = ["gold", "silver", "blue", "green", "orange", "red"];
+  const qualityGroups = useMemo(() => {
+    const g: Record<string, any[]> = {};
+    qualityTiers.forEach((t) => (g[t] = []));
+    chrono.forEach((m) => {
+      const rt = ratingForMatch(player, byId[oppId(m)], m.date).tier;
+      (g[rt] || (g[rt] = [])).push(m);
+    });
+    return qualityTiers.map((t) => ({ tier: t, matches: g[t] }));
+  }, [chrono, player]);
   return (
     <>
       {memory && (
@@ -245,6 +262,17 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           )}
         </div>
       )}
+      {r.gp > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <button onClick={() => setShowQuality(!showQuality)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "transparent", border: "none", padding: 0, marginBottom: showQuality ? 6 : 0, cursor: "pointer", textAlign: "left" }}>
+            <span style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED }}>Opponent quality</span>
+            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{showQuality ? "hide" : "show"}</span>
+          </button>
+          {showQuality && qualityGroups.map(({ tier, matches: tm }) => (
+            <QualityTierRow key={tier} tier={tier} matches={tm} resultFor={resultFor} nm={nm} oppId={oppId} onOpenMatch={onOpenMatch} open={openTier === tier} onClick={() => setOpenTier(openTier === tier ? null : tier)} />
+          ))}
+        </div>
+      )}
       <VerifiedTrophies player={player} meId={meId} />
       {r.gp > 0 && <TrophyWall player={player} players={players} matches={matches} fixtures={fixtures} group={group} />}
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
@@ -304,41 +332,79 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "none" }}>
-      <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
-      <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-        <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
-        <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{rating && <span title={rating.note} style={{ marginLeft: 5 }}>{rating.icon}</span>}</div>
-      </button>
-      {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
-      {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
+    <div style={{ display: "flex", alignItems: "stretch", gap: 10, padding: "11px 0" }}>
+      <div title={`Difficulty: ${rating.note}`} style={{ width: 4, borderRadius: 2, background: rating.color, flexShrink: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+        <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
+        <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
+          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}</div>
+          <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+        </button>
+        {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
+        {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
+      </div>
     </div>
   );
 }
 
 function DifficultyKey() {
-  const rows: Array<[string, string]> = [
-    ["🥇", "Opponent well above your level at the time"],
-    ["🔵", "Opponent above your level"],
-    ["🟢", "Same level as you"],
-    ["🟡", "Opponent below your level"],
-    ["🔴", "Opponent well below your level"],
+  const rows: Array<[Tier, string]> = [
+    ["gold", "Opponent was 3+ levels above you at the time"],
+    ["silver", "Opponent was 2 levels above you"],
+    ["blue", "Opponent was 1 level above you"],
+    ["green", "Same level as you"],
+    ["orange", "Opponent was below your level"],
+    ["red", "Opponent was well below your level"],
   ];
   return (
     <div style={{ background: PANEL2, borderRadius: 12, padding: "12px 14px", marginBottom: 10 }}>
       <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 8, lineHeight: 1.45 }}>
-        The colour is how tough the opponent was, at their level then — not whether you won. Beating or losing to someone is a different story depending who they were.
+        The bar colour is how tough the opponent was, at their level then — not whether you won. Beating or losing to someone is a different story depending who they were.
       </div>
-      <div style={{ display: "grid", gap: 4, marginBottom: 8 }}>
-        {rows.map(([icon, text]) => (
-          <div key={icon} style={{ display: "flex", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
-            <span>{icon}</span><span style={{ color: MUTED }}>{text}</span>
+      <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
+        {rows.map(([tier, text]) => (
+          <div key={tier} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: body, fontSize: 12.5, color: CHALK }}>
+            <span style={{ width: 4, height: 14, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
+            <span style={{ color: MUTED }}>{text}</span>
           </div>
         ))}
       </div>
       <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
-        A respectable record is mostly 🟢🔵, maybe some 🥇, with the odd 🟡. Wall-to-wall 🔴 — win or lose — means the competition wasn't testing them.
+        A respectable record is mostly green and blue, maybe some gold, with the odd orange. Wall-to-wall red — win or lose — means the competition wasn't testing them.
       </div>
+      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.5, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8, marginTop: 8 }}>
+        This is relative to whoever's profile you're on — the same opponent can show up gold here and orange on theirs, and both are correct.
+      </div>
+    </div>
+  );
+}
+
+function QualityTierRow({ tier, matches, resultFor, nm, oppId, onOpenMatch, open, onClick }: any) {
+  let w = 0, d = 0, l = 0;
+  matches.forEach((m: any) => { const res = resultFor(m); if (res === "W") w++; else if (res === "L") l++; else d++; });
+  const rec = matches.length ? (d > 0 ? `${w}-${d}-${l}` : `${w}-${l}`) : "none yet";
+  return (
+    <div>
+      <button onClick={onClick} disabled={!matches.length} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "7px 0", cursor: matches.length ? "pointer" : "default", textAlign: "left" }}>
+        <span style={{ width: 4, height: 18, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
+        <span style={{ fontFamily: body, fontSize: 14, color: matches.length ? CHALK : MUTED, flex: 1 }}>{TIER_LABEL[tier]}</span>
+        <span style={{ fontFamily: mono, fontSize: 13, color: MUTED }}>{rec}</span>
+      </button>
+      {open && matches.length > 0 && (
+        <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "8px 10px", margin: "2px 0 8px" }}>
+          {matches.slice().sort((a: any, b: any) => b.date - a.date).map((m: any, i: number) => {
+            const res = resultFor(m);
+            return (
+              <button key={m.id} onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: onOpenMatch ? "pointer" : "default", textAlign: "left" }}>
+                <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
+                <span style={{ fontFamily: body, fontSize: 12.5, color: CHALK, flex: 1, marginLeft: 8 }}>{nm(oppId(m))}</span>
+                <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginRight: 8 }}>{fmtDate(m.date)}</span>
+                <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -367,10 +433,13 @@ function VsMatches({ oid, matches, resultFor, onOpen, selfPlayer, oppPlayer }: a
         const res = resultFor(m);
         const rating = ratingForMatch(selfPlayer, oppPlayer, m.date);
         return (
-          <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
-            <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}{rating && <span title={rating.note} style={{ marginLeft: 5 }}>{rating.icon}</span>}</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
+          <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "stretch", width: "100%", background: "transparent", border: "none", padding: 0, borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
+            <span title={`Difficulty: ${rating.note}`} style={{ width: 3, borderRadius: 2, background: rating.color, flexShrink: 0, marginRight: 8 }} />
+            <span style={{ display: "flex", alignItems: "center", flex: 1, padding: "5px 0" }}>
+              <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
+              <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}</span>
+              <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
+            </span>
           </button>
         );
       }) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED, padding: "4px 0" }}>No matches to show.</div>}
