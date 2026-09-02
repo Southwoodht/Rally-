@@ -15,3 +15,14 @@ export const D = (s) => new Date(s).getTime();
 export const recordStr = (r) => (r.d > 0 ? r.w + "-" + r.d + "-" + r.l : r.w + "-" + r.l);
 
 export const winnerLabel = (m, nameOf) => m.winner === "draw" ? nameOf(m.p1) + " drew " + nameOf(m.p2) : nameOf(m.winner === "p1" ? m.p1 : m.p2) + " beat " + nameOf(m.winner === "p1" ? m.p2 : m.p1);
+
+// "auto-confirms in ~6h" / "auto-confirms in ~1 day" — makes the 24h rule
+// concrete wherever a pending match or edit is shown, instead of just
+// implying it. loggedAt is sourced from the match row's own created_at.
+export const autoConfirmNote = (loggedAt: number | undefined | null) => {
+  if (!loggedAt) return null;
+  const remaining = loggedAt + 24 * 3600 * 1000 - Date.now();
+  if (remaining <= 0) return "confirming automatically now…";
+  const hrs = Math.ceil(remaining / 3600000);
+  return hrs <= 1 ? "auto-confirms within the hour" : hrs < 24 ? `auto-confirms in ~${hrs}h` : "auto-confirms in ~1 day";
+};

@@ -4,7 +4,7 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
-import { fmtDate, winnerLabel } from "@/lib/format";
+import { autoConfirmNote, fmtDate, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, mono, wrap } from "@/lib/theme";
 
 export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onOpenMatch }: any) {
@@ -47,16 +47,20 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             const canRespond = iAmIn && m.reportedBy !== meId;
             const iReported = m.reportedBy === meId;
             const other = nameOf(m.p1 === meId ? m.p2 : m.p1);
+            const note = autoConfirmNote(m.loggedAt);
             return (
               <div key={m.id} style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nameOf(m.reportedBy) || "Someone"} logged: <strong>{winnerLabel(m, nameOf)}</strong></div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
                 {canRespond ? (
-                  <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onConfirm(m.id)} color={BALL}>Agree</BigBtn><BigBtn onClick={() => onDispute(m.id)} color={CLAY}>Dispute</BigBtn></div>
+                  <>
+                    <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onConfirm(m.id)} color={BALL}>Agree</BigBtn><BigBtn onClick={() => onDispute(m.id)} color={CLAY}>Dispute</BigBtn></div>
+                    {note && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
+                  </>
                 ) : iReported ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree…</span><button onClick={() => onDispute(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onDispute(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
                 ) : (
-                  <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree.</span>
+                  <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree{note ? ` — ${note}` : "."}</span>
                 )}
               </div>
             );

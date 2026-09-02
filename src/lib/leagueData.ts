@@ -106,6 +106,12 @@ const rowToMatch = (r: any) => ({
   photoUrl: r.photo_url ?? undefined,
   category: r.category ?? undefined,
   pendingEdit: r.pending_edit ?? undefined,
+  // Drives the 24h auto-confirm sweep in RallyApp.tsx. Sourced from the
+  // row's own created_at (set server-side, once, on insert) rather than
+  // trusting a client-supplied timestamp — this was silently dropped
+  // entirely by this mapping before, which is why auto-confirm stopped
+  // working the moment matches moved off the blob and onto this table.
+  loggedAt: r.created_at ? new Date(r.created_at).getTime() : undefined,
 });
 
 const fixtureToRow = (leagueId: string, f: any) => ({

@@ -2,7 +2,7 @@
 import React, { useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { matchContext } from "@/core/rank";
-import { fmtDate } from "@/lib/format";
+import { autoConfirmNote, fmtDate } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
 
@@ -98,7 +98,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
           {isDraw ? "Draw" : p1Won ? nm(match.p1) + " won" : nm(match.p2) + " won"}
         </div>
         <div style={{ textAlign: "center", fontFamily: mono, fontSize: 12, color: MUTED, marginBottom: 4 }}>{fmtDate(match.date)}{match.score ? " · " + match.score : ""}</div>
-        {match.status === "pending" && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Awaiting confirmation</div>}
+        {match.status === "pending" && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</div>}
         {match.pendingEdit && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Edit pending agreement</div>}
 
         <Row label="Competition">{inSeason ? season.name : (groupName || "—")}</Row>
