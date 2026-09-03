@@ -43,9 +43,20 @@ export interface DifficultyRating {
 
 const gapNote = (gap: number) => (gap === 0 ? "your level" : gap > 0 ? "above you" : "below you");
 
-// gap = opponent's level value minus yours (see core/levels.ts's 12-point
+// gap = opponent's level value minus yours (see core/levels.ts's 18-point
 // scale), both at the time in question. null (either side unrated) gets a
 // neutral "unrated" badge rather than silently assuming Beginner.
+//
+// The thresholds are deliberately unchanged from the 12-point scale, and no
+// rescale of them is possible rather than merely unwanted. Inserting Amateur
+// and Semi-pro adds +3 only to pairs that straddle them, so the same old gap
+// maps to two different new gaps: a within-category gap of 2 is still 2 and
+// must stay silver, while Beginner/High vs Intermediate/Medium goes 2 -> 5
+// and must also stay silver, and Advanced/High vs Pro/Low goes 1 -> 4 and
+// must stay blue. That needs new-gap 2 silver, 4 blue, 5 silver — not
+// monotonic, so no threshold set produces it. Some bars therefore change
+// colour, which is the intended reading: under six tiers a Beginner beating
+// an Intermediate is a two-tier upset and should look like one.
 export function ratingForGap(gap: number | null): DifficultyRating {
   if (gap == null) return { tier: "muted", color: TIER_COLOR.muted, note: "level unrated" };
   const note = gapNote(gap);

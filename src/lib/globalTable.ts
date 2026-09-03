@@ -50,7 +50,13 @@ const pts = (w: number, d: number, l: number) => (w + l + d ? (w + d * 0.5) / (w
 // The middle of the scale — where "we don't actually know how good you are"
 // sits. Both an unbacked "Pro" and an unbacked "Beginner" get pulled towards
 // it, from opposite directions.
-const NEUTRAL = 3 * 100;
+//
+// 6 is Intermediate/Low on the 18-point scale, which is what 3 meant on the
+// 12-point one — the same rung, renumbered, not a new opinion about where
+// the middle is. Checked against the production snapshot: at 6 the global
+// order is identical to today's. Left at 3 it moves two people; set to the
+// arithmetic midpoint of the new scale instead it moves nine.
+const NEUTRAL = 6 * 100;
 
 /**
  * Where someone sits globally.

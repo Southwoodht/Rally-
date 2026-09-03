@@ -5,8 +5,10 @@ import { BALL, CHALK, COURT, MUTED, body } from "@/lib/theme";
 export function LevelGuide({ onClose }: any) {
   const items = [
     ["Beginner", "Learning basic forehands and backhands. Can rally 3–10 shots with another beginner. Still developing serves and consistency."],
+    ["Amateur", "Rallies comfortably and gets most serves in. Plays socially or in a club ladder, but consistency still comes and goes under pressure."],
     ["Intermediate", "Can rally consistently and serve reliably. Understands tactics and positioning. A regular club player."],
     ["Advanced", "Strong club or county level. Can consistently control points. Comfortable against most club players."],
+    ["Semi-pro", "County or regional standard. Competes in graded tournaments, or coaches alongside playing."],
     ["Pro", "National or international standard. Coaching or competing professionally."],
   ];
   return (

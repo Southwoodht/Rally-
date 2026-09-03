@@ -1,3 +1,4 @@
+import { WIN_QUALITY_DIVISOR } from "@/core/constants";
 import { levelAt, levelVal } from "@/core/levels";
 import { winPct } from "@/lib/format";
 
@@ -16,7 +17,7 @@ export function computeOfficial(players, matches, wdl) {
   matches.filter((m) => m.status !== "pending" && m.winner !== "draw").forEach((m) => {
     const wid = m.winner === "p1" ? m.p1 : m.p2, lid = m.winner === "p1" ? m.p2 : m.p1;
     const oppLv = levelVal(levelAt(byId[lid], m.date)) ?? 0;
-    if (qual[wid] != null) { const q = 1 + oppLv / 4; qual[wid] += q; winQuality[wid].push(q); }
+    if (qual[wid] != null) { const q = 1 + oppLv / WIN_QUALITY_DIVISOR; qual[wid] += q; winQuality[wid].push(q); }
   });
   const score = {};
   players.forEach((p) => {
