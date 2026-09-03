@@ -20,7 +20,7 @@ export const avCell = (on: boolean): CSSProperties => ({ width: 40, height: 40, 
 // as normal sentence-case body text now.
 export const display = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 
-export const body = "'Inter', system-ui, sans-serif";
+export const body = "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif";
 
 // Numbers only — ratings, scores, dates, counters.
 export const mono = "'JetBrains Mono', 'Courier New', monospace";
@@ -31,7 +31,7 @@ export const RADIUS_SM = 12;
 
 export const fxBtn: CSSProperties = { flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "10px 6px", borderRadius: RADIUS_SM, cursor: "pointer", border: "none", background: PANEL2, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
-export const fontImport = "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');";
+export const fontImport = "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');";
 
 export const wrap: CSSProperties = { background: COURT, minHeight: "100vh", width: "100%" };
 

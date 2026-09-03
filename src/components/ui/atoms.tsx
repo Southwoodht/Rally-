@@ -2,12 +2,14 @@
 import React from "react";
 import { BALL, CHALK, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS_SM, body, display, input, mono } from "@/lib/theme";
 
-export function Stat({ n, label, c, onClick, active }: any) {
-  const style: any = { flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none" };
+// `big` is the profile's headline W/D/L: deliberately the largest thing on
+// the screen, so the record outweighs the quality bars below it.
+export function Stat({ n, label, c, onClick, active, big }: any) {
+  const style: any = { flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: big ? "17px 8px" : "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none" };
   const content = (
     <>
-      <div style={{ fontFamily: mono, fontSize: 24, fontWeight: 700, color: c }}>{n}</div>
-      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: MUTED, marginTop: 2 }}>{label}{onClick ? <span style={{ color: BALL }}> {active ? "▾" : "›"}</span> : null}</div>
+      <div style={{ fontFamily: mono, fontSize: big ? 34 : 24, fontWeight: 700, color: c, lineHeight: 1.05 }}>{n}</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: big ? 12 : 11, letterSpacing: 0.2, color: MUTED, marginTop: 3 }}>{label}{onClick ? <span style={{ color: BALL }}> {active ? "▾" : "›"}</span> : null}</div>
     </>
   );
   if (onClick) return <button onClick={onClick} style={{ ...style, cursor: "pointer" }}>{content}</button>;

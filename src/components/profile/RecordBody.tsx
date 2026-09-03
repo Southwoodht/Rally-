@@ -8,7 +8,7 @@ import { SeasonSummary } from "@/components/profile/SeasonSummary";
 import { TrophyWall } from "@/components/profile/TrophyWall";
 import { VerifiedTrophies } from "@/components/profile/VerifiedTrophies";
 import { Empty, Stat, StreakTile } from "@/components/ui/atoms";
-import { START_ELO } from "@/core/constants";
+import { LEVELS, START_ELO } from "@/core/constants";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal, yearOf } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
@@ -18,7 +18,7 @@ import { ratingForMatch, ratingNow, TIER_COLOR, TIER_LABEL, TIER_RANK, type Tier
 import { findMemory } from "@/core/memories";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
 import { D, fmtDate, winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, RADIUS_SM, body, miniInput, mono } from "@/lib/theme";
 
 // Only ever rendered for someone else's claimed profile, never your own.
 // Friendship is between accounts (auth ids), not league players, so this
@@ -101,6 +101,8 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const [showKey, setShowKey] = useState(false);
   const [showQuality, setShowQuality] = useState(false);
   const [openTier, setOpenTier] = useState<Tier | null>(null);
+  const [showLevels, setShowLevels] = useState(false);
+  const [openLevel, setOpenLevel] = useState<string | null>(null);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   const memory = useMemo(() => findMemory(player.id, matches, nameOf), [player.id, matches, nameOf]);
   // Same underlying matches as the winning/losing lists above — grouped by
@@ -115,6 +117,26 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       (g[rt] || (g[rt] = [])).push(m);
     });
     return qualityTiers.map((t) => ({ tier: t, matches: g[t] }));
+  }, [chrono, player]);
+  // Opponent Levels answers a different question from Opponent Quality.
+  // Quality is relative — "how strong were they compared to me". This is
+  // absolute — "what level have I actually beaten". It's the counterweight
+  // to self-assessed levels: if someone claims Advanced and the record
+  // against them is 15-0, that shows up here in plain sight. Grouped by the
+  // opponent's category at the time of the match, never today's claim, so a
+  // win doesn't retroactively get better because they promoted themselves.
+  const levelGroups = useMemo(() => {
+    const g: Record<string, { w: number; d: number; l: number; per: Record<string, { w: number; d: number; l: number }> }> = {};
+    chrono.forEach((m: any) => {
+      const cat = levelAt(byId[oppId(m)], m.date)?.cat;
+      if (!cat) return;
+      const res = resultFor(m);
+      const bucket = g[cat] || (g[cat] = { w: 0, d: 0, l: 0, per: {} });
+      const oid = oppId(m);
+      const per = bucket.per[oid] || (bucket.per[oid] = { w: 0, d: 0, l: 0 });
+      if (res === "W") { bucket.w++; per.w++; } else if (res === "L") { bucket.l++; per.l++; } else { bucket.d++; per.d++; }
+    });
+    return LEVELS.filter((c) => g[c]).map((cat) => ({ cat, ...g[cat] }));
   }, [chrono, player]);
   return (
     <>
@@ -135,9 +157,9 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           {player.inactive ? (
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginTop: 3 }}>Not active in this league · record kept</div>
           ) : r.gp > 0 ? (
-            <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}><span style={{ color: BALL, fontWeight: 700, fontSize: 14 }}>#{ranks.off[player.id]}</span> Official <span style={{ color: LINE }}>·</span> #{ranks.el[player.id]} ELO <span style={{ color: LINE }}>·</span> #{ranks.rec[player.id]} Record</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginTop: 3 }}><span style={{ fontFamily: mono, color: BALL, fontWeight: 700, fontSize: 14 }}>#{ranks.off[player.id]}</span> Official <span style={{ color: LINE }}>·</span> <span style={{ fontFamily: mono, fontWeight: 700 }}>#{ranks.el[player.id]}</span> ELO <span style={{ color: LINE }}>·</span> <span style={{ fontFamily: mono, fontWeight: 700 }}>#{ranks.rec[player.id]}</span> Record</div>
           ) : (
-            <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}>Unranked</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginTop: 3 }}>Unranked</div>
           )}
         </div>
         {player.auth_id && myAuthId && player.auth_id !== myAuthId && <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />}
@@ -159,10 +181,10 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       )}
       {showSeason && yr !== "all" && <SeasonSummary player={player} players={players} matches={matches} year={yr} fixtures={fixtures} group={group} nameOf={nameOf} onOpenMatch={onOpenMatch} onClose={() => setShowSeason(false)} />}
       <div style={{ display: "flex", gap: 10, margin: "16px 0", marginBottom: resultFilter ? 10 : 18 }}>
-        <Stat n={r.w} label="Won" c={BALL} onClick={() => setResultFilter(resultFilter === "W" ? null : "W")} active={resultFilter === "W"} />
-        <Stat n={r.d} label="Drawn" c={MUTED} onClick={() => setResultFilter(resultFilter === "D" ? null : "D")} active={resultFilter === "D"} />
-        <Stat n={r.l} label="Lost" c={CLAY} onClick={() => setResultFilter(resultFilter === "L" ? null : "L")} active={resultFilter === "L"} />
-        <Stat n={pct === null ? "–" : pct + "%"} label="Win rate" c={BALL} />
+        <Stat n={r.w} label="Won" c={BALL} big onClick={() => setResultFilter(resultFilter === "W" ? null : "W")} active={resultFilter === "W"} />
+        <Stat n={r.d} label="Drawn" c={MUTED} big onClick={() => setResultFilter(resultFilter === "D" ? null : "D")} active={resultFilter === "D"} />
+        <Stat n={r.l} label="Lost" c={CLAY} big onClick={() => setResultFilter(resultFilter === "L" ? null : "L")} active={resultFilter === "L"} />
+        <Stat n={pct === null ? "–" : pct + "%"} label="Win rate" c={BALL} big />
       </div>
       {resultFilter && (
         <div style={{ marginBottom: 20 }}>
@@ -264,13 +286,35 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       )}
       {r.gp > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <button onClick={() => setShowQuality(!showQuality)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "transparent", border: "none", padding: 0, marginBottom: showQuality ? 6 : 0, cursor: "pointer", textAlign: "left" }}>
-            <span style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED }}>Opponent quality</span>
-            <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{showQuality ? "hide" : "show"}</span>
+          <button onClick={() => setShowQuality(!showQuality)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: PANEL2, border: "none", borderRadius: RADIUS_SM, padding: "13px 14px", marginBottom: showQuality ? 8 : 0, cursor: "pointer", textAlign: "left" }}>
+            <span style={{ fontFamily: body, fontWeight: 700, fontSize: 15, color: CHALK }}>Opponent quality</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: BALL }}>{showQuality ? "Hide ▾" : "Show ›"}</span>
           </button>
-          {showQuality && qualityGroups.map(({ tier, matches: tm }) => (
-            <QualityTierRow key={tier} tier={tier} matches={tm} resultFor={resultFor} nm={nm} oppId={oppId} onOpenMatch={onOpenMatch} open={openTier === tier} onClick={() => setOpenTier(openTier === tier ? null : tier)} />
-          ))}
+          {showQuality && (
+            <>
+              {qualityGroups.map(({ tier, matches: tm }) => (
+                <QualityTierRow key={tier} tier={tier} matches={tm} resultFor={resultFor} nm={nm} oppId={oppId} onOpenMatch={onOpenMatch} open={openTier === tier} onClick={() => setOpenTier(openTier === tier ? null : tier)} />
+              ))}
+              {levelGroups.length > 0 && (
+                <div style={{ marginTop: 10, borderTop: "1px solid " + LINE, paddingTop: 10 }}>
+                  <button onClick={() => setShowLevels(!showLevels)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+                    <span style={{ fontFamily: body, fontWeight: 700, fontSize: 13.5, color: CHALK }}>Opponent Levels</span>
+                    <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL }}>{showLevels ? "Hide ▾" : "Show ›"}</span>
+                  </button>
+                  {showLevels && (
+                    <>
+                      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.45, margin: "6px 0 2px" }}>
+                        What level they actually were, at the time — not how they compare to you. Tap a level for the player-by-player breakdown.
+                      </div>
+                      {levelGroups.map((lg: any) => (
+                        <LevelRow key={lg.cat} {...lg} nm={nm} open={openLevel === lg.cat} onClick={() => setOpenLevel(openLevel === lg.cat ? null : lg.cat)} />
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
       <VerifiedTrophies player={player} meId={meId} />
@@ -337,7 +381,7 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
         <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: mono, fontSize: 9, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
+          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
           <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
         </button>
         {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
@@ -382,13 +426,13 @@ function DifficultyKey() {
 function QualityTierRow({ tier, matches, resultFor, nm, oppId, onOpenMatch, open, onClick }: any) {
   let w = 0, d = 0, l = 0;
   matches.forEach((m: any) => { const res = resultFor(m); if (res === "W") w++; else if (res === "L") l++; else d++; });
-  const rec = matches.length ? (d > 0 ? `${w}-${d}-${l}` : `${w}-${l}`) : "none yet";
+  const rec = matches.length ? `${w}–${d}–${l}` : "none yet";
   return (
     <div>
       <button onClick={onClick} disabled={!matches.length} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "7px 0", cursor: matches.length ? "pointer" : "default", textAlign: "left" }}>
-        <span style={{ width: 6, height: 18, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
-        <span style={{ fontFamily: body, fontSize: 14, color: matches.length ? CHALK : MUTED, flex: 1 }}>{TIER_LABEL[tier]}</span>
-        <span style={{ fontFamily: mono, fontSize: 13, color: MUTED }}>{rec}</span>
+        <span style={{ width: 4, height: 13, borderRadius: 2, background: TIER_COLOR[tier], flexShrink: 0 }} />
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: matches.length ? CHALK : MUTED, flex: 1 }}>{TIER_LABEL[tier]}</span>
+        <span style={{ fontFamily: matches.length ? mono : body, fontWeight: matches.length ? 700 : 500, fontSize: 12.5, color: MUTED }}>{rec}</span>
       </button>
       {open && matches.length > 0 && (
         <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "8px 10px", margin: "2px 0 8px" }}>
@@ -396,13 +440,40 @@ function QualityTierRow({ tier, matches, resultFor, nm, oppId, onOpenMatch, open
             const res = resultFor(m);
             return (
               <button key={m.id} onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "flex", alignItems: "center", width: "100%", background: "transparent", border: "none", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none", cursor: onOpenMatch ? "pointer" : "default", textAlign: "left" }}>
-                <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
+                <span style={{ fontFamily: body, fontSize: 11.5, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
                 <span style={{ fontFamily: body, fontSize: 12.5, color: CHALK, flex: 1, marginLeft: 8 }}>{nm(oppId(m))}</span>
                 <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginRight: 8 }}>{fmtDate(m.date)}</span>
                 <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{m.score || "—"}</span>
               </button>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// One category (Beginner, Intermediate…) inside Opponent Levels. Always
+// shows the full W–D–L, never just the wins — a bare win count is the
+// flattering half of the story and hides exactly what this section is for.
+function LevelRow({ cat, w, d, l, per, nm, open, onClick }: any) {
+  const people = Object.entries(per as Record<string, { w: number; d: number; l: number }>)
+    .sort((a, b) => (b[1].w + b[1].d + b[1].l) - (a[1].w + a[1].d + a[1].l));
+  return (
+    <div>
+      <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "7px 0", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: CHALK, flex: 1 }}>{cat}</span>
+        <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 12.5, color: MUTED }}>{w}–{d}–{l}</span>
+        <span style={{ fontFamily: body, fontSize: 12, color: BALL }}>{open ? "▾" : "›"}</span>
+      </button>
+      {open && (
+        <div style={{ background: PANEL2, borderRadius: 12, padding: "8px 10px", margin: "2px 0 8px" }}>
+          {people.map(([oid, x], i) => (
+            <div key={oid} style={{ display: "flex", alignItems: "center", padding: "5px 0", borderTop: i ? "1px solid " + LINE : "none" }}>
+              <span style={{ fontFamily: body, fontSize: 12.5, color: CHALK, flex: 1 }}>{nm(oid)}</span>
+              <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 12, color: MUTED }}>{x.w}–{x.d}–{x.l}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
