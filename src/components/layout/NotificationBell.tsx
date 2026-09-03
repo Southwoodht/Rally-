@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { MessengerBird } from "@/components/ui/MessengerBird";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { computeLocalNotifications, Notification } from "@/core/notifications";
 import { listMyTrophies, listPendingClaims } from "@/lib/trophies";
@@ -40,15 +41,15 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
   return (
     <>
       <button onClick={() => setOpen(true)} aria-label="Notifications" style={{ position: "relative", background: PANEL2, border: "none", borderRadius: 14, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
-        <span style={{ fontSize: 16 }}>🔔</span>
+        <MessengerBird size={18} />
         {badge > 0 && <span style={{ position: "absolute", top: -4, right: -4, background: BALL, color: COURT, fontFamily: mono, fontSize: 9, fontWeight: 800, borderRadius: 999, minWidth: 16, height: 16, display: "grid", placeItems: "center", padding: "0 3px" }}>{badge}</span>}
       </button>
       {open && (
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "18px 16px 32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <span style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED }}>Notifications</span>
-              <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "4px 10px", fontFamily: mono, fontSize: 12, cursor: "pointer" }}>Close</button>
+              <span style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK }}>Notifications</span>
+              <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", color: BALL, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>Close</button>
             </div>
             {all.length === 0 ? (
               <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>Nothing new.</div>

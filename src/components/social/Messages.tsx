@@ -32,25 +32,50 @@ function Face({ t, size = 38 }: { t: Thread; size?: number }) {
 }
 
 function ThreadRowView({ t, onClick }: { t: Thread; onClick: () => void }) {
+  const unread = t.unread > 0;
   return (
-    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "12px 14px", cursor: "pointer", textAlign: "left" }}>
-      <Face t={t} />
+    <button
+      onClick={onClick}
+      style={{
+        display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", cursor: "pointer",
+        border: "none", padding: "13px 14px 13px 11px",
+        // An unread conversation should be findable without reading anything:
+        // a bar down the edge and a brighter row, not just a small number.
+        background: unread ? PANEL2 : "transparent",
+        borderLeft: "3px solid " + (unread ? BALL : "transparent"),
+      }}
+    >
+      <Face t={t} size={42} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontFamily: body, fontWeight: 700, fontSize: 14.5, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontFamily: body, fontWeight: 800, fontSize: 15.5, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {t.profile?.display_name}
           </span>
-          {t.unread > 0 && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{t.unread}</span>}
+          {unread && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>{t.unread}</span>}
         </span>
-        <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {t.lastMessage || "No messages yet"}
+        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 400, fontSize: 13, color: unread ? CHALK : MUTED, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {t.lastMessage ? (t.lastFromMe ? "You: " : "") + t.lastMessage : "No messages yet"}
         </span>
       </span>
-      {t.last_message_at && <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED, flexShrink: 0 }}>{when(t.last_message_at)}</span>}
-      <span style={{ fontFamily: body, fontSize: 13, color: BALL, flexShrink: 0 }}>›</span>
+      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
+        {t.last_message_at && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: unread ? BALL : MUTED }}>{when(t.last_message_at)}</span>}
+        <span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span>
+      </span>
     </button>
   );
 }
+
+// Days, not timestamps. A thread is read top to bottom, and "Tuesday" tells
+// you more about a gap in a conversation than a clock time does.
+const dayLabel = (iso: string) => {
+  const d = new Date(iso);
+  const today = new Date();
+  const days = Math.floor((new Date(today.toDateString()).getTime() - new Date(d.toDateString()).getTime()) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return d.toLocaleDateString(undefined, { weekday: "long" });
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long" });
+};
 
 function Conversation({ thread, myId, onBack, onChanged }: any) {
   const t: Thread = thread;
@@ -93,9 +118,16 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
 
   return (
     <div>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", padding: "0 0 12px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14, color: BALL }}>
-        ‹ <Face t={t} size={28} /> {t.profile?.display_name}
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px" }}>
+        <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 2px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 700, fontSize: 22, color: BALL, lineHeight: 1 }}>‹</button>
+        <Face t={t} size={40} />
+        <span style={{ minWidth: 0 }}>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 800, fontSize: 18, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.profile?.display_name}</span>
+          <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 1 }}>
+            {t.status === "accepted" ? (msgs ? msgs.length + " message" + (msgs.length === 1 ? "" : "s") : " ") : t.isRequestToMe ? "Message request" : "Request sent — not accepted yet"}
+          </span>
+        </span>
+      </div>
 
       {t.isRequestToMe && (
         <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, padding: 16, marginBottom: 12 }}>
@@ -112,17 +144,30 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
       <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, padding: "14px 14px", minHeight: 160, maxHeight: "52vh", overflowY: "auto" }}>
         {!msgs ? <Empty msg="Loading…" />
           : !msgs.length ? <Empty msg="No messages yet. Say something." />
-          : msgs.map((m) => {
+          : msgs.map((m, i) => {
             const mine = m.sender_id === myId;
+            const newDay = i === 0 || dayLabel(msgs[i - 1].created_at) !== dayLabel(m.created_at);
+            // "Seen" belongs on the last thing you sent and nowhere else —
+            // on every bubble it's noise, and on theirs it's meaningless.
+            const isMyLast = mine && !msgs.slice(i + 1).some((x) => x.sender_id === myId);
             return (
-              <div key={m.id} style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 8 }}>
-                <div style={{ maxWidth: "78%" }}>
-                  <div style={{ background: mine ? BALL : PANEL2, color: mine ? COURT : CHALK, borderRadius: RADIUS_SM, padding: "9px 12px", fontFamily: body, fontSize: 14, lineHeight: 1.4, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {m.body}
+              <React.Fragment key={m.id}>
+                {newDay && (
+                  <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "16px 0 12px" }}>
+                    <span style={{ fontFamily: body, fontWeight: 700, fontSize: 11, color: MUTED, background: PANEL2, borderRadius: 999, padding: "3px 11px" }}>{dayLabel(m.created_at)}</span>
                   </div>
-                  <div style={{ fontFamily: body, fontSize: 10.5, color: MUTED, marginTop: 3, textAlign: mine ? "right" : "left" }}>{when(m.created_at)}</div>
+                )}
+                <div style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 8 }}>
+                  <div style={{ maxWidth: "78%" }}>
+                    <div style={{ background: mine ? BALL : PANEL2, color: mine ? COURT : CHALK, borderRadius: 16, borderBottomRightRadius: mine ? 5 : 16, borderBottomLeftRadius: mine ? 16 : 5, padding: "10px 13px", fontFamily: body, fontWeight: 500, fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {m.body}
+                    </div>
+                    <div style={{ fontFamily: body, fontSize: 10.5, color: MUTED, marginTop: 3, textAlign: mine ? "right" : "left" }}>
+                      {when(m.created_at)}{isMyLast && m.read_at ? " · Seen" : ""}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })}
         <div ref={endRef} />
@@ -214,7 +259,10 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
     <>
       {requests.length > 0 && (
         <>
-          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6 }}>Requests</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <span style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK }}>Requests</span>
+            <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
+          </div>
           <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden", marginBottom: 18 }}>
             {requests.map((t) => <ThreadRowView key={t.id} t={t} onClick={() => setOpenId(t.id)} />)}
           </div>
@@ -225,7 +273,7 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
       )}
       {conversations.length > 0 && (
         <>
-          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6 }}>Conversations</div>}
+          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
           <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
             {conversations.map((t) => <ThreadRowView key={t.id} t={t} onClick={() => setOpenId(t.id)} />)}
           </div>

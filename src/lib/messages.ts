@@ -29,6 +29,7 @@ export interface MessageRow {
 export interface Thread extends ThreadRow {
   profile: Profile;
   lastMessage: string | null;
+  lastFromMe: boolean;
   unread: number;
   /** A request someone sent you, still waiting on your answer. */
   isRequestToMe: boolean;
@@ -91,6 +92,7 @@ export async function listThreads(): Promise<Thread[]> {
         ...t,
         profile: byId.get(otherId) as Profile,
         lastMessage: ms.length ? ms[ms.length - 1].body : null,
+        lastFromMe: ms.length ? ms[ms.length - 1].sender_id === myId : false,
         unread: ms.filter((m) => m.sender_id !== myId && !m.read_at).length,
         isRequestToMe: t.status === "pending" && t.started_by !== myId,
       };
