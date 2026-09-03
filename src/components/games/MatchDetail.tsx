@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { predictProb } from "@/core/predict";
 import { matchContext } from "@/core/rank";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
@@ -26,7 +27,7 @@ const movement = (before: number | null, after: number | null) => {
 
 // The plain-English version of the three rows below it. Same numbers — a
 // scoreline is not much use if you have to assemble the story from a table.
-function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionCorrect, groupName }: any) {
+function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionCorrect, groupName, stored }: any) {
   const side = (which: "p1" | "p2") => {
     const dElo = (ctx.eloAfter[which] ?? 0) - (ctx.eloBefore[which] ?? 0);
     const dPts = (ctx.ptsAfter[which] ?? 0) - (ctx.ptsBefore[which] ?? 0);
@@ -37,7 +38,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   return (
     <div style={{ background: PANEL2, borderRadius: 12, padding: "12px 14px", margin: "4px 0 12px" }}>
       <div style={{ fontFamily: body, fontSize: 13.5, color: CHALK, lineHeight: 1.5 }}>
-        {favoredId && favoredPct != null && <>Rally made <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
+        {favoredId && favoredPct != null && <>Rally {stored ? "made" : "would have made"} <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
         {isDraw ? <>They drew.</> : <><strong>{winnerName}</strong> won{predictionCorrect === false ? " — the underdog took it." : "."}</>}
       </div>
       {(["p1", "p2"] as const).map((which) => {
@@ -83,7 +84,22 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
 
   const inSeason = season && match.date >= season.start && (season.end == null || match.date <= season.end);
 
-  const prediction = match.prediction;
+  // Rally only started snapshotting its own prediction when a match was
+  // logged, so every match from before that has nothing stored — which is
+  // most of the history, and it left the most interesting line on the screen
+  // blank. Where there's no snapshot, work out what the call would have been
+  // from the state as it actually stood: the ELO both players carried into
+  // the match, and only the matches that had happened by then. Labelled as
+  // worked out afterwards, because it's a reconstruction rather than what the
+  // app said on the day.
+  const reconstructed = !match.prediction && ctx ? (() => {
+    try {
+      const before = (matches || []).filter((m: any) => m.status !== "pending" && m.date < match.date);
+      const eloThen = { [match.p1]: ctx.eloBefore.p1 ?? 0, [match.p2]: ctx.eloBefore.p2 ?? 0 };
+      return { p1Pct: Math.round(predictProb(match.p1, match.p2, before, eloThen, players) * 100) };
+    } catch { return null; }
+  })() : null;
+  const prediction = match.prediction || reconstructed;
   const favoredId = prediction ? (prediction.p1Pct >= 50 ? match.p1 : match.p2) : null;
   const favoredPct = prediction ? (prediction.p1Pct >= 50 ? prediction.p1Pct : 100 - prediction.p1Pct) : null;
   const predictionResolved = match.status !== "pending" && !isDraw;
@@ -180,6 +196,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         {ctx && (
           <MatchStory
             ctx={ctx}
+            stored={!!match.prediction}
             match={match}
             nm={nm}
             isDraw={isDraw}
@@ -208,7 +225,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         <Row label="Head-to-head">{h2hP1 === h2hP2 ? `${h2hP1}-${h2hD}-${h2hP2} · even` : h2hP1 > h2hP2 ? `${nm(match.p1)} leads ${h2hP1}-${h2hD}-${h2hP2}` : `${nm(match.p2)} leads ${h2hP2}-${h2hD}-${h2hP1}`}</Row>
 
         {prediction && (
-          <Row label="Rally predicted">
+          <Row label={match.prediction ? "Rally predicted" : "Rally would have predicted"}>
             {nm(favoredId)} {favoredPct}%
             {predictionCorrect != null && <span style={{ marginLeft: 8, color: predictionCorrect ? BALL : CLAY, fontWeight: 700 }}>{predictionCorrect ? "Correct ✓" : "Incorrect ✗"}</span>}
           </Row>

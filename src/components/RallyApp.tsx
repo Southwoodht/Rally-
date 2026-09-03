@@ -20,6 +20,7 @@ import { LegacyProfile } from "@/components/profile/LegacyProfile";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
 import { SettingsTab } from "@/components/settings/SettingsTab";
+import { MessengerBird } from "@/components/ui/MessengerBird";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
 import { unreadMessageCount } from "@/lib/messages";
@@ -512,7 +513,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                 <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  <MessageCircle size={17} color={BALL} />
+                  <MessengerBird size={19} flap={unreadMsgs > 0} />
                   {unreadMsgs > 0 && <span style={{ position: "absolute", top: 2, right: 2, minWidth: 15, height: 15, borderRadius: 999, background: BALL, color: COURT, fontFamily: mono, fontWeight: 700, fontSize: 9, display: "grid", placeItems: "center", padding: "0 3px" }}>{unreadMsgs}</span>}
                 </button>
                 <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} />
@@ -560,7 +561,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             <div style={listCard}>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><MessageCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><MessengerBird size={18} flap={unreadMsgs > 0} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>›</span></button>
               {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED }}>›</span></button>}

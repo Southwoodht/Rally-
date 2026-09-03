@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { MessengerBird } from "@/components/ui/MessengerBird";
+import { Bell } from "@/components/ui/Bell";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { computeLocalNotifications, Notification } from "@/core/notifications";
 import { listMyTrophies, listPendingClaims } from "@/lib/trophies";
@@ -41,7 +41,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
   return (
     <>
       <button onClick={() => setOpen(true)} aria-label="Notifications" style={{ position: "relative", background: PANEL2, border: "none", borderRadius: 14, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
-        <MessengerBird size={18} />
+        <Bell size={18} ring={badge > 0} />
         {badge > 0 && <span style={{ position: "absolute", top: -4, right: -4, background: BALL, color: COURT, fontFamily: mono, fontSize: 9, fontWeight: 800, borderRadius: 999, minWidth: 16, height: 16, display: "grid", placeItems: "center", padding: "0 3px" }}>{badge}</span>}
       </button>
       {open && (
