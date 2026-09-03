@@ -17,7 +17,7 @@ import { computeRivalries } from "@/core/rivalries";
 import { ratingForMatch, ratingNow, TIER_COLOR, TIER_LABEL, TIER_RANK, type Tier } from "@/core/difficulty";
 import { findMemory } from "@/core/memories";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
-import { globalKeyFor, globalRankFor } from "@/lib/globalTable";
+import { globalKeyFor, globalRankFor, standingWord, type GlobalPlace } from "@/lib/globalTable";
 import { D, fmtDate, winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, RADIUS_SM, body, miniInput, mono, pill } from "@/lib/theme";
 
@@ -101,8 +101,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const [showQuality, setShowQuality] = useState(false);
   const [openTier, setOpenTier] = useState<Tier | null>(null);
   const [showLevels, setShowLevels] = useState(false);
-  const [showStyle, setShowStyle] = useState(false);
-  const [globalRank, setGlobalRank] = useState<number | null>(null);
+  const [globalPlace, setGlobalPlace] = useState<GlobalPlace | null>(null);
   const [openLevel, setOpenLevel] = useState<string | null>(null);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   const memory = useMemo(() => findMemory(player.id, matches, nameOf), [player.id, matches, nameOf]);
@@ -163,7 +162,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   }, [chrono, player]);
   useEffect(() => {
     let alive = true;
-    globalRankFor(globalKeyFor(player)).then((n) => { if (alive) setGlobalRank(n); }).catch(() => {});
+    globalRankFor(globalKeyFor(player)).then((p) => { if (alive) setGlobalPlace(p); }).catch(() => {});
     return () => { alive = false; };
   }, [player.id, player.auth_id]);
   return (
@@ -193,23 +192,28 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         {player.auth_id && myAuthId && player.auth_id !== myAuthId && <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />}
       </div>
       {r.gp > 0 && !player.inactive && (
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "9px 14px", background: PANEL2, borderRadius: RADIUS_SM, padding: "11px 13px", margin: "10px 0 0" }}>
-          {showElo && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>ELO <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 14, color: CHALK }}>{rating.toLocaleString()}</span></span>}
-          {yr === "all" && globalRank != null && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>Global <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 14, color: CHALK }}>#{globalRank}</span></span>}
-          {last5.length > 0 && (
-            <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>Form</span>
-              <FormRow items={last5.map((x: any) => x.res)} colors={last5.map((x: any) => x.color)} />
-            </span>
+        <div style={{ background: PANEL2, borderRadius: RADIUS_SM, padding: "12px 14px", margin: "10px 0 0", display: "grid", gap: 10 }}>
+          {yr === "all" && globalPlace && (
+            <SnapRow label="Global" place={"#" + globalPlace.rank} sub={"of " + globalPlace.of} chip={standingWord(globalPlace)} />
           )}
+          <SnapRow
+            label={group?.name || "League"}
+            place={ranks.off[player.id] ? "#" + ranks.off[player.id] : "–"}
+            sub={showElo ? "ELO " + rating.toLocaleString() : null}
+          />
           {playStyle && (
-            <button onClick={() => setShowStyle(!showStyle)} style={{ ...pill(playStyle.color + "26", playStyle.color), border: "none", cursor: "pointer" }}>{playStyle.label}</button>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 9, borderTop: "1px solid " + LINE, paddingTop: 10 }}>
+              <span style={{ ...pill(playStyle.color + "26", playStyle.color), flexShrink: 0 }}>{playStyle.label}</span>
+              <span style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.4 }}>{playStyle.note}</span>
+            </div>
           )}
-        </div>
-      )}
-      {showStyle && playStyle && (
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.45, background: PANEL2, borderRadius: RADIUS_SM, padding: "9px 13px", marginTop: 4 }}>
-          {playStyle.note} The bars under Form show the same thing match by match.
+          {last5.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, borderTop: "1px solid " + LINE, paddingTop: 10 }}>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, width: 42, flexShrink: 0 }}>Form</span>
+              <FormRow items={last5.map((x: any) => x.res)} colors={last5.map((x: any) => x.color)} />
+              <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.35 }}>bar = how tough each one was</span>
+            </div>
+          )}
         </div>
       )}
       {showElo && yr === "all" && r.gp > 0 && !player.inactive && (isTop || (above && gap !== null)) && (
@@ -375,6 +379,20 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         ? bouts.map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
         : <Empty msg="No matches logged yet." />}
     </>
+  );
+}
+
+// One line of the profile snapshot: where they stand somewhere, and what
+// that standing is worth. The place is the thing being read, so it carries
+// the weight; the label and the field size stay quiet beside it.
+function SnapRow({ label, place, sub, chip }: any) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 17, color: CHALK }}>{place}</span>
+      {sub && <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{sub}</span>}
+      {chip && <span style={{ marginLeft: "auto", ...pill(TIER_COLOR[chip.tier] + "26", TIER_COLOR[chip.tier]) }}>{chip.label}</span>}
+    </div>
   );
 }
 

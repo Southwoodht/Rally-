@@ -97,14 +97,28 @@ const CACHE_MS = 60_000;
 
 export const globalKeyFor = (p: any): string => (p?.auth_id ? String(p.auth_id) : "p:" + p?.id);
 
-export async function globalRankFor(key: string, now = Date.now()): Promise<number | null> {
+export interface GlobalPlace { rank: number; of: number }
+
+export async function globalRankFor(key: string, now = Date.now()): Promise<GlobalPlace | null> {
   if (!cache || now - cache.at > CACHE_MS) {
     try { cache = { at: now, rows: await loadGlobalStandings() }; } catch { return null; }
   }
   // Ranked against the rated players only, matching what the table shows —
   // unrated players are listed separately there and hold no place number.
-  const i = cache.rows.filter((r) => r.level).findIndex((r) => r.key === key);
-  return i < 0 ? null : i + 1;
+  const rated = cache.rows.filter((r) => r.level);
+  const i = rated.findIndex((r) => r.key === key);
+  return i < 0 ? null : { rank: i + 1, of: rated.length };
+}
+
+// #6 means nothing without knowing whether that's six of eight or six of six
+// hundred. The word carries what the number can't at a glance.
+export function standingWord(place: GlobalPlace): { label: string; tier: "gold" | "blue" | "green" | "orange" | "muted" } {
+  const p = place.rank / Math.max(1, place.of);
+  if (p <= 0.1) return { label: "Elite", tier: "gold" };
+  if (p <= 0.25) return { label: "Strong", tier: "blue" };
+  if (p <= 0.5) return { label: "Decent", tier: "green" };
+  if (p <= 0.75) return { label: "Climbing", tier: "orange" };
+  return { label: "Early days", tier: "muted" };
 }
 
 export async function loadGlobalStandings(): Promise<GlobalRow[]> {
