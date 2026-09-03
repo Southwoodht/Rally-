@@ -17,8 +17,9 @@ import { computeRivalries } from "@/core/rivalries";
 import { ratingForMatch, ratingNow, TIER_COLOR, TIER_LABEL, TIER_RANK, type Tier } from "@/core/difficulty";
 import { findMemory } from "@/core/memories";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
+import { globalKeyFor, globalRankFor } from "@/lib/globalTable";
 import { D, fmtDate, winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, RADIUS_SM, body, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, RADIUS_SM, body, miniInput, mono, pill } from "@/lib/theme";
 
 // Only ever rendered for someone else's claimed profile, never your own.
 // Friendship is between accounts (auth ids), not league players, so this
@@ -46,7 +47,6 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const yearStats = useMemo(() => (yr === "all" ? null : computeStats(players, scopedMatches)), [yr, players, scopedMatches]);
   const activeElo = yr === "all" ? elo : yearStats!.elo;
   const activeWdl = yr === "all" ? wdl : yearStats!.wdl;
-  const activeForm = yr === "all" ? form : yearStats!.form;
   const activeDeltas = yr === "all" ? deltas : yearStats!.deltas;
 
   // Player-reported, from onboarding's "when did you start playing?" — not
@@ -64,7 +64,6 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const gap = above ? Math.max(1, Math.round((offMap[above.id] ?? 0) - (offMap[player.id] ?? 0))) : null;
   const isTop = offIdx === 0;
   const pct = r.gp ? Math.round(winPct(r) * 100) : null;
-  const last = (activeForm[player.id] || []).slice(-5);
   const [resultFilter, setResultFilter] = useState<"W" | "D" | "L" | null>(null);
   const [openVs, setOpenVs] = useState<string | null>(null);
   const bouts = scopedMatches.filter((m) => m.p1 === player.id || m.p2 === player.id).sort((a, b) => b.date - a.date);
@@ -102,6 +101,8 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const [showQuality, setShowQuality] = useState(false);
   const [openTier, setOpenTier] = useState<Tier | null>(null);
   const [showLevels, setShowLevels] = useState(false);
+  const [showStyle, setShowStyle] = useState(false);
+  const [globalRank, setGlobalRank] = useState<number | null>(null);
   const [openLevel, setOpenLevel] = useState<string | null>(null);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   const memory = useMemo(() => findMemory(player.id, matches, nameOf), [player.id, matches, nameOf]);
@@ -138,6 +139,33 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
     });
     return LEVELS.filter((c) => g[c]).map((cat) => ({ cat, ...g[cat] }));
   }, [chrono, player]);
+  // The last five with who each was against. WWWWW reads identically whether
+  // it was five semi-pros or five beginners; the bar underneath is the part
+  // that tells you which.
+  const last5 = useMemo(() => chrono.slice(-5).map((m: any) => ({
+    res: resultFor(m),
+    color: ratingForMatch(player, byId[oppId(m)], m.date).color,
+  })), [chrono, player]);
+  // One word for the schedule someone actually chooses to play. Strictly
+  // about who they face, never about whether they win — you can be 2-20 and
+  // still be the bravest player in the league. Needs five rated matches
+  // before it says anything, because three easy games isn't a pattern.
+  const playStyle = useMemo(() => {
+    const tiers = chrono.map((m: any) => ratingForMatch(player, byId[oppId(m)], m.date).tier).filter((t: string) => t !== "muted");
+    if (tiers.length < 5) return null;
+    const share = tiers.filter((t: string) => t === "gold" || t === "silver" || t === "blue" || t === "green").length / tiers.length;
+    const pctTxt = Math.round(share * 100) + "% of their matches are against their own level or above.";
+    if (share >= 0.85) return { label: "Fearless", color: TIER_COLOR.gold, note: "Barely takes an easy match. " + pctTxt };
+    if (share >= 0.65) return { label: "Tested", color: TIER_COLOR.blue, note: "Mostly plays up or level. " + pctTxt };
+    if (share >= 0.4) return { label: "Balanced", color: TIER_COLOR.green, note: "A fair mix of hard and easy. " + pctTxt };
+    if (share >= 0.2) return { label: "Comfortable", color: TIER_COLOR.orange, note: "More easy matches than hard ones. " + pctTxt };
+    return { label: "Padding the record", color: TIER_COLOR.red, note: "Nearly every match is against someone below their level. " + pctTxt };
+  }, [chrono, player]);
+  useEffect(() => {
+    let alive = true;
+    globalRankFor(globalKeyFor(player)).then((n) => { if (alive) setGlobalRank(n); }).catch(() => {});
+    return () => { alive = false; };
+  }, [player.id, player.auth_id]);
   return (
     <>
       {memory && (
@@ -164,6 +192,26 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
         </div>
         {player.auth_id && myAuthId && player.auth_id !== myAuthId && <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />}
       </div>
+      {r.gp > 0 && !player.inactive && (
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "9px 14px", background: PANEL2, borderRadius: RADIUS_SM, padding: "11px 13px", margin: "10px 0 0" }}>
+          {showElo && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>ELO <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 14, color: CHALK }}>{rating.toLocaleString()}</span></span>}
+          {yr === "all" && globalRank != null && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>Global <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 14, color: CHALK }}>#{globalRank}</span></span>}
+          {last5.length > 0 && (
+            <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>Form</span>
+              <FormRow items={last5.map((x: any) => x.res)} colors={last5.map((x: any) => x.color)} />
+            </span>
+          )}
+          {playStyle && (
+            <button onClick={() => setShowStyle(!showStyle)} style={{ ...pill(playStyle.color + "26", playStyle.color), border: "none", cursor: "pointer" }}>{playStyle.label}</button>
+          )}
+        </div>
+      )}
+      {showStyle && playStyle && (
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.45, background: PANEL2, borderRadius: RADIUS_SM, padding: "9px 13px", marginTop: 4 }}>
+          {playStyle.note} The bars under Form show the same thing match by match.
+        </div>
+      )}
       {showElo && yr === "all" && r.gp > 0 && !player.inactive && (isTop || (above && gap !== null)) && (
         <div style={{ background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 4, fontFamily: body, fontSize: 13, color: CHALK }}>
           {isTop ? <><strong style={{ color: BALL }}>Top of the table.</strong> Nobody above — keep winning to stay there.</>
@@ -199,7 +247,6 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           </div>
         </div>
       )}
-      {last.length > 0 && <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}><span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>Recent form</span><FormRow items={last} /></div>}
       {rivalries.length > 0 && (
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6 }}>Rivalries</div>
@@ -381,10 +428,10 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
         <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
-          <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
+          <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
         </button>
-        {dv != null && <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
+        {dv != null && <span style={{ fontFamily: mono, fontSize: 14, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
         {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
       </div>
     </div>

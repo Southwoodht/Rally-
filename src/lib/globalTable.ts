@@ -88,6 +88,25 @@ export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {
   });
 }
 
+// A profile asks for one person's global place, and several profiles get
+// opened in a row, so the whole table is cached briefly rather than re-fetched
+// per profile. A minute is short enough that a result logged elsewhere shows
+// up quickly and long enough that flicking between profiles costs nothing.
+let cache: { at: number; rows: GlobalRow[] } | null = null;
+const CACHE_MS = 60_000;
+
+export const globalKeyFor = (p: any): string => (p?.auth_id ? String(p.auth_id) : "p:" + p?.id);
+
+export async function globalRankFor(key: string, now = Date.now()): Promise<number | null> {
+  if (!cache || now - cache.at > CACHE_MS) {
+    try { cache = { at: now, rows: await loadGlobalStandings() }; } catch { return null; }
+  }
+  // Ranked against the rated players only, matching what the table shows —
+  // unrated players are listed separately there and hold no place number.
+  const i = cache.rows.filter((r) => r.level).findIndex((r) => r.key === key);
+  return i < 0 ? null : i + 1;
+}
+
 export async function loadGlobalStandings(): Promise<GlobalRow[]> {
   if (!supabase) return [];
   const { data, error } = await withSupabaseTimeout(
