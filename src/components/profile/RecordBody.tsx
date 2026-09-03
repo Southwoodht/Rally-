@@ -461,7 +461,10 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
 
   return (
     <div style={{ display: "flex", alignItems: "stretch", gap: 10, padding: "11px 0" }}>
-      <div title={`Difficulty: ${rating.note}`} style={{ width: 6, borderRadius: 2, background: rating.color, flexShrink: 0 }} />
+      {/* Fixed height and centred: without it the bar stretches to the row,
+          so an opponent whose name wraps to two lines gets a bar twice as
+          long as everyone else's. */}
+      <div title={`Difficulty: ${rating.note}`} style={{ width: 5, height: 26, alignSelf: "center", borderRadius: 3, background: rating.color, flexShrink: 0 }} />
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
         <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
@@ -589,7 +592,7 @@ function VsMatches({ oid, matches, resultFor, onOpen, selfPlayer, oppPlayer }: a
         const rating = ratingForMatch(selfPlayer, oppPlayer, m.date);
         return (
           <button key={m.id} onClick={() => onOpen && onOpen(oid)} style={{ display: "flex", alignItems: "stretch", width: "100%", background: "transparent", border: "none", padding: 0, borderTop: i ? "1px solid " + LINE : "none", cursor: "pointer", textAlign: "left" }}>
-            <span title={`Difficulty: ${rating.note}`} style={{ width: 4, borderRadius: 2, background: rating.color, flexShrink: 0, marginRight: 8 }} />
+            <span title={`Difficulty: ${rating.note}`} style={{ width: 4, height: 15, alignSelf: "center", borderRadius: 3, background: rating.color, flexShrink: 0, marginRight: 8 }} />
             <span style={{ display: "flex", alignItems: "center", flex: 1, padding: "5px 0" }}>
               <span style={{ fontFamily: mono, fontSize: 11, fontWeight: 800, color: res === "W" ? BALL : res === "L" ? CLAY : MUTED, width: 16 }}>{res}</span>
               <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, flex: 1, marginLeft: 8 }}>{fmtDate(m.date)}</span>

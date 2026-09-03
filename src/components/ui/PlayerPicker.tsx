@@ -51,7 +51,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
             <span style={{ fontFamily: body, fontSize: 14, color: CHALK, flex: 1 }}>{selected.name}{selected.last ? " " + selected.last : ""}</span>
           </>
         ) : <span style={{ fontFamily: body, fontSize: 14, color: MUTED, flex: 1 }}>{placeholder}</span>}
-        <span style={{ color: MUTED, fontFamily: mono, fontSize: 12 }}>▾</span>
+        <span style={{ color: MUTED, fontFamily: body, fontSize: 12 }}>▾</span>
       </button>
 
       {open && (
@@ -64,7 +64,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
 
             {mode === "pick" ? (
               <>
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" autoFocus style={{ ...miniInput, width: "100%", marginBottom: 12, boxSizing: "border-box" as const }} />
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" autoFocus style={{ ...miniInput, fontFamily: body, width: "100%", marginBottom: 12, boxSizing: "border-box" as const }} />
                 <button onClick={() => setMode("create")} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "11px 12px", marginBottom: 12, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 700 }}>
                   <span style={{ fontSize: 16 }}>＋</span> Create new player
                 </button>

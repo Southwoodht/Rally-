@@ -6,6 +6,7 @@ import { Rankings } from "@/components/table/Rankings";
 import { RecapCard } from "@/components/table/RecapCard";
 import { Empty, Toggle } from "@/components/ui/atoms";
 import { START_ELO } from "@/core/constants";
+import { ratingForMatch } from "@/core/difficulty";
 import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { WEEK, currentStreakOf } from "@/core/rank";
@@ -93,6 +94,21 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     return { topGain, topGv, upset, marquee, strP, strV };
   }, [filtered, deltas, elo, players]);
 
+  // The colour under each of the last five results — same question the
+  // profile's form row answers: were those wins against anybody?
+  const formColors = useMemo(() => {
+    const byId: any = {}; players.forEach((p: any) => (byId[p.id] = p));
+    const out: Record<string, string[]> = {};
+    players.forEach((p: any) => {
+      const mine = filtered
+        .filter((m: any) => m.status !== "pending" && (m.p1 === p.id || m.p2 === p.id))
+        .sort((a: any, b: any) => a.date - b.date)
+        .slice(-5);
+      out[p.id] = mine.map((m: any) => ratingForMatch(p, byId[m.p1 === p.id ? m.p2 : m.p1], m.date).color);
+    });
+    return out;
+  }, [players, filtered]);
+
   const daysIn = season ? Math.max(1, Math.round((Date.now() - season.start) / 86400000)) : 0;
 
   return (
@@ -178,7 +194,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       {players.length > 0 && scopedRanked.length === 0 ? (
         <Empty msg={activeScope === "active" ? "No one's played in the last 12 months. Check Legacy for career history." : activeScope === "nonactive" ? "Everyone's played in the last 12 months." : "No players yet."} />
       ) : (
-        <Rankings ranked={scopedRanked} elo={elo} wdl={wdl} form={form} official={officialMap} mode={mode} onMode={onMode} onOpen={(id) => onOpen(id, tableYr)} requireSetup={requireSetup} />
+        <Rankings ranked={scopedRanked} elo={elo} wdl={wdl} form={form} formColors={formColors} official={officialMap} mode={mode} onMode={onMode} onOpen={(id) => onOpen(id, tableYr)} requireSetup={requireSetup} />
       )}
         </>
       )}

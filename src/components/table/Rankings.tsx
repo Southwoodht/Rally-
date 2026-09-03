@@ -10,7 +10,11 @@ import { isSetUp } from "@/core/levels";
 import { D, recordStr, winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, MUTED, PANEL, RADIUS, body, input, listCard, listRow, miniInput, mono, segmentOption, segmentTrack } from "@/lib/theme";
 
-export function Rankings({ ranked, elo, wdl, form, official, mode, onMode, onOpen, requireSetup }: any) {
+// Gold, silver, bronze for the top three — the podium reads instantly and
+// saves the leader needing a tennis ball beside their name to stand out.
+const MEDAL = ["#d4af37", "#c0c8d0", "#b07a3c"];
+
+export function Rankings({ ranked, elo, wdl, form, formColors, official, mode, onMode, onOpen, requireSetup }: any) {
   const [infoOpen, setInfoOpen] = useState(false);
   const [q, setQ] = useState("");
   const base = requireSetup ? ranked.filter(isSetUp) : ranked;
@@ -65,13 +69,16 @@ export function Rankings({ ranked, elo, wdl, form, official, mode, onMode, onOpe
             const record = `${r.w}–${r.d}–${r.l}`;
             return (
               <button key={p.id} onClick={() => onOpen(p.id)} style={listRow}>
-                <div style={{ fontFamily: mono, fontSize: 13, width: 20, textAlign: "right", color: leader ? BALL : MUTED, fontWeight: 700 }}>{i + 1}</div>
+                <div style={{ fontFamily: mono, fontSize: 14, width: 20, textAlign: "right", color: r.gp > 0 && MEDAL[i] ? MEDAL[i] : MUTED, fontWeight: 800 }}>{i + 1}</div>
                 <Avatar player={p} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, lineHeight: 1.2, display: "flex", alignItems: "center", gap: 8 }}>{p.name}{p.last ? " " + p.last : ""}{leader && <span style={{ fontSize: 14 }}>🎾</span>}<LevelBadge level={p.level} small /></div>
+                  <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}{p.last ? " " + p.last : ""}</div>
+                  {/* Level sits here as quiet text rather than a coloured
+                      badge by the name: people pick it themselves, so it's
+                      background about who they are, not a rank. */}
                   <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, display: "flex", gap: 10, alignItems: "center" }}>
-                    <span>{record}{pct !== null ? ` · ${pct}% win rate` : ""}</span>
-                    {last.length > 0 && <FormRow items={last} small />}
+                    <span>{record}{pct !== null ? ` · ${pct}%` : ""}{p.level?.cat ? " · " + p.level.cat : ""}</span>
+                    {last.length > 0 && <FormRow items={last} small colors={formColors?.[p.id]} />}
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 46 }}>

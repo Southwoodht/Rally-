@@ -38,7 +38,12 @@ export interface GlobalRow {
   gp: number;
   qgp: number;
   score: number;
+  /** Too few games to place them honestly — see globalScore. */
+  provisional: boolean;
 }
+
+// Below this many games we don't claim to know where someone belongs.
+export const PROVISIONAL_GAMES = 10;
 
 const pts = (w: number, d: number, l: number) => (w + l + d ? (w + d * 0.5) / (w + d + l) : 0.5);
 
@@ -78,10 +83,17 @@ const NEUTRAL = 3 * 100;
  * that happened before Rally existed isn't something this table can see, and
  * it shouldn't pretend to: that's what the Legacy table and trophies are for.
  *
+ * Finally the whole thing is damped by how much they've played at all. A
+ * player who is 0-1 may well be excellent — but one match is not a position
+ * in a table, and letting a claimed level alone lift them over somebody with
+ * forty results makes the table describe ambition rather than evidence. Under
+ * ten games they're pulled towards the middle and shown as provisional; they
+ * climb out of it by playing, which is the right incentive.
+ *
  * Unrated players get no starting assumption at all and are listed after the
  * ranked ones — see rankGlobal — rather than being assumed to be beginners.
  */
-export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp">): number {
+export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisional">): number {
   const lv = levelVal(r.level);
   if (lv == null) return -1;
   const claimed = lv * 100;
@@ -91,8 +103,11 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp">): number 
   const unproven = claimed * 0.45 + NEUTRAL * 0.55;
   const proven = claimed + (pts(r.qw, r.qd, r.ql) - 0.5) * 2 * 300;
   const career = 45 * Math.log10(1 + Math.max(0, r.w));
+  const raw = unproven * trust + proven * (1 - trust) + career;
 
-  return unproven * trust + proven * (1 - trust) + career;
+  const gp = r.w + r.d + r.l;
+  const established = Math.min(1, gp / PROVISIONAL_GAMES);
+  return raw * established + NEUTRAL * (1 - established);
 }
 
 export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {
@@ -165,7 +180,8 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
       qd: r.qd || 0,
       ql: r.ql || 0,
     };
-    return { ...base, gp: base.w + base.d + base.l, qgp: base.qw + base.qd + base.ql, score: globalScore(base) };
+    const gp = base.w + base.d + base.l;
+    return { ...base, gp, qgp: base.qw + base.qd + base.ql, score: globalScore(base), provisional: gp < PROVISIONAL_GAMES };
   });
   return rankGlobal(rows);
 }

@@ -102,8 +102,9 @@ export default function Dashboard({ session }: { session: Session }) {
       <div>
         <div style={{ background: PANEL, borderBottom: "none", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>{active.name}</div>
-            <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Code <span style={{ fontFamily: mono }}>{active.join_code}</span></div>
+            {/* Quiet: you know which league you're in, and the join code is
+                a thing you need once. It lives on the league list instead. */}
+            <div style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: MUTED }}>{active.name}</div>
           </div>
           <button onClick={() => setView(leagues.length > 1 ? "picker" : "empty")} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Leagues</button>
         </div>

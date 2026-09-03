@@ -44,7 +44,7 @@ function Row({ row, place, isMe, open, onClick }: any) {
             {r.level && <LevelBadge level={r.level} />}
           </span>
           <span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 2 }}>
-            {r.leagues > 1 ? r.leagues + " leagues" : r.claimed ? "1 league" : "not claimed — our leagues only"}
+            {r.provisional ? "Provisional — too few games to place yet" : r.leagues > 1 ? r.leagues + " leagues" : r.claimed ? "1 league" : "not claimed — our leagues only"}
           </span>
         </span>
         <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 13.5, color: CHALK, flexShrink: 0 }}>{rec(r.w, r.d, r.l)}</span>
