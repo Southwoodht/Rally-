@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { listMyLeagues, createLeague, joinLeague, League } from "@/lib/leagues";
+import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
 import { COURT, PANEL, PANEL2, CHALK, BALL, CLAY, MUTED, LINE, display, body, mono } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
 
@@ -23,6 +23,9 @@ export default function Dashboard({ session }: { session: Session }) {
     session.user.email?.split("@")[0] ||
     "player";
 
+  const [sizes, setSizes] = useState<Record<string, { players: number; matches: number }>>({});
+  const [confirmLeave, setConfirmLeave] = useState<string | null>(null);
+
   const load = async () => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
       // dev auto mode — skip Supabase league listing so the debug league remains active
@@ -31,6 +34,8 @@ export default function Dashboard({ session }: { session: Session }) {
     try {
       const mine = await listMyLeagues();
       setLeagues(mine);
+      // Only worth asking when there's a choice to make.
+      if (mine.length > 1) leagueSizes(mine.map((l) => l.id)).then(setSizes).catch(() => {});
       if (mine.length === 1) { setActive(mine[0]); setView("app"); }
       else if (mine.length > 1) setView("picker");
       else setView("empty");
@@ -151,12 +156,42 @@ export default function Dashboard({ session }: { session: Session }) {
   if (view === "picker") return shell(
     <div>
       <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 10 }}>Your leagues</div>
-      {leagues.map((l) => (
-        <button key={l.id} onClick={() => { setActive(l); setView("app"); }} style={{ ...tile, width: "100%", marginBottom: 8, display: "block" }}>
-          <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{l.name}</div>
-          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{l.location ? l.location + " · " : ""}Code <span style={{ fontFamily: mono }}>{l.join_code}</span>{l.role === "owner" ? " · Owner" : ""}</div>
-        </button>
-      ))}
+      {/* Several leagues can end up with the same name — created once each
+          time somebody tapped Create while setting things up. The counts are
+          what tell them apart, so they're shown before there's any chance to
+          leave the wrong one. */}
+      {leagues.map((l) => {
+        const n = sizes[l.id];
+        const empty = n && !n.players && !n.matches;
+        return (
+          <div key={l.id} style={{ ...tile, width: "100%", marginBottom: 8, display: "block", boxSizing: "border-box" as const }}>
+            <button onClick={() => { setActive(l); setView("app"); }} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
+              <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{l.name}</div>
+              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{l.location ? l.location + " · " : ""}Code <span style={{ fontFamily: mono }}>{l.join_code}</span>{l.role === "owner" ? " · Owner" : ""}</div>
+              {n && (
+                <div style={{ fontFamily: body, fontSize: 12.5, fontWeight: 600, color: empty ? CLAY : MUTED, marginTop: 4 }}>
+                  {empty ? "Empty — nothing in it" : n.players + " player" + (n.players === 1 ? "" : "s") + " · " + n.matches + " match" + (n.matches === 1 ? "" : "es")}
+                </div>
+              )}
+            </button>
+            {leagues.length > 1 && (
+              confirmLeave === l.id ? (
+                <div style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+                  <div style={{ fontFamily: body, fontSize: 12.5, color: CHALK, lineHeight: 1.45, marginBottom: 8 }}>
+                    Leave <strong>{l.name}</strong>? It stays exactly as it is — this only takes it off your list, and code <span style={{ fontFamily: mono }}>{l.join_code}</span> gets you back in.
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={async () => { try { await leaveLeague(l.id); setConfirmLeave(null); await load(); } catch (e: any) { setError(e.message || "Couldn't leave."); } }} style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "8px 14px", cursor: "pointer" }}>Leave</button>
+                    <button onClick={() => setConfirmLeave(null)} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setConfirmLeave(l.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, background: "transparent", border: "none", padding: "8px 0 0", cursor: "pointer" }}>Leave this league</button>
+              )
+            )}
+          </div>
+        );
+      })}
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
         <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>➕ Create</div></button>
         <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>🔑 Join</div></button>

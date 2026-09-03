@@ -29,6 +29,41 @@ export async function listMyLeagues(): Promise<League[]> {
     .map((r: any) => ({ ...r.leagues, role: r.role }));
 }
 
+/**
+ * How much is actually in each league, so a list of five identically named
+ * ones can be told apart before anybody leaves the wrong one. Two small
+ * queries — only the league_id column comes back, counted here.
+ */
+export async function leagueSizes(ids: string[]): Promise<Record<string, { players: number; matches: number }>> {
+  const out: Record<string, { players: number; matches: number }> = {};
+  ids.forEach((id) => (out[id] = { players: 0, matches: 0 }));
+  if (!supabase || !ids.length) return out;
+  const [pl, mt]: any[] = await Promise.all([
+    withSupabaseTimeout(supabase.from("players").select("league_id").in("league_id", ids), { data: [], error: null } as any),
+    withSupabaseTimeout(supabase.from("matches").select("league_id").in("league_id", ids), { data: [], error: null } as any),
+  ]);
+  (pl?.data || []).forEach((r: any) => { if (out[r.league_id]) out[r.league_id].players++; });
+  (mt?.data || []).forEach((r: any) => { if (out[r.league_id]) out[r.league_id].matches++; });
+  return out;
+}
+
+/**
+ * Removes your membership only. The league and everything in it stays
+ * exactly where it is, and the join code gets you back in — which is why
+ * this is offered in the app and deleting a league isn't.
+ */
+export async function leaveLeague(id: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const { data: userData } = await withSupabaseTimeout(supabase.auth.getUser(), { data: { user: null }, error: null } as any);
+  const uid = (userData as any)?.user?.id;
+  if (!uid) throw new Error("You need to be logged in.");
+  const { error }: any = await withSupabaseTimeout(
+    supabase.from("league_members").delete().eq("league_id", id).eq("user_id", uid),
+    { error: { message: "Timed out leaving the league." } } as any,
+  );
+  if (error) throw error;
+}
+
 export async function createLeague(name: string, location: string): Promise<League> {
   if (!supabase) throw new Error("Not connected.");
   const { data: userData } = await withSupabaseTimeout(supabase.auth.getUser(), { data: { user: null }, error: null } as any);

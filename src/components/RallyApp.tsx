@@ -511,6 +511,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "history" ? "Games" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <MessageCircle size={17} color={BALL} />
+                  {unreadMsgs > 0 && <span style={{ position: "absolute", top: 2, right: 2, minWidth: 15, height: 15, borderRadius: 999, background: BALL, color: COURT, fontFamily: mono, fontWeight: 700, fontSize: 9, display: "grid", placeItems: "center", padding: "0 3px" }}>{unreadMsgs}</span>}
+                </button>
                 <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} />
                 {tab === "profile" && (
                   <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3.5, flexShrink: 0 }}>
