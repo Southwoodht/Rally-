@@ -79,28 +79,18 @@ function Line({ label, value, mutedValue }: any) {
   );
 }
 
-// `onlyKeys`, when given, narrows the table to the people you've actually
-// played — the standby view you get by unticking every league. Same numbers,
-// same order, just your own circle instead of everyone's.
-export function GlobalTable({ myAuthId, onlyKeys, blurb }: { myAuthId?: string | null; onlyKeys?: Set<string> | null; blurb?: string }) {
+export function GlobalTable({ myAuthId }: { myAuthId?: string | null }) {
   const [rows, setRows] = useState<GlobalRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
 
-  // Callers build the key set inline, so it's a new Set on every parent
-  // render. Depending on the Set itself would re-run the fetch each time the
-  // app re-rendered for any unrelated reason; depending on its contents
-  // re-runs it only when the circle actually changes.
-  const onlyKeysSig = onlyKeys ? Array.from(onlyKeys).sort().join(",") : "";
-
   useEffect(() => {
     let alive = true;
-    const keys = onlyKeysSig ? new Set(onlyKeysSig.split(",")) : null;
     loadGlobalStandings()
-      .then((r) => { if (alive) { setRows(keys ? r.filter((x) => keys.has(x.key)) : r); setErr(null); } })
+      .then((r) => { if (alive) { setRows(r); setErr(null); } })
       .catch((e) => { if (alive) setErr(e?.message || "Could not load the global table."); });
     return () => { alive = false; };
-  }, [onlyKeysSig]);
+  }, []);
 
   if (err) {
     return (
@@ -113,8 +103,8 @@ export function GlobalTable({ myAuthId, onlyKeys, blurb }: { myAuthId?: string |
       </div>
     );
   }
-  if (!rows) return <Empty msg="Loading…" />;
-  if (!rows.length) return <Empty msg={onlyKeys ? "You haven't played anyone yet." : "Nobody to rank yet."} />;
+  if (!rows) return <Empty msg="Loading the global table…" />;
+  if (!rows.length) return <Empty msg="Nobody to rank yet." />;
 
   // Unrated players sit after the ranked ones and take no place number —
   // without a level there's nothing to anchor them to, and inventing one
@@ -125,7 +115,7 @@ export function GlobalTable({ myAuthId, onlyKeys, blurb }: { myAuthId?: string |
   return (
     <>
       <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
-        {blurb || "Everyone you’ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level sets the tier; how they do against their own level or better decides the order inside it."}
+        Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level sets the tier; how they do against their own level or better decides the order inside it.
       </div>
       <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
         {rated.map((r, i) => (

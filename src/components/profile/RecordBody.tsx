@@ -197,6 +197,12 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           )}
         </div>
         {player.auth_id && myAuthId && player.auth_id !== myAuthId && <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />}
+        {/* Friendship is between accounts, so there is nobody to befriend
+            until they claim their profile. Saying so beats silently showing
+            no button, which reads as a missing feature. */}
+        {!player.auth_id && myAuthId && player.id !== meId && (
+          <span style={{ fontFamily: body, fontSize: 11, color: MUTED, lineHeight: 1.3, textAlign: "right" as const, maxWidth: 96, flexShrink: 0 }}>No account yet — can&apos;t add as a friend</span>
+        )}
       </div>
       {r.gp > 0 && !player.inactive && (
         <div style={{ background: PANEL2, borderRadius: RADIUS_SM, padding: "12px 14px", margin: "10px 0 0", display: "grid", gap: 10 }}>
