@@ -13,6 +13,7 @@ import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, mini
 export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId }: any) {
   const [name, setName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState(null);
+  const [confirmWipe, setConfirmWipe] = useState(false);
   const [fxP1, setFxP1] = useState("");
   const [fxP2, setFxP2] = useState("");
   const [avOpen, setAvOpen] = useState(null);
@@ -174,8 +175,32 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
 
       <div style={{ borderTop: "none", marginTop: 6, paddingTop: 16 }}>
         <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK, marginBottom: 10 }}>Data</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><BigBtn onClick={onLoadDemo} color={BALL}>Load example data</BigBtn><BigBtn onClick={onClearResults} color={CLAY}>Clear results</BigBtn><BigBtn onClick={onImportHistoricalMatches} color={PANEL2}>Import historical matches</BigBtn></div>
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8 }}>Applies to this league only. "Clear results" wipes matches but keeps players — use it when you go live. The historical import adds dated singles matches and creates any missing opponent players without duplicating existing entries.</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><BigBtn onClick={onLoadDemo} color={BALL}>Load example data</BigBtn><BigBtn onClick={onImportHistoricalMatches} color={PANEL2}>Import historical matches</BigBtn></div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8 }}>Applies to this league only. The historical import adds dated singles matches and creates any missing opponent players without duplicating existing entries.</div>
+        {/* Clearing results deletes every match row in this league and cannot
+            be undone. It used to be a plain button sitting between "Load
+            example data" and the import, one mis-tap away from a season. It
+            now takes two steps and states the number out loud first — the
+            same shape as the per-opponent clear in LogResult, which has been
+            guarded all along. */}
+        <div style={{ border: "1px solid " + CLAY, borderRadius: 12, padding: "12px 13px", marginTop: 14 }}>
+          {confirmWipe ? (
+            <>
+              <div style={{ fontFamily: body, fontSize: 13, color: CHALK, lineHeight: 1.45, marginBottom: 10 }}>
+                Delete all <strong>{(matches || []).length}</strong> results in this league? Players are kept. This cannot be undone.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <BigBtn onClick={() => { setConfirmWipe(false); onClearResults(); }} color={CLAY}>Delete {(matches || []).length}</BigBtn>
+                <BigBtn onClick={() => setConfirmWipe(false)} color={PANEL2}>Cancel</BigBtn>
+              </div>
+            </>
+          ) : (
+            <>
+              <button onClick={() => setConfirmWipe(true)} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: body, fontWeight: 700, fontSize: 13.5, color: CLAY }}>Clear all results…</button>
+              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 6, lineHeight: 1.45 }}>Wipes every match in this league and keeps the players. For starting a season clean — not something to undo.</div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
