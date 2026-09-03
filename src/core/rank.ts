@@ -53,5 +53,10 @@ export function matchContext(players, matches, target) {
     eloAfter: { p1: statsAfter.elo[target.p1] ?? null, p2: statsAfter.elo[target.p2] ?? null },
     rankBefore: { p1: rankBefore[target.p1] ?? null, p2: rankBefore[target.p2] ?? null },
     rankAfter: { p1: rankAfter[target.p1] ?? null, p2: rankAfter[target.p2] ?? null },
+    // Official points were already computed here to work the ranks out; they
+    // were just never handed back, so a match could say someone moved from
+    // 5th to 6th without saying by how much.
+    ptsBefore: { p1: offBefore[target.p1] ?? null, p2: offBefore[target.p2] ?? null },
+    ptsAfter: { p1: offAfter[target.p1] ?? null, p2: offAfter[target.p2] ?? null },
   };
 }

@@ -42,38 +42,57 @@ export interface GlobalRow {
 
 const pts = (w: number, d: number, l: number) => (w + l + d ? (w + d * 0.5) / (w + d + l) : 0.5);
 
-// Confidence ramp: a 1-0 record shouldn't move someone as far as a 40-0 one.
-// Full weight arrives at ten games, which is roughly where a record in this
-// app stops being noise.
-const confidence = (n: number) => Math.min(1, n / 10);
+// The middle of the scale — where "we don't actually know how good you are"
+// sits. Both an unbacked "Pro" and an unbacked "Beginner" get pulled towards
+// it, from opposite directions.
+const NEUTRAL = 3 * 100;
 
 /**
  * Where someone sits globally.
  *
- * Level is the anchor, worth 100 a point, because that is the one claim that
- * spans leagues — an Advanced player's league and an Intermediate's are not
- * the same competition and their win rates are not comparable. Records then
- * move people *within* reach of their neighbours without ever leapfrogging a
- * whole level on volume alone:
+ * Level is a *claim*, not a measurement. Anyone can pick Pro from a dropdown,
+ * and nothing in the app stops them. So level cannot be the anchor: it's a
+ * starting assumption whose weight falls away as real evidence arrives.
  *
- *   ±60  how they do against opponents at or above their own level. This is
- *        the load-bearing one. Beating your equals and betters is the only
- *        record that survives the move across leagues.
- *   ±25  overall win rate, as a tiebreak. Deliberately small: 100-0 against
- *        people well below you says little, and shouldn't outrank someone
- *        with a harder draw.
+ *   unproven  what we assume before they've shown us anything — their claim,
+ *             dragged more than half the way back to the middle of the scale.
+ *             An unevidenced Pro does not get to sit at the top.
+ *   proven    what their record says their level is: how they do against
+ *             opponents at or above their own level, worth up to three level
+ *             points either side of the claim. Dominating your equals and
+ *             betters is the one result that means the same thing in every
+ *             league, which is why it carries the weight here.
+ *   trust     how much we still have to take their word for it. Six matches
+ *             against their own level or better halves it, eighteen cuts it
+ *             to a quarter. Evidence replaces the claim rather than adding
+ *             to it.
+ *   career    all-time wins, with heavy diminishing returns — a hundred wins
+ *             is worth about half a level point, not five. Volume against
+ *             weak opposition must never outrank evidence against strong.
  *
- * Unrated players get no anchor and are listed after rated ones — see
- * rankGlobal — rather than being silently assumed to be beginners.
+ * The awkward case, and it is genuinely awkward: a 70-year-old ex-pro with
+ * three matches on record against an active player with thirty wins and a
+ * hard schedule. This lands them close together, which is the honest answer —
+ * the ex-pro's claim is discounted for thin evidence, the active player's
+ * volume and quality lift them, and neither runs away with it. A career peak
+ * that happened before Rally existed isn't something this table can see, and
+ * it shouldn't pretend to: that's what the Legacy table and trophies are for.
+ *
+ * Unrated players get no starting assumption at all and are listed after the
+ * ranked ones — see rankGlobal — rather than being assumed to be beginners.
  */
 export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp">): number {
   const lv = levelVal(r.level);
   if (lv == null) return -1;
+  const claimed = lv * 100;
   const qgp = r.qw + r.qd + r.ql;
-  const gp = r.w + r.d + r.l;
-  const quality = (pts(r.qw, r.qd, r.ql) - 0.5) * 2 * 60 * confidence(qgp);
-  const overall = (pts(r.w, r.d, r.l) - 0.5) * 2 * 25 * confidence(gp);
-  return lv * 100 + quality + overall;
+
+  const trust = 1 / (1 + qgp / 6);
+  const unproven = claimed * 0.45 + NEUTRAL * 0.55;
+  const proven = claimed + (pts(r.qw, r.qd, r.ql) - 0.5) * 2 * 300;
+  const career = 45 * Math.log10(1 + Math.max(0, r.w));
+
+  return unproven * trust + proven * (1 - trust) + career;
 }
 
 export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {

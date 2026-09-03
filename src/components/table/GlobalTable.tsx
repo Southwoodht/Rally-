@@ -115,7 +115,7 @@ export function GlobalTable({ myAuthId }: { myAuthId?: string | null }) {
   return (
     <>
       <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
-        Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level sets the tier; how they do against their own level or better decides the order inside it.
+        Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level is only a starting assumption: the more someone plays their own level or better, the more their results decide their place and the less their claimed level does.
       </div>
       <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
         {rated.map((r, i) => (

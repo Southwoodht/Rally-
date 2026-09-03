@@ -8,6 +8,54 @@ import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, miniInput, mono } from "
 
 const PHOTO_SIZE = 480;
 
+// A signed number that reads as a change rather than a value: "+0.4", "-0.8",
+// and "no change" when it rounds to nothing, because "+0.0" looks like a bug.
+const delta = (n: number | null, dp = 1) => {
+  if (n == null || !isFinite(n)) return null;
+  const r = Number(n.toFixed(dp));
+  if (r === 0) return null;
+  return (r > 0 ? "+" : "−") + Math.abs(r).toFixed(dp);
+};
+
+const movement = (before: number | null, after: number | null) => {
+  if (!after) return null;
+  if (!before) return "entered the table at " + after;
+  if (before === after) return "held " + before;
+  return (after < before ? "climbed " : "dropped ") + before + " → " + after;
+};
+
+// The plain-English version of the three rows below it. Same numbers — a
+// scoreline is not much use if you have to assemble the story from a table.
+function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionCorrect, groupName }: any) {
+  const side = (which: "p1" | "p2") => {
+    const dElo = (ctx.eloAfter[which] ?? 0) - (ctx.eloBefore[which] ?? 0);
+    const dPts = (ctx.ptsAfter[which] ?? 0) - (ctx.ptsBefore[which] ?? 0);
+    const bits = [delta(dElo) && delta(dElo) + " ELO", delta(dPts) && delta(dPts) + " pts", movement(ctx.rankBefore[which], ctx.rankAfter[which])].filter(Boolean);
+    return { name: nm(match[which]), text: bits.length ? bits.join(" · ") : "nothing changed" };
+  };
+  const winnerName = isDraw ? null : nm(match.winner === "p1" ? match.p1 : match.p2);
+  return (
+    <div style={{ background: PANEL2, borderRadius: 12, padding: "12px 14px", margin: "4px 0 12px" }}>
+      <div style={{ fontFamily: body, fontSize: 13.5, color: CHALK, lineHeight: 1.5 }}>
+        {favoredId && favoredPct != null && <>Rally made <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
+        {isDraw ? <>They drew.</> : <><strong>{winnerName}</strong> won{predictionCorrect === false ? " — the underdog took it." : "."}</>}
+      </div>
+      {(["p1", "p2"] as const).map((which) => {
+        const s = side(which);
+        return (
+          <div key={which} style={{ display: "flex", gap: 8, marginTop: 8, fontFamily: body, fontSize: 12.5, lineHeight: 1.4 }}>
+            <span style={{ fontWeight: 700, color: CHALK, flexShrink: 0 }}>{s.name}</span>
+            <span style={{ color: MUTED }}>{s.text}</span>
+          </div>
+        );
+      })}
+      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginTop: 9, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
+        Places shown are in {groupName || "this league"}. Global places aren&apos;t here — they&apos;re worked out across every league at once, so they can&apos;t be rewound to what they were on the day.
+      </div>
+    </div>
+  );
+}
+
 export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, groupName, season }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
@@ -128,6 +176,19 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         ) : canEdit ? (
           <button onClick={() => setVenueDraft("")} style={{ display: "block", width: "100%", textAlign: "left", background: "transparent", border: "none", padding: "8px 0", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>+ Add venue</button>
         ) : null}
+
+        {ctx && (
+          <MatchStory
+            ctx={ctx}
+            match={match}
+            nm={nm}
+            isDraw={isDraw}
+            favoredId={favoredId}
+            favoredPct={favoredPct}
+            predictionCorrect={predictionCorrect}
+            groupName={groupName}
+          />
+        )}
 
         {ctx && (
           <>
