@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, Check, HelpCircle } from "lucide-react";
+import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, Check, HelpCircle, MessageCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -20,7 +20,9 @@ import { LegacyProfile } from "@/components/profile/LegacyProfile";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
 import { SettingsTab } from "@/components/settings/SettingsTab";
+import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
+import { unreadMessageCount } from "@/lib/messages";
 import { LeagueHome } from "@/components/table/LeagueHome";
 import PlayerClaim from "@/components/auth/PlayerClaim";
 import { Avatar } from "@/components/ui/Avatar";
@@ -62,6 +64,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // league. The league still loads underneath — this changes what's shown,
   // not what's fetched.
   const [personal, setPersonal] = useState(false);
+  // Who to open a conversation with when arriving from a profile's Message
+  // button. Cleared as soon as Messages has used it, so going back to the
+  // screen later doesn't reopen the same thread.
+  const [msgWith, setMsgWith] = useState<string | null>(null);
+  const [unreadMsgs, setUnreadMsgs] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [onboarded, setOnboarded] = useState(true);
   const [toast, setToast] = useState("");
@@ -335,6 +342,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // First names alone collide often enough (two Sams, two Charlies) that
   // this always includes the surname when there is one.
   const nameOf = (id) => { const p = players.find((p) => p.id === id); return p ? p.name + (p.last ? " " + p.last : "") : "—"; };
+  // A badge, so it never justifies an error screen — unreadMessageCount
+  // already swallows failures and returns 0.
+  useEffect(() => {
+    let alive = true;
+    const tick = () => unreadMessageCount().then((n) => { if (alive) setUnreadMsgs(n); }).catch(() => {});
+    tick();
+    const timer = setInterval(tick, 30000);
+    return () => { alive = false; clearInterval(timer); };
+  }, [tab]);
 
   // A pending result waits for the opponent to agree it — but only ever for
   // matches logged after this existed (`loggedAt`), so we never mass-confirm
@@ -462,7 +478,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
-  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   const main = tab === "ladder" || tab === "add" || tab === "history" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
@@ -524,6 +540,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
         {tab === "help" && <HelpGuide />}
+        {tab === "messages" && <SubHeader title="Messages" onBack={() => setTab("profile")} />}
+        {tab === "messages" && <Messages startWith={msgWith} onStarted={() => setMsgWith(null)} />}
         {tab === "friends" && <SubHeader title="Friends" onBack={() => setTab("profile")} />}
         {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} />}
       </div>
@@ -536,12 +554,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <button onClick={() => setMenuOpen(false)} style={{ background: PANEL, border: "none", color: MUTED, borderRadius: 14, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
             </div>
             <div style={listCard}>
-              <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>\u203A</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>\u203A</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>\u203A</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>\u203A</span></button>
-              {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED }}>\u203A</span></button>}
-              <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>\u203A</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><MessageCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>›</span></button>
+              {isClubAdmin && <button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span><span style={{ color: MUTED }}>›</span></button>}
+              <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
             </div>
           </div>
         </div>

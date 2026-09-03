@@ -40,7 +40,7 @@ function FriendAction({ theirAuthId, myAuthId }: { theirAuthId: string; myAuthId
   return btn("Accept friend request", async () => { try { await acceptFriendRequest(row.id); load(); } catch {} });
 }
 
-export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, groups, meId, myAuthId, onProposeEdit, onOpenMatch, initialYear }: any) {
+export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, groups, meId, myAuthId, onProposeEdit, onOpenMatch, onMessage, initialYear }: any) {
   const [yr, setYr] = useState<"all" | number>(initialYear ?? "all");
   const [showSeason, setShowSeason] = useState(false);
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
@@ -196,7 +196,14 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginTop: 3 }}>Unranked</div>
           )}
         </div>
-        {player.auth_id && myAuthId && player.auth_id !== myAuthId && <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />}
+        {player.auth_id && myAuthId && player.auth_id !== myAuthId && (
+          <span style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end", flexShrink: 0 }}>
+            <FriendAction theirAuthId={player.auth_id} myAuthId={myAuthId} />
+            {onMessage && (
+              <button onClick={() => onMessage(player.auth_id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: CHALK, background: PANEL2, border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer" }}>Message</button>
+            )}
+          </span>
+        )}
         {/* Friendship is between accounts, so there is nobody to befriend
             until they claim their profile. Saying so beats silently showing
             no button, which reads as a missing feature. */}

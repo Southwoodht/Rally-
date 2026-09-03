@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { LegacyTable } from "@/components/table/LegacyTable";
 import { PredictionCard } from "@/components/table/PredictionCard";
 import { Rankings } from "@/components/table/Rankings";
@@ -17,7 +17,21 @@ const ACTIVE_WINDOW_MS = 365 * 86400000;
 export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, requireSetup, nameOf }: any) {
   const [view, setView] = useState<"active" | "legacy">("active");
   const season = group?.season;
-  const [scope, setScope] = useState("season");
+  // This used to reset to "season" on every page load, which meant the table
+  // quietly went back to season-only records after each deploy — and a career
+  // record of 32-0-12 showing as 4-0 reads as lost data, not as a filter.
+  // Remembered per league instead.
+  const scopeKey = "rally.scope." + (group?.id || "none");
+  const [scope, setScope] = useState<string>(() => {
+    if (typeof window === "undefined") return "season";
+    try { return window.localStorage.getItem("rally.scope." + (group?.id || "none")) || "season"; } catch { return "season"; }
+  });
+  useEffect(() => {
+    try { setScope(window.localStorage.getItem(scopeKey) || "season"); } catch {}
+  }, [scopeKey]);
+  useEffect(() => {
+    try { window.localStorage.setItem(scopeKey, scope); } catch {}
+  }, [scopeKey, scope]);
   const inSeason = !!(season && scope === "season");
   const [tableYr, setTableYr] = useState<"all" | number>("all");
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
