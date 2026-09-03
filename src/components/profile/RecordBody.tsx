@@ -18,6 +18,7 @@ import { ratingForMatch, ratingNow, TIER_COLOR, TIER_LABEL, TIER_RANK, type Tier
 import { findMemory } from "@/core/memories";
 import { FriendRow, getFriendshipWith, sendFriendRequest, acceptFriendRequest, removeFriendship } from "@/lib/friends";
 import { globalKeyFor, globalRankFor, standingWord, type GlobalPlace } from "@/lib/globalTable";
+import { myLeaguePlaces, type LeaguePlace } from "@/lib/myLeaguePlaces";
 import { D, fmtDate, winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, RADIUS_SM, body, miniInput, mono, pill } from "@/lib/theme";
 
@@ -39,7 +40,7 @@ function FriendAction({ theirAuthId, myAuthId }: { theirAuthId: string; myAuthId
   return btn("Accept friend request", async () => { try { await acceptFriendRequest(row.id); load(); } catch {} });
 }
 
-export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, meId, myAuthId, onProposeEdit, onOpenMatch, initialYear }: any) {
+export function RecordBody({ player, players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo, onOpen, fixtures, group, groups, meId, myAuthId, onProposeEdit, onOpenMatch, initialYear }: any) {
   const [yr, setYr] = useState<"all" | number>(initialYear ?? "all");
   const [showSeason, setShowSeason] = useState(false);
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
@@ -102,6 +103,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const [openTier, setOpenTier] = useState<Tier | null>(null);
   const [showLevels, setShowLevels] = useState(false);
   const [globalPlace, setGlobalPlace] = useState<GlobalPlace | null>(null);
+  const [leaguePlaces, setLeaguePlaces] = useState<LeaguePlace[]>([]);
   const [openLevel, setOpenLevel] = useState<string | null>(null);
   const rivalries = useMemo(() => computeRivalries(player.id, scopedMatches), [player.id, scopedMatches]);
   const memory = useMemo(() => findMemory(player.id, matches, nameOf), [player.id, matches, nameOf]);
@@ -163,8 +165,13 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   useEffect(() => {
     let alive = true;
     globalRankFor(globalKeyFor(player)).then((p) => { if (alive) setGlobalPlace(p); }).catch(() => {});
+    // Your standing in every league you're in — only ever for your own
+    // profile, since other people's leagues aren't yours to load.
+    const isMe = !!myAuthId && player.auth_id === myAuthId;
+    if (isMe) myLeaguePlaces(groups || [], myAuthId).then((ps) => { if (alive) setLeaguePlaces(ps); }).catch(() => {});
+    else setLeaguePlaces([]);
     return () => { alive = false; };
-  }, [player.id, player.auth_id]);
+  }, [player.id, player.auth_id, myAuthId, groups]);
   return (
     <>
       {memory && (
@@ -196,11 +203,10 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           {yr === "all" && globalPlace && (
             <SnapRow label="Global" place={"#" + globalPlace.rank} sub={"of " + globalPlace.of} chip={standingWord(globalPlace)} />
           )}
-          <SnapRow
-            label={group?.name || "League"}
-            place={ranks.off[player.id] ? "#" + ranks.off[player.id] : "–"}
-            sub={showElo ? "ELO " + rating.toLocaleString() : null}
-          />
+          {leaguePlaces.length > 0
+            ? leaguePlaces.map((lp) => <SnapRow key={lp.leagueId} label={lp.name} place={"#" + lp.place} sub={"of " + lp.of} />)
+            : <SnapRow label={group?.name || "League"} place={ranks.off[player.id] ? "#" + ranks.off[player.id] : "–"} sub={null} />}
+          {showElo && <SnapRow label="ELO" place={rating.toLocaleString()} sub={null} />}
           {playStyle && (
             <div style={{ display: "flex", alignItems: "flex-start", gap: 9, borderTop: "1px solid " + LINE, paddingTop: 10 }}>
               <span style={{ ...pill(playStyle.color + "26", playStyle.color), flexShrink: 0 }}>{playStyle.label}</span>
@@ -224,11 +230,11 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       )}
       {years.length > 0 && (
         <div style={{ display: "flex", gap: 6, margin: "12px 0 0" }}>
-          <select value={String(yr)} onChange={(e) => { setYr(e.target.value === "all" ? "all" : Number(e.target.value)); setResultFilter(null); setOpenVs(null); }} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }}>
+          <select value={String(yr)} onChange={(e) => { setYr(e.target.value === "all" ? "all" : Number(e.target.value)); setResultFilter(null); setOpenVs(null); }} style={{ ...miniInput, fontFamily: body, fontWeight: 600, fontSize: 13, flex: 1, boxSizing: "border-box" as const }}>
             <option value="all">All Time</option>
             {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
           </select>
-          {yr !== "all" && <button onClick={() => setShowSeason(true)} style={{ ...miniInput, cursor: "pointer", color: BALL, flexShrink: 0, whiteSpace: "nowrap" as const }}>Season summary</button>}
+          {yr !== "all" && <button onClick={() => setShowSeason(true)} style={{ ...miniInput, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", color: BALL, flexShrink: 0, whiteSpace: "nowrap" as const }}>Season summary</button>}
         </div>
       )}
       {showSeason && yr !== "all" && <SeasonSummary player={player} players={players} matches={matches} year={yr} fixtures={fixtures} group={group} nameOf={nameOf} onOpenMatch={onOpenMatch} onClose={() => setShowSeason(false)} />}

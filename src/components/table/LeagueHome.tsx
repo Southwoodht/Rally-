@@ -151,12 +151,12 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       {inSeason && prediction.length > 0 && <PredictionCard prediction={prediction} />}
       {inSeason && recap && <RecapCard recap={recap} nameOf={nameOf} leagueName={group.name} />}
       {years.length > 0 && (
-        <select value={String(tableYr)} onChange={(e) => setTableYr(e.target.value === "all" ? "all" : Number(e.target.value))} style={{ ...miniInput, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
+        <select value={String(tableYr)} onChange={(e) => setTableYr(e.target.value === "all" ? "all" : Number(e.target.value))} style={{ ...miniInput, fontFamily: body, fontWeight: 600, fontSize: 13, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
           <option value="all">All Time</option>
           {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
         </select>
       )}
-      <select value={activeScope} onChange={(e) => setActiveScope(e.target.value as any)} style={{ ...miniInput, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
+      <select value={activeScope} onChange={(e) => setActiveScope(e.target.value as any)} style={{ ...miniInput, fontFamily: body, fontWeight: 600, fontSize: 13, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
         <option value="active">Active — last 12 months</option>
         <option value="nonactive">Non-active</option>
         <option value="all">All players</option>

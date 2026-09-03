@@ -21,6 +21,7 @@ import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { GlobalTable } from "@/components/table/GlobalTable";
+import { globalKeyFor } from "@/lib/globalTable";
 import { LeagueHome } from "@/components/table/LeagueHome";
 import PlayerClaim from "@/components/auth/PlayerClaim";
 import { Avatar } from "@/components/ui/Avatar";
@@ -58,6 +59,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [profileYear, setProfileYear] = useState<"all" | number>("all");
   const openProfile = (id: any, year?: "all" | number) => { setProfileId(id); setProfileYear(year ?? "all"); };
   const [groupSheet, setGroupSheet] = useState(false);
+  // Standby view: the Table tab shows the people you've played instead of a
+  // league. The league still loads underneath — this changes what's shown,
+  // not what's fetched.
+  const [personal, setPersonal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [onboarded, setOnboarded] = useState(true);
   const [toast, setToast] = useState("");
@@ -458,8 +463,19 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
-  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, meId, myAuthId, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   const main = tab === "ladder" || tab === "add" || tab === "history" || tab === "profile";
+  // Your circle: you, plus everyone you've personally faced. Keyed the same
+  // way global_standings keys people, so it can filter that table directly.
+  const myCircleKeys = (() => {
+    const byId: any = {}; (players || []).forEach((p: any) => { byId[p.id] = p; });
+    const ids = new Set<string>(meId ? [meId] : []);
+    (matches || []).forEach((m: any) => {
+      if (m.p1 === meId) ids.add(m.p2);
+      else if (m.p2 === meId) ids.add(m.p1);
+    });
+    return new Set(Array.from(ids).map((id) => globalKeyFor(byId[id] || { id })));
+  })();
 
   return (
     <div style={wrap}>
@@ -468,7 +484,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {main && (
           <header style={{ marginBottom: 18 }}>
             <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "none", borderRadius: 999, padding: "6px 13px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13 }}>
-              {group?.name || "League"} <ChevronDown size={13} />
+              {personal ? "Everyone I've played" : (group?.name || "League")} <ChevronDown size={13} />
             </button>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
               <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "8px 0 0", fontSize: 38, lineHeight: 0.95, textTransform: "uppercase", letterSpacing: -0.5 }}>
@@ -486,9 +502,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </header>
         )}
 
-        {tab === "ladder" && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
-        {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 17 }}>🌍</span><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span></button>}
-        {tab === "ladder" && <LeagueHome players={players} matches={matches} group={group} fixtures={fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={group?.requireSetup} nameOf={nameOf} />}
+        {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
+        {tab === "ladder" && personal && <GlobalTable myAuthId={myAuthId} onlyKeys={myCircleKeys} blurb="The people you've actually played, ranked on their own record wherever they play. No league, no season — this is just your circle." />}
+        {tab === "ladder" && !personal && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 17 }}>🌍</span><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span></button>}
+        {tab === "ladder" && !personal && <LeagueHome players={players} matches={matches} group={group} fixtures={fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} />}
         {tab === "global" && <SubHeader title="Global" onBack={() => setTab("ladder")} />}
@@ -529,7 +546,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       {profilePlayer && <ProfileModal player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)} />}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
       {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
-      {groupSheet && <GroupSheet groups={groups} currentId={gid} onSwitch={switchGroup} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
+      {groupSheet && <GroupSheet groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
       <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />
       {toast && <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", background: BALL, color: COURT, fontFamily: body, fontWeight: 700, padding: "10px 18px", borderRadius: 999, fontSize: 13, boxShadow: "0 8px 24px rgba(0,0,0,.4)", zIndex: 80 }}>{toast}</div>}
