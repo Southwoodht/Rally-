@@ -268,21 +268,22 @@ Already run: `schema_global_standings.sql`, `schema_messages.sql`,
 file — it contains everything that did, plus the bad-loss columns, so on a
 fresh database run it alone).
 
-`schema_clubs_trophies.sql` was **not** run until 2026-09-04 — the clubs,
-club_members and trophies tables simply didn't exist in production, so the
-Claim-a-trophy form and the Club admin tab had been inert since they were
-written (every call is inside a catch, so they failed silently rather than
-erroring at anyone). Don't assume a file in `supabase/` has been run because
-the feature reading it is deployed. Sam ran it, and there are no clubs yet:
-until somebody creates one nobody is a club admin, so nothing trophy-shaped
-appears anywhere.
+Also run, both on 2026-09-04: `schema_clubs_trophies.sql` and
+`schema_trophies_unclaimed.sql`.
 
-**Written and waiting for Sam:** `schema_trophies_unclaimed.sql`. Additive —
-one new column (`trophies.player_id`), `claimed_by` relaxed to nullable, a
-`can_record_trophy_for()` helper and two policies. Rewrites no rows. Until
-it's run, the Record-a-trophy button appears for club admins on unclaimed
-players and the insert is refused by the old RLS, so run it before telling
-anyone the feature is there.
+The first of those had **never** been run until that day, though the code
+reading it shipped long before — clubs, club_members and trophies didn't
+exist in production at all, so the Claim-a-trophy form and the Club admin
+tab were inert from the day they were written. Every call sits inside a
+catch, so they failed silently instead of saying so. **A file in
+`supabase/` is not run just because the feature reading it is deployed**,
+and a screen that shows you nothing is not the same as a screen with
+nothing to show.
+
+The second added `trophies.player_id` — a `text` column, because
+`players.id` is the app's own short id and not a uuid. That mismatch is
+easy to make: every other reference in `trophies` points at `auth.users`
+or `clubs` and so is a uuid.
 
 `level_val()` in SQL is a hand-copy of `levelVal()` in `core/levels.ts`. If
 `LEVELS` ever changes again this must change with it: `array_position`
