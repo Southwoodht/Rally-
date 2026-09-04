@@ -293,6 +293,19 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
   // losing to weaker players drags it down without needing a separate
   // penalty, and beating them holds it up instead of counting for nothing.
   const perf = performanceLevel(r);
+  // Pure skill: your position is the level you play at, and nothing else.
+  //
+  // Everything that used to sit on top of this accounted for sample size in
+  // one way or another — damping a thin record toward the middle, crediting
+  // all-time wins — and every one of them put a player with fifty-seven
+  // matches above a player who had beaten him twice in two. That is the one
+  // thing the table must never do. Zaach beat Sam; Zaach goes above Sam.
+  //
+  // The cost, and it is real: two matches are enough to top this table, and
+  // a single fluke result against somebody strong moves you a long way.
+  // Records under PROVISIONAL_GAMES are flagged provisional so that reads as
+  // what it is rather than as a settled position.
+  if (perf != null) return perf * 100;
   const evidenceN = r.ratedN || qgp;
   const trust = 1 / (1 + evidenceN / 6);
   // An unevidenced claim is worth nothing at all now, not 45% of something.
@@ -332,6 +345,12 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
 export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {
   return rows.slice().sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
+    // Ties are common now that the score is a level: everyone who has lost
+    // once to the same opponent lands on the same number. Wins break it, so
+    // somebody who has beaten people sits above somebody who hasn't —
+    // a 2-0-1 above an 0-0-2 rather than the two falling in whatever order
+    // the rows arrived in.
+    if (b.w !== a.w) return b.w - a.w;
     if (b.gp !== a.gp) return b.gp - a.gp;
     return a.name.localeCompare(b.name);
   });
