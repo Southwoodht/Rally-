@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { RecordTrophyForm } from "@/components/profile/RecordTrophyForm";
 import { listMyAdminClubs } from "@/lib/clubs";
-import { listApprovedTrophiesForPlayer, listMyTrophies, removeRecordedTrophy, Trophy, withdrawTrophyClaim } from "@/lib/trophies";
+import { listApprovedTrophiesForPlayer, listMyTrophies, deleteTrophy, Trophy, withdrawTrophyClaim } from "@/lib/trophies";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme";
 
 // Verified Trophies are distinct from the Achievements grid above them: an
@@ -17,6 +17,11 @@ import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme"
 // admin recorded it directly, because most of a club's history belongs to
 // people who have never opened Rally. Both are read by player row here, so
 // the day somebody claims that row the recorded ones are simply theirs.
+//
+// Removal follows the same split. You can take down a trophy of your own,
+// approved or not, without asking anyone — nobody else put it there. An
+// admin can take down one they recorded. Neither can touch the other's,
+// and RLS says so too, so the button is only ever the interface to that.
 export function VerifiedTrophies({ player, meId }: any) {
   const isOwn = player.id === meId;
   const unclaimed = !player.auth_id;
@@ -68,7 +73,7 @@ export function VerifiedTrophies({ player, meId }: any) {
 
   const remove = async (id: string) => {
     setConfirmRemove(null);
-    try { await removeRecordedTrophy(id); reload(); } catch {}
+    try { await deleteTrophy(id); reload(); } catch {}
   };
 
   return (
@@ -94,7 +99,7 @@ export function VerifiedTrophies({ player, meId }: any) {
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
                 <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · {t.claimed_by ? "Verified ✓" : "Recorded by the club ✓"}</div>
               </div>
-              {canRecord && !t.claimed_by && (
+              {((canRecord && !t.claimed_by) || (isOwn && !!t.claimed_by)) && (
                 <button
                   onClick={() => (confirmRemove === t.id ? remove(t.id) : setConfirmRemove(t.id))}
                   onBlur={() => setConfirmRemove((c) => (c === t.id ? null : c))}

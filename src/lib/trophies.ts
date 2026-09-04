@@ -218,9 +218,12 @@ export async function recordTrophyForPlayer(input: RecordTrophyInput): Promise<T
   return data as Trophy;
 }
 
-// Only ever a row an admin recorded — one with a real claimant is theirs to
-// withdraw, not an admin's to delete. RLS says the same thing.
-export async function removeRecordedTrophy(id: string): Promise<void> {
+// Taking a trophy back down. The same one-line delete serves both cases
+// because the interesting part isn't here — RLS decides whether you're the
+// claimant taking down your own, or the admin taking down one they
+// recorded, and refuses everything else. Doing that check here as well
+// would just be a second opinion the database doesn't ask for.
+export async function deleteTrophy(id: string): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   const { error } = await withSupabaseTimeout(supabase.from("trophies").delete().eq("id", id), { error: null } as any);
   if (error) throw error;
