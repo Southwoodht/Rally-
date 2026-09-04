@@ -312,5 +312,9 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
     const gp = base.w + base.d + base.l;
     return { ...base, gp, qgp: base.qw + base.qd + base.ql, score: globalScore(base), provisional: gp < PROVISIONAL_GAMES };
   });
-  return rankGlobal(rows);
+  // Somebody who has never played has no record to be ranked on, and this
+  // table ranks people on their record. They were being given a position
+  // anyway — landing mid-table on the neutral score, above people with real
+  // results — which is a placeholder holding a place.
+  return rankGlobal(rows.filter((r) => r.gp > 0));
 }
