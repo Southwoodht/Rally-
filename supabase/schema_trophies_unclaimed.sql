@@ -17,7 +17,14 @@
 
 -- ------------------------------------------------------------------ column
 alter table public.trophies
-  add column if not exists player_id uuid references public.players(id) on delete cascade;
+  add column if not exists player_id text references public.players(id) on delete cascade;
+
+-- text, not uuid: players.id is the app's own short id ("96zp33j8", from
+-- uid() in src/lib/format.ts), kept as text so the original backfill could
+-- carry every existing player id over unchanged. Everything else in this
+-- table is a uuid because everything else in it points at auth.users or
+-- clubs, which aren't. A uuid here fails outright — the foreign key can't
+-- be built across the two types.
 
 -- Cascade rather than set null: a trophy recorded against a player row has
 -- no other owner, so orphaning it would leave a row belonging to nobody
@@ -50,7 +57,7 @@ end $$;
 -- an admin doesn't get to write honours onto a live account behind its
 -- owner's back. Checked at insert time only, so a trophy recorded today
 -- survives Hugh claiming the row tomorrow.
-create or replace function public.can_record_trophy_for(p_id uuid)
+create or replace function public.can_record_trophy_for(p_id text)
 returns boolean
 language sql
 security definer

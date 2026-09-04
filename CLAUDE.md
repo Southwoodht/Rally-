@@ -268,6 +268,15 @@ Already run: `schema_global_standings.sql`, `schema_messages.sql`,
 file — it contains everything that did, plus the bad-loss columns, so on a
 fresh database run it alone).
 
+`schema_clubs_trophies.sql` was **not** run until 2026-09-04 — the clubs,
+club_members and trophies tables simply didn't exist in production, so the
+Claim-a-trophy form and the Club admin tab had been inert since they were
+written (every call is inside a catch, so they failed silently rather than
+erroring at anyone). Don't assume a file in `supabase/` has been run because
+the feature reading it is deployed. Sam ran it, and there are no clubs yet:
+until somebody creates one nobody is a club admin, so nothing trophy-shaped
+appears anywhere.
+
 **Written and waiting for Sam:** `schema_trophies_unclaimed.sql`. Additive —
 one new column (`trophies.player_id`), `claimed_by` relaxed to nullable, a
 `can_record_trophy_for()` helper and two policies. Rewrites no rows. Until
