@@ -53,19 +53,6 @@ export interface GlobalRow {
    */
   badLossSum: number;
   badDrawSum: number;
-  /**
-   * Every match against an opponent who has a level — and note this does not
-   * require *them* to have one. `ratedN` matches, `oppLvSum` those opponents'
-   * levels summed, `ratedResSum` the 1/0.5/0 results, and the share pair for
-   * the ones with a score. All 0 before the migration, which is the fall-back
-   * case.
-   */
-  ratedN: number;
-  oppLvSum: number;
-  ratedResSum: number;
-  ratedShareSum: number;
-  ratedShareN: number;
-  ratedScoredResSum: number;
   score: number;
   /** Too few games to place them honestly — see globalScore. */
   provisional: boolean;
@@ -157,46 +144,43 @@ export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: 
 /**
  * Where someone sits globally.
  *
- * Ranked on who they have actually beaten. Not on the level they picked —
- * that is a dropdown anybody can set to Pro, and it no longer moves their own
- * position at all. It decides who they are measured against, never where they
- * land, which is also what stops anyone gaming the table by editing it.
+ * Level is a *claim*, not a measurement. Anyone can pick Pro from a dropdown,
+ * and nothing in the app stops them. So level cannot be the anchor: it's a
+ * starting assumption whose weight falls away as real evidence arrives.
  *
- *   proven    performanceLevel(): roughly the average level they faced, moved
- *             by how they did against it. Beating Intermediates makes you
- *             Intermediate-ish; losing to Beginners makes you a Beginner. It
- *             needs the *opponent* to have a level, not the player — which is
- *             what lets it rate somebody who has never set one.
- *   trust     how much is still guesswork. Six rated matches halves it,
- *             eighteen cuts it to a quarter, and until then they sit near the
- *             middle of the scale. Not near their claim: an unevidenced claim
- *             is worth nothing, because it once let a Pro claim with three
- *             matches outrank fifty-seven matches of evidence.
- *   career    all-time wins on a log curve. A performance rating alone says a
- *             proven-mediocre player and a complete unknown are the same
- *             thing, which is how a 2-0-1 ended up below five people whose
- *             whole record was one defeat. Beating somebody counts, even when
- *             they were weaker than you. See WIN_CREDIT for why 90 and not
- *             140 — volume must never outrank evidence against strong
- *             opposition.
+ *   unproven  what we assume before they've shown us anything — their claim,
+ *             dragged more than half the way back to the middle of the scale.
+ *             An unevidenced Pro does not get to sit at the top.
+ *   proven    what their record says their level is: how they do against
+ *             opponents at or above their own level, worth up to three level
+ *             points either side of the claim. Dominating your equals and
+ *             betters is the one result that means the same thing in every
+ *             league, which is why it carries the weight here.
+ *   trust     how much we still have to take their word for it. Six matches
+ *             against their own level or better halves it, eighteen cuts it
+ *             to a quarter. Evidence replaces the claim rather than adding
+ *             to it.
+ *   career    all-time wins, with heavy diminishing returns — a hundred wins
+ *             is worth about half a level point, not five. Volume against
+ *             weak opposition must never outrank evidence against strong.
  *
- * There is no second damping toward the middle on top of trust. There was,
- * and it inverted the table: the less you had played the harder you were
- * pulled up, so a 2-0-1 scored below an 0-0-2 for having played one more
- * match. Playing more and doing better must never lower you. Thin records are
- * flagged provisional instead, which says the same thing honestly and without
- * moving anybody.
+ * The awkward case, and it is genuinely awkward: a 70-year-old ex-pro with
+ * three matches on record against an active player with thirty wins and a
+ * hard schedule. This lands them close together, which is the honest answer —
+ * the ex-pro's claim is discounted for thin evidence, the active player's
+ * volume and quality lift them, and neither runs away with it. A career peak
+ * that happened before Rally existed isn't something this table can see, and
+ * it shouldn't pretend to: that's what the Legacy table and trophies are for.
  *
- * The awkward case is still genuinely awkward: a 70-year-old ex-pro with
- * three matches against an active player with thirty wins. The ex-pro comes
- * out ahead here when those three were against strong opposition, flagged
- * provisional, and that is the honest reading of what this table can see. A
- * career peak from before Rally existed is not something it can see at all —
- * that is what Legacy and trophies are for.
+ * Finally the whole thing is damped by how much they've played at all. A
+ * player who is 0-1 may well be excellent — but one match is not a position
+ * in a table, and letting a claimed level alone lift them over somebody with
+ * forty results makes the table describe ambition rather than evidence. Under
+ * ten games they're pulled towards the middle and shown as provisional; they
+ * climb out of it by playing, which is the right incentive.
  *
- * Everything falls back to the previous shape — the quality bucket, the
- * bad-loss penalty, the claim-anchored score — when the migration behind
- * performanceLevel() has not been run. See loadGlobalStandings.
+ * Unrated players get no starting assumption at all and are listed after the
+ * ranked ones — see rankGlobal — rather than being assumed to be beginners.
  */
 /**
  * What losing to weaker players takes off, in points.
@@ -213,68 +197,6 @@ export function badLossPenalty(r: { badLossSum: number; badDrawSum: number; w: n
   return Math.min(BAD_LOSS_CAP, BAD_LOSS_WEIGHT * (categories / gp));
 }
 
-/**
- * How far a perfect record lifts you above the level you played, in level
- * points. 6 is two categories: beat everyone you face and you're rated two
- * categories above them; lose to everyone and you're two below. Conservative
- * on purpose — a 100% record against three people is thin evidence, and the
- * trust blend below is what stops it running away.
- */
-export const PERF_SPREAD = 6;
-
-/**
- * What having actually won counts for, on a log curve.
- *
- * A performance rating on its own says a proven-mediocre player and a
- * complete unknown are the same thing — Chris, 2-0-1, sat below five people
- * whose entire record was a single defeat. He has shown he can beat somebody;
- * they have shown nothing. That deserves credit even when the people he beat
- * were weaker than him.
- *
- * 90 is where that holds without volume taking over: it lifts a 2-0-1 above
- * an 0-0-1, and a hundred wins is worth about 180 points, well under a
- * category, so grinding easy matches still cannot outrank evidence against
- * strong opposition. It was 45, which said nothing at all. At 140 the balance
- * tips the wrong way and a long record of ordinary wins overtakes a short one
- * against Advanced players — both checked against the real table.
- */
-export const WIN_CREDIT = 90;
-
-/**
- * The level somebody has actually played like, in level points, or null when
- * they've never faced a levelled opponent.
- *
- * The average level they faced, moved by how they did against it. Beating
- * Intermediates makes you Intermediate-ish whatever you claim; losing to
- * Beginners makes you a Beginner however good you say you are.
- *
- * This is the piece that makes the table automatic. It replaces the old
- * "results against opponents at or above your level" bucket, which ignored
- * every match against somebody weaker — so a 2-0-1 whose wins were against
- * weaker players counted only the loss, and an unrated player counted for
- * nothing in either direction because there was no level of their own to
- * compare against. Nothing here needs the person to have a level; only the
- * opponent does.
- *
- * Where scores exist the win rate is softened by the share of games taken,
- * on the same MARGIN_WEIGHT as before, so a 6-5 loss reads as closer than a
- * bagelling without a win stopping being a win.
- */
-export function performanceLevel(r: {
-  ratedN: number; oppLvSum: number; ratedResSum: number;
-  ratedShareSum: number; ratedScoredResSum: number;
-}): number | null {
-  if (!r.ratedN) return null;
-  const avgOpp = r.oppLvSum / r.ratedN;
-  // Same rearrangement as qualityRate: the plain result is swapped for a
-  // blend of result and share, and only over the matches that actually have
-  // a score — hence ratedScoredResSum, the results of exactly those, so the
-  // swap is like for like. Matches with no score keep their plain result.
-  const total = r.ratedResSum + MARGIN_WEIGHT * (r.ratedShareSum - r.ratedScoredResSum);
-  const rate = Math.max(0, Math.min(1, total / r.ratedN));
-  return avgOpp + PERF_SPREAD * (rate - 0.5);
-}
-
 export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisional">): number {
   const lv = levelVal(r.level);
   // No level set is not a result. It used to send someone to the bottom of
@@ -287,52 +209,15 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
   const claimed = lv == null ? NEUTRAL : lv * 100;
   const qgp = r.qw + r.qd + r.ql;
 
-  // What their results say, when there is anything to go on. This replaces
-  // the old quality bucket and the bad-loss patch bolted beside it: a
-  // performance rating already counts every match in both directions, so
-  // losing to weaker players drags it down without needing a separate
-  // penalty, and beating them holds it up instead of counting for nothing.
-  const perf = performanceLevel(r);
-  // Pure skill: your position is the level you play at, and nothing else.
-  //
-  // Everything that used to sit on top of this accounted for sample size in
-  // one way or another — damping a thin record toward the middle, crediting
-  // all-time wins — and every one of them put a player with fifty-seven
-  // matches above a player who had beaten him twice in two. That is the one
-  // thing the table must never do. Zaach beat Sam; Zaach goes above Sam.
-  //
-  // The cost, and it is real: two matches are enough to top this table, and
-  // a single fluke result against somebody strong moves you a long way.
-  // Records under PROVISIONAL_GAMES are flagged provisional so that reads as
-  // what it is rather than as a settled position.
-  if (perf != null) return perf * 100;
-  const evidenceN = r.ratedN || qgp;
-  const trust = 1 / (1 + evidenceN / 6);
-  // An unevidenced claim is worth nothing at all now, not 45% of something.
-  // It used to be worth enough that a Pro claim with three matches outranked
-  // fifty-seven matches of evidence, and an Advanced claim with a single
-  // loss sat fifth. Everyone starts in the middle and their results move
-  // them; the level they picked decides who they're measured against, not
-  // where they land. That also retires the old wrinkle where setting no
-  // level scored better than honestly setting Beginner.
-  const unproven = NEUTRAL;
-  // Falls back to the old shape, penalty included, when the migration hasn't
-  // run and there is no performance rating to be had.
-  const proven = perf != null ? perf * 100 : claimed + (qualityRate(r) - 0.5) * 2 * 300;
-  const career = WIN_CREDIT * Math.log10(1 + Math.max(0, r.w));
-  const raw = unproven * trust + proven * (1 - trust) + career - (perf != null ? 0 : badLossPenalty(r));
+  const trust = 1 / (1 + qgp / 6);
+  const unproven = claimed * 0.45 + NEUTRAL * 0.55;
+  const proven = claimed + (qualityRate(r) - 0.5) * 2 * 300;
+  const career = 45 * Math.log10(1 + Math.max(0, r.w));
+  const raw = unproven * trust + proven * (1 - trust) + career - badLossPenalty(r);
 
-  // No second damping toward neutral. There used to be one, pulling anybody
-  // under ten games toward the middle, and it inverted the table: the less
-  // you had played, the harder you were pulled up towards 600, so a 2-0-1
-  // scored below an 0-0-2 purely for having played one more match. Playing
-  // more and doing better must never make you rank lower.
-  //
-  // Thin evidence is already handled once, and in the right place — `trust`
-  // leans on the claim until results arrive. Doing it twice was the bug.
-  // Under PROVISIONAL_GAMES people are still flagged provisional, which is
-  // the honest thing to say about them; it just isn't done by moving them.
-  return raw;
+  const gp = r.w + r.d + r.l;
+  const established = Math.min(1, gp / PROVISIONAL_GAMES);
+  return raw * established + NEUTRAL * (1 - established);
 }
 
 // Everyone is ranked together, unrated included. Segregating them was meant
@@ -345,12 +230,6 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
 export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {
   return rows.slice().sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    // Ties are common now that the score is a level: everyone who has lost
-    // once to the same opponent lands on the same number. Wins break it, so
-    // somebody who has beaten people sits above somebody who hasn't —
-    // a 2-0-1 above an 0-0-2 rather than the two falling in whatever order
-    // the rows arrived in.
-    if (b.w !== a.w) return b.w - a.w;
     if (b.gp !== a.gp) return b.gp - a.gp;
     return a.name.localeCompare(b.name);
   });
@@ -429,15 +308,6 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
       // the penalty is 0, so the table behaves exactly as it did before.
       badLossSum: Number(r.badloss_sum ?? 0),
       badDrawSum: Number(r.baddraw_sum ?? 0),
-      // Absent until schema_global_standings_perf.sql has been run. ratedN
-      // at 0 means performanceLevel returns null and the score falls back to
-      // exactly the previous behaviour.
-      ratedN: Number(r.rated_n ?? 0),
-      oppLvSum: Number(r.opp_lv_sum ?? 0),
-      ratedResSum: Number(r.rated_res_sum ?? 0),
-      ratedShareSum: Number(r.rated_share_sum ?? 0),
-      ratedShareN: Number(r.rated_share_n ?? 0),
-      ratedScoredResSum: Number(r.rated_scored_res_sum ?? 0),
     };
     const gp = base.w + base.d + base.l;
     return { ...base, gp, qgp: base.qw + base.qd + base.ql, score: globalScore(base), provisional: gp < PROVISIONAL_GAMES };
