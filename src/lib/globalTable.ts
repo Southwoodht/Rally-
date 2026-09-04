@@ -157,43 +157,46 @@ export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: 
 /**
  * Where someone sits globally.
  *
- * Level is a *claim*, not a measurement. Anyone can pick Pro from a dropdown,
- * and nothing in the app stops them. So level cannot be the anchor: it's a
- * starting assumption whose weight falls away as real evidence arrives.
+ * Ranked on who they have actually beaten. Not on the level they picked —
+ * that is a dropdown anybody can set to Pro, and it no longer moves their own
+ * position at all. It decides who they are measured against, never where they
+ * land, which is also what stops anyone gaming the table by editing it.
  *
- *   unproven  what we assume before they've shown us anything — their claim,
- *             dragged more than half the way back to the middle of the scale.
- *             An unevidenced Pro does not get to sit at the top.
- *   proven    what their record says their level is: how they do against
- *             opponents at or above their own level, worth up to three level
- *             points either side of the claim. Dominating your equals and
- *             betters is the one result that means the same thing in every
- *             league, which is why it carries the weight here.
- *   trust     how much we still have to take their word for it. Six matches
- *             against their own level or better halves it, eighteen cuts it
- *             to a quarter. Evidence replaces the claim rather than adding
- *             to it.
- *   career    all-time wins, with heavy diminishing returns — a hundred wins
- *             is worth about half a level point, not five. Volume against
- *             weak opposition must never outrank evidence against strong.
+ *   proven    performanceLevel(): roughly the average level they faced, moved
+ *             by how they did against it. Beating Intermediates makes you
+ *             Intermediate-ish; losing to Beginners makes you a Beginner. It
+ *             needs the *opponent* to have a level, not the player — which is
+ *             what lets it rate somebody who has never set one.
+ *   trust     how much is still guesswork. Six rated matches halves it,
+ *             eighteen cuts it to a quarter, and until then they sit near the
+ *             middle of the scale. Not near their claim: an unevidenced claim
+ *             is worth nothing, because it once let a Pro claim with three
+ *             matches outrank fifty-seven matches of evidence.
+ *   career    all-time wins on a log curve. A performance rating alone says a
+ *             proven-mediocre player and a complete unknown are the same
+ *             thing, which is how a 2-0-1 ended up below five people whose
+ *             whole record was one defeat. Beating somebody counts, even when
+ *             they were weaker than you. See WIN_CREDIT for why 90 and not
+ *             140 — volume must never outrank evidence against strong
+ *             opposition.
  *
- * The awkward case, and it is genuinely awkward: a 70-year-old ex-pro with
- * three matches on record against an active player with thirty wins and a
- * hard schedule. This lands them close together, which is the honest answer —
- * the ex-pro's claim is discounted for thin evidence, the active player's
- * volume and quality lift them, and neither runs away with it. A career peak
- * that happened before Rally existed isn't something this table can see, and
- * it shouldn't pretend to: that's what the Legacy table and trophies are for.
+ * There is no second damping toward the middle on top of trust. There was,
+ * and it inverted the table: the less you had played the harder you were
+ * pulled up, so a 2-0-1 scored below an 0-0-2 for having played one more
+ * match. Playing more and doing better must never lower you. Thin records are
+ * flagged provisional instead, which says the same thing honestly and without
+ * moving anybody.
  *
- * Finally the whole thing is damped by how much they've played at all. A
- * player who is 0-1 may well be excellent — but one match is not a position
- * in a table, and letting a claimed level alone lift them over somebody with
- * forty results makes the table describe ambition rather than evidence. Under
- * ten games they're pulled towards the middle and shown as provisional; they
- * climb out of it by playing, which is the right incentive.
+ * The awkward case is still genuinely awkward: a 70-year-old ex-pro with
+ * three matches against an active player with thirty wins. The ex-pro comes
+ * out ahead here when those three were against strong opposition, flagged
+ * provisional, and that is the honest reading of what this table can see. A
+ * career peak from before Rally existed is not something it can see at all —
+ * that is what Legacy and trophies are for.
  *
- * Unrated players get no starting assumption at all and are listed after the
- * ranked ones — see rankGlobal — rather than being assumed to be beginners.
+ * Everything falls back to the previous shape — the quality bucket, the
+ * bad-loss penalty, the claim-anchored score — when the migration behind
+ * performanceLevel() has not been run. See loadGlobalStandings.
  */
 /**
  * What losing to weaker players takes off, in points.
@@ -218,6 +221,24 @@ export function badLossPenalty(r: { badLossSum: number; badDrawSum: number; w: n
  * trust blend below is what stops it running away.
  */
 export const PERF_SPREAD = 6;
+
+/**
+ * What having actually won counts for, on a log curve.
+ *
+ * A performance rating on its own says a proven-mediocre player and a
+ * complete unknown are the same thing — Chris, 2-0-1, sat below five people
+ * whose entire record was a single defeat. He has shown he can beat somebody;
+ * they have shown nothing. That deserves credit even when the people he beat
+ * were weaker than him.
+ *
+ * 90 is where that holds without volume taking over: it lifts a 2-0-1 above
+ * an 0-0-1, and a hundred wins is worth about 180 points, well under a
+ * category, so grinding easy matches still cannot outrank evidence against
+ * strong opposition. It was 45, which said nothing at all. At 140 the balance
+ * tips the wrong way and a long record of ordinary wins overtakes a short one
+ * against Advanced players — both checked against the real table.
+ */
+export const WIN_CREDIT = 90;
 
 /**
  * The level somebody has actually played like, in level points, or null when
@@ -285,7 +306,7 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
   // Falls back to the old shape, penalty included, when the migration hasn't
   // run and there is no performance rating to be had.
   const proven = perf != null ? perf * 100 : claimed + (qualityRate(r) - 0.5) * 2 * 300;
-  const career = 45 * Math.log10(1 + Math.max(0, r.w));
+  const career = WIN_CREDIT * Math.log10(1 + Math.max(0, r.w));
   const raw = unproven * trust + proven * (1 - trust) + career - (perf != null ? 0 : badLossPenalty(r));
 
   // No second damping toward neutral. There used to be one, pulling anybody
