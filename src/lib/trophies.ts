@@ -3,8 +3,9 @@ import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 export interface Trophy {
   id: string;
   kind: "trophy" | "legacy_fact";
-  claimed_by: string;
+  claimed_by: string | null;
   claimant_name: string | null;
+  player_id: string | null;
   club_id: string;
   league_id: string | null;
   competition: string | null;
@@ -26,6 +27,16 @@ export interface TrophyClaimInput {
   claimantName?: string;
   competition: string;
   category?: string;
+  season?: string;
+  result?: string;
+  notes?: string;
+}
+
+export interface RecordTrophyInput {
+  clubId: string;
+  playerId: string;
+  playerName?: string;
+  competition: string;
   season?: string;
   result?: string;
   notes?: string;
@@ -108,10 +119,18 @@ export async function listMyTrophies(): Promise<Trophy[]> {
 
 // Any signed-in user can read approved trophies (RLS-enforced) — used to
 // show verified honours on someone else's profile, not just your own.
-export async function listApprovedTrophiesFor(userId: string): Promise<Trophy[]> {
-  if (!supabase || !userId) return [];
+//
+// A trophy can belong to this profile two ways: the person claimed it
+// against their own account, or a club admin recorded it against this
+// player row back when they had no account. That second case is why the
+// transfer needs no rewrite — the trophy stays attached to the row, so
+// claiming the row is the whole of it becoming theirs.
+export async function listApprovedTrophiesForPlayer(playerId: string, authId?: string | null): Promise<Trophy[]> {
+  if (!supabase || !playerId) return [];
+  const owners = ["player_id.eq." + playerId];
+  if (authId) owners.push("claimed_by.eq." + authId);
   const { data, error } = await withSupabaseTimeout(
-    supabase.from("trophies").select("*, clubs (name)").eq("claimed_by", userId).eq("status", "approved").order("created_at", { ascending: false }),
+    supabase.from("trophies").select("*, clubs (name)").or(owners.join(",")).eq("status", "approved").order("created_at", { ascending: false }),
     { data: [], error: null } as any,
   );
   if (error) throw error;
@@ -151,6 +170,44 @@ export async function rejectTrophy(id: string): Promise<void> {
 }
 
 export async function withdrawTrophyClaim(id: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const { error } = await withSupabaseTimeout(supabase.from("trophies").delete().eq("id", id), { error: null } as any);
+  if (error) throw error;
+}
+
+// A club admin recording an honour for somebody who has never opened Rally.
+// It lands approved with them stamped on it, because they ARE the review —
+// see schema_trophies_unclaimed.sql, where RLS insists on exactly that shape
+// and on the player row being unclaimed. Nothing here can write onto a live
+// account: that still goes through submitTrophyClaim and a second person.
+export async function recordTrophyForPlayer(input: RecordTrophyInput): Promise<Trophy> {
+  if (!supabase) throw new Error("Not connected.");
+  const uid = await currentUserId();
+  if (!uid) throw new Error("You need to be logged in.");
+  const { data, error } = await withSupabaseTimeout(
+    supabase.from("trophies").insert({
+      kind: "trophy",
+      claimed_by: null,
+      player_id: input.playerId,
+      claimant_name: input.playerName?.trim() || null,
+      club_id: input.clubId,
+      competition: input.competition.trim(),
+      season: input.season?.trim() || null,
+      result: input.result?.trim() || null,
+      notes: input.notes?.trim() || null,
+      status: "approved",
+      verified_by: uid,
+      verified_at: new Date().toISOString(),
+    }).select().single(),
+    { data: null, error: null } as any,
+  );
+  if (error) throw error;
+  return data as Trophy;
+}
+
+// Only ever a row an admin recorded — one with a real claimant is theirs to
+// withdraw, not an admin's to delete. RLS says the same thing.
+export async function removeRecordedTrophy(id: string): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   const { error } = await withSupabaseTimeout(supabase.from("trophies").delete().eq("id", id), { error: null } as any);
   if (error) throw error;

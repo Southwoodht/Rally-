@@ -214,12 +214,21 @@ app: while a thread is pending only its starter can write to it.
 
 ## 5. Outstanding work
 
+Built, waiting on a migration:
+
+- ~~Trophies for unclaimed players~~ — **built, migration not yet run.**
+  `trophies.player_id` attaches an honour to a league player row instead of
+  an account, so a club admin can record "Hugh — Seacourt Men's Singles 2019"
+  against somebody who has never opened Rally. Nothing rewrites the row when
+  Hugh claims the player: the profile reads trophies for *this player row or
+  this auth id*, so setting `players.auth_id` is the whole of the transfer.
+  Recording lands `approved` with the admin stamped on it — they are the
+  review — and RLS only allows it against a player row with `auth_id` null,
+  so it can never write onto a live account behind its owner's back.
+  `supabase/schema_trophies_unclaimed.sql` is waiting for Sam to run.
+
 Approved, not built:
 
-- **Trophies for unclaimed players.** A trophy should attach to a league
-  player row, not just an account, so a club admin can record
-  "Hugh — Seacourt Men's Singles 2019" against someone with no account, and
-  it transfers when they claim. Needs a migration + a form.
 - **Fancy loading screen on first app load.**
 - **Head-to-Head** is missing the favourite % and needs simplifying.
 - **Prompt everyone to re-pick their level** now six categories exist, so the
@@ -258,6 +267,13 @@ Already run: `schema_global_standings.sql`, `schema_messages.sql`,
 `schema_global_standings_badloss.sql` (that last one supersedes the margin
 file — it contains everything that did, plus the bad-loss columns, so on a
 fresh database run it alone).
+
+**Written and waiting for Sam:** `schema_trophies_unclaimed.sql`. Additive —
+one new column (`trophies.player_id`), `claimed_by` relaxed to nullable, a
+`can_record_trophy_for()` helper and two policies. Rewrites no rows. Until
+it's run, the Record-a-trophy button appears for club admins on unclaimed
+players and the insert is refused by the old RLS, so run it before telling
+anyone the feature is there.
 
 `level_val()` in SQL is a hand-copy of `levelVal()` in `core/levels.ts`. If
 `LEVELS` ever changes again this must change with it: `array_position`
