@@ -4,14 +4,32 @@ import { Bell } from "@/components/ui/Bell";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { computeLocalNotifications, Notification } from "@/core/notifications";
 import { listIncomingRequests } from "@/lib/friends";
+import { storage } from "@/lib/storage";
 import { listMyTrophies, listPendingClaims } from "@/lib/trophies";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme";
 
 const RECENT_WINDOW_MS = 7 * 86400000;
+const SEEN_KEY = "notifs_seen";
 
 export function NotificationBell({ meId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin, onGoFriends }: any) {
   const [open, setOpen] = useState(false);
   const [remote, setRemote] = useState<Notification[]>([]);
+  // Which notifications have been looked at. Notifications are computed from
+  // live data rather than stored, so "read" is the one piece of state that
+  // has to be kept — otherwise the count comes back every time the screen
+  // recalculates. Kept per account rather than per device, so reading
+  // something on your phone clears it on your laptop too.
+  const [seen, setSeen] = useState<Set<string>>(new Set());
+  const [seenLoaded, setSeenLoaded] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    storage.get(SEEN_KEY)
+      .then((r) => { if (alive && r) setSeen(new Set(JSON.parse(r.value))); })
+      .catch(() => {})
+      .finally(() => { if (alive) setSeenLoaded(true); });
+    return () => { alive = false; };
+  }, []);
   const local = useMemo(() => computeLocalNotifications(meId, players, matches, posts, nameOf), [meId, players, matches, posts, nameOf]);
 
   const loadRemote = async () => {
@@ -53,11 +71,33 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
   useEffect(() => { if (open) loadRemote(); /* eslint-disable-next-line */ }, [open]);
 
   const all = useMemo(() => [...local, ...remote].sort((a, b) => b.date - a.date), [local, remote]);
-  // Anything waiting on you counts, wherever it came from. This used to
+  // Anything waiting on you that you haven't looked at yet. This used to
   // match remote rows on the words "needs review" in their text, so a friend
   // request or a pending delete could never have reached the badge however
   // it was worded.
-  const badge = all.filter((n) => n.action !== "none").length;
+  //
+  // Seen is deliberately not the same as done: a match still needs
+  // confirming after you've read that it's there, and it stays in the list
+  // saying so. What stops is the badge and the ringing, which are for "there
+  // is something you haven't seen", not "there is something outstanding".
+  const badge = all.filter((n) => n.action !== "none" && !seen.has(n.id)).length;
+
+  // Reading the list is what marks it read — same as opening the panel
+  // anywhere else. Written back pruned to what's currently live, so the set
+  // can't grow forever off the back of notifications that have long gone.
+  const markSeen = (ids: string[]) => {
+    if (!seenLoaded) return;
+    const live = new Set(all.map((n) => n.id));
+    const next = new Set([...seen, ...ids].filter((id) => live.has(id)));
+    if (next.size === seen.size && [...next].every((id) => seen.has(id))) return;
+    setSeen(next);
+    storage.set(SEEN_KEY, JSON.stringify([...next])).catch(() => {});
+  };
+
+  useEffect(() => {
+    if (open && seenLoaded && all.length) markSeen(all.map((n) => n.id));
+    // eslint-disable-next-line
+  }, [open, seenLoaded, all]);
 
   return (
     <>
@@ -87,7 +127,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
               >
                 <span style={{ fontSize: 17, flexShrink: 0 }}>{n.icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: body, fontSize: 13.5, color: n.action !== "none" ? BALL : CHALK }}>{n.text}</div>
+                  <div style={{ fontFamily: body, fontSize: 13.5, fontWeight: n.action !== "none" && !seen.has(n.id) ? 600 : 400, color: n.action !== "none" && !seen.has(n.id) ? BALL : CHALK }}>{n.text}</div>
                   <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, marginTop: 2 }}>{new Date(n.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
                 </div>
               </button>
