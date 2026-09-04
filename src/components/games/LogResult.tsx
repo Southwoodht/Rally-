@@ -13,7 +13,18 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   const [mode, setMode] = useState("single");
   const [p1, setP1] = useState(""); const [p2, setP2] = useState("");
   const [dateStr, setDateStr] = useState(todayStr());
-  const [score, setScore] = useState(""); const [err, setErr] = useState("");
+  // Set-by-set rather than one free-text box. Stored back into the same
+  // `score` string as "6-2, 6-3, 6-2" (see core/sets.ts), so nothing else
+  // has to change to display it and no migration is needed. Three sets to
+  // start because that's the common case; more on request.
+  const [sets, setSets] = useState<Array<{ a: string; b: string }>>([{ a: "", b: "" }, { a: "", b: "" }, { a: "", b: "" }]);
+  const [err, setErr] = useState("");
+  const setCell = (i: number, side: "a" | "b", v: string) =>
+    setSets(sets.map((s, j) => (j === i ? { ...s, [side]: v.replace(/[^0-9]/g, "").slice(0, 3) } : s)));
+  // Only sets where both sides were filled in count — a half-entered set is
+  // someone still typing, not a 6-0.
+  const filledSets = sets.filter((s) => s.a !== "" && s.b !== "");
+  const scoreStr = filledSets.map((s) => `${parseInt(s.a, 10)}-${parseInt(s.b, 10)}`).join(", ");
   const [showMore, setShowMore] = useState(false);
   const [notes, setNotes] = useState(""); const [venue, setVenue] = useState(""); const [category, setCategory] = useState("");
   const [w1, setW1] = useState(""); const [dr, setDr] = useState(""); const [w2, setW2] = useState("");
@@ -36,7 +47,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     if (elo) {
       try { const pctP1 = Math.round(predictProb(p1, p2, matches, elo, players) * 100); prediction = { p1Pct: pctP1 }; } catch {}
     }
-    onSave({ id: uid(), date: when, p1, p2, score: score.trim(), winner, status: needsConfirm ? "pending" : "confirmed", reportedBy: meId, loggedAt: Date.now(), notes: notes.trim() || undefined, venue: venue.trim() || undefined, category: category.trim() || undefined, prediction });
+    onSave({ id: uid(), date: when, p1, p2, score: scoreStr, winner, status: needsConfirm ? "pending" : "confirmed", reportedBy: meId, loggedAt: Date.now(), notes: notes.trim() || undefined, venue: venue.trim() || undefined, category: category.trim() || undefined, prediction });
   };
   const submitBulk = () => {
     if (!p1 || !p2) return setErr("Pick both players.");
@@ -67,7 +78,35 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
       {mode === "single" ? (
         <>
           <Field label="Date played"><input type="date" value={dateStr} max={todayStr()} onChange={(e) => setDateStr(e.target.value)} style={{ ...input, colorScheme: "dark", boxSizing: "border-box" as const }} /></Field>
-          <Field label="Score (optional)"><input value={score} onChange={(e) => setScore(e.target.value)} placeholder="e.g. 6–4" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+          <Field label="Score (optional)">
+            <div style={{ display: "grid", gridTemplateColumns: `minmax(0,1fr) repeat(${sets.length}, 46px)`, gap: 6, alignItems: "center" }}>
+              <span />
+              {sets.map((_, i) => (
+                <span key={"h" + i} style={{ fontFamily: body, fontSize: 10.5, fontWeight: 600, color: MUTED, textAlign: "center" }}>Set {i + 1}</span>
+              ))}
+              {([["a", n1], ["b", n2]] as const).map(([side, label]) => (
+                <React.Fragment key={side}>
+                  <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+                  {sets.map((s, i) => (
+                    <input
+                      key={side + i}
+                      value={s[side]}
+                      onChange={(e) => setCell(i, side, e.target.value)}
+                      inputMode="numeric"
+                      aria-label={`${label}, set ${i + 1}`}
+                      style={{ ...input, fontFamily: mono, fontSize: 15, textAlign: "center", padding: "10px 4px", marginBottom: 0 }}
+                    />
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+            {sets.length < 5 && (
+              <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, cursor: "pointer", padding: "8px 0 0" }}>+ Add a set</button>
+            )}
+            <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>
+              Leave blank if you&apos;d rather not. Filling it in tells the global table how close the match actually was — it doesn&apos;t affect this league&apos;s table.
+            </div>
+          </Field>
           {showMore ? (
             <>
               <Field label="Note (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Came back from 4–1 down" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
