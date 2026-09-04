@@ -46,6 +46,13 @@ export interface GlobalRow {
    */
   qShareSum: number;
   qResSum: number;
+  /**
+   * Losses and draws against people *below* their level, summed as level
+   * points of gap. Losing one category down adds 3, three categories down
+   * adds 9. Both 0 when the migration hasn't been run.
+   */
+  badLossSum: number;
+  badDrawSum: number;
   score: number;
   /** Too few games to place them honestly — see globalScore. */
   provisional: boolean;
@@ -70,6 +77,32 @@ export interface GlobalRow {
  * migration.
  */
 export const MARGIN_WEIGHT = 0.35;
+
+/**
+ * What a bad loss costs, in the same currency as everything else — points,
+ * where 100 is one rung and 300 a full category.
+ *
+ * Beating people at or above you can lift you 300 above your claim. Losing to
+ * people below you should be able to pull you down comparably, because it is
+ * the same kind of evidence pointing the other way: it says the claimed level
+ * is too high. Before this, it said nothing at all — the quality bucket only
+ * looked upwards, so a loss to a beginner was invisible while a loss to
+ * somebody stronger counted against you.
+ *
+ * It's a rate, not a tally: severity is averaged over games played, so this
+ * is "how often do you lose to people below you", not "how many times". One
+ * category-below loss in ten games costs about 30 points; losing half your
+ * games a category down costs about 150, which is the point at which the
+ * level itself is the thing that's wrong.
+ */
+export const BAD_LOSS_WEIGHT = 300;
+
+/**
+ * The most a bad-loss record can take off, so a thin record can't produce a
+ * wild number. Someone 0-0-1 to a beginner would otherwise carry the full
+ * severity of that single match into a table position.
+ */
+export const BAD_LOSS_CAP = 300;
 
 // Below this many games we don't claim to know where someone belongs.
 export const PROVISIONAL_GAMES = 10;
@@ -149,6 +182,21 @@ export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: 
  * Unrated players get no starting assumption at all and are listed after the
  * ranked ones — see rankGlobal — rather than being assumed to be beginners.
  */
+/**
+ * What losing to weaker players takes off, in points.
+ *
+ * Severity is level points of gap, converted to categories, averaged over
+ * every game played and capped. A draw counts half a loss — it's the same
+ * signal, weaker. Zero for anyone who has never lost to somebody below them,
+ * and zero before the migration adds the columns.
+ */
+export function badLossPenalty(r: { badLossSum: number; badDrawSum: number; w: number; d: number; l: number }): number {
+  const gp = r.w + r.d + r.l;
+  if (!gp) return 0;
+  const categories = (r.badLossSum + r.badDrawSum * 0.5) / 3;
+  return Math.min(BAD_LOSS_CAP, BAD_LOSS_WEIGHT * (categories / gp));
+}
+
 export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisional">): number {
   const lv = levelVal(r.level);
   // No level set is not a result. It used to send someone to the bottom of
@@ -165,7 +213,7 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
   const unproven = claimed * 0.45 + NEUTRAL * 0.55;
   const proven = claimed + (qualityRate(r) - 0.5) * 2 * 300;
   const career = 45 * Math.log10(1 + Math.max(0, r.w));
-  const raw = unproven * trust + proven * (1 - trust) + career;
+  const raw = unproven * trust + proven * (1 - trust) + career - badLossPenalty(r);
 
   const gp = r.w + r.d + r.l;
   const established = Math.min(1, gp / PROVISIONAL_GAMES);
@@ -256,6 +304,10 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
       // before rather than mis-scoring anybody.
       qShareSum: Number(r.qshare_sum ?? 0),
       qResSum: Number(r.qres_sum ?? 0),
+      // Absent until schema_global_standings_badloss.sql has been run; at 0
+      // the penalty is 0, so the table behaves exactly as it did before.
+      badLossSum: Number(r.badloss_sum ?? 0),
+      badDrawSum: Number(r.baddraw_sum ?? 0),
     };
     const gp = base.w + base.d + base.l;
     return { ...base, gp, qgp: base.qw + base.qd + base.ql, score: globalScore(base), provisional: gp < PROVISIONAL_GAMES };
