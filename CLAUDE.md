@@ -401,12 +401,47 @@ That turns the whole thing into arithmetic instead of guesswork.
 - `schema_global_standings_perf.sql` — dead. The code that read it was
   reverted in 7b1e307.
 - `schema_global_edges.sql` — **live code reads this.** Running it switches
-  the Global table to the network rating in `core/rating.ts`. That has ten
-  passing unit tests but has never run against real data. Without it the
-  RPC fails and the table falls back to the previous maths, which is the
-  state Sam is on and is happy with.
+  the Global table to the network rating in `core/rating.ts`. Without it the
+  RPC fails and the table falls back to the previous maths. **It has now been
+  tested against real data** (2026-09-04), offline, and it is the best answer
+  anything has produced: see below.
+
+### What the data actually said, 2026-09-04
+
+Sam pasted a live extract (every confirmed match, every player's level and
+level history — one `json_build_object` query, in the session log) and
+separately wrote down his own top ten for the club. That combination is what
+every earlier attempt lacked: real results **and** a target to check against.
+
+Ask for both again before touching any ranking. The extract beats the
+head-to-head query below for this, and `backups/` is still stale.
+
+**The level multiplier in `core/elo.ts` is genuinely broken, and not in the
+way anyone was looking.** `LV_MIN = 0.05` means a higher-rated player beating
+a lower-rated one scores a twentieth of a normal result, while losing to one
+runs up to 2.8x. Measured: **30 of 89 decided matches are pinned at 0.05**.
+Adrian beat Zaach four times for **+6.1 total** and lost to him six times for
+**-100.6**, which is why the best player Sam knows sits last on ELO. Hugh is
+3-0-0 including wins over Mike and Sam and has earned 3.2 points, because he
+claimed Pro so every win is "expected". **The app punishes rating yourself
+honestly.** Fixing the asymmetry is worth doing on its own merits.
+
+But it does **not** fix the order. Measured as total places away from Sam's
+own ranking: ELO today 34, floor raised to 0.35 → 34, symmetric multiplier
+→ 32. Barely moves, because five of Sam's top eleven have three matches or
+fewer and one (Flynn) has none. **That part is missing data, not maths**, and
+no formula reaches it. Don't try — a formula that hit Sam's list from this
+data would be fitting his opinion, not measuring results.
+
+**The network rating lands it: 10 places out, against 34.** `computeRatings`
+run over the real match graph, nothing tuned, every constant exactly as
+written, gets Sam's top four *exactly* — Hugh, Mike, Zaach, Adrian — and puts
+Zaach above Sam, which was the original complaint. Of 24 head-to-head pairs
+with a clear leader it inverts one (Sam beat Adrian once in 2019). Its
+remaining disagreements with Sam are Will and Oliver, who have one recorded
+match each — the missing-data pile again.
 
 **The complaint that started it all was narrow**: Zaach beat Sam twice and
-ranked below him. That wants a head-to-head tiebreak between players who are
-close on score — not a new architecture. Three were attempted; none was
-needed.
+ranked below him. Three rebuilds were attempted on stale data and none was
+needed. The fourth answer wasn't a rebuild at all — it was running the code
+that already existed against numbers that were actually true.
