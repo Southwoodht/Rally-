@@ -97,6 +97,20 @@ their match history onto whichever record it picked. It's now
 `detectDuplicateNamedPlayers` — pure detection, zero mutation. A name match
 may only ever become a *suggestion* a human explicitly confirms.
 
+**`charlie` and `cheese` are two different people. Do not merge them.** In
+Seacourt, `charlie` is Charlie Henry and `cheese` is Charlie Easey — John
+Easey's son, who Sam has a long rivalry with. Charlie Henry's `nick` field
+*also* says "Cheese", so the two rows look exactly like one person entered
+twice: same first name, one nicknamed what the other is named. They are not.
+This specific pair is what a previous session merged, and it is the incident
+above. Never merge them, never propose merging them, and never treat two
+similar-looking player rows as duplicates on your own judgement — ask.
+
+`cheese` has no surname and no level set, which is why Charlie Easey shows
+as unrated and sits below the rated players on the global table. That is a
+data-entry gap, not a bug, and fixing it is Sam's call, not a cleanup to
+perform unasked.
+
 **Global rank treats level as a claim, not an anchor.** Level is a dropdown;
 anyone can pick "Pro". So it's a starting assumption whose weight decays as
 evidence arrives — an unbacked claim gets dragged towards the middle of the
