@@ -47,10 +47,21 @@ Boot path: `page.tsx` → `AuthGate` (session / setup / password recovery) →
 
 ### The ratings engine (`src/core/`)
 
-- `constants.ts` — `START_ELO=0`, `K=40`, `LEVELS` (4 categories),
-  `SUBS` (3), `LV_FACTOR/LV_MIN/LV_MAX` for level-gap weighting.
+- `constants.ts` — `START_ELO=0`, `K=40`, `LEVELS` (**6 categories**:
+  Beginner, Amateur, Intermediate, Advanced, Semi-pro, Pro), `SUBS` (3),
+  `LV_FACTOR/LV_MIN/LV_MAX` for level-gap weighting, `WIN_QUALITY_DIVISOR`.
+  The four original category names are load-bearing: level is stored as
+  `{cat, sub}` strings and looked up by name, so **adding to `LEVELS` is
+  safe, renaming or reordering is not** — it would leave every stored level
+  unresolvable and silently unrated.
+- `sets.ts` — set-by-set scores. They live inside the existing free-text
+  `score` column as `"6-2, 6-3, 6-2"`, so there's no schema for them. The
+  old free text had no player-one-first convention (a `"6-4"` sits on a
+  match p2 won), so nothing assumes direction: it reads the numbers as
+  written and resolves them against the recorded result, refusing a score it
+  can't reconcile rather than guessing.
 - `levels.ts` — `levelVal()` maps a `{cat, sub}` to `ci*3+si`, i.e. the
-  current **0–11, 12-point scale**. `levelAt(player, ts)` reads
+  current **0–17, 18-point scale**. `levelAt(player, ts)` reads
   `levelHistory` so an old match is judged on who the opponent was *then*,
   never today's claim. Timeline boundaries are either a bare year (legacy)
   or `"YYYY-MM"`; `monthIndex()` normalises both.
@@ -139,6 +150,19 @@ information and moves you down from the middle. It only affects provisional
 players and evaporates once results accumulate. Don't "fix" it by guessing a
 level for people.
 
+**Margin counts, and so does a bad loss.** A scored quality match is worth
+`(1 - W) * result + W * share`, where share is the fraction of games taken
+and `W` is `MARGIN_WEIGHT` (0.35). A share rather than a games difference
+because Rally covers several racket sports and 6-0, 11-0 squash and 21-0
+badminton all have to mean the same thing. Losses to opponents *below* your
+level pull you down, weighted by the gap and averaged over games played —
+before this they counted for literally nothing, so losing to somebody
+stronger cost you something while losing to a beginner cost you nothing.
+Every weight lives in `globalTable.ts`, never in the SQL: the function
+reports facts, the app decides what they're worth, and tuning needs no
+migration. Matches with no score keep their plain result, so leaving the
+score box empty costs nobody anything.
+
 **Careers from before Rally existed belong in Legacy and trophies, not the
 global table.** A peak the app never saw isn't something it can honestly
 rank. Don't try to make the global table account for it.
@@ -198,20 +222,24 @@ Approved, not built:
   it transfers when they claim. Needs a migration + a form.
 - **Fancy loading screen on first app load.**
 - **Head-to-Head** is missing the favourite % and needs simplifying.
+- **Prompt everyone to re-pick their level** now six categories exist, so the
+  empty Amateur and Semi-pro tiers fill by self-selection. This isn't only
+  tidiness: it's also the repair for the one-off ELO shift the new scale
+  caused, because the pairs that moved apart move back when the person
+  between them takes up the new tier.
 - **A "what's new" notification** listing recent updates.
   **ASK SAM BEFORE POSTING ANYTHING TO HIS LEAGUE — it goes to everyone.**
 
 From Sam's original 13, still undone:
 
-- **Items 1 + 2 + 8 are one coupled change**: an 18-point level scale
-  (6 categories × 3 subs, up from the current 4 × 3 = 12), difficulty tiers
-  rescaled to the new gaps, and an ELO rework. Level is stored as strings
-  (`{cat, sub}`) so **no data migration is needed** — but every derived
-  number shifts: `levelVal()`'s `ci*3+si`, the `LV_FACTOR/LV_MIN/LV_MAX`
-  gap multiplier, `ratingForGap()`'s tier thresholds, `official.ts`'s
-  `1 + oppLv/4`, and `globalTable.ts`'s `NEUTRAL = 3*100` and its `*100`
-  per level point. **Show Sam before/after numbers for the current table
-  before applying.**
+- ~~Items 1 + 2 + 8, the 18-point scale~~ — **done**. Six categories,
+  `LV_FACTOR` deliberately unchanged at 0.45 (a category is 3 points wide on
+  both scales, so a one-category-up win is worth exactly what it always
+  was — refitting it was tried and is worse), win-quality divisor 4 → 6.2,
+  `NEUTRAL` 3 → 6. Difficulty thresholds untouched, and *no rescale of them
+  exists*: the proof is in the comment above `ratingForGap`. Sam's follow-up
+  plan is to prompt everyone once to re-pick their level rather than
+  reclassify anyone — self-selection, not admin edit.
 - **Item 9, doubles** (~70% of Sam's club). `docs/doubles-readiness.md` is
   the written plan: keep doubles separate from singles rather than
   generalising `p1`/`p2` into arrays, and never fake a composite team
@@ -225,7 +253,17 @@ From Sam's original 13, still undone:
 **Sam runs the SQL himself.** Write the file into `supabase/`, tell him it's
 there, and let him paste it in. Don't try to apply migrations.
 
-Already run: `schema_global_standings.sql`, `schema_messages.sql`.
+Already run: `schema_global_standings.sql`, `schema_messages.sql`,
+`schema_level_val_18.sql`, `schema_global_standings_margin.sql`,
+`schema_global_standings_badloss.sql` (that last one supersedes the margin
+file — it contains everything that did, plus the bad-loss columns, so on a
+fresh database run it alone).
+
+`level_val()` in SQL is a hand-copy of `levelVal()` in `core/levels.ts`. If
+`LEVELS` ever changes again this must change with it: `array_position`
+returns NULL for a category it doesn't know, and a NULL level is excluded
+from the quality filter entirely — so anyone picking a new category would
+silently record zero quality games forever, with no error anywhere.
 
 **Tell him before anything touches existing data.** Additive migrations
 (new columns, new tables, widened policies) are fine to propose; anything
@@ -248,13 +286,33 @@ gitignored. Never commit it, never paste its contents anywhere.
 
 ## 7. Known issues, not fixed
 
-- **A failed save leaves screen and database out of sync.** `saveData()` in
-  `RallyApp.tsx` does `setGdata(n)` *before* awaiting the sync, and the next
-  save diffs against that already-updated state — so a failed change is
-  never retried and silently diverges from the DB. The user sees "Couldn't
-  save" and nothing else. **Needs a decision from Sam: roll back on failure,
-  or queue and retry.** Don't pick one unilaterally.
-- **Profile difficulty bars flash grey on first paint** before players load.
+- **The Global table reads *current* level; the league reads level *at the
+  time*.** `global_standings()` uses `players.level`, while `core/elo.ts`
+  and `core/difficulty.ts` use `levelAt(player, matchDate)`. So the same
+  match can be a quality win in one place and a bad loss in the other, and
+  promoting somebody retroactively turns their old wins into bad losses on
+  the global table only. Fixing it means teaching the SQL to resolve
+  `level_history` per match, which it doesn't read at all today. Deferred
+  deliberately until Sam has finished rewriting people's level histories —
+  tuning it against the old picture would mean doing it twice.
+- **Orphaned account rows.** A past glitch left people holding a login whose
+  player row is a new empty one, while their real record sits on an
+  unclaimed shell. `boot()` links by `auth_id` first, so they're sent
+  straight to the empty row and never offered the claim screen — they can't
+  reach their own results. Fix is to delete the *empty* row (check it has
+  zero matches, reported, posts and fixtures first); their login survives,
+  and next sign-in offers them the claim list so they pick their own record.
+  Charlie Easey was one of these. There may be others: any `players` row
+  with a non-null `auth_id` and zero matches is a candidate.
+
+**Fixed, recorded so nobody reintroduces them:** `saveData` no longer leaves
+the screen showing a change the database refused — on failure it re-reads
+the league and shows what actually saved (not the pre-save state, since the
+four syncs run together and some can land while others fail). The profile
+difficulty bars no longer paint grey before players load: an unknown
+opponent yields no colour rather than the *unrated* tier's real grey, and
+`players` is in that memo's dependency list, without which the grey could
+outlast the load entirely.
 
 ---
 
