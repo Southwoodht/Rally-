@@ -37,15 +37,43 @@ export interface GlobalRow {
   ql: number;
   gp: number;
   qgp: number;
+  /**
+   * Margin, over the scored quality matches only. `qShareSum` is the sum of
+   * how much of each match they took (6-0,6-0,6-0 is 1.0, a 6-7,5-7 loss is
+   * 0.44); `qResSum` is the sum of the plain 1/0.5/0 results for those same
+   * matches. Both come from global_standings(); both are 0 when the
+   * migration hasn't been run, which is exactly the no-op case.
+   */
+  qShareSum: number;
+  qResSum: number;
   score: number;
   /** Too few games to place them honestly — see globalScore. */
   provisional: boolean;
 }
 
+/**
+ * How far margin is allowed to move a quality result, 0 to 1.
+ *
+ * At 0 this is the old binary: a win is a win however close. At 1 the result
+ * stops mattering and only games count, so a 7-6 7-6 win and a 6-7 6-7 loss
+ * land within a whisker of each other, which is plainly wrong — winning is
+ * the main thing that happened.
+ *
+ * 0.35 keeps a win clearly a win (a 7-6 7-6 win scores 0.83 against a
+ * perfect 1.0) while giving a close loss to a good opponent something rather
+ * than nothing (6-7 5-7 scores 0.15 against a bagelling's 0.0). Losing 6-5
+ * to someone at your own level should cost less than losing 0-6 0-6 0-6, and
+ * this is the number that decides how much less.
+ *
+ * It lives here rather than in the SQL on purpose: the function reports
+ * facts, the app decides what they are worth, and tuning this needs no
+ * migration.
+ */
+export const MARGIN_WEIGHT = 0.35;
+
 // Below this many games we don't claim to know where someone belongs.
 export const PROVISIONAL_GAMES = 10;
 
-const pts = (w: number, d: number, l: number) => (w + l + d ? (w + d * 0.5) / (w + d + l) : 0.5);
 
 // The middle of the scale — where "we don't actually know how good you are"
 // sits. Both an unbacked "Pro" and an unbacked "Beginner" get pulled towards
@@ -57,6 +85,28 @@ const pts = (w: number, d: number, l: number) => (w + l + d ? (w + d * 0.5) / (w
 // order is identical to today's. Left at 3 it moves two people; set to the
 // arithmetic midpoint of the new scale instead it moves nine.
 const NEUTRAL = 6 * 100;
+
+/**
+ * The quality record as a rate, with margin folded in where a score exists.
+ *
+ * With no scores anywhere this is exactly the old win rate,
+ * (qw + qd/2) / qgp. Where a scored quality match exists, its plain result is
+ * swapped for a blend of the result and the share of games taken:
+ *
+ *     value = (1 - W) * result + W * share
+ *     total = resultSumAll + W * (shareSumScored - resultSumScored)
+ *
+ * which is the same thing rearranged so it needs only the two sums the SQL
+ * hands back rather than a row per match. Unscored matches keep contributing
+ * their plain result untouched, so leaving the score box empty costs nothing.
+ */
+export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: number; qResSum: number }): number {
+  const qgp = r.qw + r.qd + r.ql;
+  if (!qgp) return 0.5;
+  const resultSumAll = r.qw + r.qd * 0.5;
+  const total = resultSumAll + MARGIN_WEIGHT * (r.qShareSum - r.qResSum);
+  return total / qgp;
+}
 
 /**
  * Where someone sits globally.
@@ -107,7 +157,7 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
 
   const trust = 1 / (1 + qgp / 6);
   const unproven = claimed * 0.45 + NEUTRAL * 0.55;
-  const proven = claimed + (pts(r.qw, r.qd, r.ql) - 0.5) * 2 * 300;
+  const proven = claimed + (qualityRate(r) - 0.5) * 2 * 300;
   const career = 45 * Math.log10(1 + Math.max(0, r.w));
   const raw = unproven * trust + proven * (1 - trust) + career;
 
@@ -192,6 +242,12 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
       qw: r.qw || 0,
       qd: r.qd || 0,
       ql: r.ql || 0,
+      // Absent until schema_global_standings_margin.sql has been run. Both
+      // at 0 makes qualityRate() collapse back to the plain win rate, so an
+      // app deployed ahead of the migration behaves exactly as it did
+      // before rather than mis-scoring anybody.
+      qShareSum: Number(r.qshare_sum ?? 0),
+      qResSum: Number(r.qres_sum ?? 0),
     };
     const gp = base.w + base.d + base.l;
     return { ...base, gp, qgp: base.qw + base.qd + base.ql, score: globalScore(base), provisional: gp < PROVISIONAL_GAMES };
