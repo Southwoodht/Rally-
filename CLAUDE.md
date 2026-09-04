@@ -268,8 +268,11 @@ Already run: `schema_global_standings.sql`, `schema_messages.sql`,
 file — it contains everything that did, plus the bad-loss columns, so on a
 fresh database run it alone).
 
-Also run, both on 2026-09-04: `schema_clubs_trophies.sql` and
-`schema_trophies_unclaimed.sql`.
+Also run on 2026-09-04, all four: `schema_clubs_trophies.sql`,
+`schema_trophies_unclaimed.sql`, `schema_trophies_owner_delete.sql` (one
+policy, so you can take down a trophy of your own) and
+**`schema_global_edges.sql`** — see §9, that last one changed the Global
+table.
 
 The first of those had **never** been run until that day, though the code
 reading it shipped long before — clubs, club_members and trophies didn't
@@ -396,15 +399,16 @@ group by 1, 2 order by 3 desc;
 
 That turns the whole thing into arithmetic instead of guesswork.
 
-**Two SQL files are deliberately un-run. Leave them unless Sam asks.**
+**The Global table now runs on the network rating.** Sam ran
+`schema_global_edges.sql` on 2026-09-04 and confirmed the result: "looks very
+good and correct". So `global_edges()` exists, `loadGlobalStandings()` gets
+its edges, and `computeRatings()` in `core/rating.ts` produces the order.
+**This is the live behaviour — don't describe it as un-run, and don't
+rebuild it.** One `drop function public.global_edges();` reverts to the old
+maths, and that fallback is already deployed.
 
-- `schema_global_standings_perf.sql` — dead. The code that read it was
-  reverted in 7b1e307.
-- `schema_global_edges.sql` — **live code reads this.** Running it switches
-  the Global table to the network rating in `core/rating.ts`. Without it the
-  RPC fails and the table falls back to the previous maths. **It has now been
-  tested against real data** (2026-09-04), offline, and it is the best answer
-  anything has produced: see below.
+`schema_global_standings_perf.sql` is still dead and still un-run. The code
+that read it was reverted in 7b1e307. Leave it.
 
 ### What the data actually said, 2026-09-04
 
@@ -445,3 +449,16 @@ match each — the missing-data pile again.
 ranked below him. Three rebuilds were attempted on stale data and none was
 needed. The fourth answer wasn't a rebuild at all — it was running the code
 that already existed against numbers that were actually true.
+
+**Known and accepted: the top of the table is thinner than it looks.** The
+network rating replaces the score outright, so the "under 10 games you are
+provisional" pull toward the middle no longer shapes the ordering — the row
+still says *Provisional*, but the place number doesn't know. Hugh sits first
+on **3 matches**, Mike second on **2**, against Zaach's 44, and neither has
+ever played Zaach: their lead is inferred entirely through Sam, who they both
+beat. Reversing Mike's single 2019 win over Sam drops him from 9.37 to 6.04
+and out of the top four. Sam is happy with the order because he knows
+independently that Hugh and Mike are the best two — they have Seacourt
+trophies — but **nothing in the data justifies the confidence the layout
+implies**. The fix discussed and not built is a marker on the row, not a
+change to the maths.
