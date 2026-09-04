@@ -133,7 +133,20 @@ export async function listApprovedTrophiesForPlayer(playerId: string, authId?: s
     supabase.from("trophies").select("*, clubs (name)").or(owners.join(",")).eq("status", "approved").order("created_at", { ascending: false }),
     { data: [], error: null } as any,
   );
-  if (error) throw error;
+  // player_id is new (schema_trophies_unclaimed.sql). On a database where
+  // that hasn't been run the whole query fails on the unknown column, and
+  // an empty list here would read as "this player has no trophies" and
+  // quietly hide honours somebody really did earn. So fall back to the
+  // question the old schema can answer, and only that one goes missing.
+  if (error) {
+    if (!authId) throw error;
+    const { data: legacy, error: legacyError } = await withSupabaseTimeout(
+      supabase.from("trophies").select("*, clubs (name)").eq("claimed_by", authId).eq("status", "approved").order("created_at", { ascending: false }),
+      { data: [], error: null } as any,
+    );
+    if (legacyError) throw error;
+    return (legacy || []) as Trophy[];
+  }
   return (data || []) as Trophy[];
 }
 
