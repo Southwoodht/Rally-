@@ -3,12 +3,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Bell } from "@/components/ui/Bell";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { computeLocalNotifications, Notification } from "@/core/notifications";
+import { listIncomingRequests } from "@/lib/friends";
 import { listMyTrophies, listPendingClaims } from "@/lib/trophies";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme";
 
 const RECENT_WINDOW_MS = 7 * 86400000;
 
-export function NotificationBell({ meId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin }: any) {
+export function NotificationBell({ meId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin, onGoFriends }: any) {
   const [open, setOpen] = useState(false);
   const [remote, setRemote] = useState<Notification[]>([]);
   const local = useMemo(() => computeLocalNotifications(meId, players, matches, posts, nameOf), [meId, players, matches, posts, nameOf]);
@@ -16,6 +17,22 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
   const loadRemote = async () => {
     const out: Notification[] = [];
     const now = Date.now();
+    try {
+      // Friend requests notified nowhere at all — no badge, no row, nothing.
+      // You only ever found one by opening Friends and happening to look, so
+      // a request from somebody you'd just played could sit unanswered for
+      // weeks and read as being ignored.
+      const requests = await listIncomingRequests();
+      requests.forEach((r) => {
+        out.push({
+          id: "friendreq_" + r.id,
+          icon: "👋",
+          text: `${r.profile?.display_name || "Someone"} wants to add you as a friend`,
+          date: new Date(r.created_at).getTime(),
+          action: "friend",
+        });
+      });
+    } catch {}
     try {
       const mine = await listMyTrophies();
       mine.filter((t) => t.status !== "pending" && t.verified_at && now - new Date(t.verified_at).getTime() <= RECENT_WINDOW_MS).forEach((t) => {
@@ -26,7 +43,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
       for (const c of adminClubs) {
         const pending = await listPendingClaims(c.id);
         pending.forEach((t) => {
-          out.push({ id: "review_" + t.id, icon: "📋", text: `${t.claimant_name || "Someone"} submitted a claim for ${c.name} — needs review`, date: new Date(t.created_at).getTime(), action: "none" });
+          out.push({ id: "review_" + t.id, icon: "📋", text: `${t.claimant_name || "Someone"} submitted a claim for ${c.name} — needs review`, date: new Date(t.created_at).getTime(), action: "review" });
         });
       }
     } catch {}
@@ -36,7 +53,11 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
   useEffect(() => { if (open) loadRemote(); /* eslint-disable-next-line */ }, [open]);
 
   const all = useMemo(() => [...local, ...remote].sort((a, b) => b.date - a.date), [local, remote]);
-  const badge = local.filter((n) => n.action !== "none").length + remote.filter((n) => n.text.includes("needs review")).length;
+  // Anything waiting on you counts, wherever it came from. This used to
+  // match remote rows on the words "needs review" in their text, so a friend
+  // request or a pending delete could never have reached the badge however
+  // it was worded.
+  const badge = all.filter((n) => n.action !== "none").length;
 
   return (
     <>
@@ -56,9 +77,13 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
             ) : all.map((n) => (
               <button
                 key={n.id}
-                onClick={() => { if (n.matchId && onOpenMatch) { onOpenMatch(n.matchId); setOpen(false); } }}
-                disabled={!n.matchId}
-                style={{ display: "flex", gap: 10, width: "100%", background: "transparent", border: "none", borderTop: "none", padding: "11px 2px", cursor: n.matchId ? "pointer" : "default", textAlign: "left" }}
+                onClick={() => {
+                  if (n.matchId && onOpenMatch) { onOpenMatch(n.matchId); setOpen(false); return; }
+                  if (n.action === "friend" && onGoFriends) { onGoFriends(); setOpen(false); return; }
+                  if (n.action === "review" && onGoAdmin) { onGoAdmin(); setOpen(false); }
+                }}
+                disabled={!(n.matchId || (n.action === "friend" && onGoFriends) || (n.action === "review" && onGoAdmin))}
+                style={{ display: "flex", gap: 10, width: "100%", background: "transparent", border: "none", borderTop: "none", padding: "11px 2px", cursor: n.matchId || n.action === "friend" || n.action === "review" ? "pointer" : "default", textAlign: "left" }}
               >
                 <span style={{ fontSize: 17, flexShrink: 0 }}>{n.icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>

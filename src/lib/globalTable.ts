@@ -151,8 +151,14 @@ export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: 
  */
 export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisional">): number {
   const lv = levelVal(r.level);
-  if (lv == null) return -1;
-  const claimed = lv * 100;
+  // No level set is not a result. It used to send someone to the bottom of
+  // the table below everybody, which put a 6-3-10 record under a player who
+  // was 0-0-1 — and "worse than everyone" is a far stronger claim about
+  // somebody than the beginner assumption this was written to avoid. So an
+  // unrated player simply makes no claim: they start at the middle of the
+  // scale, exactly where a rated player's unevidenced claim gets dragged to,
+  // and their record moves them from there like anybody else's.
+  const claimed = lv == null ? NEUTRAL : lv * 100;
   const qgp = r.qw + r.qd + r.ql;
 
   const trust = 1 / (1 + qgp / 6);
@@ -166,12 +172,15 @@ export function globalScore(r: Omit<GlobalRow, "score" | "gp" | "qgp" | "provisi
   return raw * established + NEUTRAL * (1 - established);
 }
 
+// Everyone is ranked together, unrated included. Segregating them was meant
+// to avoid guessing at someone we know nothing about, but it guessed anyway
+// and guessed the worst: an unrated player with a real record sat under
+// every rated player, however few games they had. Someone with no level and
+// nineteen matches is not less placeable than someone with a level and one.
+// The row still says "unrated", so nobody is presented as having claimed a
+// level they haven't.
 export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {
   return rows.slice().sort((a, b) => {
-    const aRated = levelVal(a.level) != null, bRated = levelVal(b.level) != null;
-    // Nobody unrated is placed among the rated — we don't know enough about
-    // them to say, and guessing would be the dishonest half of the feature.
-    if (aRated !== bRated) return aRated ? -1 : 1;
     if (b.score !== a.score) return b.score - a.score;
     if (b.gp !== a.gp) return b.gp - a.gp;
     return a.name.localeCompare(b.name);
@@ -193,11 +202,10 @@ export async function globalRankFor(key: string, now = Date.now()): Promise<Glob
   if (!cache || now - cache.at > CACHE_MS) {
     try { cache = { at: now, rows: await loadGlobalStandings() }; } catch { return null; }
   }
-  // Ranked against the rated players only, matching what the table shows —
-  // unrated players are listed separately there and hold no place number.
-  const rated = cache.rows.filter((r) => r.level);
-  const i = rated.findIndex((r) => r.key === key);
-  return i < 0 ? null : { rank: i + 1, of: rated.length };
+  // Ranked against everybody, matching what the table shows now that unrated
+  // players are placed on their record rather than dumped underneath it.
+  const i = cache.rows.findIndex((r) => r.key === key);
+  return i < 0 ? null : { rank: i + 1, of: cache.rows.length };
 }
 
 // #6 means nothing without knowing whether that's six of eight or six of six

@@ -516,7 +516,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   <MessengerBird size={19} flap={unreadMsgs > 0} />
                   {unreadMsgs > 0 && <span style={{ position: "absolute", top: 2, right: 2, minWidth: 15, height: 15, borderRadius: 999, background: BALL, color: COURT, fontFamily: mono, fontWeight: 700, fontSize: 9, display: "grid", placeItems: "center", padding: "0 3px" }}>{unreadMsgs}</span>}
                 </button>
-                <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} />
+                <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
                 {tab === "profile" && (
                   <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3.5, flexShrink: 0 }}>
                     {[0, 1, 2].map((i) => <span key={i} style={{ display: "block", width: 17, height: 2, background: BALL, borderRadius: 2 }} />)}

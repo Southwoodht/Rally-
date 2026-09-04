@@ -118,10 +118,26 @@ scale, six matches against your own level or better halve the trust term,
 eighteen quarter it. Evidence *replaces* the claim rather than adding to it.
 All-time wins sit on a log curve so volume against weak opposition can't
 outrank quality. Under 10 games you're **provisional** and pulled to the
-middle — one match is not a position in a table. Unrated players are listed
-separately, never assumed to be beginners. All of this is documented in the
-long comment on `globalScore()` in `src/lib/globalTable.ts` — read it before
-changing a coefficient.
+middle — one match is not a position in a table. All of this is documented in
+the long comment on `globalScore()` in `src/lib/globalTable.ts` — read it
+before changing a coefficient.
+
+**Unrated players are ranked with everyone else, on their record.** This
+reverses an earlier rule that listed them separately underneath with no
+place number. The intent had been to avoid assuming an unrated player was a
+beginner, but the effect was worse than the assumption it avoided: it put
+Charlie Easey's 6-3-10 below a player who was 0-0-1, and "below everybody"
+is a stronger claim than "probably a beginner", not a weaker one. Someone
+with no level now starts at `NEUTRAL` — the same middle a rated player's
+unevidenced claim gets dragged to — and their results move them from there.
+Their row still shows no level badge, so nobody is presented as having
+claimed a level they haven't.
+
+Known wrinkle, accepted rather than solved: setting no level scores slightly
+higher than honestly setting Beginner/Low, because a low claim is
+information and moves you down from the middle. It only affects provisional
+players and evaporates once results accumulate. Don't "fix" it by guessing a
+level for people.
 
 **Careers from before Rally existed belong in Legacy and trophies, not the
 global table.** A peak the app never saw isn't something it can honestly

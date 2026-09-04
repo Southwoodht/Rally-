@@ -12,7 +12,9 @@ export interface Notification {
   icon: string;
   text: string;
   date: number;
-  action: "confirm" | "edit" | "none";
+  // Anything that isn't "none" is something waiting on you, and that's what
+  // the bell's count means. "none" is news you can read or ignore.
+  action: "confirm" | "edit" | "none" | "friend" | "review";
   matchId?: string;
 }
 
@@ -29,6 +31,30 @@ export function computeLocalNotifications(meId: string, players: any[], matches:
   matches.filter((m) => m.pendingEdit && m.pendingEdit.proposedBy !== meId && (m.p1 === meId || m.p2 === meId)).forEach((m) => {
     const proposer = nm(m.pendingEdit.proposedBy);
     out.push({ id: "edit_" + m.id, icon: "✏️", text: `${proposer} proposed a change to your match — review it`, date: m.pendingEdit.proposedAt || now, action: "edit", matchId: m.id });
+  });
+
+  // A requested delete goes through on its own after 24 hours, on whichever
+  // client happens to be open, and used to do it without telling anybody.
+  // That is how two August matches went missing and weren't noticed for three
+  // weeks. A match being removed from someone's record is the single most
+  // destructive thing the app does on a timer, so it says so — to both
+  // sides, including the person who asked, since a mis-tap is exactly the
+  // case that needs catching.
+  matches.filter((m) => m.deleteRequestedAt && (m.p1 === meId || m.p2 === meId)).forEach((m) => {
+    const other = nm(m.p1 === meId ? m.p2 : m.p1);
+    const mine = m.deleteRequestedBy === meId;
+    const left = m.deleteRequestedAt + 24 * 3600 * 1000 - now;
+    const when = left <= 0 ? "any moment now" : left < 3600 * 1000 ? "within the hour" : `in about ${Math.ceil(left / 3600000)}h`;
+    out.push({
+      id: "del_" + m.id,
+      icon: "🗑️",
+      text: mine
+        ? `You asked to delete your match with ${other} — it goes for good ${when} unless you cancel`
+        : `${other} asked to delete your match — it goes for good ${when} unless you say no`,
+      date: m.deleteRequestedAt,
+      action: "edit",
+      matchId: m.id,
+    });
   });
 
   const myAchievements = computeAchievements(meId, matches);

@@ -106,32 +106,21 @@ export function GlobalTable({ myAuthId }: { myAuthId?: string | null }) {
   if (!rows) return <Empty msg="Loading the global table…" />;
   if (!rows.length) return <Empty msg="Nobody to rank yet." />;
 
-  // Unrated players sit after the ranked ones and take no place number —
-  // without a level there's nothing to anchor them to, and inventing one
-  // would undo the point of the table.
-  const rated = rows.filter((r) => r.level);
-  const unrated = rows.filter((r) => !r.level);
-
+  // One table, everybody in it. Unrated players used to be listed underneath
+  // in their own block with no place number, which sounds neutral and isn't:
+  // it put a 6-3-10 record below a 0-0-1 one. Somebody who hasn't set a level
+  // is placed on their record like anyone else, and their row still shows no
+  // level badge, so nothing presents them as having claimed one.
   return (
     <>
       <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
-        Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level is only a starting assumption: the more someone plays their own level or better, the more their results decide their place and the less their claimed level does.
+        Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level is only a starting assumption: the more someone plays their own level or better, the more their results decide their place and the less their claimed level does. Nobody has to set a level to be ranked — without one we simply assume the middle and let the results talk.
       </div>
       <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
-        {rated.map((r, i) => (
+        {rows.map((r, i) => (
           <Row key={r.key} row={r} place={i + 1} isMe={!!myAuthId && r.key === myAuthId} open={open === r.key} onClick={() => setOpen(open === r.key ? null : r.key)} />
         ))}
       </div>
-      {unrated.length > 0 && (
-        <>
-          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, margin: "18px 0 6px" }}>No level set</div>
-          <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
-            {unrated.map((r) => (
-              <Row key={r.key} row={r} place={null} isMe={!!myAuthId && r.key === myAuthId} open={open === r.key} onClick={() => setOpen(open === r.key ? null : r.key)} />
-            ))}
-          </div>
-        </>
-      )}
     </>
   );
 }
