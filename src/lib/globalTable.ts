@@ -1,4 +1,5 @@
 import { levelVal } from "@/core/levels";
+import { computeRatings, type Edge } from "@/core/rating";
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 
 // The Global table — everyone you can see, ranked on their own record
@@ -316,5 +317,46 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
   // table ranks people on their record. They were being given a position
   // anyway — landing mid-table on the neutral score, above people with real
   // results — which is a placeholder holding a place.
-  return rankGlobal(rows.filter((r) => r.gp > 0));
+  return rankGlobal((await withNetworkRating(rows)).filter((r) => r.gp > 0));
+}
+
+/**
+ * Replaces the score with a rating computed over who actually beat whom.
+ *
+ * Everything above works on totals, and totals cannot hold a chain — which is
+ * why the table kept placing people above opponents who had beaten them. This
+ * asks for the edges instead and solves the network (see core/rating.ts).
+ *
+ * If global_edges() isn't there yet the RPC fails and the rows come back
+ * exactly as they were, so the table keeps working on the old maths until the
+ * migration is run. Same for a timeout: a slow network must never silently
+ * reorder the table.
+ */
+async function withNetworkRating(rows: GlobalRow[]): Promise<GlobalRow[]> {
+  if (!supabase || !rows.length) return rows;
+  const result = await withSupabaseTimeout(
+    supabase.rpc("global_edges"),
+    { data: null, error: { message: "Timed out" } } as any,
+  );
+  const { data, error } = result || {};
+  if (error || !Array.isArray(data) || !data.length) return rows;
+
+  const edges: Edge[] = data.map((e: any) => ({
+    key: e.key,
+    // Opponents the viewer can't see come back as an opaque token instead of
+    // a real key. Either way they're a node, so the graph stays connected and
+    // a record doesn't shrink just because half of it is out of view.
+    opp: e.opp ?? e.opp_anon,
+    result: Number(e.result),
+  })).filter((e: Edge) => e.key && e.opp && Number.isFinite(e.result));
+  if (!edges.length) return rows;
+
+  // Levels set where the scale sits, and nothing else. Everyone is shifted by
+  // the same amount, so a rating stays readable as a level value while nobody
+  // can move their own position by editing their own level.
+  const declared = rows.map((r) => levelVal(r.level)).filter((v): v is number => v != null);
+  const anchor = declared.length ? declared.reduce((a, b) => a + b, 0) / declared.length : 6;
+
+  const rating = computeRatings(edges, { anchor });
+  return rows.map((r) => (r.key in rating ? { ...r, score: rating[r.key] * 100 } : r));
 }
