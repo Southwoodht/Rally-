@@ -336,3 +336,51 @@ outlast the load entirely.
   screen is open, and no extra Supabase setup.
 - `?__dev_auto=1` fakes a session and mounts a debug league. Guarded to
   non-production so it can't become a login bypass on the live URL.
+
+---
+
+## 9. Before you touch the Global table — you cannot see it
+
+The league table is computed in the app from data you can read. **The Global
+table is not.** It comes from `global_standings()` running against live
+Supabase data, and a coding session can read the code but cannot query the
+database. If you change the ranking maths you are working blind.
+
+On 2026-09-04 a session rebuilt that ranking three times in one evening,
+every time against `backups/production-snapshot-2026-08-21.csv`. That file's
+most recent match is **8 August**, it holds 16 players and 63 matches, and
+nobody in it has a carried-in record. Live, Zaach is 32-0-12; in that file he
+is 2-0-0. So every table it showed Sam disagreed with his app, and each fix
+broke something else. Check the date on that backup before trusting it.
+
+Ask Sam to run this and paste the output before changing any ranking:
+
+```sql
+select case when m.winner = 'p1' then p1.name || ' ' || coalesce(p1.last,'')
+            else p2.name || ' ' || coalesce(p2.last,'') end as winner,
+       case when m.winner = 'p1' then p2.name || ' ' || coalesce(p2.last,'')
+            else p1.name || ' ' || coalesce(p1.last,'') end as loser,
+       count(*) as times
+from public.matches m
+join public.players p1 on p1.id = m.p1
+join public.players p2 on p2.id = m.p2
+where m.status = 'confirmed' and m.winner <> 'draw'
+group by 1, 2 order by 3 desc;
+```
+
+That turns the whole thing into arithmetic instead of guesswork.
+
+**Two SQL files are deliberately un-run. Leave them unless Sam asks.**
+
+- `schema_global_standings_perf.sql` — dead. The code that read it was
+  reverted in 7b1e307.
+- `schema_global_edges.sql` — **live code reads this.** Running it switches
+  the Global table to the network rating in `core/rating.ts`. That has ten
+  passing unit tests but has never run against real data. Without it the
+  RPC fails and the table falls back to the previous maths, which is the
+  state Sam is on and is happy with.
+
+**The complaint that started it all was narrow**: Zaach beat Sam twice and
+ranked below him. That wants a head-to-head tiebreak between players who are
+close on score — not a new architecture. Three were attempted; none was
+needed.
