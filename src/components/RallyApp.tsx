@@ -198,6 +198,19 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // actually differ from what we had a moment ago are synced to their
   // tables — never a full-blob rewrite, so one bad save can only ever touch
   // the rows it actually changed.
+  //
+  // A failed save used to leave the screen showing a change the database
+  // never took. Worse, the next save diffed against that already-updated
+  // state, so the lost change wasn't in the diff and could never be written
+  // again — the two drifted apart permanently and silently, and the only
+  // clue was one "Couldn't save" you may well have missed.
+  //
+  // Now a failure re-reads the league and shows what actually saved. Not the
+  // pre-save state: these four syncs run together and some can land while
+  // others fail, so the previous state is just as much a lie as the new one.
+  // The only honest thing to put on screen is what the database really holds.
+  // If even the re-read fails we fall back to the pre-save state, since that
+  // is at least a view that once existed.
   const saveData = async (n: LeagueData) => {
     const prev = gdata;
     setGdata(n);
@@ -211,7 +224,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       ]);
     } catch (e) {
       console.error(e);
-      flash("Couldn't save");
+      try {
+        const fresh = await fetchLeagueData(gid);
+        setGdata({ ...fresh, me: n.me ?? prev.me });
+        flash("Couldn't save — showing what's actually saved");
+      } catch (reloadError) {
+        console.error(reloadError);
+        setGdata(prev);
+        flash("Couldn't save — your change was undone");
+      }
     }
   };
   const importHistoricalResults = async () => {

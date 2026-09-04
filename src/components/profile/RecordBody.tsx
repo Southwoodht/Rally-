@@ -143,10 +143,22 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   // The last five with who each was against. WWWWW reads identically whether
   // it was five semi-pros or five beginners; the bar underneath is the part
   // that tells you which.
-  const last5 = useMemo(() => chrono.slice(-5).map((m: any) => ({
-    res: resultFor(m),
-    color: ratingForMatch(player, byId[oppId(m)], m.date).color,
-  })), [chrono, player]);
+  // While players are still loading, byId is empty and every opponent looks
+  // unrated — which is a real tier with a real grey, so the bars painted
+  // themselves grey before the data arrived and then changed colour under
+  // you. An unknown opponent now yields no colour at all, and FormRow draws
+  // no bar rather than a wrong one.
+  //
+  // `players` also has to be in the dependency list. Without it this memo
+  // held whatever it computed on the first paint, so the grey could outlast
+  // the load entirely rather than merely flashing.
+  const last5 = useMemo(() => chrono.slice(-5).map((m: any) => {
+    const opp = byId[oppId(m)];
+    return {
+      res: resultFor(m),
+      color: opp ? ratingForMatch(player, opp, m.date).color : undefined,
+    };
+  }), [chrono, player, players]);
   // One word for the schedule someone actually chooses to play. Strictly
   // about who they face, never about whether they win — you can be 2-20 and
   // still be the bravest player in the league. Needs five rated matches
