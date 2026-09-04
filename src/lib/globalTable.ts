@@ -152,13 +152,20 @@ export async function globalRankFor(key: string, now = Date.now()): Promise<Glob
 
 // #6 means nothing without knowing whether that's six of eight or six of six
 // hundred. The word carries what the number can't at a glance.
-export function standingWord(place: GlobalPlace): { label: string; tier: "gold" | "blue" | "green" | "orange" | "muted" } {
+//
+// The word on its own turned out not to be enough either — "Decent" and
+// "Strong" don't say what they are measuring, and the row they sit on is
+// labelled "Global", which doesn't say it spans every league rather than
+// this one. So each carries a note that spells out both, in the same shape
+// the play-style chip uses.
+export function standingWord(place: GlobalPlace): { label: string; tier: "gold" | "blue" | "green" | "orange" | "muted"; note: string } {
   const p = place.rank / Math.max(1, place.of);
-  if (p <= 0.1) return { label: "Elite", tier: "gold" };
-  if (p <= 0.25) return { label: "Strong", tier: "blue" };
-  if (p <= 0.5) return { label: "Decent", tier: "green" };
-  if (p <= 0.75) return { label: "Climbing", tier: "orange" };
-  return { label: "Early days", tier: "muted" };
+  const of = `of the ${place.of} players ranked across every league Rally can see for you`;
+  if (p <= 0.1) return { label: "Elite", tier: "gold", note: `Top 10% ${of}.` };
+  if (p <= 0.25) return { label: "Strong", tier: "blue", note: `Top quarter ${of}.` };
+  if (p <= 0.5) return { label: "Decent", tier: "green", note: `Top half ${of}.` };
+  if (p <= 0.75) return { label: "Climbing", tier: "orange", note: `Bottom half ${of}.` };
+  return { label: "Early days", tier: "muted", note: `Bottom quarter ${of}.` };
 }
 
 export async function loadGlobalStandings(): Promise<GlobalRow[]> {

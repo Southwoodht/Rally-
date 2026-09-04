@@ -15,14 +15,22 @@ export type Tier = "gold" | "silver" | "blue" | "green" | "orange" | "red" | "mu
 // distinct from the app's brand accent (BALL/CLAY stay what they mean
 // everywhere else), chosen to read clearly as a thin bar with no glow.
 export const TIER_COLOR: Record<Tier, string> = {
-  gold: "#d4af37",
+  // Gold and orange sit at opposite ends of the meaning — the toughest
+  // opponent you can face and one of the easiest — so they must never read
+  // as the same colour. The previous pair (#d4af37 / #d98a2b) were both
+  // mid-brightness amber about 10 degrees of hue apart, a 1.3:1 contrast
+  // ratio, and blurred into each other on a thin bar. Gold is now brighter
+  // and more yellow, orange darker and browner: 2.2:1, and they differ in
+  // saturation as well, so the pair separates even at bar width.
+  gold: "#f0c93f",
   silver: "#a7b4bf",
   blue: "#5b93c9",
   green: "#8fd19e",
-  // Orange pushed warmer/more amber and red pushed darker/cooler so the two
-  // separate by brightness as well as hue on a thin bar — the previous pair
-  // (#cb6d47 / #c94f4f) were nearly the same lightness and read as one blur.
-  orange: "#d98a2b",
+  // Orange stays clear of red, which is the other pair that has to survive
+  // being 3px wide — the two were pushed apart for the same reason once
+  // before (#cb6d47 / #c94f4f read as one brick tone) and darkening orange
+  // to separate it from gold must not undo that. 1.9:1 as it stands.
+  orange: "#bd7a42",
   red: "#9c3b4a",
   muted: "#5c6b7a",
 };

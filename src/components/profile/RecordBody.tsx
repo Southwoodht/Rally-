@@ -406,11 +406,15 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
 // the weight; the label and the field size stay quiet beside it.
 function SnapRow({ label, place, sub, chip }: any) {
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
-      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 17, color: CHALK }}>{place}</span>
-      {sub && <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{sub}</span>}
-      {chip && <span style={{ marginLeft: "auto", ...pill(TIER_COLOR[chip.tier] + "26", TIER_COLOR[chip.tier]) }}>{chip.label}</span>}
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{label}</span>
+        <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 17, color: CHALK }}>{place}</span>
+        {sub && <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{sub}</span>}
+        {chip && <span style={{ marginLeft: "auto", ...pill(TIER_COLOR[chip.tier] + "26", TIER_COLOR[chip.tier]) }}>{chip.label}</span>}
+      </div>
+      {/* A one-word standing that nobody can decode is decoration. */}
+      {chip?.note && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.4, marginTop: 3 }}>{chip.note}</div>}
     </div>
   );
 }
