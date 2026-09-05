@@ -90,17 +90,25 @@ export const FEED_LIME_INK = "#102921";
 // because nothing in the app had text on lime before this.
 export const FEED_LIME_INK_2 = "#3B6D11";
 
-// A step lighter than MUTED, and measured rather than guessed: MUTED on
-// PANEL is 4.07:1, which fails AA for 12px text, and this is 4.55:1, which
-// passes. MUTED is left alone — it's correct everywhere else in the app,
-// where it's rarely this small.
-export const FEED_TEXT_MID = "#95B0A3";
-
-// Metadata and labels. Deliberately MUTED itself rather than something
-// darker: the first version of this used #6E9782, which measures 3.24:1 and
-// is genuinely hard to read at 12px. This is still only 4.07:1, so it is
-// the quietest thing that should ever be set this small.
-export const FEED_TEXT_LOW = MUTED;      // #8AA79A
+// The two quiet text tiers, both measured rather than eyeballed, and both
+// chosen against PANEL2 rather than PANEL. PANEL2 is the lightest surface
+// either of them can land on, so it's the one that decides: a value that
+// passes on the card and fails on a raised tile is a value that will fail
+// the first time somebody nests one, which the Table screen is about to do.
+//
+// Measured contrast (PANEL2 / PANEL / DEEP):
+//   FEED_TEXT_MID  5.13 / 5.85 / 8.51
+//   FEED_TEXT_LOW  4.56 / 5.20 / 7.57
+//
+// For reference, the values these replaced: MUTED is 3.99 on PANEL2 and
+// 4.07 on PANEL, and the first draft's low was #6E9782 at 3.24 — genuinely
+// hard to read at 12px. MUTED itself is left alone, because it is correct
+// everywhere else in the app, where it is rarely set this small.
+//
+// Kept a clear step apart so the hierarchy survives: low has to be quieter
+// than mid AND still pass, which is only possible if mid moves up too.
+export const FEED_TEXT_MID = "#A6C8B9";
+export const FEED_TEXT_LOW = "#9CBDAE";
 
 // Row dividers use the app's existing hairline rather than a green of their
 // own, so a card's internal rules match every other divider in the product.
