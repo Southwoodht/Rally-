@@ -6,9 +6,13 @@ import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate, winnerLabel } from "@/lib/format";
 import { PlayerLink } from "@/components/ui/PlayerLink";
+import { MatchCard } from "@/components/games/MatchCard";
+import { WeeklyRoundup } from "@/components/games/WeeklyRoundup";
+import { feedContexts } from "@/core/feedContext";
+import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, mono, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId }: any) {
   const [scope, setScope] = useState("feed");
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<any>(null);
@@ -32,6 +36,28 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   // One place to turn an id into a person, so every name on this screen
   // resolves the same way and every one of them is a tap to them.
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
+  // One replay of the whole history for the whole feed, rather than a
+  // question per row — the phrase on a card has to be true as of that match,
+  // not as of now.
+  const contexts = React.useMemo(() => feedContexts(matches || [], nm), [matches, players]);
+  // Set-by-set, oriented so the winner's games come first. A score that
+  // can't be reconciled with the recorded result yields nothing and the card
+  // simply shows no numerals — same shape, result carried by the lime bar.
+  const sidesOf = (m: any) => {
+    const drawn = m.winner === "draw";
+    const winnerId = m.winner === "p2" ? m.p2 : m.p1;
+    const loserId = m.winner === "p2" ? m.p1 : m.p2;
+    const raw = parseSets(m.score);
+    const oriented = raw ? orientToWinner(raw, m.winner) : null;
+    let winSets: number[] | undefined;
+    let loseSets: number[] | undefined;
+    if (oriented) {
+      const winnerIsP1 = winnerId === m.p1;
+      winSets = oriented.map((x: any) => (winnerIsP1 ? x.a : x.b));
+      loseSets = oriented.map((x: any) => (winnerIsP1 ? x.b : x.a));
+    }
+    return { drawn, winner: { player: who(winnerId), sets: winSets }, loser: { player: who(loserId), sets: loseSets } };
+  };
   const Who = ({ id, ...rest }: any) => <PlayerLink player={who(id)} name={nameOf(id)} onOpen={onOpenProfile} {...rest} />;
   const beginEdit = (m: any) => {
     setEditingMatchId(m.id);
@@ -127,6 +153,13 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
         <FixturesPanel fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} onResolve={onResolveFixture} onBook={onBookFixture} />
       ) : (
         <div>
+          {/* The week that just ended, above the feed of individual results.
+              Renders nothing at all when that week had no matches, which is
+              most weeks in most leagues — an empty roundup is worse than no
+              roundup. */}
+          <div style={{ marginBottom: 14 }}>
+            <WeeklyRoundup players={players} matches={matches} elo={elo} wdl={wdl} meId={meId} leagueId={leagueId} />
+          </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
             <Toggle on={feedFilter === "league"} onClick={() => setFeedFilter("league")} label="League" />
             <Toggle on={feedFilter === "mine"} onClick={() => setFeedFilter("mine")} label="Mine" />
@@ -217,18 +250,15 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               );
               const m = it.m;
               return (
-                <div key={it.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: "none" }}>
-                  <span style={{ fontSize: 17 }}>{m.winner === "draw" ? "\uD83E\uDD1D" : "\uD83C\uDFBE"}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontFamily: body, fontSize: 14, color: CHALK }}>
-                      <Who id={m.winner === "p2" ? m.p2 : m.p1} />
-                      <span style={{ color: MUTED, fontWeight: 500 }}>{m.winner === "draw" ? "drew with" : "beat"}</span>
-                      <Who id={m.winner === "p2" ? m.p1 : m.p2} />
-                      {(m.notes || m.photoUrl) && <span>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}
-                    </div>
-                    <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default", marginTop: 2 }}>
-                      <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{onOpenMatch ? <span style={{ color: BALL }}> ›</span> : null}</div>
-                    </button>
+                <div key={it.key} style={{ padding: "6px 0" }}>
+                  <MatchCard
+                    dateLabel={fmtDate(m.date)}
+                    {...sidesOf(m)}
+                    context={contexts[m.id]}
+                    onOpenProfile={onOpenProfile}
+                    onOpenMatch={onOpenMatch ? () => onOpenMatch(m.id) : undefined}
+                  />
+                  <div>
                     {canEditMatches && (
                       <div style={{ marginTop: 8 }}>
                         {editingMatchId === m.id ? (

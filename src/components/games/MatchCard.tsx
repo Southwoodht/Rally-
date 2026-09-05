@@ -51,7 +51,17 @@ export interface MatchCardProps {
 
 // The nickname is the name here. Full names belong in match detail, where
 // there's room to be formal and a reason to be precise.
-const shortNameOf = (p: any): string => (p?.nick || p?.name || "Someone");
+// First name, not the full name and not the nick field.
+//
+// The brief says "use each player's nickname, not their full name", and the
+// contrast there is with the *full* name — these cards can't wrap, so
+// "Samuel Southwood" doesn't fit and isn't wanted. It is not the `nick`
+// column: that's the joke one, filled by a dice button from a list that
+// includes "The Destroyer", and rendering it here would give a feed reading
+// "The Destroyer beat Iceman". In Seacourt it would be worse than odd —
+// Charlie Henry's nick is "Cheese", which is what a different player in the
+// same league is actually called.
+const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 
 const SET_COL = 30;
 

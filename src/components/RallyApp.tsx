@@ -29,6 +29,9 @@ import PlayerClaim from "@/components/auth/PlayerClaim";
 import { Avatar } from "@/components/ui/Avatar";
 import { START_ELO } from "@/core/constants";
 import { computeStats } from "@/core/elo";
+import { rankMaps } from "@/core/rank";
+import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
+import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { computeOfficial } from "@/core/official";
 import { gkey } from "@/data/seed";
 import { uid, winPct } from "@/lib/format";
@@ -374,6 +377,40 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     return () => { alive = false; clearInterval(timer); };
   }, [tab]);
 
+  // Write down where everybody stood, once a week, because rank movement
+  // cannot be recovered afterwards: the standings are a full recompute over
+  // all history, so a match logged today for a game played in 2019 rewrites
+  // last week as well. If nobody records it as it happens, "up 1 place" has
+  // nothing to be measured against.
+  //
+  // No cron and no server — the first person to open the app after a week
+  // ends writes that week. It's idempotent by week, so it doesn't matter how
+  // many of them do it, and the standings it captures are as of that first
+  // open rather than midnight on the Sunday, which is close enough for a
+  // number that only ever reads "up 1".
+  //
+  // Every failure path here does nothing at all. A read that fails must
+  // never reach recordWeek as an empty list — that would append this week to
+  // nothing and write it back over every week we had.
+  useEffect(() => {
+    if (!gid || !players.length) return;
+    let alive = true;
+    (async () => {
+      try {
+        const week = weekEndingFor();
+        const existing = await loadSnapshots(gid);
+        if (!alive || alreadyRecorded(existing, week)) return;
+        const ranks = rankMaps(players, matches, elo, wdl).off;
+        if (!Object.keys(ranks).length) return;
+        await recordWeek(gid, buildSnapshots(ranks, elo, week), week);
+      } catch {
+        // Left for the next open. Movement is a nicety; losing a week of it
+        // is not worth showing anybody an error over.
+      }
+    })();
+    return () => { alive = false; };
+  }, [gid, players, matches, elo, wdl]);
+
   // A pending result waits for the opponent to agree it — but only ever for
   // matches logged after this existed (`loggedAt`), so we never mass-confirm
   // an old backlog someone hasn't dealt with yet.
@@ -552,7 +589,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 17 }}>🌍</span><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span></button>}
         {tab === "ladder" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
-        {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} />}
+        {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />}
         {tab === "global" && <SubHeader title="Global" onBack={() => setTab("ladder")} />}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} />}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => setTab("profile")} />}
