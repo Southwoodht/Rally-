@@ -7,6 +7,7 @@ import { LevelBadge } from "@/components/ui/LevelBadge";
 import { SeasonSummary } from "@/components/profile/SeasonSummary";
 import { TrophyWall } from "@/components/profile/TrophyWall";
 import { VerifiedTrophies } from "@/components/profile/VerifiedTrophies";
+import { PlayerLink } from "@/components/ui/PlayerLink";
 import { Empty, Stat, StreakTile } from "@/components/ui/atoms";
 import { LEVELS, START_ELO } from "@/core/constants";
 import { computeStats } from "@/core/elo";
@@ -284,7 +285,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
           </div>
           <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "2px 12px" }}>
             {countedBouts.filter((m) => resultFor(m) === resultFilter).length
-              ? countedBouts.filter((m) => resultFor(m) === resultFilter).map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
+              ? countedBouts.filter((m) => resultFor(m) === resultFilter).map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} onOpen={onOpen} />)
               : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>No matches in this category yet.</div>}
           </div>
         </div>
@@ -414,7 +415,7 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
       </div>
       {showKey && <DifficultyKey />}
       {bouts.length
-        ? bouts.map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
+        ? bouts.map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} onOpen={onOpen} />)
         : <Empty msg="No matches logged yet." />}
     </>
   );
@@ -438,7 +439,7 @@ function SnapRow({ label, place, sub, chip }: any) {
   );
 }
 
-function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId, onProposeEdit, onOpenMatch }: any) {
+function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId, onProposeEdit, onOpenMatch, onOpen }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   const res = resultFor(m);
@@ -490,10 +491,20 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
       <div title={`Difficulty: ${rating.note}`} style={{ width: 5, height: 26, alignSelf: "center", borderRadius: 3, background: rating.color, flexShrink: 0 }} />
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
-        <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.status === "pending" && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>awaiting their OK · not counted</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
-          <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
-        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* The opponent's name is its own tap through to them, so this
+              block can't be one button any more — a button inside a button
+              is invalid and the outer one takes the tap. The date and score
+              underneath carries the way through to the match instead. */}
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: CHALK, display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+            <span>{res === "D" ? "Drew with" : res === "W" ? "Beat" : "Lost to"}</span>
+            <PlayerLink player={players && players.find((x: any) => x.id === (m.p1 === playerId ? m.p2 : m.p1))} name={oppName} onOpen={onOpen} avatar={false} />
+            {(m.notes || m.photoUrl) && <span>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.status === "pending" && <span style={{ fontFamily: body, fontWeight: 700, fontSize: 9.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>awaiting their OK · not counted</span>}{m.pendingEdit && <span style={{ fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}
+          </div>
+          <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
+            <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{onOpenMatch ? <span style={{ color: BALL }}> ›</span> : null}</div>
+          </button>
+        </div>
         {dv != null && <span style={{ fontFamily: mono, fontSize: 14, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
         {canEdit && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", flexShrink: 0 }}>Edit</button>}
       </div>
