@@ -129,6 +129,14 @@ export const FEED_HAIRLINE = FEED_RAISED;
 export const FEED_UP = "#7BD88F";
 export const FEED_DOWN = "#E2705F";
 
+// The rating bar behind a standings row. Lime at low opacity rather than
+// FEED_RAISED, which was the first attempt and measures 1.14:1 against the
+// card — I looked at it on a phone and could not see it at all, which for
+// the one element whose entire job is to be a visible length is a total
+// failure rather than a subtle one. At 16% it reads as a length without
+// competing with the numbers sitting on top of it.
+export const FEED_BAR = "rgba(217, 232, 75, 0.16)";
+
 export const FEED_RADIUS = 20;
 export const FEED_TILE_RADIUS = 14;
 export const FEED_PAD = 18;

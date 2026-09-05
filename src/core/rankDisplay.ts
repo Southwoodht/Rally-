@@ -28,15 +28,19 @@
  * adjacent pair in the run marks both of its members.
  *
  * If two values still collide at one decimal they are within 0.05 of each
- * other, and printing them identically is then the honest answer rather than
- * a failure — chasing it with more decimals would show noise as if it were
- * signal.
+ * other, and the decimal is not shown at all — it would print the same digits
+ * on both rows while implying a precision that resolves nothing. Chasing it
+ * with more decimals would show noise as if it were signal.
  */
 export function ratingColumn(values: number[]): string[] {
   const rounded = values.map((v) => Math.round(v));
   const decimal = values.map(() => false);
   for (let i = 1; i < values.length; i++) {
-    if (rounded[i] === rounded[i - 1]) {
+    // Only when the decimal actually separates them. Ten winless players all
+    // on exactly nought round the same AND print the same at one decimal, so
+    // adding it buys nothing and costs a column of "0.0" that looks like a
+    // rendering fault. They are equal; "0" is the honest way to say it.
+    if (rounded[i] === rounded[i - 1] && values[i].toFixed(1) !== values[i - 1].toFixed(1)) {
       decimal[i] = true;
       decimal[i - 1] = true;
     }

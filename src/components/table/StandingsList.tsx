@@ -7,7 +7,7 @@ import { ratingColumn } from "@/core/rankDisplay";
 import { shortNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD, FEED_RADIUS,
-  FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight,
+  FEED_BAR, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight,
 } from "@/lib/theme";
 
 // The standings, in the same language as the newsfeed.
@@ -50,7 +50,16 @@ const winPctOf = (p: StandingsPlayer) => {
   const gp = p.w + p.d + p.l;
   return gp ? Math.round(((p.w + p.d * 0.5) / gp) * 100) : null;
 };
+const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
+
+// Somebody who has never played is not somebody on nought. Printing them as
+// "0–0–0 · 0%" with an empty bar makes them look identical to a player who
+// has turned out eight times and lost, and those are opposite facts: one is
+// no evidence, the other is a lot of it. They keep their place in the list —
+// a separate section under the table was worse, because "below everybody" is
+// a stronger claim than "unknown" — and simply say so instead.
 const statLineOf = (p: StandingsPlayer) => {
+  if (!gamesOf(p)) return "no games yet";
   const pct = winPctOf(p);
   return [recordOf(p), pct === null ? null : pct + "%", p.player?.level?.cat ? String(p.player.level.cat).toLowerCase() : null]
     .filter(Boolean).join(" · ");
@@ -110,6 +119,9 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
 }
 
 function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
+  // No bar at all for somebody with no games — a zero-width bar and a
+  // no-bar-drawn are the same pixels, but only one of them is a measurement.
+  const played = gamesOf(p) > 0;
   return (
     <div
       onClick={onOpen ? () => onOpen(p.player.id) : undefined}
@@ -121,10 +133,12 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
     >
       {/* The bar sits behind everything, full height, and is never a border
           or a background colour — it has to be a measurable length. */}
-      <div
-        aria-hidden="true"
-        style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: (fraction * 100).toFixed(2) + "%", background: FEED_RAISED }}
-      />
+      {played && (
+        <div
+          aria-hidden="true"
+          style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: (fraction * 100).toFixed(2) + "%", background: FEED_BAR }}
+        />
+      )}
       <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 16, color: FEED_TEXT_LOW, width: 26, flexShrink: 0, textAlign: "right" }}>
           {rank}{tied ? "=" : ""}
@@ -144,7 +158,7 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <StatNumeral size={24} tone="hi" style={{ letterSpacing: "-0.03em" }}>{display}</StatNumeral>
+          <StatNumeral size={24} tone={played ? "hi" : "mid"} style={{ letterSpacing: "-0.03em" }}>{played ? display : "–"}</StatNumeral>
           {p.movement !== null && p.movement !== undefined && (
             <div style={{ marginTop: 2 }}><MovementIndicator delta={p.movement} size={11} /></div>
           )}
@@ -162,15 +176,24 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
       // Ranked on what the table prints, so two players showing the same
       // number are treated as level rather than separated by a difference
       // nobody can see.
-      score: Math.round(p.rating),
+      // Somebody with no games sorts below everybody, whatever the metric
+      // says about them. computeOfficial hands back -1,000,000 for them and
+      // Elo hands back 0, and neither is a rating — one is a sentinel and
+      // the other is the middle of the table. Both would be read as a score.
+      score: p.w + p.d + p.l > 0 ? Math.round(p.rating) : Number.NEGATIVE_INFINITY,
       w: p.w, d: p.d, l: p.l,
     }));
     const ranked = assignRanks(candidates, buildH2H(matches || []));
     const byId = new Map(players.map((p) => [p.player.id, p]));
     const ordered = ranked.map((r) => ({ ...r, p: byId.get(r.id)! })).filter((r) => r.p);
     const display = ratingColumn(ordered.map((r) => r.p.rating));
-    const values = ordered.map((r) => r.p.rating);
-    const min = Math.min(...values), max = Math.max(...values);
+    // The scale is drawn from players who have actually played. Including
+    // the unplayed would drag min down to computeOfficial's -1,000,000
+    // sentinel and stretch every real bar to the full width — which is
+    // exactly what it did, and what looking at the screen caught.
+    const scaleValues = ordered.filter((r) => r.p.w + r.p.d + r.p.l > 0).map((r) => r.p.rating).filter((v) => Number.isFinite(v));
+    const min = scaleValues.length ? Math.min(...scaleValues) : 0;
+    const max = scaleValues.length ? Math.max(...scaleValues) : 0;
     return ordered.map((r, i) => ({ ...r, display: r.p.displayOverride ?? display[i], fraction: barFraction(r.p.rating, min, max) }));
   }, [players, matches]);
 

@@ -211,9 +211,29 @@ const ranksOf = (out: ReturnType<typeof assignRanks>) => out.map((r) => [r.id, r
     "a run of three colliding neighbours all gain a decimal");
   eq(ratingColumn([18.4, 5, 18.3]), ["18", "5", "18"],
     "same rounded value far apart in the column is nobody's confusion");
-  eq(ratingColumn([0, 0, 0]), ["0.0", "0.0", "0.0"], "genuinely equal values still collide, and honestly say so");
+  // Ten winless players all on exactly nought is the real case here. A
+  // decimal that prints the same digits on every row is a rendering fault
+  // wearing the costume of precision.
+  eq(ratingColumn([0, 0, 0]), ["0", "0", "0"], "identical values stay whole — the decimal would separate nothing");
+  eq(ratingColumn([18.02, 17.99]), ["18", "18"], "and values inside a tenth of each other are left alone too");
   eq(ratingColumn([]), [], "an empty column is not an error");
   eq(ratingColumn([9]), ["9"], "one value never collides with anything");
+}
+
+// ------------------------- the exact skip Sam asked to see: 11=, 11=, 13
+{
+  // Ten players deep, two of them inseparable at eleventh.
+  const many: RankCandidate[] = [];
+  for (let i = 0; i < 10; i++) many.push(p("p" + i, "P" + i, 100 - i, 5, 0, i));
+  const out = assignRanks([
+    ...many,
+    p("x", "Xan", 0, 0, 0, 4),
+    p("y", "Yves", 0, 0, 0, 4),
+    p("z", "Zoe", 0, 0, 0, 3),
+  ], {});
+  const tail = out.slice(-3).map((r) => [r.id, r.rank, r.tied]);
+  eq(tail, [["x", 11, true], ["y", 11, true], ["z", 13, false]],
+    "two sharing eleventh means nobody is twelfth: 11=, 11=, 13");
 }
 
 console.log((failures ? "FAILED" : "PASSED") + " — " + (checks - failures) + "/" + checks + " checks");
