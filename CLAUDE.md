@@ -158,10 +158,26 @@ badminton all have to mean the same thing. Losses to opponents *below* your
 level pull you down, weighted by the gap and averaged over games played —
 before this they counted for literally nothing, so losing to somebody
 stronger cost you something while losing to a beginner cost you nothing.
-Every weight lives in `globalTable.ts`, never in the SQL: the function
-reports facts, the app decides what they're worth, and tuning needs no
-migration. Matches with no score keep their plain result, so leaving the
-score box empty costs nobody anything.
+`MARGIN_WEIGHT` lives in **`core/constants.ts`** next to `K` and
+`LV_FACTOR`. It moved out of `globalTable.ts` on 2026-09-05 when league ELO
+started using it too — one weight in two files is a weight that will quietly
+disagree with itself. Never in the SQL: the database reports facts, the app
+decides what they're worth, and tuning needs no migration. Matches with no
+score keep their plain result, so leaving the score box empty costs nobody
+anything.
+
+**Both ratings read the score, and neither did until 2026-09-05.** League ELO
+never had. The Global table's margin weighting was live but went dead the
+moment `global_edges()` was run the day before: the network rating replaces
+the score outright and the edges were bare 1/0.5/0, so `globalScore()` was
+computing margins nothing then read. The lesson generalises — when you change
+what an RPC returns, check what downstream stops reading.
+
+Known and unresolved: **the formula can only take away.** A 6-0 win is worth
+a plain win and every other win is worth less, so it punishes a narrow win
+rather than rewarding a dominant one. Sam's own examples all wanted exactly
+that — 7-6 is a bad win, 6-5 is a good loss — but he has never ruled on
+whether a thrashing should actively pay more. Don't assume either way.
 
 **Careers from before Rally existed belong in Legacy and trophies, not the
 global table.** A peak the app never saw isn't something it can honestly
@@ -294,6 +310,14 @@ returns NULL for a category it doesn't know, and a NULL level is excluded
 from the quality filter entirely — so anyone picking a new category would
 silently record zero quality games forever, with no error anywhere.
 
+**Waiting for Sam:** `schema_global_edges_score.sql`. Drops and recreates
+`global_edges()` so it also returns the match score, which is what lets the
+Global table see margin. Writes no rows. It drops rather than replaces
+because the return type changes — for the moment between the two statements
+the RPC is missing and the app falls back, which is harmless. Until it's run
+the deployed code simply sees no score, so the plain result stands and
+nothing is broken.
+
 **Tell him before anything touches existing data.** Additive migrations
 (new columns, new tables, widened policies) are fine to propose; anything
 that rewrites or deletes rows gets flagged explicitly first.
@@ -333,6 +357,17 @@ gitignored. Never commit it, never paste its contents anywhere.
   and next sign-in offers them the claim list so they pick their own record.
   Charlie Easey was one of these. There may be others: any `players` row
   with a non-null `auth_id` and zero matches is a candidate.
+
+**A list presented as the contents of a number must contain that number's
+contents.** Sam counted 31 wins on his profile where the tile said 28. The
+tile was right: every number in the engine drops a match the opponent hasn't
+confirmed, and exactly one list — `bouts` in `RecordBody` — had no status
+filter, so the history and the tap-through from the Wins tile both showed
+three unconfirmed wins as ordinary ones. `BoutRow` marked *edit pending* and
+*delete pending* but had nothing for a result nobody had agreed to yet. The
+tap-through now shows what the tile counted; the full history still lists
+pending matches, marked, because they are real matches and hiding them is a
+worse answer than explaining them.
 
 **Fixed, recorded so nobody reintroduces them:** `saveData` no longer leaves
 the screen showing a change the database refused — on failure it re-reads
