@@ -9,5 +9,5 @@
     "esModuleInterop": true,
     "types": ["node"]
   },
-  "include": ["src/core/tiebreak.ts", "src/core/tiebreak.test.ts"]
+  "include": ["src/core/tiebreak.ts", "src/core/rankDisplay.ts", "src/core/tiebreak.test.ts"]
 }

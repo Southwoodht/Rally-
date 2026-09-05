@@ -10,7 +10,8 @@
 // rewrite path aliases on emit, so an aliased import here would compile
 // fine and then fail to resolve at run time.
 
-import { assignRanks, buildH2H, compareWithinScore, type RankCandidate } from "./tiebreak";
+import { assignRanks, buildH2H, splitTiedGroup, type RankCandidate } from "./tiebreak";
+import { ratingColumn } from "./rankDisplay";
 
 let failures = 0;
 let checks = 0;
@@ -154,10 +155,65 @@ const ranksOf = (out: ReturnType<typeof assignRanks>) => out.map((r) => [r.id, r
     "a result nobody has agreed to does not decide a tie");
 }
 
-// -------------------------------------------------- comparator sanity
+// ------------------------------- a tie that only partly splits, then again
 {
-  const group = [p("a", "Ann", 18, 4, 0, 4), p("b", "Bob", 18, 4, 0, 4)];
-  eq(compareWithinScore(group[0], group[1], group, {}), 0, "identical players compare equal");
+  // Four level on score. Head-to-head separates them into two pairs: Ann and
+  // Bob each beat both of Cal and Dee, so +2 apiece; Cal and Dee are -2. That
+  // leaves two pairs still level, and the criteria have to be re-applied
+  // INSIDE each pair — where Ann beat Bob, and Dee beat Cal. Carrying the
+  // original group's numbers forward would leave both pairs tied, because
+  // across all four Ann and Bob have identical records and so do Cal and Dee.
+  const cands = [
+    p("a", "Ann", 18, 5, 0, 5), p("b", "Bob", 18, 5, 0, 5),
+    p("c", "Cal", 18, 5, 0, 5), p("d", "Dee", 18, 5, 0, 5),
+  ];
+  const w = (x: string, y: string) => ({ p1: x, p2: y, winner: "p1", status: "confirmed" });
+  const h2h = buildH2H([
+    w("a", "c"), w("a", "d"), w("b", "c"), w("b", "d"),  // Ann and Bob over Cal and Dee
+    w("a", "b"),                                          // and Ann over Bob
+    w("d", "c"),                                          // and Dee over Cal
+  ]);
+  const out = assignRanks(cands, h2h);
+  eq(ranksOf(out), [["a", 1], ["b", 2], ["d", 3], ["c", 4]],
+    "a group that splits in two has each half re-judged on its own head-to-head");
+  eq(out.every((r) => !r.tied), true, "nobody ends up sharing once the subgroups separate");
+  eq(splitTiedGroup(cands, h2h).map((g) => g.map((c) => c.id)), [["a"], ["b"], ["d"], ["c"]],
+    "splitTiedGroup returns four singletons");
+}
+
+{
+  // Same shape, but the second pass can't separate the top pair either, so
+  // they share and the next rank skips.
+  const cands = [
+    p("a", "Ann", 18, 5, 0, 5), p("b", "Bob", 18, 5, 0, 5),
+    p("c", "Cal", 18, 4, 0, 6), p("d", "Dee", 18, 4, 0, 6),
+  ];
+  const w = (x: string, y: string) => ({ p1: x, p2: y, winner: "p1", status: "confirmed" });
+  const h2h = buildH2H([w("a", "c"), w("b", "d")]);
+  const out = assignRanks(cands, h2h);
+  eq(ranksOf(out), [["a", 1], ["b", 1], ["c", 3], ["d", 3]],
+    "two shared pairs: 1, 1, 3, 3");
+}
+
+// ------------------------------------------------- rating column formatting
+{
+  // The real Seacourt column, 4 September. Worth pinning as a test because
+  // the pair that prompted this rule turns out not to collide at all: 18.48
+  // and 17.41 print as 18 and 17, one apart, exactly as they should. The
+  // rule is still right, it just doesn't fire here.
+  eq(ratingColumn([110, 77, 28, 18.48, 17.41, 14]), ["110", "77", "28", "18", "17", "14"],
+    "values that round a whole point apart are left as whole numbers");
+  // What an actual collision looks like.
+  eq(ratingColumn([18.48, 17.61]), ["18.5", "17.6"], "two neighbours that both round to 18 gain a decimal each");
+  eq(ratingColumn([110, 77, 18.48, 17.61, 14]), ["110", "77", "18.5", "17.6", "14"],
+    "and only that pair — the rest of the column keeps whole numbers");
+  eq(ratingColumn([20, 18.4, 18.2, 17.9, 5]), ["20", "18.4", "18.2", "17.9", "5"],
+    "a run of three colliding neighbours all gain a decimal");
+  eq(ratingColumn([18.4, 5, 18.3]), ["18", "5", "18"],
+    "same rounded value far apart in the column is nobody's confusion");
+  eq(ratingColumn([0, 0, 0]), ["0.0", "0.0", "0.0"], "genuinely equal values still collide, and honestly say so");
+  eq(ratingColumn([]), [], "an empty column is not an error");
+  eq(ratingColumn([9]), ["9"], "one value never collides with anything");
 }
 
 console.log((failures ? "FAILED" : "PASSED") + " — " + (checks - failures) + "/" + checks + " checks");

@@ -1,12 +1,10 @@
 // Deciding who is above whom when the ranking metric can't.
 //
-// Today it doesn't decide at all. rankMaps() sorts on the metric alone, and
-// Array#sort is stable, so two players on the same score come out in
-// whatever order the players array happened to be in. That is not a tie
-// being broken — it's a tie being ignored, and the answer changes the moment
-// somebody joins the league or a row comes back from Supabase in a different
-// order. Adrian and Charlie Henry are both on 18 Official points and are
-// rendered 3rd and 4th for no stated reason.
+// Before this, rankMaps() sorted on the metric alone. Array#sort is stable,
+// so two players on the same score came out in whatever order the players
+// array happened to be in. That is not a tie being broken — it's a tie being
+// ignored, and the answer changes the moment somebody joins the league or a
+// row comes back from Supabase in a different order.
 //
 // Nothing here touches the metric. Everything below only ever separates
 // players the metric has already declared equal.
@@ -44,19 +42,18 @@ const winRateOf = (c: RankCandidate) => {
 /**
  * Head-to-head *among the tied group*, not pairwise.
  *
- * This distinction is the whole reason this function exists. Pairwise
- * head-to-head is not transitive: if A beat B, B beat C and C beat A, all on
- * the same score, then "whoever won the meeting goes first" has no answer
- * and a comparator built on it is not a valid ordering — Array#sort with an
- * inconsistent comparator produces a different result depending on which
- * pairs it happens to examine, which is the bug we are here to remove rather
- * than a new place to hide it.
+ * Pairwise is unsound and this is the reason the whole file is shaped around
+ * groups. If A beat B, B beat C and C beat A on the same score, then
+ * "whoever won the meeting goes first" has no answer — and a JavaScript
+ * comparator that claims otherwise is not transitive, so Array#sort returns
+ * implementation-defined results that change with which pairs it happens to
+ * examine. That is precisely the non-determinism this file exists to remove,
+ * not a new place to hide it.
  *
  * So each tied player gets one number instead: wins minus losses against the
  * others in the tie. That is a total order, it cannot cycle, and it is what
- * league tables have always meant by "head-to-head record". In the common
- * case of exactly two tied players it reduces to precisely what you'd
- * expect — whoever won the series is ahead.
+ * league tables have always meant by "head-to-head record". With exactly two
+ * tied players it reduces to whoever won the series.
  */
 function h2hWithin(id: string, group: RankCandidate[], h2h: H2HWins): number {
   let net = 0;
@@ -67,30 +64,41 @@ function h2hWithin(id: string, group: RankCandidate[], h2h: H2HWins): number {
   return net;
 }
 
-/**
- * The rank-deciding comparison, within a group already level on score.
- *
- * Returns 0 only when two players are genuinely inseparable — equal on
- * head-to-head, win rate and games played. Name is deliberately NOT part of
- * this: alphabetical order is a way to list people, not a reason one of them
- * finished above the other, and folding it in here would mean nobody ever
- * shared a rank and the whole 3, 3, 5 convention could never fire.
- */
-export function compareWithinScore(a: RankCandidate, b: RankCandidate, group: RankCandidate[], h2h: H2HWins): number {
-  const byH2H = h2hWithin(b.id, group, h2h) - h2hWithin(a.id, group, h2h);
-  if (byH2H !== 0) return byH2H;
-  const byRate = winRateOf(b) - winRateOf(a);
-  if (Math.abs(byRate) > 1e-9) return byRate < 0 ? -1 : 1;
-  const byGames = gamesOf(b) - gamesOf(a);
-  if (byGames !== 0) return byGames;
-  return 0;
-}
+// Ordered, highest first. Each is measured within whatever group it's handed,
+// which is what makes re-application meaningful: head-to-head among four
+// players is a different number from head-to-head among the two of them who
+// are still level after the first pass.
+const CRITERIA: Array<(c: RankCandidate, group: RankCandidate[], h2h: H2HWins) => number> = [
+  (c, group, h2h) => h2hWithin(c.id, group, h2h),
+  (c) => winRateOf(c),
+  (c) => gamesOf(c),
+];
 
-/** The full ordering, including the alphabetical last resort for display. */
-export function compareForDisplay(a: RankCandidate, b: RankCandidate, group: RankCandidate[], h2h: H2HWins): number {
-  const decided = compareWithinScore(a, b, group, h2h);
-  if (decided !== 0) return decided;
-  return a.name.localeCompare(b.name);
+/**
+ * Split a group level on score into ordered subgroups, each internally
+ * inseparable.
+ *
+ * The criteria are re-applied from the top inside every subgroup a split
+ * produces — the UEFA rule, and the one people expect. It matters as soon as
+ * a group only partly separates: if four players are level and head-to-head
+ * puts two above the other two, the pair left together get their head-to-head
+ * recomputed *between themselves*, which can separate them even though it
+ * couldn't when the other two were in the calculation. Carrying the original
+ * group's numbers forward would silently skip that.
+ *
+ * Terminates because a split always yields subgroups strictly smaller than
+ * the group that produced it.
+ */
+export function splitTiedGroup(group: RankCandidate[], h2h: H2HWins): RankCandidate[][] {
+  if (group.length <= 1) return [group];
+  for (const criterion of CRITERIA) {
+    const scored = group.map((c) => ({ c, v: criterion(c, group, h2h) }));
+    const values = [...new Set(scored.map((s) => s.v))].sort((a, b) => b - a);
+    if (values.length > 1) {
+      return values.flatMap((v) => splitTiedGroup(scored.filter((s) => s.v === v).map((s) => s.c), h2h));
+    }
+  }
+  return [group]; // nothing left to separate them: a real shared rank
 }
 
 /**
@@ -108,25 +116,19 @@ export function assignRanks(candidates: RankCandidate[], h2h: H2HWins = {}): Ran
     else byScore.set(c.score, [c]);
   }
 
-  const scores = [...byScore.keys()].sort((x, y) => y - x);
   const out: RankedPlayer[] = [];
   let place = 1;
 
-  for (const score of scores) {
-    const group = byScore.get(score)!;
-    const ordered = [...group].sort((a, b) => compareForDisplay(a, b, group, h2h));
-
-    let i = 0;
-    while (i < ordered.length) {
-      // Everybody inseparable from ordered[i] shares its place.
-      let j = i + 1;
-      while (j < ordered.length && compareWithinScore(ordered[i], ordered[j], group, h2h) === 0) j++;
-      const shared = j - i > 1;
-      for (let k = i; k < j; k++) out.push({ id: ordered[k].id, rank: place, tied: shared });
-      // The next place skips the ones just used: two in third means nobody
-      // came fourth.
-      place += j - i;
-      i = j;
+  for (const score of [...byScore.keys()].sort((x, y) => y - x)) {
+    for (const sub of splitTiedGroup(byScore.get(score)!, h2h)) {
+      // Alphabetical inside a shared rank. Name decides the order they are
+      // listed in and never the rank itself — if it separated ranks then
+      // nobody could ever share one and the 3, 3, 5 convention would be dead
+      // code.
+      const listed = [...sub].sort((a, b) => a.name.localeCompare(b.name));
+      const tied = listed.length > 1;
+      for (const c of listed) out.push({ id: c.id, rank: place, tied });
+      place += listed.length;
     }
   }
   return out;
