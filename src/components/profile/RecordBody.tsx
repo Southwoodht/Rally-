@@ -68,6 +68,13 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
   const [resultFilter, setResultFilter] = useState<"W" | "D" | "L" | null>(null);
   const [openVs, setOpenVs] = useState<string | null>(null);
   const bouts = scopedMatches.filter((m) => m.p1 === player.id || m.p2 === player.id).sort((a, b) => b.date - a.date);
+  // Everything that actually counts. A match the opponent hasn't confirmed
+  // is excluded from every number in the engine — computeStats, official.ts
+  // and rank.ts all drop it — so any list presented as the contents of a
+  // tile has to drop it too, or the tile says 28 and the list under it has
+  // 31 rows in it. The full history below still shows them, marked, because
+  // they are real matches you played and hiding them is worse.
+  const countedBouts = bouts.filter((m) => m.status !== "pending");
   const resultFor = (m) => m.winner === "draw" ? "D" : ((m.winner === "p1" && m.p1 === player.id) || (m.winner === "p2" && m.p2 === player.id)) ? "W" : "L";
   const oppId = (m) => m.p1 === player.id ? m.p2 : m.p1;
   const byId = {}; (players || []).forEach((p) => { byId[p.id] = p; });
@@ -276,8 +283,8 @@ export function RecordBody({ player, players, elo, wdl, form, deltas, matches, n
             <button onClick={() => setResultFilter(null)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>All ✕</button>
           </div>
           <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "2px 12px" }}>
-            {bouts.filter((m) => resultFor(m) === resultFilter).length
-              ? bouts.filter((m) => resultFor(m) === resultFilter).map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
+            {countedBouts.filter((m) => resultFor(m) === resultFilter).length
+              ? countedBouts.filter((m) => resultFor(m) === resultFilter).map((m) => <BoutRow key={m.id} m={m} resultFor={resultFor} oppName={nm(oppId(m))} activeDeltas={activeDeltas} playerId={player.id} players={players} meId={meId} onProposeEdit={onProposeEdit} onOpenMatch={onOpenMatch} />)
               : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>No matches in this category yet.</div>}
           </div>
         </div>
@@ -484,7 +491,7 @@ function BoutRow({ m, resultFor, oppName, activeDeltas, playerId, players, meId,
       <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
         <span style={{ width: 22, height: 22, borderRadius: 4, display: "grid", placeItems: "center", fontFamily: mono, fontWeight: 800, fontSize: 11, color: COURT, background: res === "W" ? BALL : res === "L" ? CLAY : MUTED }}>{res}</span>
         <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: CHALK }}>{res === "D" ? "Drew " : res === "W" ? "Beat " : "Lost to "}<strong>{oppName}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}{m.status === "pending" && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>awaiting their OK · not counted</span>}{m.pendingEdit && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: BALL, textTransform: "uppercase", letterSpacing: 0.5 }}>edit pending</span>}{m.deleteRequestedBy && <span style={{ marginLeft: 6, fontFamily: body, fontWeight: 700, fontSize: 9.5, color: CLAY, textTransform: "uppercase", letterSpacing: 0.5 }}>delete pending</span>}</div>
           <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
         </button>
         {dv != null && <span style={{ fontFamily: mono, fontSize: 14, fontWeight: 700, color: dv > 0.05 ? BALL : dv < -0.05 ? CLAY : MUTED }}>{(dv >= 0 ? "+" : "−") + Math.abs(dv).toFixed(1)}</span>}
