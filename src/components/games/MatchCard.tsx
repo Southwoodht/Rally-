@@ -24,7 +24,7 @@ import {
 // know what a match is, work out who won, or fetch anything.
 
 export interface MatchCardSide {
-  /** The player record, for the avatar and the nickname. */
+  /** The player record, for the avatar and the name. */
   player: any;
   /** Games taken in each set, in order. Omit when no score was logged. */
   sets?: number[];
@@ -49,9 +49,9 @@ export interface MatchCardProps {
   onOpenMatch?: () => void;
 }
 
-// The nickname is the name here. Full names belong in match detail, where
-// there's room to be formal and a reason to be precise.
-// First name, not the full name and not the nick field.
+// First name, not the full name and not the nick field. Full names belong
+// in match detail, where there is room to be formal and a reason to be
+// precise.
 //
 // The brief says "use each player's nickname, not their full name", and the
 // contrast there is with the *full* name — these cards can't wrap, so
