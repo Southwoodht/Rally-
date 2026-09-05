@@ -1,4 +1,6 @@
 import { levelVal } from "@/core/levels";
+import { MARGIN_WEIGHT } from "@/core/constants";
+import { shareForResult } from "@/core/sets";
 import { computeRatings, type Edge } from "@/core/rating";
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 
@@ -77,7 +79,7 @@ export interface GlobalRow {
  * facts, the app decides what they are worth, and tuning this needs no
  * migration.
  */
-export const MARGIN_WEIGHT = 0.35;
+export { MARGIN_WEIGHT } from "@/core/constants";
 
 /**
  * What a bad loss costs, in the same currency as everything else — points,
@@ -341,14 +343,22 @@ async function withNetworkRating(rows: GlobalRow[]): Promise<GlobalRow[]> {
   const { data, error } = result || {};
   if (error || !Array.isArray(data) || !data.length) return rows;
 
-  const edges: Edge[] = data.map((e: any) => ({
-    key: e.key,
-    // Opponents the viewer can't see come back as an opaque token instead of
-    // a real key. Either way they're a node, so the graph stays connected and
-    // a record doesn't shrink just because half of it is out of view.
-    opp: e.opp ?? e.opp_anon,
-    result: Number(e.result),
-  })).filter((e: Edge) => e.key && e.opp && Number.isFinite(e.result));
+  const edges: Edge[] = data.map((e: any) => {
+    const result = Number(e.result);
+    // Margin, when the match has a score we can read. Without this a 6-5 and
+    // a 6-0 are the same loss, which is the whole of what a score is for.
+    // e.score is absent until schema_global_edges_score.sql has been run, and
+    // an unreadable one yields null, so either way the plain result stands.
+    const share = shareForResult(e.score, result);
+    return {
+      key: e.key,
+      // Opponents the viewer can't see come back as an opaque token instead of
+      // a real key. Either way they're a node, so the graph stays connected and
+      // a record doesn't shrink just because half of it is out of view.
+      opp: e.opp ?? e.opp_anon,
+      result: share === null ? result : (1 - MARGIN_WEIGHT) * result + MARGIN_WEIGHT * share,
+    };
+  }).filter((e: Edge) => e.key && e.opp && Number.isFinite(e.result));
   if (!edges.length) return rows;
 
   // Levels set where the scale sits, and nothing else. Everyone is shifted by

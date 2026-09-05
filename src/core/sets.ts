@@ -71,6 +71,27 @@ export function gamesShare(sets: SetScore[], forP1: boolean): number | null {
   return (forP1 ? t.a : t.b) / total;
 }
 
+/**
+ * The share for a player who knows their own result but not which side of
+ * the match they were written as — an edge row from global_edges() is one
+ * player, one opponent and a 1/0.5/0, with no p1 or p2 in it.
+ *
+ * Same discipline as orientToWinner: the numbers are read as written and
+ * resolved against the result, and a score that can't be reconciled with it
+ * is refused rather than guessed at.
+ */
+export function shareForResult(score: string | null | undefined, result: number): number | null {
+  const parsed = parseSets(score);
+  if (!parsed) return null;
+  const t = gameTotals(parsed);
+  const total = t.a + t.b;
+  if (!total) return null;
+  if (result === 0.5) return t.a === t.b ? 0.5 : null;
+  if (t.a === t.b) return null;
+  const hi = Math.max(t.a, t.b), lo = Math.min(t.a, t.b);
+  return (result === 1 ? hi : lo) / total;
+}
+
 /** The share for one player id on a match, or null if it can't be worked out. */
 export function shareForPlayer(match: any, playerId: string): number | null {
   const raw = parseSets(match?.score);

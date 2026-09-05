@@ -43,3 +43,16 @@ export const LV_FACTOR = 0.45, LV_MIN = 0.05, LV_MAX = 4.0;
 // win over a rated opponent by half again. With this, no league position
 // changes on the Official table; left at 4, two players swap places.
 export const WIN_QUALITY_DIVISOR = 6.2;
+
+// How much of a scored result is the margin rather than the bare win or
+// loss: worth `(1 - W) * result + W * share`. Lived in globalTable.ts until
+// two different ratings needed it, and a weight copied into two files is a
+// weight that will disagree with itself. Still in the app and never in the
+// SQL — the database reports what happened, the app decides what it's worth,
+// so tuning this needs no migration.
+//
+// A share of games rather than a difference, because Rally covers several
+// racket sports: 6-0 tennis, 11-0 squash and 21-0 badminton all have to mean
+// the same thing, and a margin in games would rate the badminton player
+// highest for doing the same thing.
+export const MARGIN_WEIGHT = 0.35;

@@ -1,5 +1,6 @@
-import { K, LV_FACTOR, LV_MAX, LV_MIN, START_ELO } from "@/core/constants";
+import { K, LV_FACTOR, LV_MAX, LV_MIN, MARGIN_WEIGHT, START_ELO } from "@/core/constants";
 import { levelAt, levelVal } from "@/core/levels";
+import { shareForPlayer } from "@/core/sets";
 import { D } from "@/lib/format";
 
 export function computeStats(players, matches) {
@@ -23,6 +24,14 @@ export function computeStats(players, matches) {
     if (m.winner === "p1") { s1 = 1; wdl[m.p1].w++; wdl[m.p2].l++; form[m.p1].push("W"); form[m.p2].push("L"); }
     else if (m.winner === "p2") { s1 = 0; wdl[m.p2].w++; wdl[m.p1].l++; form[m.p2].push("W"); form[m.p1].push("L"); }
     else { s1 = 0.5; wdl[m.p1].d++; wdl[m.p2].d++; form[m.p1].push("D"); form[m.p2].push("D"); }
+    // How close it was, when we know. Losing 6-5 to somebody strong is a
+    // different match from losing 6-0, and winning 7-6 is a different win
+    // from winning 6-0 — but the win itself is untouched, so the W-D-L
+    // above is exactly what it was. A match with no score, or one whose
+    // score can't be reconciled with its result, keeps the plain 1/0.5/0
+    // and costs nobody anything.
+    const share = shareForPlayer(m, m.p1);
+    if (share !== null) s1 = (1 - MARGIN_WEIGHT) * s1 + MARGIN_WEIGHT * share;
     wdl[m.p1].gp++; wdl[m.p2].gp++;
     let mult = 1;
     if (m.winner !== "draw") {

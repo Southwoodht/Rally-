@@ -22,7 +22,14 @@ export interface Edge {
   key: string;
   /** Who they played. Opaque for opponents the viewer can't see. */
   opp: string;
-  /** 1 won, 0.5 drew, 0 lost. */
+  /**
+   * 1 won, 0.5 drew, 0 lost — or somewhere between when the match had a
+   * score and the caller blended the margin in (see MARGIN_WEIGHT). A
+   * narrow win therefore separates two players by less than a thrashing
+   * does, but it still separates them: the winner is always above 0.5 and
+   * the loser always below, so a winner never finishes under the man he
+   * beat, which is the one promise this whole rating exists to keep.
+   */
   result: number;
 }
 
