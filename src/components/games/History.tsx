@@ -256,7 +256,6 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                         )}
                       </div>
                     )}                  </div>
-                  <button onClick={() => onDelete(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Undo</button>
                 </div>
               );
             })}</div>;
