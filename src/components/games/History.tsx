@@ -5,9 +5,10 @@ import { buildEvents } from "@/components/games/events";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate, winnerLabel } from "@/lib/format";
+import { PlayerLink } from "@/components/ui/PlayerLink";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, mono, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile }: any) {
   const [scope, setScope] = useState("feed");
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<any>(null);
@@ -28,6 +29,10 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   }, [confirmed, feedFilter, customSel, meId]);
   const toggleCustom = (id) => setCustomSel(customSel.includes(id) ? customSel.filter((x) => x !== id) : [...customSel, id]);
   const nm = (id) => { const p = players.find((x) => x.id === id); return p ? p.name + (p.last ? " " + p.last : "") : nameOf(id); };
+  // One place to turn an id into a person, so every name on this screen
+  // resolves the same way and every one of them is a tap to them.
+  const who = (id: string) => players.find((x: any) => x.id === id) || null;
+  const Who = ({ id, ...rest }: any) => <PlayerLink player={who(id)} name={nameOf(id)} onOpen={onOpenProfile} {...rest} />;
   const beginEdit = (m: any) => {
     setEditingMatchId(m.id);
     setEditDraft({ date: m.date ? new Date(m.date).toISOString().slice(0, 10) : "", p1: m.p1, p2: m.p2, winner: m.winner || "draw", score: m.score || "" });
@@ -51,7 +56,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             const note = autoConfirmNote(m.loggedAt);
             return (
               <div key={m.id} style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
-                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nameOf(m.reportedBy) || "Someone"} logged: <strong>{winnerLabel(m, nameOf)}</strong></div>
+                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><Who id={m.reportedBy} size={18} /> logged: <strong>{winnerLabel(m, nameOf)}</strong></div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
                 {canRespond ? (
                   <>
@@ -76,7 +81,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             const after = { winner: edit.winner, score: edit.score, date: edit.date };
             return (
               <div key={m.id + "-edit"} style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
-                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nameOf(edit.proposedBy) || "Someone"} wants to change a result:</div>
+                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><Who id={edit.proposedBy} size={18} /> wants to change a result:</div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, margin: "4px 0" }}>Was: {winnerLabel({ ...m, ...before }, nameOf)}{before.score ? " · " + before.score : ""} · {fmtDate(before.date)}</div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: BALL, marginBottom: 10 }}>Now: {winnerLabel({ ...m, ...after }, nameOf)}{after.score ? " · " + after.score : ""} · {fmtDate(after.date)}</div>
                 {canRespond ? (
@@ -97,7 +102,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             const note = deleteTimeoutNote(m.deleteRequestedAt);
             return (
               <div key={m.id + "-delete"} style={{ background: PANEL, border: "1px solid " + CLAY, borderRadius: 14, padding: 12, marginBottom: 8 }}>
-                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{nameOf(m.deleteRequestedBy) || "Someone"} wants to delete a result:</div>
+                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><Who id={m.deleteRequestedBy} size={18} /> wants to delete a result:</div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{winnerLabel(m, nameOf)}{m.score ? " · " + m.score : ""} · {fmtDate(m.date)}</div>
                 {canRespond ? (
                   <>
@@ -205,7 +210,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   <span style={{ fontSize: 17 }}>&#128172;</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{it.p.text}</div>
-                    <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 2 }}>{nm(it.p.by)} \u00b7 {fmtDate(it.p.date)}</div>
+                    <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 2 }}><Who id={it.p.by} size={16} strong={false} /> \u00b7 {fmtDate(it.p.date)}</div>
                   </div>
                   {it.p.by === meId && <button onClick={() => onRemovePost(it.p.id)} style={{ fontFamily: mono, fontSize: 10, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 7px", cursor: "pointer" }}>&#10005;</button>}
                 </div>
@@ -215,9 +220,14 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                 <div key={it.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: "none" }}>
                   <span style={{ fontSize: 17 }}>{m.winner === "draw" ? "\uD83E\uDD1D" : "\uD83C\uDFBE"}</span>
                   <div style={{ flex: 1 }}>
-                    <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default" }}>
-                      <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><strong>{winnerLabel(m, nameOf)}</strong>{(m.notes || m.photoUrl) && <span style={{ marginLeft: 5 }}>{m.notes ? "\uD83D\uDCAC" : ""}{m.photoUrl ? "\uD83D\uDCF7" : ""}</span>}</div>
-                      <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(m.date)}{m.score ? " \u00b7 " + m.score : ""}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontFamily: body, fontSize: 14, color: CHALK }}>
+                      <Who id={m.winner === "p2" ? m.p2 : m.p1} />
+                      <span style={{ color: MUTED, fontWeight: 500 }}>{m.winner === "draw" ? "drew with" : "beat"}</span>
+                      <Who id={m.winner === "p2" ? m.p1 : m.p2} />
+                      {(m.notes || m.photoUrl) && <span>{m.notes ? "💬" : ""}{m.photoUrl ? "📷" : ""}</span>}
+                    </div>
+                    <button onClick={() => onOpenMatch && onOpenMatch(m.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: onOpenMatch ? "pointer" : "default", marginTop: 2 }}>
+                      <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}{onOpenMatch ? <span style={{ color: BALL }}> ›</span> : null}</div>
                     </button>
                     {canEditMatches && (
                       <div style={{ marginTop: 8 }}>
