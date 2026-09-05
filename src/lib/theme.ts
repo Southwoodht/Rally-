@@ -90,29 +90,33 @@ export const FEED_LIME_INK = "#102921";
 // because nothing in the app had text on lime before this.
 export const FEED_LIME_INK_2 = "#3B6D11";
 
-// The two quiet text tiers, both measured rather than eyeballed, and both
-// chosen against PANEL2 rather than PANEL. PANEL2 is the lightest surface
-// either of them can land on, so it's the one that decides: a value that
-// passes on the card and fails on a raised tile is a value that will fail
-// the first time somebody nests one, which the Table screen is about to do.
+// The two quiet text tiers, measured against PANEL — the card — because
+// that is the surface the brief names and the one they actually land on.
+// An earlier version of this solved for PANEL2 instead and came out
+// noticeably brighter than anyone would pick by eye; PANEL2 is a hairline
+// colour now, not a text surface, so that constraint was self-imposed.
 //
-// Measured contrast (PANEL2 / PANEL / DEEP):
-//   FEED_TEXT_MID  5.13 / 5.85 / 8.51
-//   FEED_TEXT_LOW  4.56 / 5.20 / 7.57
+// Measured contrast on PANEL:
+//   FEED_TEXT_MID  #9DB8AB  4.98:1   two steps up from MUTED
+//   FEED_TEXT_LOW  #95B0A3  4.55:1   one step up
 //
-// For reference, the values these replaced: MUTED is 3.99 on PANEL2 and
-// 4.07 on PANEL, and the first draft's low was #6E9782 at 3.24 — genuinely
-// hard to read at 12px. MUTED itself is left alone, because it is correct
-// everywhere else in the app, where it is rarely set this small.
+// MUTED as given is 4.07:1, which fails AA for 12px text — the reason for
+// moving at all. MUTED itself is untouched: it is correct everywhere else
+// in the app, where it is rarely set this small.
 //
-// Kept a clear step apart so the hierarchy survives: low has to be quieter
-// than mid AND still pass, which is only possible if mid moves up too.
-export const FEED_TEXT_MID = "#A6C8B9";
-export const FEED_TEXT_LOW = "#9CBDAE";
+// They stay a clear step apart because low has to be quieter than mid and
+// still clear 4.5, which only works if mid moves up as well. FEED_TEXT_LOW
+// is this file's own tier, not one from the brief — metadata needed a voice
+// below the losing side of a scoreline.
+export const FEED_TEXT_MID = "#9DB8AB";
+export const FEED_TEXT_LOW = "#95B0A3";
 
-// Row dividers use the app's existing hairline rather than a green of their
-// own, so a card's internal rules match every other divider in the product.
-export const FEED_HAIRLINE = LINE;
+// Row dividers are the raised surface colour, which makes a divider read as
+// the edge of the next surface rather than as a line drawn over this one.
+// It is very quiet by design — #234F3D on PANEL measures 1.14:1, which is
+// far too little for text and about right for a rule you are not supposed
+// to notice.
+export const FEED_HAIRLINE = FEED_RAISED;
 
 // Rank movement. Not in the palette because nothing in the app moved up or
 // down before; picked to sit beside the greens rather than reusing CLAY,
