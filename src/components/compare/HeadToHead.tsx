@@ -9,8 +9,10 @@ import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput, mono } from "@/lib/theme";
 
-export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreatePlayer }: any) {
-  const [a, setA] = useState(""); const [b, setB] = useState("");
+export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreatePlayer, initialA, initialB }: any) {
+  // Seeded when you arrive from a Table row: comparing an empty pair with
+  // an empty pair is not what you asked for when you tapped somebody.
+  const [a, setA] = useState(initialA || ""); const [b, setB] = useState(initialB || "");
   const [yr, setYr] = useState("all");
   const [venue, setVenue] = useState("");
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { Swords } from "lucide-react";
 import { RankingInfo } from "@/components/table/RankingInfo";
 import { Avatar } from "@/components/ui/Avatar";
 import { FormRow } from "@/components/ui/FormRow";
@@ -14,7 +15,32 @@ import { BALL, CHALK, CLAY, MUTED, PANEL, RADIUS, body, input, listCard, listRow
 // saves the leader needing a tennis ball beside their name to stand out.
 const MEDAL = ["#d4af37", "#c0c8d0", "#b07a3c"];
 
-export function Rankings({ ranked, elo, wdl, form, formColors, official, mode, onMode, onOpen, requireSetup }: any) {
+// A table row does two things now that Compare has lost its tab: it opens
+// the player, and it compares them with you. Two jobs means two buttons
+// side by side rather than one wrapping the other — a button inside a
+// button is invalid and the outer one takes the tap, which is exactly why
+// there was nowhere to put this before.
+function RowShell({ children, onOpen, onCompare }: any) {
+  return (
+    <div style={{ display: "flex", alignItems: "stretch" }}>
+      <button onClick={onOpen} style={{ ...listRow, flex: 1, minWidth: 0, paddingRight: onCompare ? 4 : undefined }}>
+        {children}
+      </button>
+      {onCompare && (
+        <button
+          onClick={onCompare}
+          aria-label="Compare with me"
+          title="Compare with me"
+          style={{ background: "transparent", border: "none", padding: "0 14px 0 6px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+        >
+          <Swords size={17} color={MUTED} strokeWidth={1.9} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function Rankings({ ranked, elo, wdl, form, formColors, official, mode, onMode, onOpen, onCompare, requireSetup }: any) {
   const [infoOpen, setInfoOpen] = useState(false);
   const [q, setQ] = useState("");
   const base = requireSetup ? ranked.filter(isSetUp) : ranked;
@@ -68,7 +94,7 @@ export function Rankings({ ranked, elo, wdl, form, formColors, official, mode, o
             const leader = i === 0 && r.gp > 0;
             const record = `${r.w}–${r.d}–${r.l}`;
             return (
-              <button key={p.id} onClick={() => onOpen(p.id)} style={listRow}>
+              <RowShell key={p.id} onOpen={() => onOpen(p.id)} onCompare={onCompare ? () => onCompare(p.id) : null}>
                 <div style={{ fontFamily: mono, fontSize: 14, width: 20, textAlign: "right", color: r.gp > 0 && MEDAL[i] ? MEDAL[i] : MUTED, fontWeight: 800 }}>{i + 1}</div>
                 <Avatar player={p} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -85,7 +111,7 @@ export function Rankings({ ranked, elo, wdl, form, formColors, official, mode, o
                   <div style={{ fontFamily: mono, fontSize: mode === "record" ? 20 : 22, fontWeight: 700, color: mode === "form" ? (formScore > 0 ? BALL : formScore < 0 ? CLAY : MUTED) : (leader ? BALL : CHALK), fontVariantNumeric: "tabular-nums" }}>{mode === "elo" ? rating : mode === "record" ? (r.gp ? recordStr(r) : "0-0") : mode === "winpct" ? (pct === null ? "–" : pct + "%") : mode === "form" ? (r.gp ? (formScore > 0 ? "+" + formScore : String(formScore)) : "–") : (r.gp && official ? Math.round(official[p.id]) : "–")}</div>
                   <div style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: MUTED }}>{mode === "elo" ? "Elo" : mode === "record" ? "W–L" : mode === "winpct" ? "Win %" : mode === "form" ? "Form" : "Rating"}</div>
                 </div>
-              </button>
+              </RowShell>
             );
           })}
         </div>

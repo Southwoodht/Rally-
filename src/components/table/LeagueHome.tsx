@@ -15,7 +15,7 @@ import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, mono } 
 
 const ACTIVE_WINDOW_MS = 365 * 86400000;
 
-export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, requireSetup, nameOf }: any) {
+export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, onCompare, requireSetup, nameOf }: any) {
   const [view, setView] = useState<"active" | "legacy">("active");
   const season = group?.season;
   // This used to reset to "season" on every page load, which meant the table
@@ -194,7 +194,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       {players.length > 0 && scopedRanked.length === 0 ? (
         <Empty msg={activeScope === "active" ? "No one's played in the last 12 months. Check Legacy for career history." : activeScope === "nonactive" ? "Everyone's played in the last 12 months." : "No players yet."} />
       ) : (
-        <Rankings ranked={scopedRanked} elo={elo} wdl={wdl} form={form} formColors={formColors} official={officialMap} mode={mode} onMode={onMode} onOpen={(id) => onOpen(id, tableYr)} requireSetup={requireSetup} />
+        <Rankings ranked={scopedRanked} elo={elo} wdl={wdl} form={form} formColors={formColors} official={officialMap} mode={mode} onMode={onMode} onOpen={(id) => onOpen(id, tableYr)} onCompare={onCompare} requireSetup={requireSetup} />
       )}
         </>
       )}

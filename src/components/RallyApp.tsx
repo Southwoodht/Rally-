@@ -57,7 +57,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [rankingMode, setRankingMode] = useState("overall");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [tab, setTab] = useState("ladder");
+  const [tab, setTab] = useState("home");
+  // Set when you arrive at Compare from a Table row, so it opens on the two
+  // of you rather than on two empty pickers.
+  const [compareWith, setCompareWith] = useState<string | null>(null);
   const [profileId, setProfileId] = useState(null);
   const [matchDetailId, setMatchDetailId] = useState(null);
   const [legacyId, setLegacyId] = useState(null);
@@ -346,7 +349,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       data = { ...emptyLeagueData };
       try { await storage.set(gkey(id), JSON.stringify(data), true); } catch {}
     }
-    setGid(id); setGdata(data); setGroupSheet(false); setProfileId(null); setTab("ladder");
+    setGid(id); setGdata(data); setGroupSheet(false); setProfileId(null); setTab("home");
     try { await storage.set("settings_c5", JSON.stringify({ currentGroupId: id, rankingMode, onboarded }), true); } catch {}
   };
   const addGroup = async (name) => {
@@ -538,7 +541,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
   const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
-  const main = tab === "ladder" || tab === "add" || tab === "history" || tab === "profile";
+  const main = tab === "home" || tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
   // personal league behave like any other one — computeStats only counts a
@@ -567,7 +570,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             </button>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
               <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "8px 0 0", fontSize: 38, lineHeight: 0.95, textTransform: "uppercase", letterSpacing: -0.5 }}>
-                {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "history" ? "Games" : "Profile"}
+                {tab === "home" ? "Home" : tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                 <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
@@ -585,15 +588,17 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </header>
         )}
 
-        {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("history")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
+        {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 17 }}>🌍</span><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span></button>}
-        {tab === "ladder" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onOpenLegacy={setLegacyId} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
-        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("history"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
-        {tab === "history" && <History posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />}
+        {tab === "ladder" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTab("h2h"); }} onOpenLegacy={setLegacyId} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
+        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        {(tab === "home" || tab === "fixtures") && <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />}
         {tab === "global" && <SubHeader title="Global" onBack={() => setTab("ladder")} />}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} />}
-        {tab === "h2h" && <SubHeader title="Compare" onBack={() => setTab("profile")} />}
-        {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} />}
+        {/* Back to wherever you came from: the Table if a row sent you here,
+            the profile menu otherwise. */}
+        {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
+        {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
         {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}

@@ -12,8 +12,13 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, mono, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId }: any) {
-  const [scope, setScope] = useState("feed");
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode }: any) {
+  // Games used to be one screen with a toggle across the top. It's two
+  // screens now — the feed lives on Home, fixtures have their own tab — so
+  // when a caller states which half it wants, the toggle has nothing left to
+  // choose between and goes away.
+  const [scope, setScope] = useState(mode || "feed");
+  const fixed = !!mode;
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<any>(null);
   const [feedFilter, setFeedFilter] = useState("league");
@@ -145,10 +150,12 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           })}
         </div>
       )}
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        <Toggle on={scope === "feed"} onClick={() => setScope("feed")} label="Newsfeed" />
-        <Toggle on={scope === "fixtures"} onClick={() => setScope("fixtures")} label="Fixtures" />
-      </div>
+      {!fixed && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <Toggle on={scope === "feed"} onClick={() => setScope("feed")} label="Newsfeed" />
+          <Toggle on={scope === "fixtures"} onClick={() => setScope("fixtures")} label="Fixtures" />
+        </div>
+      )}
       {scope === "fixtures" ? (
         <FixturesPanel fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} onResolve={onResolveFixture} onBook={onBookFixture} />
       ) : (

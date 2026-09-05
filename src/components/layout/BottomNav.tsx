@@ -1,10 +1,14 @@
 "use client";
 import React from "react";
-import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
+import { Trophy, Swords, Plus, Clock, User, Home as HomeIcon, CalendarDays, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
 import { BALL, COURT, LINE, MUTED, PANEL, display, mono } from "@/lib/theme";
 
 export function BottomNav({ tab, setTab }: any) {
-  const active = (tab === "h2h" || tab === "settings" || tab === "myprofile") ? "profile" : tab;
+  // Compare has no tab of its own any more — it's reached from a Table row
+  // and from a profile — so it lights Table rather than nothing at all.
+  const active = (tab === "settings" || tab === "myprofile") ? "profile"
+    : tab === "h2h" ? "ladder"
+    : tab;
   const item = (key, Icon, label) => {
     const on = active === key;
     return (
@@ -15,12 +19,12 @@ export function BottomNav({ tab, setTab }: any) {
   };
   return (
     <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: PANEL, borderTop: "none", display: "flex", alignItems: "center", maxWidth: 620, margin: "0 auto", paddingBottom: "env(safe-area-inset-bottom)", zIndex: 55 }}>
+      {item("home", HomeIcon, "Home")}
       {item("ladder", Trophy, "Table")}
-      {item("h2h", Swords, "Compare")}
       <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
         <button onClick={() => setTab("add")} style={{ width: 54, height: 54, borderRadius: 27, background: BALL, color: COURT, border: "4px solid " + COURT, display: "grid", placeItems: "center", cursor: "pointer", marginTop: -18, boxShadow: "0 6px 16px rgba(0,0,0,.35)" }}><Plus size={26} strokeWidth={2.6} /></button>
       </div>
-      {item("history", Clock, "Games")}
+      {item("fixtures", CalendarDays, "Fixtures")}
       {item("profile", User, "Profile")}
     </nav>
   );
