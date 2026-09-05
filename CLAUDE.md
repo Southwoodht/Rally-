@@ -310,13 +310,23 @@ returns NULL for a category it doesn't know, and a NULL level is excluded
 from the quality filter entirely — so anyone picking a new category would
 silently record zero quality games forever, with no error anywhere.
 
-**Waiting for Sam:** `schema_global_edges_score.sql`. Drops and recreates
-`global_edges()` so it also returns the match score, which is what lets the
-Global table see margin. Writes no rows. It drops rather than replaces
-because the return type changes — for the moment between the two statements
-the RPC is missing and the app falls back, which is harmless. Until it's run
-the deployed code simply sees no score, so the plain result stands and
-nothing is broken.
+Run on 2026-09-05: `schema_global_edges_score.sql`, which added the match
+score to `global_edges()` so the Global table can see margin. It drops and
+recreates rather than replacing, because the return type changed.
+
+**`global_edges()` returns zero rows in the Supabase SQL editor, and that is
+correct.** It filters through `is_league_member()`, which reads
+`auth.uid()` — and in the editor you are the service role, so nobody is
+visible and you get nothing. Don't debug it from there. To check it's
+installed, ask for its signature instead:
+
+```sql
+select pg_get_function_result(oid) from pg_proc where proname = 'global_edges';
+```
+
+The real test is the app: if the Global table still shows the network
+ordering, the RPC is being called. If it had failed, the code falls back to
+the old maths and the order visibly changes.
 
 **Tell him before anything touches existing data.** Additive migrations
 (new columns, new tables, widened policies) are fine to propose; anything
