@@ -13,3 +13,4 @@ next-env.d.ts
 
 # Production data snapshots — contains real player PII, never commit
 backups/
+.test-out
