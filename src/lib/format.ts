@@ -4,6 +4,14 @@ export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export const fmtDate = (ts) => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
+// How a player is named on a card or a table row: their first name.
+// Not the full name, which cannot wrap into the space these give it, and
+// not the `nick` field, which is the joke one — a dice button fills it from
+// a list containing "The Destroyer", and in Seacourt it holds "Cheese" for
+// a player who is not the one everybody calls Cheese. One definition, so
+// every screen names people the same way.
+export const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
+
 export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);
 
 export const winPct = (r) => (r && r.gp ? (r.w + r.d * 0.5) / r.gp : 0);

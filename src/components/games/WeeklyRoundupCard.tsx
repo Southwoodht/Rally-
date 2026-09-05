@@ -1,10 +1,8 @@
 "use client";
 import React from "react";
-import { ArrowDown, ArrowUp, Award, Flame, Minus, TrendingUp } from "lucide-react";
-import {
-  FEED_CARD, FEED_DEEP, FEED_DOWN, FEED_HAIRLINE, FEED_LIME, FEED_PAD, FEED_RADIUS,
-  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_TILE_RADIUS, FEED_UP, body, tabular, tight,
-} from "@/lib/theme";
+import { Award, Flame, TrendingUp } from "lucide-react";
+import { MovementIndicator, StatNumeral, SurfaceCard, SurfaceTile } from "@/components/ui/Surfaces";
+import { FEED_HAIRLINE, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight } from "@/lib/theme";
 
 // The Sunday-night roundup: one card, the week in about six seconds.
 //
@@ -63,21 +61,6 @@ const ordinal = (n: number): string => {
 
 const HIGHLIGHT_ICON = { climb: TrendingUp, streak: Flame, firstWin: Award };
 
-function Movement({ placesGained, size = 13 }: { placesGained: number; size?: number }) {
-  const up = placesGained > 0, down = placesGained < 0;
-  const color = up ? FEED_UP : down ? FEED_DOWN : FEED_TEXT_LOW;
-  const Icon = up ? ArrowUp : down ? ArrowDown : Minus;
-  const n = Math.abs(placesGained);
-  const label = n === 0 ? "no change" : (up ? "up " : "down ") + n + (n === 1 ? " place" : " places");
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color }}>
-      <Icon size={size} color={color} strokeWidth={2} />
-      <span style={{ fontFamily: body, fontWeight: 400, fontSize: size, color }}>{label}</span>
-    </span>
-  );
-}
-
-const tileStyle: React.CSSProperties = { background: FEED_DEEP, borderRadius: FEED_TILE_RADIUS, padding: 14, minWidth: 0 };
 const labelStyle: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
 
 export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, results, highlight }: WeeklyRoundupCardProps) {
@@ -85,7 +68,7 @@ export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, 
   const shown = (swings || []).slice(0, 2);
 
   return (
-    <div style={{ background: FEED_CARD, borderRadius: FEED_RADIUS, padding: FEED_PAD }}>
+    <SurfaceCard>
       <div style={{ ...labelStyle, ...tabular }}>{rangeLabel}</div>
       <div style={{ ...tight(26), fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_TEXT_HI, marginTop: 2, marginBottom: 14 }}>
         Your week
@@ -94,20 +77,22 @@ export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, 
       {/* Two, never three. At phone width a third tile turns readable
           numbers into a row of cramped ones. */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-        <div style={tileStyle}>
+        <SurfaceTile>
           <div style={labelStyle}>Won / lost</div>
-          <div style={{ ...tabular, ...tight(32), fontFamily: body, fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: FEED_LIME, marginTop: 4 }}>
-            {record.w}–{record.l}
+          <div style={{ marginTop: 4 }}>
+            <StatNumeral size={32} tone="lime">{record.w}–{record.l}</StatNumeral>
           </div>
-        </div>
-        <div style={tileStyle}>
+        </SurfaceTile>
+        <SurfaceTile>
           <div style={labelStyle}>Rank</div>
-          <div style={{ ...tabular, ...tight(32), fontFamily: body, fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: FEED_TEXT_HI, marginTop: 4 }}>
-            {rank}
-            <span style={{ fontSize: 15, verticalAlign: "super", marginLeft: 1 }}>{ordinal(rank)}</span>
+          <div style={{ marginTop: 4 }}>
+            <StatNumeral size={32} tone="hi">
+              {rank}
+              <span style={{ fontSize: 15, verticalAlign: "super", marginLeft: 1 }}>{ordinal(rank)}</span>
+            </StatNumeral>
           </div>
-          {movement && <div style={{ marginTop: 4 }}><Movement placesGained={movement.placesGained} size={12} /></div>}
-        </div>
+          {movement && <div style={{ marginTop: 4 }}><MovementIndicator delta={movement.placesGained} size={12} /></div>}
+        </SurfaceTile>
       </div>
 
       {shown.length > 0 && (
@@ -115,7 +100,7 @@ export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, 
           {shown.map((s) => (
             <span key={s.name} style={{ display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}>
               <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>{s.name}</span>
-              <Movement placesGained={s.placesGained} size={12} />
+              <MovementIndicator delta={s.placesGained} size={12} />
             </span>
           ))}
         </div>
@@ -144,11 +129,11 @@ export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, 
       </div>
 
       {highlight && HighlightIcon && (
-        <div style={{ ...tileStyle, display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+        <SurfaceTile style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
           <HighlightIcon size={18} color={FEED_LIME} strokeWidth={2} />
           <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}>{highlight.sentence}</span>
-        </div>
+        </SurfaceTile>
       )}
-    </div>
+    </SurfaceCard>
   );
 }

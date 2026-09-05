@@ -63,32 +63,52 @@ export const segmentOption = (on: boolean): CSSProperties => ({
   transition: "background 0.15s ease, color 0.15s ease",
 });
 
-// ---- feed palette (Apple Sports direction) ----
+// ---- feed / scoreboard tokens ----
 //
-// A separate, darker set from the brand tokens above rather than a
-// replacement for them. FEED_LIME is not BALL and FEED_DEEP is not COURT —
-// they're close, and that is exactly why they're named apart: a scoreline
-// card wants more contrast than the rest of the app, and quietly widening
-// COURT to suit one screen would restyle every screen.
-//
-// These live here rather than in the Tailwind config because nothing in
-// src/components/ uses Tailwind classes — the whole app styles through
-// inline objects built from this file, and a token you can't reach from
-// there is a token nobody uses.
-export const FEED_DEEP = "#0F2A1E";      // feed background, inset tiles
-export const FEED_CARD = "#1A3D2C";      // card surface
-export const FEED_LIME = "#D9EE63";      // accent, winner bar
-export const FEED_LIME_INK = "#12300C";  // text on lime
-export const FEED_LIME_INK_2 = "#3B6D11";// secondary text on lime
-export const FEED_TEXT_HI = "#F3FAE6";   // winner name, primary numerals
-export const FEED_TEXT_MID = "#7EA692";  // loser name and score
-export const FEED_TEXT_LOW = "#6E9782";  // metadata, labels
-export const FEED_HAIRLINE = "#2A5540";  // row dividers
+// These are the app's own colours, named for the job they do on a card.
+// Almost every one of them IS a brand token above: FEED_CARD is PANEL,
+// FEED_PAGE is COURT, FEED_LIME is BALL. They're aliased rather than copied
+// so there is exactly one definition of each colour — the first version of
+// this block sampled them by eye and every value was a shade off, which is
+// what a second copy of a palette always eventually becomes.
+export const FEED_PAGE = COURT;          // #15352A
+export const FEED_CARD = PANEL;          // #1D4636
+export const FEED_RAISED = PANEL2;       // #234F3D
+export const FEED_LIME = BALL;           // #D9E84B
+export const FEED_TEXT_HI = CHALK;       // #F5F2E9
 
-// Not in the brief, but the roundup needs a direction for rank movement and
-// "green" and "red" have to resolve to something. Picked to sit in the same
-// family as the palette above rather than pulling in CLAY, which means
-// "clay court" elsewhere in the app and would read as a surface, not a fall.
+// The one genuinely new colour: a step below COURT, for tiles inset into a
+// card that need to read as recessed rather than raised.
+export const FEED_DEEP = "#102921";
+
+// Text on lime, and the same value as FEED_DEEP — a coincidence in the
+// palette rather than a relationship, so it's named separately: changing the
+// inset tile background should not silently restyle every winner bar.
+export const FEED_LIME_INK = "#102921";
+
+// Secondary text on lime. The one value here not sampled from the app,
+// because nothing in the app had text on lime before this.
+export const FEED_LIME_INK_2 = "#3B6D11";
+
+// A step lighter than MUTED, and measured rather than guessed: MUTED on
+// PANEL is 4.07:1, which fails AA for 12px text, and this is 4.55:1, which
+// passes. MUTED is left alone — it's correct everywhere else in the app,
+// where it's rarely this small.
+export const FEED_TEXT_MID = "#95B0A3";
+
+// Metadata and labels. Deliberately MUTED itself rather than something
+// darker: the first version of this used #6E9782, which measures 3.24:1 and
+// is genuinely hard to read at 12px. This is still only 4.07:1, so it is
+// the quietest thing that should ever be set this small.
+export const FEED_TEXT_LOW = MUTED;      // #8AA79A
+
+// Row dividers use the app's existing hairline rather than a green of their
+// own, so a card's internal rules match every other divider in the product.
+export const FEED_HAIRLINE = LINE;
+
+// Rank movement. Not in the palette because nothing in the app moved up or
+// down before; picked to sit beside the greens rather than reusing CLAY,
+// which means "clay court" elsewhere and would read as a surface, not a fall.
 export const FEED_UP = "#7BD88F";
 export const FEED_DOWN = "#E2705F";
 
@@ -96,8 +116,7 @@ export const FEED_RADIUS = 20;
 export const FEED_TILE_RADIUS = 14;
 export const FEED_PAD = 18;
 
-// Anything with digits in it lines up column-wise; anything big enough to
-// show loose tracking gets pulled in. Both are called for often enough in
-// the two feed cards to be worth naming once.
+// Anything with digits lines up column-wise; anything big enough to show
+// loose tracking gets pulled in.
 export const tabular: CSSProperties = { fontVariantNumeric: "tabular-nums" };
 export const tight = (px: number): CSSProperties => (px > 18 ? { letterSpacing: px >= 26 ? "-0.03em" : "-0.02em" } : {});

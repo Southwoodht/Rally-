@@ -5,6 +5,7 @@ import { feedContexts } from "@/core/feedContext";
 import { currentStreakOf, rankMaps } from "@/core/rank";
 import { movementFor, topSwings, weekEndingFor, weekStartFor, type RankSnapshot } from "@/core/snapshots";
 import { loadSnapshots } from "@/lib/rankSnapshots";
+import { shortNameOf } from "@/lib/format";
 
 // The container for the Sunday roundup: it does the loading and the counting
 // so the card can stay a card. Everything it hands down is a finished number.
@@ -12,18 +13,6 @@ import { loadSnapshots } from "@/lib/rankSnapshots";
 // The week it covers is the last completed one — Monday to the most recent
 // Sunday — so on a Wednesday you're reading about the week that ended, not a
 // half-finished one.
-
-// First name, not the full name and not the nick field.
-//
-// The brief says "use each player's nickname, not their full name", and the
-// contrast there is with the *full* name — these cards can't wrap, so
-// "Samuel Southwood" doesn't fit and isn't wanted. It is not the `nick`
-// column: that's the joke one, filled by a dice button from a list that
-// includes "The Destroyer", and rendering it here would give a feed reading
-// "The Destroyer beat Iceman". In Seacourt it would be worse than odd —
-// Charlie Henry's nick is "Cheese", which is what a different player in the
-// same league is actually called.
-const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 
 const dayLabel = (isoDate: string): string => {
   const d = new Date(isoDate + "T12:00:00");
