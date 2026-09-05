@@ -10,6 +10,15 @@ export const fmtDate = (ts) => new Date(ts).toLocaleDateString("en-GB", { day: "
 // a list containing "The Destroyer", and in Seacourt it holds "Cheese" for
 // a player who is not the one everybody calls Cheese. One definition, so
 // every screen names people the same way.
+// "Evening, Sam". Boundaries at 12 and 18 because that is what people
+// actually mean by them — not 17, which reads as evening to a clock and as
+// mid-afternoon to anybody outside.
+export const greetingFor = (name: string, at: Date = new Date()): string => {
+  const h = at.getHours();
+  const part = h < 12 ? "Morning" : h < 18 ? "Afternoon" : "Evening";
+  return name ? part + ", " + name : part;
+};
+
 export const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 
 export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);

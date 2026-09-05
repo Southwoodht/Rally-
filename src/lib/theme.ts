@@ -86,9 +86,14 @@ export const FEED_DEEP = "#102921";
 // inset tile background should not silently restyle every winner bar.
 export const FEED_LIME_INK = "#102921";
 
-// Secondary text on lime. The one value here not sampled from the app,
-// because nothing in the app had text on lime before this.
-export const FEED_LIME_INK_2 = "#3B6D11";
+// Secondary text on lime. 7.47:1, against 4.61:1 for the value this
+// replaced — same ink family as FEED_LIME_INK rather than a separate green,
+// so the two read as one voice at two volumes.
+export const FEED_LIME_INK_2 = "#2A4A12";
+
+// A rule drawn on lime. Ink at low opacity rather than a named colour, so it
+// stays correct if the lime ever moves.
+export const FEED_LIME_DIVIDER = "rgba(0,0,0,0.22)";
 
 // The two quiet text tiers, measured against PANEL — the card — because
 // that is the surface the brief names and the one they actually land on.
