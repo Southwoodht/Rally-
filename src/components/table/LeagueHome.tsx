@@ -2,7 +2,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { LegacyTable } from "@/components/table/LegacyTable";
 import { PredictionCard } from "@/components/table/PredictionCard";
-import { Rankings } from "@/components/table/Rankings";
+import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
+import { RankingInfo } from "@/components/table/RankingInfo";
+import { StandingsList, type StandingsPlayer } from "@/components/table/StandingsList";
 import { RecapCard } from "@/components/table/RecapCard";
 import { Empty, Toggle } from "@/components/ui/atoms";
 import { START_ELO } from "@/core/constants";
@@ -15,7 +17,7 @@ import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, mono } 
 
 const ACTIVE_WINDOW_MS = 365 * 86400000;
 
-export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, onCompare, requireSetup, nameOf }: any) {
+export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, onCompare, requireSetup, nameOf, meId, movement, onGoGlobal }: any) {
   const [view, setView] = useState<"active" | "legacy">("active");
   const season = group?.season;
   // This used to reset to "season" on every page load, which meant the table
@@ -67,6 +69,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const activeRanked = useMemo(() => ranked.filter((p) => recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
   const nonActiveRanked = useMemo(() => ranked.filter((p) => !recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
   const [activeScope, setActiveScope] = useState<"active" | "nonactive" | "all">("active");
+  const [query, setQuery] = useState("");
   const scopedRanked = activeScope === "active" ? activeRanked : activeScope === "nonactive" ? nonActiveRanked : ranked;
 
   const prediction = useMemo(() => {
@@ -111,91 +114,134 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
 
   const daysIn = season ? Math.max(1, Math.round((Date.now() - season.start) / 86400000)) : 0;
 
+  // Every control that used to stack down the screen, as one scrolling row
+  // of chips. The stack ran to roughly 1400px of chrome before rank 1
+  // appeared, which is more table than table.
+  const METRICS = [
+    { value: "official", label: "Official", note: "Your five best wins by opponent quality, times how regularly you play." },
+    { value: "elo", label: "Elo", note: "Moves every match, by how surprising the result was." },
+    { value: "record", label: "Record", note: "Win rate, weighted by opposition and how much you have played." },
+    { value: "winpct", label: "Win %", note: "The plain share of games won. A draw counts as half." },
+    { value: "form", label: "Form", note: "The last five results and nothing else." },
+  ];
+  const periodValue = tableYr !== "all" ? String(tableYr) : (inSeason ? "season" : "all");
+  // "overall" is what the stored setting has always called Official.
+  const metricValue = !mode || mode === "overall" ? "official" : mode;
+  const filters: FilterDef[] = [
+    { key: "metric", label: "Ranked by", value: metricValue, options: METRICS, onChange: (v: string) => onMode && onMode(v) },
+    {
+      key: "scope", label: "Who is included",
+      value: view === "legacy" ? "legacy" : activeScope,
+      options: [
+        { value: "active", label: "Active", note: "Played in the last 12 months." },
+        { value: "nonactive", label: "Not active", note: "Everyone who has not." },
+        { value: "all", label: "Everyone in this league" },
+        { value: "legacy", label: "Legacy", note: "Career impact, including people who have stopped playing." },
+        ...(onGoGlobal ? [{ value: "global", label: "Global table", note: "Everyone you have crossed paths with, across every league." }] : []),
+      ],
+      onChange: (v: string) => {
+        if (v === "global") return onGoGlobal && onGoGlobal();
+        if (v === "legacy") return setView("legacy");
+        setView("active");
+        setActiveScope(v as any);
+      },
+    },
+    {
+      key: "period", label: "When",
+      value: periodValue,
+      options: [
+        ...(season ? [{ value: "season", label: season.name || "This season" }] : []),
+        { value: "all", label: "All time" },
+        ...years.map((y: number) => ({ value: String(y), label: String(y) })),
+      ],
+      onChange: (v: string) => {
+        if (v === "season") { setScope("season"); setTableYr("all"); return; }
+        setScope("all");
+        setTableYr(v === "all" ? "all" : Number(v));
+      },
+    },
+  ];
+
+  // What the big number on a row is, and what it is called. Record keeps its
+  // own display string, because "28-6-10" is not a rating and cannot be one,
+  // while still sorting and drawing its bar on the numeric score behind it.
+  const valueOf = (id: string): number => {
+    const r = wdl[id] || { w: 0, d: 0, l: 0, gp: 0 };
+    if (mode === "elo") return elo[id] ?? START_ELO;
+    if (mode === "winpct") return r.gp ? Math.round(winPct(r) * 100) : 0;
+    if (mode === "form") return (form[id] || []).slice(-5).reduce((sum: number, x: string) => sum + (x === "W" ? 1 : x === "L" ? -1 : 0), 0);
+    if (mode === "record") return r.gp ? winPct(r) * 100 : 0;
+    return officialMap[id] ?? 0;
+  };
+  const unit = mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
+
+  const q = query.trim().toLowerCase();
+  const searched = q
+    ? scopedRanked.filter((pl: any) => ((pl.name || "") + " " + (pl.last || "") + " " + (pl.nick || "")).toLowerCase().includes(q))
+    : scopedRanked;
+
+  const standingsPlayers: StandingsPlayer[] = searched.map((pl: any) => {
+    const r = wdl[pl.id] || { w: 0, d: 0, l: 0, gp: 0 };
+    return {
+      player: pl,
+      rating: valueOf(pl.id),
+      displayOverride: mode === "record" ? r.w + "-" + r.d + "-" + r.l : undefined,
+      w: r.w, d: r.d, l: r.l,
+      form: (form[pl.id] || []).slice(-5) as any,
+      movement: movement ? movement[pl.id] : undefined,
+    };
+  });
+
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-        <Toggle on={view === "active"} onClick={() => setView("active")} label="Active" icon="🟢" emphasize />
-        <Toggle on={view === "legacy"} onClick={() => setView("legacy")} label="Legacy" icon="🏛️" />
-      </div>
-      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>
-        {view === "active" ? "Active rankings measure current form." : "Legacy ranks by career impact — everyone who's ever played."}
-      </div>
+      <FilterChips
+        filters={filters}
+        search={{ value: query, onChange: setQuery }}
+        overflow={{ title: "How the ranking works", content: <RankingInfo /> }}
+      />
 
       {view === "legacy" ? (
         <LegacyTable players={players} matches={matches} onOpen={onOpenLegacy} />
       ) : (
         <>
-      {season && (
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          <Toggle on={scope === "season"} onClick={() => setScope("season")} label={season.name || "Season"} />
-          <Toggle on={scope === "all"} onClick={() => setScope("all")} label="All-time" />
-        </div>
-      )}
-      {inSeason && (() => {
-        if (!season.end) return <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginBottom: 14 }}>Season live · day {daysIn} · ongoing</div>;
-        const total = Math.max(1, Math.round((season.end - season.start) / 86400000));
-        const left = Math.max(0, Math.round((season.end - Date.now()) / 86400000));
-        const pctDone = Math.max(0, Math.min(100, Math.round(((total - left) / total) * 100)));
-        return (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-              <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{season.name}</span>
-              <span style={{ fontFamily: mono, fontSize: 12, color: left <= 30 ? CLAY : BALL }}>{left > 0 ? left + " days left" : "Season over"}</span>
+          {players.length > 0 && standingsPlayers.length === 0 ? (
+            <Empty msg={q ? "Nobody here by that name." : activeScope === "active" ? "No one has played in the last 12 months. Try Legacy for career history." : activeScope === "nonactive" ? "Everyone has played in the last 12 months." : "No players yet."} />
+          ) : (
+            <StandingsList
+              players={standingsPlayers}
+              matches={filtered}
+              meId={meId}
+              unit={unit}
+              onOpen={(id: string) => onOpen(id, tableYr)}
+            />
+          )}
+
+          {/* Season progress, the prediction and the recap moved below the
+              table. All three are worth reading and none of them is worth
+              reading before you can see who is top, which is what somebody
+              opened this screen for. */}
+          {inSeason && season && (
+            <div style={{ marginTop: 22 }}>
+              {!season.end ? (
+                <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>Season live · day {daysIn} · ongoing</div>
+              ) : (() => {
+                const total = Math.max(1, Math.round((season.end - season.start) / 86400000));
+                const left = Math.max(0, Math.round((season.end - Date.now()) / 86400000));
+                const pctDone = Math.max(0, Math.min(100, Math.round(((total - left) / total) * 100)));
+                return (
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                      <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{season.name}</span>
+                      <span style={{ fontFamily: mono, fontSize: 12, color: left <= 30 ? CLAY : BALL }}>{left > 0 ? left + " days left" : "Season over"}</span>
+                    </div>
+                    <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden" }}><div style={{ width: pctDone + "%", height: "100%", background: BALL }} /></div>
+                  </div>
+                );
+              })()}
             </div>
-            <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden" }}><div style={{ width: pctDone + "%", height: "100%", background: BALL }} /></div>
-          </div>
-        );
-      })()}
-      {inSeason && (() => {
-        const ended = season.end && Date.now() > season.end;
-        const allPlayed = fixtures && fixtures.length > 0 && fixtures.every((f) => f.done);
-        if (!ended && !allPlayed) return null;
-        const fxIds = new Set((fixtures || []).filter((f) => f.done && f.matchId).map((f) => f.matchId));
-        const useFx = fxIds.size > 0;
-        const fxMatches = useFx ? matches.filter((m) => fxIds.has(m.id)) : filtered;
-        const fxStats = computeStats(players, fxMatches);
-        const fxWdl = fxStats.wdl;
-        const fxOff = computeOfficial(players, fxMatches, fxWdl);
-        const podium = players.filter((p) => (fxWdl[p.id]?.gp || 0) > 0 && !p.inactive).sort((a, b) => (fxOff[b.id] ?? -1e9) - (fxOff[a.id] ?? -1e9)).slice(0, 3);
-        if (!podium.length) return null;
-        const medals = ["🏆", "🥈", "🥉"], labels = ["Champion", "Runner-up", "Third"];
-        return (
-          <div style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 12.5, color: BALL, marginBottom: 4 }}>{ended ? "Season finished" : "All fixtures played"}{useFx ? " · fixture league only" : ""}</div>
-            <div style={{ fontFamily: body, fontSize: 19, fontWeight: 800, color: CHALK, marginBottom: 12 }}>{season.name} results</div>
-            {podium.map((p, i) => (
-              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: i ? "1px solid " + LINE : "none" }}>
-                <span style={{ fontSize: 22 }}>{medals[i]}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: i === 0 ? BALL : CHALK }}>{p.name}{p.last ? " " + p.last : ""}</div>
-                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>{labels[i]} · {(fxWdl[p.id]?.w ?? 0)}-{(fxWdl[p.id]?.d ?? 0)}-{(fxWdl[p.id]?.l ?? 0)}</div>
-                </div>
-              </div>
-            ))}
-            {players.filter((p) => !(fxWdl[p.id]?.gp)).length > 0 && (
-              <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.4 }}>Didn't play: {players.filter((p) => !(fxWdl[p.id]?.gp)).map((p) => p.name + (p.last ? " " + p.last : "")).join(", ")}</div>
-            )}
-          </div>
-        );
-      })()}
-      {inSeason && prediction.length > 0 && <PredictionCard prediction={prediction} />}
-      {inSeason && recap && <RecapCard recap={recap} nameOf={nameOf} leagueName={group.name} />}
-      {years.length > 0 && (
-        <select value={String(tableYr)} onChange={(e) => setTableYr(e.target.value === "all" ? "all" : Number(e.target.value))} style={{ ...miniInput, fontFamily: body, fontWeight: 600, fontSize: 13, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
-          <option value="all">All Time</option>
-          {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
-        </select>
-      )}
-      <select value={activeScope} onChange={(e) => setActiveScope(e.target.value as any)} style={{ ...miniInput, fontFamily: body, fontWeight: 600, fontSize: 13, width: "100%", marginBottom: 14, boxSizing: "border-box" as const }}>
-        <option value="active">Active — last 12 months</option>
-        <option value="nonactive">Non-active</option>
-        <option value="all">All players</option>
-      </select>
-      {players.length > 0 && scopedRanked.length === 0 ? (
-        <Empty msg={activeScope === "active" ? "No one's played in the last 12 months. Check Legacy for career history." : activeScope === "nonactive" ? "Everyone's played in the last 12 months." : "No players yet."} />
-      ) : (
-        <Rankings ranked={scopedRanked} elo={elo} wdl={wdl} form={form} formColors={formColors} official={officialMap} mode={mode} onMode={onMode} onOpen={(id) => onOpen(id, tableYr)} onCompare={onCompare} requireSetup={requireSetup} />
-      )}
+          )}
+          {inSeason && prediction.length > 0 && <div style={{ marginTop: 18 }}><PredictionCard prediction={prediction} /></div>}
+          {inSeason && recap && <div style={{ marginTop: 18 }}><RecapCard recap={recap} nameOf={nameOf} leagueName={group.name} /></div>}
         </>
       )}
     </div>

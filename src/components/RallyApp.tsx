@@ -32,10 +32,11 @@ import { computeStats } from "@/core/elo";
 import { rankMaps } from "@/core/rank";
 import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
+import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { gkey } from "@/data/seed";
 import { uid, winPct } from "@/lib/format";
-import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, wrap } from "@/lib/theme";
+import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
 import { fetchLeagueData, insertPlayerRow, syncFixtures, syncMatches, syncPlayers, syncPosts, updatePlayerRow } from "@/lib/leagueData";
@@ -61,6 +62,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Set when you arrive at Compare from a Table row, so it opens on the two
   // of you rather than on two empty pickers.
   const [compareWith, setCompareWith] = useState<string | null>(null);
+  // Standings or Compare, on the Table tab. Session only — a filter you
+  // chose once is not a preference worth remembering across launches, and
+  // opening the app into Compare would be answering a question nobody asked.
+  const [tableMode, setTableMode] = useState<"standings" | "compare">("standings");
+  const [snapshots, setSnapshots] = useState<RankSnapshot[]>([]);
   const [profileId, setProfileId] = useState(null);
   const [matchDetailId, setMatchDetailId] = useState(null);
   const [legacyId, setLegacyId] = useState(null);
@@ -370,6 +376,19 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // First names alone collide often enough (two Sams, two Charlies) that
   // this always includes the surname when there is one.
   const nameOf = (id) => { const p = players.find((p) => p.id === id); return p ? p.name + (p.last ? " " + p.last : "") : "—"; };
+  // Places gained since the last snapshot. Only offered when the table is
+  // ranked on Official, because that is the ranking the weekly snapshot
+  // records — showing Official movement beside an Elo column would be an
+  // arrow about a different table.
+  const officialRanks = useMemo(() => rankMaps(players, matches, elo, wdl).off, [players, matches, elo, wdl]);
+  const movement = useMemo(() => {
+    const out: Record<string, number | null> = {};
+    for (const id of Object.keys(officialRanks)) {
+      const mv = movementFor(id, officialRanks[id], snapshots);
+      out[id] = mv ? mv.placesGained : null;
+    }
+    return out;
+  }, [officialRanks, snapshots]);
   // A badge, so it never justifies an error screen — unreadMessageCount
   // already swallows failures and returns 0.
   useEffect(() => {
@@ -413,6 +432,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     })();
     return () => { alive = false; };
   }, [gid, players, matches, elo, wdl]);
+
+  // The weeks already on record, for the movement arrows. A failed read
+  // leaves this empty and every arrow simply doesn't render, which is the
+  // right answer: we don't know, and "no change" would be a claim.
+  useEffect(() => {
+    let alive = true;
+    if (!gid) return;
+    loadSnapshots(gid).then((s) => { if (alive) setSnapshots(s); }).catch(() => {});
+    return () => { alive = false; };
+  }, [gid]);
 
   // A pending result waits for the opponent to agree it — but only ever for
   // matches logged after this existed (`loggedAt`), so we never mass-confirm
@@ -590,7 +619,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><span style={{ fontSize: 17 }}>🌍</span><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span></button>}
-        {tab === "ladder" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTab("h2h"); }} onOpenLegacy={setLegacyId} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
+        {tab === "ladder" && (
+          <div style={{ ...segmentTrack, marginBottom: 14 }}>
+            <button onClick={() => setTableMode("standings")} style={segmentOption(tableMode === "standings")}>Standings</button>
+            <button onClick={() => setTableMode("compare")} style={segmentOption(tableMode === "compare")}>Compare</button>
+          </div>
+        )}
+        {tab === "ladder" && tableMode === "compare" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
+        {tab === "ladder" && tableMode === "standings" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {(tab === "home" || tab === "fixtures") && <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />}
         {tab === "global" && <SubHeader title="Global" onBack={() => setTab("ladder")} />}
