@@ -41,9 +41,13 @@ export function computeStats(players, matches) {
     wdl[m.p1].gp++; wdl[m.p2].gp++;
     let mult = 1;
     if (m.winner !== "draw") {
-      const lv1 = levelVal(levelAt(byId[m.p1], m.date)) ?? 0, lv2 = levelVal(levelAt(byId[m.p2], m.date)) ?? 0;
-      const winnerVal = m.winner === "p1" ? lv1 : lv2, loserVal = m.winner === "p1" ? lv2 : lv1;
-      mult = Math.max(LV_MIN, Math.min(LV_MAX, 1 - LV_FACTOR * (winnerVal - loserVal)));
+      const lv1 = levelVal(levelAt(byId[m.p1], m.date)), lv2 = levelVal(levelAt(byId[m.p2], m.date));
+      // Both levels or neither: a gap needs two ends. With one missing the
+      // result counts at face value.
+      if (lv1 != null && lv2 != null) {
+        const winnerVal = m.winner === "p1" ? lv1 : lv2, loserVal = m.winner === "p1" ? lv2 : lv1;
+        mult = Math.max(LV_MIN, Math.min(LV_MAX, 1 - LV_FACTOR * (winnerVal - loserVal)));
+      }
     }
     const d1 = K * (s1 - exp1) * mult, d2 = -d1;
     deltas[m.id] = { [m.p1]: d1, [m.p2]: d2 };

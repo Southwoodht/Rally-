@@ -21,8 +21,8 @@ export function buildEvents(players, matches, wdl) {
       streak[win] = (streak[win] || 0) + 1; streak[lose] = 0;
       if (w[win] === 1) ev.push({ id: "e" + m.id + "fw", date: m.date, icon: "\uD83C\uDF89", text: nm(win) + "'s first win!" });
       if ([3, 5, 10].includes(streak[win])) ev.push({ id: "e" + m.id + "st", date: m.date, icon: "\uD83D\uDD25", text: nm(win) + " is on a " + streak[win] + "-match winning streak" });
-      const lvW = levelVal(levelAt(byId[win], m.date)) ?? 0, lvL = levelVal(levelAt(byId[lose], m.date)) ?? 0;
-      if (lvL - lvW >= 3) ev.push({ id: "e" + m.id + "up", date: m.date, icon: "\u26A1", text: "Upset \u2014 " + nm(win) + " beat " + nm(lose) + ", a level above" });
+      const lvW = levelVal(levelAt(byId[win], m.date)), lvL = levelVal(levelAt(byId[lose], m.date));
+      if (lvW != null && lvL != null && lvL - lvW >= 3) ev.push({ id: "e" + m.id + "up", date: m.date, icon: "\u26A1", text: "Upset \u2014 " + nm(win) + " beat " + nm(lose) + ", a level above" });
     }
     [m.p1, m.p2].forEach((id) => { if ([25, 50, 100].includes(gp[id])) ev.push({ id: "e" + m.id + "gp" + id, date: m.date, icon: "\uD83C\uDFBE", text: nm(id) + " played their " + gp[id] + "th match" }); });
     const stats = computeStats(players, running);

@@ -4,7 +4,7 @@ import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
 import { computeAchievements } from "@/core/achievements";
-import { levelAtRecorded } from "@/core/levels";
+import { levelAt } from "@/core/levels";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { TIER_HEIGHTS } from "@/core/stars";
@@ -78,11 +78,11 @@ export function ProfileContainer({
     for (const m of played) { if (outcome(m) === "W") { run++; bestStreak = Math.max(bestStreak, run); } else run = 0; }
 
     // Height is the opponent's level as recorded on the day. Never today's —
-    // see core/levels.ts levelAtRecorded for why that distinction is the
+    // see core/levels.ts levelAt for why that distinction is the
     // whole point of the bars.
     const formBars = played.slice(-5).map((m: any) => {
       const o = byId[m.p1 === pid ? m.p2 : m.p1];
-      const lv = levelAtRecorded(o, m.date);
+      const lv = levelAt(o, m.date);
       return {
         outcome: outcome(m),
         height: lv?.cat ? (TIER_HEIGHTS[lv.cat] ?? null) : null,
@@ -127,7 +127,7 @@ export function ProfileContainer({
       .filter((m: any) => outcome(m) === "W")
       .map((m: any) => {
         const oid = m.p1 === pid ? m.p2 : m.p1;
-        const lv = levelAtRecorded(byId[oid], m.date);
+        const lv = levelAt(byId[oid], m.date);
         return {
           matchId: m.id,
           opponent: byId[oid],

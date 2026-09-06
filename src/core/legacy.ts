@@ -139,11 +139,11 @@ export function computeLegacyProfile(playerId: string, players: any[], matches: 
   const pre = preMatchRatings(playerId, players, confirmed);
   const wins = bouts.filter((m) => resultFor(m) === "W").map((m) => {
     const oid = oppOf(m);
-    const oppLv = levelVal(levelAt(byId[oid], m.date)) ?? 0;
-    const myLv = levelVal(levelAt(player, m.date)) ?? 0;
-    const upset = Math.max(0, oppLv - myLv);
+    const oppLv = levelVal(levelAt(byId[oid], m.date));
+    const myLv = levelVal(levelAt(player, m.date));
+    const lvTerm = oppLv == null || myLv == null ? 0 : oppLv + Math.max(0, oppLv - myLv);
     const oppElo = pre[m.id]?.opp ?? 0;
-    return { oid, match: m, q: (oppLv + upset) * 1000 + oppElo };
+    return { oid, match: m, q: lvTerm * 1000 + oppElo };
   });
   const bestWins: RankedWin[] = [...wins].sort((a, b) => b.q - a.q).slice(0, 3).map((w, i) => ({
     oid: w.oid,

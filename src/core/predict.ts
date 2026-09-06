@@ -1,4 +1,4 @@
-import { levelAt, levelVal } from "@/core/levels";
+import { levelAt, levelNow, levelVal } from "@/core/levels";
 
 export function predictProb(a, b, matches, elo, players) {
   const eA = (elo && elo[a]) || 0, eB = (elo && elo[b]) || 0;
@@ -34,8 +34,8 @@ export function predictProb(a, b, matches, elo, players) {
   const fA = formRate(a), fB = formRate(b);
   const formExp = (fA + fB) > 0 ? fA / (fA + fB) : 0.5;
   const formWeight = 0.15;
-  const lvA = levelVal(levelAt(find(a), Date.now()));
-  const lvB = levelVal(levelAt(find(b), Date.now()));
+  const lvA = levelVal(levelNow(find(a)));
+  const lvB = levelVal(levelNow(find(b)));
   const haveLevels = lvA != null && lvB != null;
   const levelExp = haveLevels ? 1 / (1 + Math.pow(10, -0.15 * (lvA - lvB))) : 0.5;
   const eloWeight = Math.min(0.3, Math.max(0, 1 - h2hWeight - formWeight));
@@ -95,8 +95,8 @@ export function explainFactors(a, b, matches, elo, players) {
     return { w, l, n: gs.length };
   };
   const find = (id) => (players || []).find((p) => p.id === id);
-  const lvA = levelVal(levelAt(find(a), Date.now()));
-  const lvB = levelVal(levelAt(find(b), Date.now()));
+  const lvA = levelVal(levelNow(find(a)));
+  const lvB = levelVal(levelNow(find(b)));
   return {
     eloDiff: Math.round(eA - eB),
     h2h: { aw, bw, d, n: h2h.length },

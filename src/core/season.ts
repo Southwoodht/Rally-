@@ -42,10 +42,10 @@ export function computeSeasonSummary(playerId: string, players: any[], matches: 
   const player = byId[playerId];
   const wins = bouts.filter((m) => resultFor(m) === "W").map((m) => {
     const oid = oppIdOf(m);
-    const oppLv = levelVal(levelAt(byId[oid], m.date)) ?? 0;
-    const myLv = levelVal(levelAt(player, m.date)) ?? 0;
-    const upset = Math.max(0, oppLv - myLv);
-    return { oid, match: m, q: (oppLv + upset) * 1000 + (yearStats.elo[oid] ?? 0) };
+    const oppLv = levelVal(levelAt(byId[oid], m.date));
+    const myLv = levelVal(levelAt(player, m.date));
+    const lvTerm = oppLv == null || myLv == null ? 0 : oppLv + Math.max(0, oppLv - myLv);
+    return { oid, match: m, q: lvTerm * 1000 + (yearStats.elo[oid] ?? 0) };
   });
   const biggestWin = wins.length ? [...wins].sort((a, b) => b.q - a.q)[0] : null;
 

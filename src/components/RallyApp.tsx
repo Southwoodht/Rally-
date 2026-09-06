@@ -20,6 +20,7 @@ import { Friends } from "@/components/social/Friends";
 import { LegacyProfile } from "@/components/profile/LegacyProfile";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
+import { LevelRepair } from "@/components/settings/LevelRepair";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { MessengerBird } from "@/components/ui/MessengerBird";
 import { Messages } from "@/components/social/Messages";
@@ -567,6 +568,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
     setOnboarded(true); persistSettings({ onboarded: true });
   };
+  // How many active players nobody has recorded a level history for. Their
+  // matches count flat, so this is a number worth carrying into the menu.
+  const missingLevelHistory = players.filter((p) => !p.inactive && !(p.levelHistory && p.levelHistory.length)).length;
   const pendingForMe = matches.filter((m) => m.status === "pending" && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).length;
   const homeData = (() => {
     if (!meId) return null;
@@ -729,6 +733,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
         {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} />}
+        {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab("profile")} />}
+        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
@@ -752,6 +758,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><MessengerBird size={18} flap={unreadMsgs > 0} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span>{!isClubAdmin && <span style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", color: MUTED }}>set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
             </div>

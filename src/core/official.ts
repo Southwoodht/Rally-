@@ -16,8 +16,10 @@ export function computeOfficial(players, matches, wdl) {
   const qual = {}; const winQuality = {}; players.forEach((p) => { qual[p.id] = 0; winQuality[p.id] = []; });
   matches.filter((m) => m.status !== "pending" && m.winner !== "draw").forEach((m) => {
     const wid = m.winner === "p1" ? m.p1 : m.p2, lid = m.winner === "p1" ? m.p2 : m.p1;
-    const oppLv = levelVal(levelAt(byId[lid], m.date)) ?? 0;
-    if (qual[wid] != null) { const q = 1 + oppLv / WIN_QUALITY_DIVISOR; qual[wid] += q; winQuality[wid].push(q); }
+    // Quality 1 for an opponent with no recorded level: the win counts, the
+    // level term doesn't move it either way.
+    const oppLv = levelVal(levelAt(byId[lid], m.date));
+    if (qual[wid] != null) { const q = oppLv == null ? 1 : 1 + oppLv / WIN_QUALITY_DIVISOR; qual[wid] += q; winQuality[wid].push(q); }
   });
   const score = {};
   players.forEach((p) => {

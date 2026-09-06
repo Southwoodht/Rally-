@@ -3,7 +3,7 @@ import React, { useState, useMemo } from "react";
 import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { computeStats } from "@/core/elo";
-import { levelAt, levelVal } from "@/core/levels";
+import { levelAt, levelNow, levelVal } from "@/core/levels";
 import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/core/predict";
 import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
@@ -41,7 +41,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     conf.forEach((m) => { if (res(m) === "W") run.push(m); else { if (run.length) runs.push(run); run = []; } });
     if (run.length) runs.push(run);
     const best = runs.reduce((mx, r) => Math.max(mx, r.length), 0);
-    const wins = conf.filter((m) => res(m) === "W").map((m) => { const o = opp(m); const oppLv = levelVal(levelAt(byId[o], m.date)) ?? 0; const myLv = levelVal(levelAt(byId[pid], m.date)) ?? 0; const upset = Math.max(0, oppLv - myLv); return { oid: o, lv: (oppLv + upset) * 1000 + ((elo && elo[o]) || 0), yr: new Date(m.date).getFullYear() }; });
+    const wins = conf.filter((m) => res(m) === "W").map((m) => { const o = opp(m); const oppLv = levelVal(levelAt(byId[o], m.date)); const myLv = levelVal(levelAt(byId[pid], m.date)); const lvTerm = oppLv == null || myLv == null ? 0 : oppLv + Math.max(0, oppLv - myLv); return { oid: o, lv: lvTerm * 1000 + ((elo && elo[o]) || 0), yr: new Date(m.date).getFullYear() }; });
     const top3 = [...wins].sort((x, y) => y.lv - x.lv).slice(0, 3);
     const h2hMap = {};
     conf.forEach((m) => { const o = opp(m); if (!h2hMap[o]) h2hMap[o] = { w: 0, d: 0, l: 0 }; const r = res(m); if (r === "W") h2hMap[o].w++; else if (r === "L") h2hMap[o].l++; else h2hMap[o].d++; });
@@ -161,7 +161,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             {([[sa, 0], [sb, 1]] as any[]).map(([s, i]: any) => {
               const Line = ({ e }: any) => {
                 const o = wdlS[e.oid] || { w: 0, d: 0, l: 0, gp: 0 };
-                const lvl = levelAt(byId[e.oid], Date.now());
+                const lvl = levelNow(byId[e.oid]);
                 return (
                   <button onClick={() => onOpen && onOpen(e.oid)} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", textAlign: i ? "right" : "left" }}>
                     <div style={{ display: "flex", flexDirection: i ? "row-reverse" : "row", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>

@@ -26,29 +26,27 @@ export const yearOf = (v: any): number | null => (v == null ? null : typeof v ==
 // now has.
 export const startIndex = (v: any): number => monthIndex(v, false);
 
+/**
+ * What somebody's level was on a given date, or **null** if nobody recorded
+ * one covering it.
+ *
+ * It used to fall back to their level today when they had no history at all,
+ * and that fallback was load-bearing in the worst way: fourteen of
+ * Seacourt's twenty-one players have no history, so twenty-six of Sam's
+ * forty-four matches were being graded against a level nobody ever claimed
+ * for the year they were played. Worse, the fallback used the *current*
+ * claim, so promoting somebody today silently reached back and rewrote what
+ * their 2019 wins had been worth.
+ *
+ * Null is a real answer — "not recorded" — and every caller handles it
+ * explicitly. Nothing may quietly substitute a number for it. In particular
+ * `?? 0` is not handling it: zero is Beginner/Low, a claim in its own right
+ * and a considerably stronger one than saying nothing.
+ *
+ * For "what are they now", which is a different question and has a real
+ * answer for everybody, use levelNow.
+ */
 export function levelAt(player, ts) {
-  if (player && player.levelHistory && player.levelHistory.length) {
-    const d = new Date(ts);
-    const at = d.getFullYear() * 12 + d.getMonth();
-    const per = player.levelHistory.find((p) => at >= monthIndex(p.from, false) && at <= monthIndex(p.to, true));
-    return per ? { cat: per.cat, sub: per.sub } : null;
-  }
-  return player ? (player.level || null) : null;
-}
-
-// levelAt with the fallback removed, for anywhere that must not guess.
-//
-// levelAt returns today's level when a player has no history, which is the
-// right answer for the ranking maths — a rating has to produce a number for
-// everybody. It is the wrong answer for the profile form bars, where the
-// height claims to be "their level on the day": fourteen of Seacourt's
-// twenty-one players have no history at all, so that claim would be false
-// two thirds of the time and would silently redraw somebody's 2019 form the
-// day an opponent got promoted.
-//
-// Null here means "not recorded", and callers are expected to show that
-// rather than fill it in.
-export function levelAtRecorded(player, ts) {
   if (!player || !player.levelHistory || !player.levelHistory.length) return null;
   const d = new Date(ts);
   const at = d.getFullYear() * 12 + d.getMonth();
@@ -56,4 +54,43 @@ export function levelAtRecorded(player, ts) {
   return per ? { cat: per.cat, sub: per.sub } : null;
 }
 
+/**
+ * Their level today — the dropdown they picked, not the timeline.
+ *
+ * A prediction about a match nobody has played yet, or a sort of who is
+ * strongest right now, is asking about the present, and the present is the
+ * one date the current claim is actually evidence for. These call sites read
+ * as levelAt(player, Date.now()) and were never really date queries at all.
+ */
+export const levelNow = (player) => (player ? (player.level || null) : null);
+
 export const isSetUp = (p) => !!(p && p.levelHistory && p.levelHistory.length);
+
+// A month index back into a "YYYY-MM" boundary.
+const monthLabel = (i: number): string => {
+  const y = Math.floor(i / 12), m = (i % 12) + 1;
+  return y + "-" + String(m).padStart(2, "0");
+};
+
+/**
+ * Turn a list of "this level, effective from here" entries into the
+ * from/to periods levelAt reads.
+ *
+ * People know when they moved up. They do not know, and should not have to
+ * say, when the previous level ended — it ended when the next one started,
+ * and asking twice is how you get a timeline with a hole in it that reads
+ * as "not recorded" for the months nobody thought about. So the editor
+ * collects starts only and the ends are derived here: each period runs to
+ * the month before the next one begins, and the last runs to null, meaning
+ * now.
+ *
+ * Entries arrive in any order and come back sorted.
+ */
+export function sealTimeline(periods: any[]): any[] {
+  const sorted = [...(periods || [])].sort((a, b) => startIndex(a.from) - startIndex(b.from));
+  return sorted.map((p, i) => {
+    const next = sorted[i + 1];
+    if (!next) return { ...p, to: null };
+    return { ...p, to: monthLabel(startIndex(next.from) - 1) };
+  });
+}
