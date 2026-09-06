@@ -625,8 +625,24 @@ beat. Reversing Mike's single 2019 win over Sam drops him from 9.37 to 6.04
 and out of the top four. Sam is happy with the order because he knows
 independently that Hugh and Mike are the best two — they have Seacourt
 trophies — but **nothing in the data justifies the confidence the layout
-implies**. The fix discussed and not built is a marker on the row, not a
-change to the maths.
+implies**.
+
+**Fixed on 2026-09-06, and not by changing the maths.** Provisional players
+are taken out of the ranked list entirely and given their own group at the
+foot of the screen, with a dash instead of a place and a "3 played" count.
+The old screen ranked them 1 and 2 *while labelling them provisional*, and
+both of those cannot be true. `computeRatings` still reads every one of their
+results — the ordering of everybody else is untouched — but a place number is
+a claim about where somebody stands, and `PROVISIONAL_GAMES = 10` is where
+this app is willing to make it. Zaach is now first, which is what the data
+actually supports.
+
+The threshold is **10 matches, not 5**; copy saying otherwise is wrong. And
+the sort key is the network rating: rows sort on `score`, which
+`withNetworkRating` *replaces* with `computeRatings(...) * 100` whenever
+`global_edges()` exists. The screen now prints that rating in a labelled
+column, because an order nobody can derive from what is on screen reads as
+arbitrary — the W–D–L beside it genuinely does not imply it.
 
 ---
 

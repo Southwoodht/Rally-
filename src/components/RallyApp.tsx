@@ -744,8 +744,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </Home>
         )}
         {tab === "fixtures" && feed}
-        {tab === "global" && <SubHeader title="Global" onBack={() => setTab("ladder")} />}
-        {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} />}
+        {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} onBack={() => setTab("ladder")} />}
         {/* Back to wherever you came from: the Table if a row sent you here,
             the profile menu otherwise. */}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
