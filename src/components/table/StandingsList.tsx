@@ -111,7 +111,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
       </div>
       {p.form && p.form.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <FormDots form={p.form} ink={FEED_LIME_INK} />
+          <FormDots form={p.form} ink={FEED_LIME_INK} tone="ink" />
         </div>
       )}
     </div>
@@ -156,6 +156,11 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
           <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statLineOf(p)}
           </div>
+          {p.form && p.form.length > 0 && (
+            <div style={{ marginTop: 5 }}>
+              <FormDots form={p.form} size={7} />
+            </div>
+          )}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <StatNumeral size={24} tone={played ? "hi" : "mid"} style={{ letterSpacing: "-0.03em" }}>{played ? display : "–"}</StatNumeral>

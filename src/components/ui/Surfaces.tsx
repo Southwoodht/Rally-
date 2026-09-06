@@ -6,7 +6,7 @@ import { shortNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_DEEP, FEED_DOWN, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD,
   FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_TILE_RADIUS,
-  FEED_UP, body, tabular, tight,
+  FEED_UP, DOT_DRAW, DOT_LOSS, DOT_WIN, body, tabular, tight,
 } from "@/lib/theme";
 
 // The scoreboard primitives, shared by the newsfeed cards and by the Table
@@ -157,9 +157,26 @@ export type FormResult = "W" | "D" | "L";
  * Fewer than five results renders fewer dots, left aligned. No empty slots:
  * a placeholder for a match nobody has played is a promise, not a fact.
  */
-export function FormDots({ form, size = 10, ink }: { form: FormResult[]; size?: number; ink?: string }) {
+const DOT_COLOUR = { W: DOT_WIN, D: DOT_DRAW, L: DOT_LOSS };
+
+export function FormDots({ form, size = 10, ink, tone = "colour" }: {
+  form: FormResult[];
+  size?: number;
+  /** The single ink to draw in when tone is "ink". */
+  ink?: string;
+  /**
+   * "colour" — green won, grey drew, red lost. Three filled dots, readable
+   * at a glance and at a distance, for rows on a dark surface.
+   *
+   * "ink" — one colour, shape carrying the outcome, for the lime card where
+   * a green dot would vanish into the background it sits on. Same data, and
+   * the only reason there are two is that a palette which works on a dark
+   * row cannot work on a bright one.
+   */
+  tone?: "colour" | "ink";
+}) {
   if (!form || !form.length) return null;
-  const color = ink || FEED_TEXT_HI;
+  const colour = ink || FEED_TEXT_HI;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
       {form.slice(-5).map((r, i) => (
@@ -168,9 +185,9 @@ export function FormDots({ form, size = 10, ink }: { form: FormResult[]; size?: 
           aria-label={r === "W" ? "win" : r === "D" ? "draw" : "loss"}
           style={{
             width: size, height: size, borderRadius: size / 2, display: "block", flexShrink: 0,
-            background: r === "D" ? "transparent" : color,
-            opacity: r === "L" ? 0.25 : 1,
-            border: r === "D" ? "1.5px solid " + color : undefined,
+            background: tone === "ink" ? (r === "D" ? "transparent" : colour) : DOT_COLOUR[r],
+            opacity: tone === "ink" && r === "L" ? 0.25 : 1,
+            border: tone === "ink" && r === "D" ? "1.5px solid " + colour : undefined,
             boxSizing: "border-box",
           }}
         />

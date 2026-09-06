@@ -153,6 +153,15 @@ export const FEED_THEY_LEAD = "#F09595";
 // The same idea at bar and border weight, where a text colour would glare.
 export const FEED_THEY_LEAD_DIM = "#7E4A4A";
 
+// Outcome dots. Deliberately louder than the bar colours: a segment of a
+// split bar is read against its neighbours, but a dot in a row of five has
+// to say win, draw or loss on its own.
+export const DOT_WIN = BALL;
+export const DOT_DRAW = MUTED;
+// The same red as a rank drop, and for the same reason — both mean it went
+// the wrong way.
+export const DOT_LOSS = FEED_DOWN;
+
 // Quieter than FEED_TEXT_LOW, for things deliberately switched off — a
 // locked achievement, a disabled row. Not for anything a reader has to
 // take in, which is why it is allowed below the contrast floor the other
