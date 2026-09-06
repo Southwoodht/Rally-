@@ -8,6 +8,15 @@ import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/co
 import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput, mono } from "@/lib/theme";
+import {
+  DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_RAISED,
+  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, tabular,
+} from "@/lib/theme";
+
+const sectionLabel: React.CSSProperties = {
+  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
+  textTransform: "uppercase", letterSpacing: 0.8,
+};
 
 export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreatePlayer, initialA, initialB }: any) {
   // Seeded when you arrive from a Table row: comparing an empty pair with
@@ -44,9 +53,9 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   };
   const Row = ({ label, av, bv, hiA, hiB }: any) => (
     <div style={{ display: "flex", alignItems: "center", padding: "9px 0", borderTop: "none" }}>
-      <span style={{ flex: 1, fontFamily: mono, fontSize: 12.5, fontWeight: 700, color: hiA ? BALL : CHALK, textAlign: "left" }}>{av}</span>
-      <span style={{ width: 108, textAlign: "center", fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED }}>{label}</span>
-      <span style={{ flex: 1, fontFamily: mono, fontSize: 12.5, fontWeight: 700, color: hiB ? BALL : CHALK, textAlign: "right" }}>{bv}</span>
+      <span style={{ ...tabular, flex: 1, fontFamily: body, fontSize: 14, fontWeight: 500, color: hiA ? FEED_LIME : FEED_TEXT_HI, textAlign: "left" }}>{av}</span>
+      <span style={{ width: 118, textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID }}>{label}</span>
+      <span style={{ ...tabular, flex: 1, fontFamily: body, fontSize: 14, fontWeight: 500, color: hiB ? FEED_LIME : FEED_TEXT_HI, textAlign: "right" }}>{bv}</span>
     </div>
   );
   const pa = byId[a], pb = byId[b];
@@ -83,8 +92,8 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     return `Rally favours ${favoredName} — ${top.join(" and ")}.`;
   }, [a, b, scoped, eloS, players, pctA]);
   return (
-    <div style={card}>
-      <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 12 }}>Pick any two players — works even if they've never played each other.</div>
+    <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 14, lineHeight: 1.45 }}>Pick any two players — works even if they've never played each other.</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <div style={{ flex: 1 }}><PlayerPicker value={a} onChange={setA} players={players} exclude={b} placeholder="Player A" onCreatePlayer={onCreatePlayer} /></div>
         <div style={{ flex: 1 }}><PlayerPicker value={b} onChange={setB} players={players} exclude={a} placeholder="Player B" onCreatePlayer={onCreatePlayer} /></div>
@@ -102,29 +111,29 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
       {a && b ? (
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{nm(a)}</span>
-            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{nm(b)}</span>
+            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 500, color: FEED_TEXT_HI, letterSpacing: "-0.02em" }}>{nm(a)}</span>
+            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 500, color: FEED_TEXT_HI, letterSpacing: "-0.02em" }}>{nm(b)}</span>
           </div>
           {rivalry && (() => {
             const leader = rivalry.w > rivalry.l ? nm(a) : rivalry.l > rivalry.w ? nm(b) : null;
             const leadRec = rivalry.w >= rivalry.l ? `${rivalry.w}-${rivalry.d}-${rivalry.l}` : `${rivalry.l}-${rivalry.d}-${rivalry.w}`;
             const streakName = rivalry.streak.holder === "me" ? nm(a) : rivalry.streak.holder === "opp" ? nm(b) : null;
             return (
-              <div style={{ background: PANEL2, border: "1px solid " + BALL, borderRadius: 12, padding: "10px 12px", marginBottom: 14 }}>
-                <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 4 }}>🔥 Rivalry · {rivalry.total} matches</div>
-                <div style={{ fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 2 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
-                <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
+              <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "12px 14px", marginBottom: 16 }}>
+                <div style={{ ...sectionLabel, color: FEED_LIME, marginBottom: 5 }}>Rivalry · {rivalry.total} matches</div>
+                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, marginBottom: 3 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
+                <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
               </div>
             );
           })()}
-          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: mono, fontSize: 15, fontWeight: 700, marginBottom: 4 }}><span style={{ color: pctA >= 50 ? BALL : MUTED }}>{pctA}%</span><span style={{ fontSize: 9, color: MUTED, letterSpacing: 1, alignSelf: "center" }}>PREDICTED WIN</span><span style={{ color: pctA < 50 ? BALL : MUTED }}>{100 - pctA}%</span></div>
-          <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: PANEL2, marginBottom: 10 }}><div style={{ width: pctA + "%", background: BALL }} /><div style={{ width: (100 - pctA) + "%", background: MUTED }} /></div>
+          <div style={{ ...tabular, display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: body, fontSize: 16, fontWeight: 500, marginBottom: 6 }}><span style={{ color: pctA >= 50 ? FEED_LIME : FEED_TEXT_MID }}>{pctA}%</span><span style={{ fontSize: 11.5, fontWeight: 400, color: FEED_TEXT_LOW }}>predicted win</span><span style={{ color: pctA < 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - pctA}%</span></div>
+          <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: FEED_RAISED, marginBottom: 12 }}><div style={{ width: pctA + "%", background: FEED_LIME }} /><div style={{ width: (100 - pctA) + "%", background: DOT_LOSS }} /></div>
           {venue && (
-            <div style={{ fontFamily: body, fontSize: 12, color: venuePrediction?.confident ? BALL : MUTED, marginBottom: 12 }}>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, marginBottom: 14, lineHeight: 1.45 }}>
               {venuePrediction?.confident ? `Factoring in results at ${venue}.` : `Not enough games at ${venue} yet to say — showing the overall prediction.`}
             </div>
           )}
-          {explanation && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.4, marginBottom: 16 }}>{explanation}</div>}
+          {explanation && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 18 }}>{explanation}</div>}
           <Row label="Head to head" av={aw + "-" + d + "-" + bw} bv={bw + "-" + d + "-" + aw} hiA={aw > bw} hiB={bw > aw} />
           <Row label="Record" av={ra.w + "-" + ra.d + "-" + ra.l} bv={rb.w + "-" + rb.d + "-" + rb.l} />
           <Row label="Win rate" av={ra.gp ? Math.round(winPct(ra) * 100) + "%" : "–"} bv={rb.gp ? Math.round(winPct(rb) * 100) + "%" : "–"} hiA={ra.gp && rb.gp && winPct(ra) > winPct(rb)} hiB={ra.gp && rb.gp && winPct(rb) > winPct(ra)} />
@@ -140,14 +149,14 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
           <div style={{ display: "flex", gap: 0, marginTop: 16 }}>
             {([[sa, a], [sb, b]] as any[]).map(([s, pid]: any, i: number) => (
               <div key={i} style={{ flex: 1, minWidth: 0, paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "1px solid " + LINE : "none" }}>
-                <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6, textAlign: i ? "right" : "left" }}>Best wins</div>
+                <div style={{ ...sectionLabel, marginBottom: 7, textAlign: i ? "right" : "left" }}>Best wins</div>
                 {s.top3.length ? s.top3.map((w, j) => (
-                  <div key={j} style={{ fontFamily: body, fontSize: 12, color: CHALK, padding: "3px 0", textAlign: i ? "right" : "left" }}>{["🥇", "🥈", "🥉"][j]} {nm(w.oid)} <span style={{ color: MUTED }}>{w.yr}</span></div>
-                )) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED, textAlign: i ? "right" : "left" }}>None yet</div>}
+                  <div key={j} style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_HI, padding: "4px 0", textAlign: i ? "right" : "left" }}><span style={{ ...tabular, color: FEED_TEXT_LOW }}>{j + 1}</span>  {nm(w.oid)} <span style={{ ...tabular, color: FEED_TEXT_MID }}>{w.yr}</span></div>
+                )) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, textAlign: i ? "right" : "left" }}>None yet</div>}
               </div>
             ))}
           </div>
-          <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 20, lineHeight: 1.4 }}>Yellow = their record against that player. Grey = that player's level and overall record.</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 22, lineHeight: 1.5, borderTop: "0.5px solid " + FEED_HAIRLINE, paddingTop: 12 }}>Yellow = their record against that player. Grey = that player's level and overall record.</div>
           <div style={{ display: "flex", gap: 0, marginTop: 8 }}>
             {([[sa, 0], [sb, 1]] as any[]).map(([s, i]: any) => {
               const Line = ({ e }: any) => {
