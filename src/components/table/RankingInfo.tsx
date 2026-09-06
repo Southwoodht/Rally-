@@ -4,7 +4,7 @@ import { BALL, CHALK, COURT, MUTED, body } from "@/lib/theme";
 
 export function RankingInfo({ onClose }: any) {
   const items = [
-    ["Official", "The headline table. Built from the average strength of your wins, your win rate, and how much you play. Beating strong players matters far more than piling up easy ones — but you still need a body of work, so two lucky wins won't put you top."],
+    ["Official", "The headline table. It takes the average strength of your five best wins, multiplies that by your win rate twice over, then by how much you have played. The win rate counting twice is the part that decides it: somebody whose wins are stronger than yours will still finish below you if they lose more often than they win. Quality separates people on similar records — it does not rescue a losing one. And two good wins will not put you top, because the activity term wants a body of work."],
     ["ELO", "A pure skill rating, starting at 0. Beating someone stronger than you earns a lot; losing to someone stronger costs almost nothing. It answers 'how good are you', ignoring how often you play."],
     ["Record", "The simple one — your win rate (share of games won, a draw counts as half), nudged by how strong your opponents were and how much you've played."],
     ["Form", "Just your last 5 results — a win scores +1, a loss −1, a draw 0. Shows who's hot right now, regardless of overall record."],
