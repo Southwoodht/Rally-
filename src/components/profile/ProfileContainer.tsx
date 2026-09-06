@@ -120,6 +120,7 @@ export function ProfileContainer({
         me: player, them: byId[v.oid],
         w: v.w, d: v.d, l: v.l, recent: v.recent, total: v.total,
         lastPlayed: shortDate(v.lastMeeting),
+        onOpen,
       }));
 
     const bestWins = played
@@ -197,6 +198,8 @@ export function ProfileContainer({
         matchId: m.id,
         outcome: outcome(m),
         opponent: fullNameOf(o),
+        opponentId: o?.id,
+        onOpenPlayer: onOpen,
         date: shortDate(m.date),
         score: m.score || null,
         delta: pending || !d ? null : Math.round(d[pid] * 10) / 10,
@@ -220,7 +223,7 @@ export function ProfileContainer({
       gap, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
       historyTotal: mine.length, meta,
     };
-  }, [pid, players, matches, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpenMatch, onProposeEdit]);
+  }, [pid, players, matches, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit]);
 
   if (!player || !data) return null;
 

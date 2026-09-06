@@ -6,7 +6,7 @@ import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps 
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { OpponentRecords, type OpponentRecord } from "@/components/profile/OpponentRecords";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
-import { RecordCard, type RecordCardProps } from "@/components/profile/RecordCard";
+import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
 import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
@@ -74,8 +74,15 @@ export function ProfileView(p: ProfileViewProps) {
   // every row, and how many of them are on screen is nobody else's business.
   const [allHistory, setAllHistory] = useState(false);
   const [allOpponents, setAllOpponents] = useState(false);
+  // Tapping "28 won" asks a question of the list below, so the answer goes
+  // there rather than opening a second list somewhere else.
+  const [filter, setFilter] = useState<OutcomeFilter>(null);
   const history = p.history || [];
-  const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
+  const filtered = filter ? history.filter((m) => m.outcome === filter) : history;
+  // A filtered list is the answer to a question, so it is shown whole. An
+  // unfiltered one is a preview of a long history and is not.
+  const shownHistory = filter || allHistory ? filtered : filtered.slice(0, HISTORY_PREVIEW);
+  const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
 
   return (
     <div>
@@ -87,7 +94,7 @@ export function ProfileView(p: ProfileViewProps) {
         </div>
       )}
 
-      <RecordCard {...p.record} />
+      <RecordCard {...p.record} onFilter={setFilter} activeFilter={filter} />
 
       {p.gap && <div style={{ marginTop: 12 }}><GapInsight {...p.gap} /></div>}
 
@@ -134,13 +141,15 @@ export function ProfileView(p: ProfileViewProps) {
 
       {history.length > 0 && (
         <Section
-          title="Match history"
+          title={filter ? FILTER_TITLE[filter] : "Match history"}
           right={
-            allHistory
-              ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
-              : history.length > HISTORY_PREVIEW
-                ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
-                : undefined
+            filter
+              ? <Link label="Show all" onClick={() => setFilter(null)} arrow={false} />
+              : allHistory
+                ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
+                : history.length > HISTORY_PREVIEW
+                  ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
+                  : undefined
           }
         >
           {/* Editing is an action on your own result, so it does not travel

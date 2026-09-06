@@ -26,8 +26,15 @@ export interface RankingRow {
   emphasis?: boolean;
 }
 
+export type OutcomeFilter = "W" | "D" | "L" | null;
+
 export interface RecordCardProps {
   record: { w: number; d: number; l: number };
+  /** Tapping a tally filters the match list below to those results. The old
+   *  profile did this and it is the obvious question to ask of a number:
+   *  28 what, exactly? */
+  onFilter?: (outcome: OutcomeFilter) => void;
+  activeFilter?: OutcomeFilter;
   form?: FormBarItem[];
   /** 0-100, already rounded. */
   winRate: number;
@@ -38,25 +45,39 @@ export interface RecordCardProps {
 
 const label: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID };
 
-function Tally({ n, colour, caption }: { n: number; colour: string; caption: string }) {
-  return (
-    <div style={{ textAlign: "center" }}>
+function Tally({ n, colour, caption, onClick, active }: { n: number; colour: string; caption: string; onClick?: () => void; active?: boolean }) {
+  const inner = (
+    <>
       <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 46, lineHeight: 1, letterSpacing: "-0.05em", color: colour }}>{n}</div>
-      <div style={{ ...label, marginTop: 6 }}>{caption}</div>
-    </div>
+      <div style={{ ...label, marginTop: 6, color: active ? colour : FEED_TEXT_MID }}>{caption}</div>
+    </>
+  );
+  if (!onClick) return <div style={{ textAlign: "center" }}>{inner}</div>;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        textAlign: "center", background: "transparent", border: "none", padding: "0 4px 4px",
+        cursor: "pointer", borderBottom: "2px solid " + (active ? colour : "transparent"),
+      }}
+    >
+      {inner}
+    </button>
   );
 }
 
-export function RecordCard({ record, form, winRate, currentStreak, bestStreak, rankings }: RecordCardProps) {
+export function RecordCard({ record, form, winRate, currentStreak, bestStreak, rankings, onFilter, activeFilter }: RecordCardProps) {
+  const tap = (o: Exclude<OutcomeFilter, null>) =>
+    onFilter ? () => onFilter(activeFilter === o ? null : o) : undefined;
   return (
     <SurfaceCard radius={18} pad="18px 16px">
       {/* a — the record */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 10 }}>
-        <Tally n={record.w} colour={FEED_LIME} caption="won" />
+        <Tally n={record.w} colour={FEED_LIME} caption="won" onClick={tap("W")} active={activeFilter === "W"} />
         <span style={{ fontFamily: body, fontWeight: 400, fontSize: 34, lineHeight: "46px", color: DASH }}>–</span>
-        <Tally n={record.d} colour={FEED_TEXT_HI} caption="drawn" />
+        <Tally n={record.d} colour={FEED_TEXT_HI} caption="drawn" onClick={tap("D")} active={activeFilter === "D"} />
         <span style={{ fontFamily: body, fontWeight: 400, fontSize: 34, lineHeight: "46px", color: DASH }}>–</span>
-        <Tally n={record.l} colour={FEED_TEXT_MID} caption="lost" />
+        <Tally n={record.l} colour={FEED_TEXT_MID} caption="lost" onClick={tap("L")} active={activeFilter === "L"} />
       </div>
 
       {/* b — form */}

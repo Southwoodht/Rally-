@@ -47,9 +47,13 @@ function resolvePlayer(key: string, players: any[] | undefined) {
 function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
   const r: GlobalRow = row;
   const podium = place <= 3 ? PODIUM[place - 1] : null;
+  // A podium place held on a handful of matches is drawn lighter than one
+  // held on a career. It is still first; it is just not as certain, and the
+  // eye should get that before the caption does.
+  const thin = !!r.provisional;
 
   return (
-    <div style={{ borderLeft: podium ? "3px solid " + podium : "3px solid transparent" }}>
+    <div style={{ borderLeft: podium ? "3px solid " + podium : "3px solid transparent", opacity: thin && podium ? 0.82 : 1 }}>
       <div style={{ display: "flex", alignItems: "stretch", background: isMe ? PANEL2 : "transparent" }}>
         <button
           onClick={onOpenProfile || onToggle}
@@ -58,7 +62,7 @@ function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
             background: "transparent", border: "none", padding: "11px 4px 11px 12px", cursor: "pointer",
           }}
         >
-          <span style={{ fontFamily: mono, fontWeight: 700, fontSize: podium ? 15 : 13, color: podium || (place ? MUTED : LINE), width: 22, flexShrink: 0 }}>
+          <span style={{ fontFamily: mono, fontWeight: 700, fontSize: podium ? 15 : 13, color: podium || (place ? MUTED : LINE), width: 22, flexShrink: 0, opacity: thin ? 0.7 : 1 }}>
             {place ? place : "–"}
           </span>
           <Face row={r} ring={podium || undefined} />
@@ -70,7 +74,7 @@ function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
               {r.level && <LevelBadge level={r.level} tiny />}
             </span>
             <span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 2 }}>
-              {r.provisional ? "Provisional — too few games to place yet" : r.leagues > 1 ? r.leagues + " leagues" : r.claimed ? "1 league" : "not claimed — our leagues only"}
+              {r.provisional ? "Provisional — " + r.gp + (r.gp === 1 ? " match" : " matches") : r.leagues > 1 ? r.leagues + " leagues" : r.claimed ? "1 league" : "not claimed — our leagues only"}
             </span>
           </span>
           <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 13.5, color: CHALK, flexShrink: 0 }}>{rec(r.w, r.d, r.l)}</span>
