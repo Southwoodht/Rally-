@@ -78,11 +78,12 @@ export function ProfileView(p: ProfileViewProps) {
   // there rather than opening a second list somewhere else.
   const [filter, setFilter] = useState<OutcomeFilter>(null);
   const history = p.history || [];
-  const filtered = filter ? history.filter((m) => m.outcome === filter) : history;
-  // A filtered list is the answer to a question, so it is shown whole. An
-  // unfiltered one is a preview of a long history and is not.
-  const shownHistory = filter || allHistory ? filtered : filtered.slice(0, HISTORY_PREVIEW);
+  const filtered = filter ? history.filter((m) => m.outcome === filter) : [];
+  const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
   const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
+  // Editing belongs to the owner of the result, wherever the list appears.
+  const forViewer = (list: MatchHistoryItem[]) =>
+    isSelf ? list : list.map((m) => ({ ...m, onEdit: undefined }));
 
   return (
     <div>
@@ -95,6 +96,18 @@ export function ProfileView(p: ProfileViewProps) {
       )}
 
       <RecordCard {...p.record} onFilter={setFilter} activeFilter={filter} />
+
+      {filter && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI }}>
+              {FILTER_TITLE[filter]} · {filtered.length}
+            </span>
+            <Link label="Close" onClick={() => setFilter(null)} arrow={false} />
+          </div>
+          <MatchHistoryList items={forViewer(filtered)} />
+        </div>
+      )}
 
       {p.gap && <div style={{ marginTop: 12 }}><GapInsight {...p.gap} /></div>}
 
@@ -141,20 +154,18 @@ export function ProfileView(p: ProfileViewProps) {
 
       {history.length > 0 && (
         <Section
-          title={filter ? FILTER_TITLE[filter] : "Match history"}
+          title="Match history"
           right={
-            filter
-              ? <Link label="Show all" onClick={() => setFilter(null)} arrow={false} />
-              : allHistory
-                ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
-                : history.length > HISTORY_PREVIEW
-                  ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
-                  : undefined
+            allHistory
+              ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
+              : history.length > HISTORY_PREVIEW
+                ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
+                : undefined
           }
         >
           {/* Editing is an action on your own result, so it does not travel
               with the list when somebody else is reading it. */}
-          <MatchHistoryList items={isSelf ? shownHistory : shownHistory.map((m) => ({ ...m, onEdit: undefined }))} />
+          <MatchHistoryList items={forViewer(shownHistory)} />
         </Section>
       )}
 
