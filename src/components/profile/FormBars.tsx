@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { FEED_LIME, FEED_TEXT_MID, body } from "@/lib/theme";
+import { FEED_LIME, FEED_LOSS, FEED_TEXT_MID, body } from "@/lib/theme";
 
 // The last five results, with height carrying who they were against.
 //
@@ -12,7 +12,6 @@ import { FEED_LIME, FEED_TEXT_MID, body } from "@/lib/theme";
 // Form that redraws itself when an old opponent gets promoted is not form,
 // it is a rolling reinterpretation of the past.
 
-const EMPTY = "#2F5B47";
 const ROW_HEIGHT = 30;
 const STUB = 3;
 
@@ -34,7 +33,7 @@ export interface FormBarItem {
 }
 
 const fillFor = (outcome: FormBarItem["outcome"]) =>
-  outcome === "W" ? FEED_LIME : outcome === "L" ? EMPTY : "transparent";
+  outcome === "W" ? FEED_LIME : outcome === "L" ? FEED_LOSS : "transparent";
 
 function Bar({ item }: { item: FormBarItem }) {
   const known = item.height !== null && item.height !== undefined;

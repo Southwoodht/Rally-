@@ -137,6 +137,19 @@ export const FEED_DOWN = "#E2705F";
 // competing with the numbers sitting on top of it.
 export const FEED_BAR = "rgba(217, 232, 75, 0.16)";
 
+// Outcome colours, for anywhere a win, a draw and a loss have to be told
+// apart as quantities rather than as text — split bars, form bars, dots.
+// FEED_LOSS is deliberately quiet: a loss is a fact, not an alarm, and CLAY
+// would read as an error state.
+export const FEED_WIN = BALL;
+export const FEED_DRAW = "#4E7A63";
+export const FEED_LOSS = "#2F5B47";
+
+// The other person leading. Not CLAY, which means "clay court" in this app,
+// and not the movement red, which means "you dropped" — this is somebody
+// else being ahead, which is neither a fault nor a fall.
+export const FEED_THEY_LEAD = "#F09595";
+
 export const FEED_RADIUS = 20;
 export const FEED_TILE_RADIUS = 14;
 export const FEED_PAD = 18;
