@@ -76,7 +76,13 @@ Boot path: `page.tsx` → `AuthGate` (session / setup / password recovery) →
   current **0–17, 18-point scale**. `levelAt(player, ts)` reads
   `levelHistory` so an old match is judged on who the opponent was *then*,
   never today's claim. Timeline boundaries are either a bare year (legacy)
-  or `"YYYY-MM"`; `monthIndex()` normalises both.
+  or `"YYYY-MM"`; `monthIndex()` normalises both. `sealTimeline()` turns a
+  list of starts into from/to periods — the repair screen collects
+  "effective from" only, because people know when they moved up and not
+  when the old level stopped, and asking twice is how a timeline ends up
+  with a hole in it. `levelNow(player)` is the present-tense lookup: a
+  prediction about a match nobody has played is asking about today, which
+  is the one date the current claim is evidence for.
 - `elo.ts` — `computeStats(players, matches)` returns `{elo, wdl, form, deltas}`.
   Level-gap multiplier on the K-factor. Honours `initialElo`/`initialRecord`
   from onboarding.
@@ -119,12 +125,42 @@ the number lives; afterwards there is just the final rating, and answering
 "what was he worth in 2019" otherwise means replaying everything per
 question. Best wins are ranked on it.
 
-`levels.ts` has two lookups and the difference matters. `levelAt()` falls
-back to today's level when a player has no history, which is right for the
-ranking — a rating must produce a number for everybody. `levelAtRecorded()`
-returns null instead, for anywhere that claims to show "their level on the
-day": **fourteen of Seacourt's twenty-one players have no level history at
-all**, so the fallback would be a fabrication two thirds of the time.
+**`levelAt()` returns null when nothing was recorded, and that is
+load-bearing.** It used to fall back to the player's level today, which
+reached much further than it looked: fourteen of Seacourt's twenty-one
+players have no history, so twenty-six of Sam's forty-four matches were
+graded against a level nobody ever claimed for the year they were played —
+and because the fallback read the *current* claim, promoting somebody today
+silently rewrote what their 2019 wins had been worth. `levelAtRecorded()`
+was the no-fallback variant and has merged into `levelAt`.
+
+**`?? 0` is not handling that null.** Zero is Beginner/Low, a claim in its
+own right and a much stronger one than saying nothing; seven call sites were
+doing exactly that, so removing the fallback on its own would have quietly
+regraded fourteen players as beginners. Sam's ruling on 2026-09-06 is **no
+adjustment** — with a level missing the level term drops out rather than
+being guessed. `elo.ts` keeps its multiplier at 1 (a gap needs two ends),
+`official.ts` uses opponent quality 1, best-wins ordering in `legacy`,
+`season` and Compare falls back to Elo alone, and `events.tsx` emits no
+upset event because there is no verifiable gap. Three call sites were never
+date queries at all — predict and Compare pass `Date.now()` — and they call
+`levelNow()` instead, unchanged in behaviour.
+
+Before/after is in the commit message for `befc7d2`, measured on the stale
+August snapshot so read the direction and not the magnitudes: Official's
+top three reorder and nothing else moves, while Elo moves a lot and the
+right way. Charlie Easey goes from **+92.2 to −31.9** on a 6-3-10 record,
+because he has no level at all and the old `?? 0` had been scoring him as a
+beginner beating his betters. **The app was rewarding having no level.**
+
+Known wobble, accepted: best wins order by `(level + upset) * 1000 + Elo`,
+so a recorded opponent outranks an unrecorded one whatever their Elo. It
+disappears as histories fill in, which is what the repair screen is for —
+**Profile → menu → Level history**, badged with how many active players
+still have none. Nothing caches a grade: no tier or colour is written by
+`leagueData.ts` or `storage.ts`, and both consumers are memos with
+`players` in the dependency list, so setting a history retroactively
+regrades every past match on the next render.
 
 ### Data access (`src/lib/`)
 
