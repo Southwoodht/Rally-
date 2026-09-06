@@ -36,4 +36,24 @@ export function levelAt(player, ts) {
   return player ? (player.level || null) : null;
 }
 
+// levelAt with the fallback removed, for anywhere that must not guess.
+//
+// levelAt returns today's level when a player has no history, which is the
+// right answer for the ranking maths — a rating has to produce a number for
+// everybody. It is the wrong answer for the profile form bars, where the
+// height claims to be "their level on the day": fourteen of Seacourt's
+// twenty-one players have no history at all, so that claim would be false
+// two thirds of the time and would silently redraw somebody's 2019 form the
+// day an opponent got promoted.
+//
+// Null here means "not recorded", and callers are expected to show that
+// rather than fill it in.
+export function levelAtRecorded(player, ts) {
+  if (!player || !player.levelHistory || !player.levelHistory.length) return null;
+  const d = new Date(ts);
+  const at = d.getFullYear() * 12 + d.getMonth();
+  const per = player.levelHistory.find((p) => at >= monthIndex(p.from, false) && at <= monthIndex(p.to, true));
+  return per ? { cat: per.cat, sub: per.sub } : null;
+}
+
 export const isSetUp = (p) => !!(p && p.levelHistory && p.levelHistory.length);
