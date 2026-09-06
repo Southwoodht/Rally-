@@ -3,7 +3,7 @@ import React from "react";
 import { ChevronDown, Settings, Star, StarHalf } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { starsForLevel } from "@/core/stars";
-import { shortNameOf } from "@/lib/format";
+import { fullNameOf } from "@/lib/format";
 import { FEED_CARD, FEED_LIME, FEED_LOSS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tight } from "@/lib/theme";
 
 // The top of the profile: whose it is, and how good they are.
@@ -97,7 +97,7 @@ export function ProfileHeader({
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ ...tight(22), fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {shortNameOf(player)}
+            {fullNameOf(player)}
           </div>
           {meta && (
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>

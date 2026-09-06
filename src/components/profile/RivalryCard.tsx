@@ -2,7 +2,7 @@
 import React from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { shortNameOf } from "@/lib/format";
+import { fullNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_DRAW, FEED_LIME, FEED_LOSS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID,
   FEED_THEY_LEAD, FEED_WIN, body, tabular,
@@ -90,7 +90,7 @@ export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOp
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 10 }}>
         <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>You</span>
         <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {shortNameOf(them)}
+          {fullNameOf(them)}
         </span>
       </div>
 

@@ -9,7 +9,7 @@ import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { TIER_HEIGHTS } from "@/core/stars";
 import { listApprovedTrophiesForPlayer } from "@/lib/trophies";
-import { fullNameOf, shortNameOf } from "@/lib/format";
+import { fullNameOf } from "@/lib/format";
 
 // Everything the profile needs, worked out from the league it belongs to.
 //
@@ -86,7 +86,7 @@ export function ProfileContainer({
       return {
         outcome: outcome(m),
         height: lv?.cat ? (TIER_HEIGHTS[lv.cat] ?? null) : null,
-        opponentName: shortNameOf(o),
+        opponentName: fullNameOf(o),
         levelLabel: lv?.cat ? lv.cat + " · " + lv.sub : undefined,
       };
     });
@@ -153,8 +153,8 @@ export function ProfileContainer({
       const places = (ranks.off[pid] ?? 0) - (ranks.off[above.id] ?? 0);
       gap = {
         headline: places === 1
-          ? "One place behind " + shortNameOf(above) + "."
-          : places + " places behind " + shortNameOf(above) + ".",
+          ? "One place behind " + fullNameOf(above) + "."
+          : places + " places behind " + fullNameOf(above) + ".",
         advice: "Beating higher-level players is the fastest way to close it.",
       };
     } else if (!isSelf && meId && h[meId]) {
@@ -163,9 +163,9 @@ export function ProfileContainer({
       // the player above them, which is their business.
       const x = h[meId];
       gap = {
-        headline: x.w === x.l ? "You are level with " + shortNameOf(player) + ", " + x.w + "–" + x.d + "–" + x.l + "."
-          : x.w > x.l ? "You lead " + shortNameOf(player) + " " + x.w + "–" + x.d + "–" + x.l + "."
-          : shortNameOf(player) + " leads you " + x.l + "–" + x.d + "–" + x.w + ".",
+        headline: x.w === x.l ? "You are level with " + fullNameOf(player) + ", " + x.w + "–" + x.d + "–" + x.l + "."
+          : x.w > x.l ? "You lead " + fullNameOf(player) + " " + x.w + "–" + x.d + "–" + x.l + "."
+          : fullNameOf(player) + " leads you " + x.l + "–" + x.d + "–" + x.w + ".",
         advice: "Across " + (x.w + x.d + x.l) + (x.w + x.d + x.l === 1 ? " meeting." : " meetings."),
       };
     }
@@ -196,7 +196,7 @@ export function ProfileContainer({
       return {
         matchId: m.id,
         outcome: outcome(m),
-        opponent: shortNameOf(o),
+        opponent: fullNameOf(o),
         date: shortDate(m.date),
         score: m.score || null,
         delta: pending || !d ? null : Math.round(d[pid] * 10) / 10,
@@ -260,7 +260,7 @@ export function ProfileContainer({
       historyTotal={data.historyTotal}
       settings={[
         { key: "friends", icon: "friends", label: "Friends", onClick: onFriends },
-        { key: "linked", icon: "linked", label: "Linked player", detail: shortNameOf(player), onClick: onLinkedPlayer },
+        { key: "linked", icon: "linked", label: "Linked player", detail: fullNameOf(player), onClick: onLinkedPlayer },
       ]}
       onOpenPlayer={onOpen}
       onOpenMatch={onOpenMatch}

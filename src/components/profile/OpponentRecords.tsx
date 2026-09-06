@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { shortNameOf } from "@/lib/format";
+import { fullNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_LIME, FEED_LOSS, FEED_TEXT_HI, FEED_TEXT_MID, FEED_THEY_LEAD,
   FEED_THEY_LEAD_DIM, body, tabular,
@@ -50,7 +50,7 @@ function Row({ r, accent, recordColour, onOpen, last }: any) {
     >
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {shortNameOf(r.player)}
+          {fullNameOf(r.player)}
         </span>
         {r.levelLabel && (
           <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{r.levelLabel}</span>
