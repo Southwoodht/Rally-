@@ -153,6 +153,12 @@ export const FEED_THEY_LEAD = "#F09595";
 // The same idea at bar and border weight, where a text colour would glare.
 export const FEED_THEY_LEAD_DIM = "#7E4A4A";
 
+// Quieter than FEED_TEXT_LOW, for things deliberately switched off — a
+// locked achievement, a disabled row. Not for anything a reader has to
+// take in, which is why it is allowed below the contrast floor the other
+// text tokens hold to.
+export const FEED_TEXT_DIM = "#5E7D6E";
+
 export const FEED_RADIUS = 20;
 export const FEED_TILE_RADIUS = 14;
 export const FEED_PAD = 18;
