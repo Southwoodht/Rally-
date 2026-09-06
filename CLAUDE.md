@@ -312,7 +312,19 @@ app: while a thread is pending only its starter can write to it.
   as something you can tap.
 - **No emoji as icons.** Draw an SVG in the app's own colours. A 🔔 renders
   as Apple's glossy 3D bell on iPhone and something else on Android, so it
-  never matches the app. See `Bell.tsx` and `MessengerBird.tsx`.
+  never matches the app. See `Bell.tsx` and `Robin.tsx`.
+- **The unread count is robins, not a number.** `MessageRobins.tsx`: one bird
+  per unread up to three, and below four the birds *are* the badge — a dot
+  beside three robins says the same number twice. Robins because Victorian
+  postmen were nicknamed robins after their red uniforms, which is why robins
+  deliver the letters on Christmas cards; the red breast is also the only
+  feature that survives at 20px. The fly-in fires **only when a poll sees the
+  count rise while the app is open** — never on mount, never on a tab switch.
+  The header unmounts when you open Messages, so the "last count animated
+  for" is module state rather than component state, or the whole flock
+  re-lands on every navigation and the charm is gone in a day.
+  `MessengerBird.tsx` (the pigeon) is no longer used anywhere but is kept
+  rather than deleted.
 - **Animation needs a reason.** The pigeon flaps while messages are unread
   and stops the moment the count clears. A permanently animating icon on a
   screen someone is reading is an irritation, not an alert.

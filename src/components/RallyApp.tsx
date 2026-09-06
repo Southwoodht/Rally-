@@ -24,7 +24,8 @@ import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches"
 import { LevelRepair } from "@/components/settings/LevelRepair";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { Globe } from "@/components/ui/Globe";
-import { MessengerBird } from "@/components/ui/MessengerBird";
+import { MessageRobins } from "@/components/ui/MessageRobins";
+import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
 import { unreadMessageCount } from "@/lib/messages";
@@ -40,7 +41,7 @@ import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { greetingFor, uid, winPct } from "@/lib/format";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
-import { FEED_LIME_INK, FEED_TEXT_MID, tabular } from "@/lib/theme";
+import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
 import { fetchLeagueData, insertPlayerRow, syncFixtures, syncMatches, syncPlayers, syncPosts, updatePlayerRow } from "@/lib/leagueData";
@@ -687,11 +688,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  <MessengerBird size={18} flap={unreadMsgs > 0} />
-                  {unreadMsgs > 0 && <span style={{ ...tabular, position: "absolute", top: 0, right: 0, minWidth: 15, height: 15, borderRadius: 999, background: BALL, color: FEED_LIME_INK, fontFamily: body, fontWeight: 500, fontSize: 9.5, display: "grid", placeItems: "center", padding: "0 3px" }}>{unreadMsgs}</span>}
+                <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
+                  <MessageRobins count={unreadMsgs} />
                 </button>
-                <div style={{ background: PANEL, borderRadius: 999, width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
                   <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
                 </div>
                 {tab === "profile" && (
@@ -723,11 +723,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               onPickLeague: () => setGroupSheet(true),
               bell: (
                 <>
-                  <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                    <MessengerBird size={18} flap={unreadMsgs > 0} />
-                    {unreadMsgs > 0 && <span style={{ position: "absolute", top: 0, right: 0, minWidth: 15, height: 15, borderRadius: 999, background: BALL, color: COURT, fontFamily: body, fontWeight: 500, fontSize: 9.5, display: "grid", placeItems: "center", padding: "0 3px" }}>{unreadMsgs}</span>}
+                  <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
+                    <MessageRobins count={unreadMsgs} />
                   </button>
-                  <div style={{ background: PANEL, borderRadius: 999, width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
                     <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
                   </div>
                 </>
@@ -789,7 +788,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             <div style={listCard}>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><MessengerBird size={18} flap={unreadMsgs > 0} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><Robin size={18} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
