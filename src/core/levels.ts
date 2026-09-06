@@ -1,4 +1,4 @@
-import { LEVELS, SUBS } from "@/core/constants";
+import { LEVELS, SUBS } from "./constants";
 
 export function levelVal(lv) { if (!lv) return null; const ci = LEVELS.indexOf(lv.cat), si = SUBS.indexOf(lv.sub); if (ci < 0 || si < 0) return null; return ci * 3 + si; }
 

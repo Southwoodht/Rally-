@@ -7,7 +7,17 @@
     "strict": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/core/tiebreak.ts", "src/core/rankDisplay.ts", "src/core/tiebreak.test.ts"]
+  "include": [
+    "src/core/tiebreak.ts",
+    "src/core/rankDisplay.ts",
+    "src/core/tiebreak.test.ts",
+    "src/core/constants.ts",
+    "src/core/levels.ts",
+    "src/core/matchGrade.ts",
+    "src/core/matchGrade.test.ts"
+  ]
 }
