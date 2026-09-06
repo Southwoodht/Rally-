@@ -18,10 +18,22 @@ re-derive the reasoning from the commit log every session.
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
 | Rollback tag | `v1.1-global-table` (also `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
-| Checks | `npx tsc --noEmit` and `npm run build`. There are no tests. |
+| Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run build` |
 
 There is no CI. The build passing locally is the only gate before a push
-becomes a live deploy, so run it.
+becomes a live deploy, so run it — and **read its exit code**, not its
+output. `npm run build | grep` returns 0 when grep matches the words "Build
+error occurred", which has waved a broken build through twice.
+
+`npm run test:core` runs `src/core/tiebreak.test.ts` — plain TypeScript with
+an assert, compiled by `tsconfig.test.json` and run by node. No framework:
+the tests import relatively because tsc does not rewrite path aliases on
+emit, so an `@/core/...` import compiles and then fails at run time.
+
+Two build failures on this machine were environmental, not code. `EINVAL
+readlink .next/...` means the dev server is running and holding the
+directory `next build` wants to clear — stop the preview first. `ENOSPC`
+means the disk is full, which it very nearly is.
 
 `README.md` is from the original prototype conversion and is **stale** in
 places — it says `storage.ts` uses browser storage (it's Supabase now) and
@@ -75,8 +87,44 @@ Boot path: `page.tsx` → `AuthGate` (session / setup / password recovery) →
   side of one match (drives Match detail).
 - `difficulty.ts` — the six-tier opponent bar (gold/silver/blue/green/
   orange/red + muted). Fixed hex vocabulary, *not* brand tokens.
+- `tiebreak.ts` — who is above whom when the metric ties. Head-to-head is
+  computed **within the tied group**, never pairwise: pairwise is not
+  transitive, and a JS comparator built on it returns different answers
+  depending on which pairs the sort examines. Criteria re-apply from the top
+  inside every subgroup a split produces (the UEFA rule). Name orders but
+  never ranks — if it separated ranks nobody could ever share one and the
+  3, 3, 5 convention would be dead code. Tested.
+- `rankDisplay.ts` — `ratingColumn()`. Whole numbers until two **neighbours**
+  round the same, then one decimal for that pair only, and never when the
+  decimal would print the same digits on both. Tested.
+- `stars.ts` — `starsForLevel()` is `(levelVal + 1) / 3`: one star per tier,
+  filled in thirds by sub-level. **Six stars**, because six tiers times three
+  subs is eighteen grades and six stars times three thirds is eighteen
+  positions — an exact fit, nothing collides. Also `TIER_HEIGHTS` for the
+  profile form bars.
+- `snapshots.ts` — weekly rank snapshots, because standings are a full
+  recompute over all history and the past is not recoverable from the
+  present. Movement has to be remembered, not derived.
+- `feedContext.ts` — the phrase on a scoreline card ("3rd straight"), true as
+  of that match rather than as of now.
+- `rating.ts` — the network rating behind the Global table. See §9.
 - Also: `predict.ts`, `season.ts`, `legacy.ts`, `achievements.ts`,
-  `rivalries.ts`, `memories.ts`, `notifications.ts`.
+  `rivalries.ts` (`topRivalries()` scores by meetings x closeness x recency,
+  and returns fewer than three rather than padding), `memories.ts`,
+  `notifications.ts`.
+
+`computeStats` also returns `ratingBefore` — what each player was rated
+walking on court, per match. It exists because that loop is the only place
+the number lives; afterwards there is just the final rating, and answering
+"what was he worth in 2019" otherwise means replaying everything per
+question. Best wins are ranked on it.
+
+`levels.ts` has two lookups and the difference matters. `levelAt()` falls
+back to today's level when a player has no history, which is right for the
+ranking — a rating must produce a number for everybody. `levelAtRecorded()`
+returns null instead, for anywhere that claims to show "their level on the
+day": **fourteen of Seacourt's twenty-one players have no level history at
+all**, so the fallback would be a fabrication two thirds of the time.
 
 ### Data access (`src/lib/`)
 
@@ -206,9 +254,14 @@ app: while a thread is pending only its starter can write to it.
 - **Typography is bold and iOS-like.** Body font leads with `-apple-system`
   so iOS renders SF Pro. `display` (Barlow Condensed) is for big page-level
   headings only.
-- **Monospace is for NUMBERS ONLY.** Ratings, scores, dates, counters. Never
-  words. A monospaced dropdown or search box reads as code — that has been
-  fixed several times, don't reintroduce it.
+- **Numbers are the body font with `tabular` figures, not monospace.** This
+  replaced the old "monospace for numbers only" rule on 2026-09-06, when the
+  whole app moved onto the scoreboard system (§10). JetBrains Mono reads as
+  code beside that palette; `fontVariantNumeric: "tabular-nums"` gives the
+  column alignment that was the point of using mono in the first place. The
+  half of the old rule that still stands, and stands harder: **never set
+  words in the numbers font.** An uppercase mono label reads as a code, not
+  as something you can tap.
 - **No emoji as icons.** Draw an SVG in the app's own colours. A 🔔 renders
   as Apple's glossy 3D bell on iPhone and something else on Android, so it
   never matches the app. See `Bell.tsx` and `MessengerBird.tsx`.
@@ -225,14 +278,23 @@ app: while a thread is pending only its starter can write to it.
   reason this file could be written at all.
 - Show before/after numbers before applying anything that shifts existing
   ratings.
+- **Look at the screen.** Reasoning about data flow found the filter
+  correct and missed that its result appeared eight hundred pixels below the
+  tap. Rendering the real component with real data has caught, in one day: a
+  rating bar at 100% for everybody (a -1,000,000 sentinel dragging the
+  scale), a bar invisible at 1.14:1, a column of "0.0", a form bar
+  fabricating a level, and a lime ring that vanished on the one player it
+  existed to mark. None of those were visible in the code.
+- Sam reads on a phone, between other things. Answer first, detail only if
+  it changes what he does.
 
 ---
 
 ## 5. Outstanding work
 
-Built, waiting on a migration:
+Built and live:
 
-- ~~Trophies for unclaimed players~~ — **built, migration not yet run.**
+- ~~Trophies for unclaimed players~~ — **done, migration run 2026-09-04.**
   `trophies.player_id` attaches an honour to a league player row instead of
   an account, so a club admin can record "Hugh — Seacourt Men's Singles 2019"
   against somebody who has never opened Rally. Nothing rewrites the row when
@@ -241,10 +303,20 @@ Built, waiting on a migration:
   Recording lands `approved` with the admin stamped on it — they are the
   review — and RLS only allows it against a player row with `auth_id` null,
   so it can never write onto a live account behind its owner's back.
-  `supabase/schema_trophies_unclaimed.sql` is waiting for Sam to run.
+  The club admin tab lists every player in the club with a control to record
+  an honour against them; a trophy can be worth points, at the admin's
+  discretion, and an owner can take down one of their own.
 
 Approved, not built:
 
+- **The nudge.** A pending result sits there until the opponent confirms it,
+  and there is currently no way to ask them. Designed with Sam and specified
+  down to the detail: delivery goes through the existing message system, but
+  the **source of truth is a `nudged_at` timestamp on the match**, not the
+  message — a message can be deleted, and then the app has forgotten
+  something it needs to know. One nudge per pending result per 24h, and the
+  limit is **enforced in RLS, not by disabling a button**: a disabled button
+  is a suggestion. The button then reads "Nudged 2h ago". One added column.
 - **Fancy loading screen on first app load.**
 - **Head-to-Head** is missing the favourite % and needs simplifying.
 - **Prompt everyone to re-pick their level** now six categories exist, so the
@@ -507,3 +579,84 @@ independently that Hugh and Mike are the best two — they have Seacourt
 trophies — but **nothing in the data justifies the confidence the layout
 implies**. The fix discussed and not built is a marker on the row, not a
 change to the maths.
+
+---
+
+## 10. The scoreboard design system
+
+Rolled across every screen on 2026-09-06, from a written brief of Sam's —
+"Apple Sports", his words. Before it, each screen had its own idea of a card
+and its own greys. **Do not restyle a screen away from this**, and don't
+introduce a colour that isn't a token.
+
+The shape of it: a dark green page, cards a step lighter, numbers large and
+quiet-coloured, words small. Emphasis is **size and colour, never weight** —
+nothing above 500, where the old screens ran at 700 and 800. A number is the
+loudest thing on any card and the label under it is the smallest.
+
+### The tokens
+
+All in `lib/theme.ts`, all prefixed `FEED_` for the feed they were designed
+for and then used everywhere. **They are aliases, not new colours**:
+`FEED_PAGE = COURT`, `FEED_CARD = PANEL`, `FEED_RAISED = PANEL2`,
+`FEED_LIME = BALL`, `FEED_TEXT_HI = CHALK`. That was deliberate — a second
+palette holding its own copies of the brand hexes is two palettes that will
+drift. Only the tokens with no brand equivalent hold their own value: the
+text tiers, the outcome colours, and the two inks.
+
+- `FEED_TEXT_MID` / `FEED_TEXT_LOW` are the quiet tiers, at **4.98:1 and
+  4.55:1 on the card colour** — measured, not judged. Both were originally
+  darker and both failed AA for small text. `FEED_TEXT_DIM` is below AA on
+  purpose and is only for text that is decoration.
+- `FEED_LIME_INK` (#102921) is what you put **on** lime. Not `COURT`, which
+  is a page colour that happens to be close; when the page colour is tuned
+  the ink shouldn't move with it.
+- `FEED_WIN` / `FEED_DRAW` / `FEED_LOSS` colour a scoreline; `DOT_WIN` /
+  `DOT_DRAW` / `DOT_LOSS` colour a form dot. They are near-identical and
+  separate anyway, because a dot is 6px and a scoreline is 28px and they will
+  eventually need different contrast.
+- `FEED_HAIRLINE = FEED_RAISED`, because `LINE` on a card is 1.14:1 —
+  invisible. A divider you can't see is worse than none, since the space it
+  takes still reads as a gap.
+- `tabular` is `fontVariantNumeric: "tabular-nums"`, and every number in the
+  app takes it. `tight()` applies negative tracking above 18px only — the
+  large-type correction, which small text doesn't want.
+
+### The primitives
+
+`components/ui/Surfaces.tsx`. Five things, and they exist because the same
+five were being rewritten inline on every screen:
+
+`SurfaceCard`, `SurfaceTile`, `StatNumeral` (tones hi/mid/lime/ink),
+`MovementIndicator` (`tone: "onAccent"` for a lime background — an arrow in
+lime on lime is invisible) and `FormDots` (`tone: "ink"` likewise, and it was
+added *after* the leader card printed five black dots on lime). Plus
+`PlayerIdentity`, which is avatar-plus-name and knows the full-name rule.
+
+**Names are `fullNameOf()`.** Never `player.nick` — the nick field is a joke
+field, and a session that reached for it produced "The Destroyer beat
+Iceman" and printed a second man's name on Charlie Henry's row.
+
+### The screens
+
+Feed, Home, Table, Profile, Match detail, Fixtures, Add result, Compare,
+Messages. The scoreline card (`games/MatchCard.tsx`) is one component used
+in the feed *and* at the top of match detail — the same result should not be
+two designs.
+
+Navigation is **Home | Table | (+) | Fixtures | Profile** since `306dff8`,
+which is its own commit precisely so it can be reverted alone. Home is a
+dashboard: standing, pending confirmations, tiles. The Table is the ranked
+list and nothing else.
+
+The Table's rating bars are scaled **from played players only**. Everyone's
+bar was full width because `computeOfficial` returns −1,000,000 for a player
+with no games and that sentinel was the scale's minimum. Ten players sit on
+exactly 0 Official points, which is a real gap in the formula — it has no
+signal below one win — and **Sam has not ruled on the fix**. His two ideas
+were partial credit for draws, or a floor by games played. Either changes
+live ratings, so §4's rule applies: numbers first.
+
+The Profile is `ProfileView` (filter and expand state) over
+`ProfileContainer` (all counting, one place). Lists that back a number must
+count what the number counted — see §7.
