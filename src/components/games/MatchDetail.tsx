@@ -1,13 +1,27 @@
 "use client";
 import React, { useRef, useState } from "react";
-import { Avatar } from "@/components/ui/Avatar";
+import { MatchCard } from "@/components/games/MatchCard";
+import { orientToWinner, parseSets } from "@/core/sets";
 import { predictProb } from "@/core/predict";
 import { matchContext } from "@/core/rank";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
-import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, miniInput, mono } from "@/lib/theme";
+import {
+  BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, miniInput, mono,
+  FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, tabular,
+} from "@/lib/theme";
 
 const PHOTO_SIZE = 480;
+
+function Notice({ children, tone = "lime" }: { children: React.ReactNode; tone?: "lime" | "clay" }) {
+  const colour = tone === "clay" ? CLAY : FEED_LIME;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, padding: "9px 12px", borderRadius: 12, background: FEED_RAISED }}>
+      <span style={{ width: 6, height: 6, borderRadius: 3, background: colour, flexShrink: 0 }} />
+      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_HI }}>{children}</span>
+    </div>
+  );
+}
 
 // A signed number that reads as a change rather than a value: "+0.4", "-0.8",
 // and "no change" when it rounds to nothing, because "+0.0" looks like a bug.
@@ -36,8 +50,8 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   };
   const winnerName = isDraw ? null : nm(match.winner === "p1" ? match.p1 : match.p2);
   return (
-    <div style={{ background: PANEL2, borderRadius: 12, padding: "12px 14px", margin: "4px 0 12px" }}>
-      <div style={{ fontFamily: body, fontSize: 13.5, color: CHALK, lineHeight: 1.5 }}>
+    <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "13px 15px", margin: "12px 0" }}>
+      <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
         {favoredId && favoredPct != null && <>Rally {stored ? "made" : "would have made"} <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
         {isDraw ? <>They drew.</> : <><strong>{winnerName}</strong> won{predictionCorrect === false ? " — the underdog took it." : "."}</>}
       </div>
@@ -45,12 +59,12 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
         const s = side(which);
         return (
           <div key={which} style={{ display: "flex", gap: 8, marginTop: 8, fontFamily: body, fontSize: 12.5, lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 700, color: CHALK, flexShrink: 0 }}>{s.name}</span>
-            <span style={{ color: MUTED }}>{s.text}</span>
+            <span style={{ fontWeight: 500, color: FEED_TEXT_HI, flexShrink: 0 }}>{s.name}</span>
+            <span style={{ ...tabular, color: FEED_TEXT_MID }}>{s.text}</span>
           </div>
         );
       })}
-      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginTop: 9, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
+      <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.45, marginTop: 9, borderTop: "0.5px solid " + FEED_HAIRLINE, paddingTop: 8 }}>
         Places shown are in {groupName || "this league"}. Global places aren&apos;t here — they&apos;re worked out across every league at once, so they can&apos;t be rewound to what they were on the day.
       </div>
     </div>
@@ -142,45 +156,52 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   };
 
   const Row = ({ label, children }: any) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "8px 0", borderTop: "none", gap: 12 }}>
-      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontFamily: body, fontSize: 13, color: CHALK, textAlign: "right" }}>{children}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "11px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, gap: 12 }}>
+      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>{label}</span>
+      <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_HI, textAlign: "right" }}>{children}</span>
     </div>
   );
 
+  const winnerId = match.winner === "p2" ? match.p2 : match.p1;
+  const loserId = match.winner === "p2" ? match.p1 : match.p2;
+  const rawSets = parseSets(match.score);
+  const oriented = rawSets ? orientToWinner(rawSets, match.winner) : null;
+  const winnerIsP1 = winnerId === match.p1;
+  const winnerSide = {
+    player: players.find((x: any) => x.id === winnerId) || { id: winnerId, name: nameOf(winnerId) },
+    sets: oriented ? oriented.map((x: any) => (winnerIsP1 ? x.a : x.b)) : undefined,
+  };
+  const loserSide = {
+    player: players.find((x: any) => x.id === loserId) || { id: loserId, name: nameOf(loserId) },
+    sets: oriented ? oriented.map((x: any) => (winnerIsP1 ? x.b : x.a)) : undefined,
+  };
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>Match detail</div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>Match detail</div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: FEED_TEXT_MID, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 400, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <button onClick={() => onOpenProfile && onOpenProfile(match.p1)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "transparent", border: "none", cursor: "pointer", padding: "8px 4px", borderRadius: 14, opacity: isDraw || p1Won ? 1 : 0.55 }}>
-            <Avatar player={p1 || { id: match.p1, name: "?" }} size={44} />
-            <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK, textAlign: "center" }}>{nm(match.p1)}</span>
-          </button>
-          <span style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>vs</span>
-          <button onClick={() => onOpenProfile && onOpenProfile(match.p2)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "transparent", border: "none", cursor: "pointer", padding: "8px 4px", borderRadius: 14, opacity: isDraw || p2Won ? 1 : 0.55 }}>
-            <Avatar player={p2 || { id: match.p2, name: "?" }} size={44} />
-            <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK, textAlign: "center" }}>{nm(match.p2)}</span>
-          </button>
-        </div>
-        <div style={{ textAlign: "center", fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL, marginBottom: 4 }}>
-          {isDraw ? "Draw" : p1Won ? nm(match.p1) + " won" : nm(match.p2) + " won"}
-        </div>
-        <div style={{ textAlign: "center", fontFamily: mono, fontSize: 12, color: MUTED, marginBottom: 4 }}>{fmtDate(match.date)}{match.score ? " · " + match.score : ""}</div>
-        {match.status === "pending" && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</div>}
-        {match.pendingEdit && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, marginBottom: 10 }}>Edit pending agreement</div>}
-        {match.deleteRequestedBy && <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: CLAY, marginBottom: 10 }}>Delete pending agreement</div>}
+        <MatchCard
+          dateLabel={fmtDate(match.date)}
+          winner={{ player: winnerSide.player, sets: winnerSide.sets }}
+          loser={{ player: loserSide.player, sets: loserSide.sets }}
+          drawn={isDraw}
+          onOpenProfile={onOpenProfile}
+        />
+
+        {match.status === "pending" && <Notice tone="lime">Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</Notice>}
+        {match.pendingEdit && <Notice tone="lime">Edit pending agreement</Notice>}
+        {match.deleteRequestedBy && <Notice tone="clay">Delete pending agreement</Notice>}
 
         <Row label="Competition">{inSeason ? season.name : (groupName || "—")}</Row>
         {match.category && <Row label="Category">{match.category}</Row>}
         {(venueDraft !== null || match.venue) ? (
           venueDraft !== null ? (
             <div style={{ display: "flex", gap: 6, padding: "8px 0", borderTop: "none", alignItems: "center" }}>
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>Venue</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>Venue</span>
               <input value={venueDraft} onChange={(e) => setVenueDraft(e.target.value)} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
               <button onClick={saveVenue} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: BALL, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Save</button>
             </div>
@@ -232,23 +253,23 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         )}
 
         <div style={{ padding: "10px 0", borderTop: "none" }}>
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginBottom: 6 }}>Note</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID, marginBottom: 6 }}>Note</div>
           {notesDraft !== null ? (
             <div style={{ display: "flex", gap: 6 }}>
               <input value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} placeholder="e.g. Came back from 4–1 down" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
               <button onClick={saveNotes} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: BALL, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Save</button>
             </div>
           ) : match.notes ? (
-            <div onClick={() => canEdit && setNotesDraft(match.notes)} style={{ fontFamily: body, fontSize: 14, color: CHALK, fontStyle: "italic", cursor: canEdit ? "pointer" : "default" }}>“{match.notes}”</div>
+            <div onClick={() => canEdit && setNotesDraft(match.notes)} style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, fontStyle: "italic", cursor: canEdit ? "pointer" : "default" }}>“{match.notes}”</div>
           ) : canEdit ? (
             <button onClick={() => setNotesDraft("")} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}>+ Add a note</button>
           ) : (
-            <div style={{ fontFamily: body, fontSize: 13, color: MUTED }}>No note.</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID }}>No note.</div>
           )}
         </div>
 
         <div style={{ padding: "10px 0", borderTop: "none" }}>
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginBottom: 6 }}>Photo</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID, marginBottom: 6 }}>Photo</div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickPhoto(f); e.target.value = ""; }} />
           {match.photoUrl ? (
             <div>
@@ -263,7 +284,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
           ) : canEdit ? (
             <button onClick={() => fileRef.current?.click()} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0 }}>+ Add a photo</button>
           ) : (
-            <div style={{ fontFamily: body, fontSize: 13, color: MUTED }}>No photo.</div>
+            <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID }}>No photo.</div>
           )}
           {flash && <div style={{ fontFamily: body, fontSize: 12, color: CLAY, marginTop: 6 }}>{flash}</div>}
         </div>
@@ -279,7 +300,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
                     <button key={r} onClick={() => setDraft({ ...draft, result: r })} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "9px 6px", borderRadius: 10, cursor: "pointer", border: "none", background: draft.result === r ? BALL : PANEL2, color: draft.result === r ? COURT : MUTED, fontWeight: 600 }}>{label}</button>
                   ))}
                 </div>
-                <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
+                <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID }}>{needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={saveEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: COURT, background: BALL, border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Save</button>
                   <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Cancel</button>
