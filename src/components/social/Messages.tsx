@@ -6,6 +6,8 @@ import {
   sendMessage, startThread, type MessageRow, type Thread,
 } from "@/lib/messages";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input, mono } from "@/lib/theme";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FEED_LIME_INK, FEED_TEXT_MID, tabular } from "@/lib/theme";
 
 // There's no realtime subscription here on purpose — one poll while the
 // screen is open is a few hundred bytes and needs no extra Supabase setup.
@@ -25,7 +27,7 @@ function Face({ t, size = 38 }: { t: Thread; size?: number }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0 } as const;
   if (t.profile?.avatar_url) return <img src={t.profile.avatar_url} alt="" style={{ ...common, objectFit: "cover" }} />;
   return (
-    <span style={{ ...common, display: "grid", placeItems: "center", background: PANEL2, fontFamily: body, fontWeight: 700, fontSize: size * 0.4, color: CHALK }}>
+    <span style={{ ...common, display: "grid", placeItems: "center", background: PANEL2, fontFamily: body, fontWeight: 500, fontSize: size * 0.4, color: CHALK }}>
       {(t.profile?.display_name || "?").charAt(0).toUpperCase()}
     </span>
   );
@@ -48,18 +50,18 @@ function ThreadRowView({ t, onClick }: { t: Thread; onClick: () => void }) {
       <Face t={t} size={42} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontFamily: body, fontWeight: 800, fontSize: 15.5, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {t.profile?.display_name}
           </span>
-          {unread && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>{t.unread}</span>}
+          {unread && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>{t.unread}</span>}
         </span>
-        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 400, fontSize: 13, color: unread ? CHALK : MUTED, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 400, fontSize: 13, color: unread ? CHALK : FEED_TEXT_MID, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {t.lastMessage ? (t.lastFromMe ? "You: " : "") + t.lastMessage : "No messages yet"}
         </span>
       </span>
       <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
-        {t.last_message_at && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: unread ? BALL : MUTED }}>{when(t.last_message_at)}</span>}
-        <span style={{ fontFamily: body, fontSize: 13, color: BALL }}>›</span>
+        {t.last_message_at && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: unread ? BALL : FEED_TEXT_MID }}>{when(t.last_message_at)}</span>}
+        <ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} />
       </span>
     </button>
   );
@@ -119,11 +121,11 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px" }}>
-        <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 2px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 700, fontSize: 22, color: BALL, lineHeight: 1 }}>‹</button>
+        <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}><ChevronLeft size={22} color={BALL} strokeWidth={2} /></button>
         <Face t={t} size={40} />
         <span style={{ minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: body, fontWeight: 800, fontSize: 18, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.profile?.display_name}</span>
-          <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 1 }}>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.profile?.display_name}</span>
+          <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
             {t.status === "accepted" ? (msgs ? msgs.length + " message" + (msgs.length === 1 ? "" : "s") : " ") : t.isRequestToMe ? "Message request" : "Request sent — not accepted yet"}
           </span>
         </span>
@@ -154,15 +156,15 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
               <React.Fragment key={m.id}>
                 {newDay && (
                   <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "16px 0 12px" }}>
-                    <span style={{ fontFamily: body, fontWeight: 700, fontSize: 11, color: MUTED, background: PANEL2, borderRadius: 999, padding: "3px 11px" }}>{dayLabel(m.created_at)}</span>
+                    <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, background: PANEL2, borderRadius: 999, padding: "4px 12px" }}>{dayLabel(m.created_at)}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 8 }}>
                   <div style={{ maxWidth: "78%" }}>
-                    <div style={{ background: mine ? BALL : PANEL2, color: mine ? COURT : CHALK, borderRadius: 16, borderBottomRightRadius: mine ? 5 : 16, borderBottomLeftRadius: mine ? 16 : 5, padding: "10px 13px", fontFamily: body, fontWeight: 500, fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    <div style={{ background: mine ? BALL : PANEL2, color: mine ? FEED_LIME_INK : CHALK, borderRadius: 16, borderBottomRightRadius: mine ? 5 : 16, borderBottomLeftRadius: mine ? 16 : 5, padding: "10px 13px", fontFamily: body, fontWeight: 500, fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {m.body}
                     </div>
-                    <div style={{ fontFamily: body, fontSize: 10.5, color: MUTED, marginTop: 3, textAlign: mine ? "right" : "left" }}>
+                    <div style={{ fontFamily: body, fontSize: 10.5, color: FEED_TEXT_MID, marginTop: 3, textAlign: mine ? "right" : "left" }}>
                       {when(m.created_at)}{isMyLast && m.read_at ? " · Seen" : ""}
                     </div>
                   </div>
@@ -260,8 +262,8 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
       {requests.length > 0 && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK }}>Requests</span>
-            <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
+            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: CHALK }}>Requests</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
           </div>
           <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden", marginBottom: 18 }}>
             {requests.map((t) => <ThreadRowView key={t.id} t={t} onClick={() => setOpenId(t.id)} />)}
@@ -273,7 +275,7 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
       )}
       {conversations.length > 0 && (
         <>
-          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
+          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
           <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
             {conversations.map((t) => <ThreadRowView key={t.id} t={t} onClick={() => setOpenId(t.id)} />)}
           </div>
