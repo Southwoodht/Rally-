@@ -224,7 +224,7 @@ evidence arrives — an unbacked claim gets dragged towards the middle of the
 scale, six matches against your own level or better halve the trust term,
 eighteen quarter it. Evidence *replaces* the claim rather than adding to it.
 All-time wins sit on a log curve so volume against weak opposition can't
-outrank quality. Under 10 games you're **provisional** and pulled to the
+outrank quality. Under `PROVISIONAL_GAMES` (5) you're **provisional** and pulled to the
 middle — one match is not a position in a table. All of this is documented in
 the long comment on `globalScore()` in `src/lib/globalTable.ts` — read it
 before changing a coefficient.
@@ -616,7 +616,7 @@ needed. The fourth answer wasn't a rebuild at all — it was running the code
 that already existed against numbers that were actually true.
 
 **Known and accepted: the top of the table is thinner than it looks.** The
-network rating replaces the score outright, so the "under 10 games you are
+network rating replaces the score outright, so the "under PROVISIONAL_GAMES you are
 provisional" pull toward the middle no longer shapes the ordering — the row
 still says *Provisional*, but the place number doesn't know. Hugh sits first
 on **3 matches**, Mike second on **2**, against Zaach's 44, and neither has
@@ -633,11 +633,16 @@ foot of the screen, with a dash instead of a place and a "3 played" count.
 The old screen ranked them 1 and 2 *while labelling them provisional*, and
 both of those cannot be true. `computeRatings` still reads every one of their
 results — the ordering of everybody else is untouched — but a place number is
-a claim about where somebody stands, and `PROVISIONAL_GAMES = 10` is where
-this app is willing to make it. Zaach is now first, which is what the data
+a claim about where somebody stands, and `PROVISIONAL_GAMES` is where this
+app is willing to make it. **Sam set it to 5 on 2026-09-06**, down from 10:
+ten matches left people unplaced for a season in a club where many play a
+handful a year, and five still excludes the two- and three-match records the
+split was built for. The same constant damps `globalScore`'s `established`
+term, which is inert while `global_edges()` exists — split the two if they
+ever need different values. Zaach is now first, which is what the data
 actually supports.
 
-The threshold is **10 matches, not 5**; copy saying otherwise is wrong. And
+The threshold is **5 matches** (10 until Sam changed it on 2026-09-06). And
 the sort key is the network rating: rows sort on `score`, which
 `withNetworkRating` *replaces* with `computeRatings(...) * 100` whenever
 `global_edges()` exists. The screen now prints that rating in a labelled

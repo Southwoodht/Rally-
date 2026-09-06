@@ -108,7 +108,20 @@ export const BAD_LOSS_WEIGHT = 300;
 export const BAD_LOSS_CAP = 300;
 
 // Below this many games we don't claim to know where someone belongs.
-export const PROVISIONAL_GAMES = 10;
+//
+// Sam's call, 2026-09-06, down from ten. Ten is a lot of matches in a club
+// where plenty of people play a handful a year, and it left people unplaced
+// for a season at a time. Five is still a real bar — it keeps out exactly the
+// players the split was built for, the two- and three-match records that were
+// holding the top of the table.
+//
+// This number does two jobs and only one of them is live. It decides who is
+// ranked (see rankGlobal), and it is also the denominator of the `established`
+// damping in globalScore below — how hard a short record is pulled towards
+// NEUTRAL. That second job only matters if global_edges() is ever dropped,
+// because withNetworkRating replaces the score outright. If the two ever need
+// to differ, split them; today they don't.
+export const PROVISIONAL_GAMES = 5;
 
 
 // The middle of the scale — where "we don't actually know how good you are"
@@ -179,8 +192,8 @@ export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: 
  * player who is 0-1 may well be excellent — but one match is not a position
  * in a table, and letting a claimed level alone lift them over somebody with
  * forty results makes the table describe ambition rather than evidence. Under
- * ten games they're pulled towards the middle and shown as provisional; they
- * climb out of it by playing, which is the right incentive.
+ * PROVISIONAL_GAMES they're pulled towards the middle and shown as
+ * provisional; they climb out of it by playing, which is the right incentive.
  *
  * Unrated players get no starting assumption at all and are listed after the
  * ranked ones — see rankGlobal — rather than being assumed to be beginners.

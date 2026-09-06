@@ -21,8 +21,8 @@ import {
 // those cannot be true: Hugh sat first on three matches and Mike second on
 // two, above a man with forty-four. The rating still reads every one of their
 // results — nothing about the maths changed — but a place number is a claim
-// about where somebody stands, and ten matches is where this app is willing
-// to make it. They get their own group with a count instead, so you can see
+// about where somebody stands, and PROVISIONAL_GAMES is where this app is
+// willing to make it. They get their own group with a count instead, so you can see
 // how close they are to being placed.
 
 /**
