@@ -150,6 +150,9 @@ export const FEED_LOSS = "#2F5B47";
 // else being ahead, which is neither a fault nor a fall.
 export const FEED_THEY_LEAD = "#F09595";
 
+// The same idea at bar and border weight, where a text colour would glare.
+export const FEED_THEY_LEAD_DIM = "#7E4A4A";
+
 export const FEED_RADIUS = 20;
 export const FEED_TILE_RADIUS = 14;
 export const FEED_PAD = 18;
