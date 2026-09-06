@@ -113,6 +113,18 @@ Boot path: `page.tsx` → `AuthGate` (session / setup / password recovery) →
   present. Movement has to be remembered, not derived.
 - `feedContext.ts` — the phrase on a scoreline card ("3rd straight"), true as
   of that match rather than as of now.
+- `matchGrade.ts` — how good a result was, given who it was against.
+  **Categories only, never sub-levels**: level is a dropdown and half of
+  them are wrong, so ranking Intermediate/High above Intermediate/Medium is
+  arithmetic performed on a guess. The 18-point scale stays in the ratings,
+  where the error averages out over a hundred matches; it is wrong for a
+  label on one row. `gradeAgainstHistory` returns `then` and `now`, and
+  **`now` is null whenever it equals `then`** so no screen can render two
+  identical chips. Verdict thresholds are 65/40/20. Tested.
+- `matchQuality.ts` — everything the matches screen shows, from one pass.
+  Quality and History are two presentations of it, so they cannot disagree.
+  Pending matches are excluded like everywhere else, and an ungraded match
+  is counted in **neither** bucket — see §11. Tested.
 - `rating.ts` — the network rating behind the Global table. See §9.
 - Also: `predict.ts`, `season.ts`, `legacy.ts`, `achievements.ts`,
   `rivalries.ts` (`topRivalries()` scores by meetings x closeness x recency,
@@ -696,3 +708,42 @@ live ratings, so §4's rule applies: numbers first.
 The Profile is `ProfileView` (filter and expand state) over
 `ProfileContainer` (all counting, one place). Lists that back a number must
 count what the number counted — see §7.
+
+---
+
+## 11. Your matches
+
+Profile → the playing-style card's Details link (Quality) or the match
+history's "All 44" (History). One route, two modes, one computation:
+`buildMatchQuality` runs once above the segmented control.
+
+**The denominator is graded matches, and the sentence says so.** "57% of your
+graded matches — 8 of 14." Sam ruled on this. A percentage that counts
+ungraded matches as "not at or above" understates everybody, and it climbs as
+level histories are filled in, which reads as somebody's schedule changing
+when only the record-keeping did. The ungraded count sits beside it, and the
+banner at the foot of History links to the level-history repair screen.
+
+**There was never a 52%.** Sam asked why the app said 52% where he counted
+41%; the answer is that no such card existed — `playingStyle` was a declared
+prop on `ProfileView` that `ProfileContainer` had never supplied, so it had
+never rendered. The only at-or-above computation in the codebase was
+`global_standings()` in SQL, on **current** levels. Measured three ways on
+the August snapshot, category and sub-level comparison give *identical*
+answers for Sam, because he sits at the bottom of his category — so
+methodology was never the difference. The two figures were the same method
+over different match sets.
+
+**The thing to know before touching this screen: almost nothing grades yet.**
+On that snapshot, **1 of 57** of Sam's matches could be graded at the date,
+because he and Adrian are the only players with a level history and a match
+needs both. Quality mode is close to empty until §5's repair screen has been
+used. That is not a bug in the screen, it is the reason the two features were
+sequenced together.
+
+Known and left as briefed: the loss border on a history row is `FEED_LOSS`
+at **1.37:1** on the card — effectively invisible, and the same pairing
+`MatchHistoryList` already ships. The theme comment says the quiet loss
+colour is deliberate ("a loss is a fact, not an alarm") and Sam specified the
+hex again in the brief, so both screens keep it rather than one of them
+inventing a different loss colour. Flagged, not changed.
