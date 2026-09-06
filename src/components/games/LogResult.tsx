@@ -6,6 +6,20 @@ import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { predictProb } from "@/core/predict";
 import { uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, body, card, display, input, mono } from "@/lib/theme";
+import { FEED_CARD, FEED_LIME, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, tabular } from "@/lib/theme";
+
+// Small actions that add a field: lime, sentence case, body font. They were
+// uppercase mono, and in this app the numbers font means a number — a word
+// set in it reads as a code rather than something you can tap.
+const addLink: React.CSSProperties = {
+  background: "transparent", border: "none", color: FEED_LIME, fontFamily: body,
+  fontWeight: 400, fontSize: 13, cursor: "pointer", textAlign: "left",
+};
+
+const sectionLabel: React.CSSProperties = {
+  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
+  textTransform: "uppercase", letterSpacing: 0.8,
+};
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
@@ -68,7 +82,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   if (players.length < 2) return <div style={card}><Empty msg="Add at least two players in Settings before logging a game." /></div>;
   const numIn = (v, set, ph) => <input value={v} onChange={(e) => set(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder={ph} style={{ ...input, boxSizing: "border-box" as const }} />;
   return (
-    <div style={card}>
+    <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <Toggle on={mode === "single"} onClick={() => setMode("single")} label="One game" />
         <Toggle on={mode === "bulk"} onClick={() => setMode("bulk")} label="Bulk / history" />
@@ -82,11 +96,11 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <div style={{ display: "grid", gridTemplateColumns: `minmax(0,1fr) repeat(${sets.length}, 46px)`, gap: 6, alignItems: "center" }}>
               <span />
               {sets.map((_, i) => (
-                <span key={"h" + i} style={{ fontFamily: body, fontSize: 10.5, fontWeight: 600, color: MUTED, textAlign: "center" }}>Set {i + 1}</span>
+                <span key={"h" + i} style={{ fontFamily: body, fontSize: 11, fontWeight: 400, color: FEED_TEXT_MID, textAlign: "center" }}>Set {i + 1}</span>
               ))}
               {([["a", n1], ["b", n2]] as const).map(([side, label]) => (
                 <React.Fragment key={side}>
-                  <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+                  <span style={{ fontFamily: body, fontSize: 14, fontWeight: 500, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
                   {sets.map((s, i) => (
                     <input
                       key={side + i}
@@ -94,17 +108,17 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                       onChange={(e) => setCell(i, side, e.target.value)}
                       inputMode="numeric"
                       aria-label={`${label}, set ${i + 1}`}
-                      style={{ ...input, fontFamily: mono, fontSize: 15, textAlign: "center", padding: "10px 4px", marginBottom: 0 }}
+                      style={{ ...input, ...tabular, fontFamily: body, fontWeight: 500, fontSize: 16, background: FEED_RAISED, color: FEED_TEXT_HI, textAlign: "center", padding: "10px 4px", marginBottom: 0 }}
                     />
                   ))}
                 </React.Fragment>
               ))}
             </div>
             {sets.length < 5 && (
-              <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, cursor: "pointer", padding: "8px 0 0" }}>+ Add a set</button>
+              <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ ...addLink, padding: "10px 0 0" }}>Add a set</button>
             )}
             <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>
-              Leave blank if you&apos;d rather not. Filling it in tells the global table how close the match actually was — it doesn&apos;t affect this league&apos;s table.
+              Leave it blank if you&apos;d rather. Filling it in tells both tables how close the match was — a narrow loss to a strong player is worth more than a heavy one.
             </div>
           </Field>
           {showMore ? (
@@ -114,16 +128,16 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
               <Field label="Category (optional)"><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Men's Singles, Friendly" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
             </>
           ) : (
-            <button onClick={() => setShowMore(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, cursor: "pointer", padding: 0, marginBottom: 14 }}>+ Add a note or venue</button>
+            <button onClick={() => setShowMore(true)} style={{ ...addLink, padding: 0, marginBottom: 16 }}>Add a note or venue</button>
           )}
           {err && <div style={{ color: CLAY, fontFamily: body, fontSize: 13, marginBottom: 10 }}>{err}</div>}
-          <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1.5, margin: "6px 0 8px" }}>Who won?</div>
+          <div style={{ ...sectionLabel, margin: "8px 0 9px" }}>Who won?</div>
           <div style={{ display: "flex", gap: 8 }}>
             <BigBtn onClick={() => submit("p1")} disabled={!p1} color={BALL}>{n1}</BigBtn>
             <BigBtn onClick={() => submit("draw")} color={MUTED}>Draw</BigBtn>
             <BigBtn onClick={() => submit("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
-          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
             {needsConfirm ? "Your opponent has 24 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Rally account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
           </div>
         </>
