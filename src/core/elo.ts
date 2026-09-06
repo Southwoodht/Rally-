@@ -4,7 +4,7 @@ import { shareForPlayer } from "@/core/sets";
 import { D } from "@/lib/format";
 
 export function computeStats(players, matches) {
-  const elo = {}, wdl = {}, form = {}, deltas = {}, byId = {};
+  const elo = {}, wdl = {}, form = {}, deltas = {}, byId = {}, ratingBefore = {};
   players.forEach((p) => {
     // Allow players to supply an initial ELO and an initial record so new users
     // can declare their existing history during onboarding. These fields are
@@ -19,6 +19,12 @@ export function computeStats(players, matches) {
   [...matches].filter((m) => m.status !== "pending").sort((a, b) => a.date - b.date).forEach((m) => {
     if (!(m.p1 in elo) || !(m.p2 in elo)) return;
     const e1 = elo[m.p1], e2 = elo[m.p2];
+    // What each player was rated walking on court. Recorded here because
+    // this loop is the only place it exists — afterwards there is just the
+    // final number, and reconstructing "what was he worth in 2019" means
+    // replaying the whole history again per question. Ranking a best win by
+    // the opponent's rating at the time needs exactly this.
+    ratingBefore[m.id] = { [m.p1]: e1, [m.p2]: e2 };
     const exp1 = 1 / (1 + Math.pow(10, (e2 - e1) / 400));
     let s1;
     if (m.winner === "p1") { s1 = 1; wdl[m.p1].w++; wdl[m.p2].l++; form[m.p1].push("W"); form[m.p2].push("L"); }
@@ -43,5 +49,5 @@ export function computeStats(players, matches) {
     deltas[m.id] = { [m.p1]: d1, [m.p2]: d2 };
     elo[m.p1] = e1 + d1; elo[m.p2] = e2 + d2;
   });
-  return { elo, wdl, form, deltas };
+  return { elo, wdl, form, deltas, ratingBefore };
 }
