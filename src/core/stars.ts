@@ -1,30 +1,51 @@
-import { LEVELS } from "@/core/constants";
+import { LEVELS, SUBS } from "@/core/constants";
 
-// A level as a five-star reading.
+// A level as a star rating.
 //
-// Stars carry the category and nothing else. The sub-level lives in the
-// label beside them, and that split is the whole point: there are 18 grades
-// (six categories times Low/Medium/High) and ten half-star positions, so
-// something has to give, and the only question is what gets crushed.
+// One star per tier, filled in thirds by sub-level. Sam's model, and it is
+// the one that works: six tiers times three sub-levels is eighteen grades,
+// six stars times three thirds is eighteen positions, so every grade in the
+// system gets its own mark and nothing collides.
 //
-// Mapping all 18 proportionally puts Beginner/Low, /Medium and /High on the
-// same half star — and eleven of Seacourt's twenty-one players are
-// Beginners, so most of the league would show one identical mark. Category
-// only spends the compression at the top instead: Advanced, Semi-pro and Pro
-// sit at 4, 4.5 and 5, which is uneven, but those tiers are nearly empty and
-// the tiers that are full get a clean position each.
+//   Beginner/Low        one third of the first star
+//   Beginner/High       one full star — the tier is complete
+//   Intermediate/Low    two full stars and a third
+//   Pro/High            six full stars
 //
-// Five stars rather than six, which would have spaced all six categories
-// evenly and needed no half-star glyph: five is a read-without-thinking
-// idiom and worth more than a regularity nobody would notice.
-const STARS_BY_CATEGORY: Record<string, number> = {
-  Beginner: 1,
-  Amateur: 2,
-  Intermediate: 3,
-  Advanced: 4,
-  "Semi-pro": 4.5,
-  Pro: 5,
-};
+// Six rather than five, which is the one place this departs from the brief.
+// Five stars is the more familiar idiom and it was the right call for the
+// earlier model, but five stars in thirds is fifteen slots for eighteen
+// grades and the collisions come straight back. The tiers decide how many
+// stars there are; the alternative is inventing a sixth tier or deleting a
+// real one.
+//
+// The formula reads better than it looks: levelVal is 0-17, and adding one
+// before dividing is what makes Beginner/Low a third of a star rather than
+// nothing at all. Somebody who has picked the lowest level has still picked
+// one, and an empty row of stars is what "no level set" means.
+
+/**
+ * How many stars, in thirds. A third up to six, or null when no level is set.
+ *
+ * Null is not zero. Somebody who has never picked a level has not declared
+ * themselves the weakest player in the league, and an empty row of outlines
+ * says exactly that; a zero would be a claim they never made.
+ */
+export function starsForLevel(level: { cat?: string; sub?: string } | null | undefined): number | null {
+  const v = levelValOf(level);
+  return v === null ? null : (v + 1) / 3;
+}
+
+/** One star per tier. */
+export const STAR_COUNT = LEVELS.length;
+
+function levelValOf(level: { cat?: string; sub?: string } | null | undefined): number | null {
+  if (!level || !level.cat || !level.sub) return null;
+  const ci = LEVELS.indexOf(level.cat);
+  const si = SUBS.indexOf(level.sub);
+  if (ci < 0 || si < 0) return null;
+  return ci * 3 + si;
+}
 
 /** Bars in the profile's form strip, tallest first. */
 export const TIER_HEIGHTS: Record<string, number> = {
@@ -35,19 +56,6 @@ export const TIER_HEIGHTS: Record<string, number> = {
   "Semi-pro": 26,
   Pro: 30,
 };
-
-/**
- * Stars for a level, or null when no level is set.
- *
- * Null is not zero. Somebody who has never picked a level has not declared
- * themselves the weakest player in the league, and an empty row of five
- * outlines says that; a zero would not.
- */
-export function starsForLevel(level: { cat?: string } | null | undefined): number | null {
-  if (!level || !level.cat) return null;
-  const stars = STARS_BY_CATEGORY[level.cat];
-  return stars === undefined ? null : stars;
-}
 
 /**
  * How tall this opponent's bar is, or null when their level at that date
