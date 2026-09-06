@@ -37,7 +37,6 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { gkey } from "@/data/seed";
 import { greetingFor, uid, winPct } from "@/lib/format";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
@@ -348,29 +347,40 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
   };
 
+  // Switching leagues reads the real tables, the same way boot() does.
+  //
+  // It used to read the legacy `grpc5_<id>` blob in shared_storage — a whole
+  // league serialised as JSON, left over from before players and matches were
+  // real tables. Nothing has written that blob in a long time, so opening the
+  // league picker and tapping your own league replaced live data with a
+  // months-old snapshot. Deleted matches came back, and worse: the next save
+  // diffed against the snapshot and could write those matches back into the
+  // real table. That is how a result Sam deleted kept returning after a
+  // re-login. Never read that blob again.
   const switchGroup = async (id) => {
-    let data: LeagueData | null = null;
+    let data: LeagueData;
     try {
-      const r = await storage.get(gkey(id), true);
-      data = r ? JSON.parse(r.value) : null;
+      const fetched = await fetchLeagueData(id);
+      data = { ...fetched, me: null };
     } catch (e) {
-      // Load failed — don't guess. Leave the current league on screen rather
-      // than seeding and saving an empty one over real data we just couldn't reach.
+      // A failed read must never look like an empty league — same rule as
+      // boot(). Leave what is on screen rather than seeding over real data
+      // we simply could not reach.
       console.error("Failed to load league to switch to — leaving current league in place.", e);
       flash("Couldn't load that league — try again");
       return;
     }
-    if (data && (!Array.isArray(data.players) || !Array.isArray(data.matches))) data = null;
-    if (!data || !data.players || !data.players.length) {
-      data = { ...emptyLeagueData };
-      try { await storage.set(gkey(id), JSON.stringify(data), true); } catch {}
-    }
+    // Link the account to its player the one permitted way: auth_id, never
+    // by name. See §3 of the working notes.
+    const linked = myAuthId ? (data.players || []).find((p: any) => p.auth_id === myAuthId) : null;
+    data.me = linked ? linked.id : null;
     setGid(id); setGdata(data); setGroupSheet(false); setProfileId(null); setTab("home");
     try { await storage.set("settings_c5", JSON.stringify({ currentGroupId: id, rankingMode, onboarded }), true); } catch {}
   };
   const addGroup = async (name) => {
     const id = "g_" + uid(); const g = { id, name };
-    try { await storage.set(gkey(id), JSON.stringify({ players: [], matches: [], me: null }), true); } catch {}
+    // No legacy blob is written any more: nothing reads it, and leaving the
+    // write in place implies it is still a source of truth. See switchGroup.
     await saveGroups([...groups, g]); switchGroup(id);
   };
   const renameGroup = (id, name) => saveGroups(groups.map((g) => g.id === id ? { ...g, name } : g));

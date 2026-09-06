@@ -168,6 +168,30 @@ eq(blind.winsFrom, { above: 0, at: 0, below: 0 }, "no wins attributed");
 eq(winsFromSentence(blind), null, "and no conclusion drawn");
 eq(shareSentence(blind), "None of your matches can be graded yet.", "the headline says so plainly");
 
+// ------------------------------------------------------------ perspective
+// The profile's head-to-head card read the wrong side of the fixture and
+// printed every result backwards — two losses to Zaach came out as "You lead
+// Zaach 2-0". An opponent record belongs to the player it was built for, and
+// the two sides must be exact mirrors.
+const fromMe = buildMatchQuality("me", players, matches).opponents.find((o) => o.player.id === "adv")!;
+const fromThem = buildMatchQuality("adv", players, matches).opponents.find((o) => o.player.id === "me")!;
+eq(fromMe.record, { w: 1, d: 0, l: 1 }, "my record against them");
+eq(fromThem.record, { w: 1, d: 0, l: 1 }, "and theirs against me, mirrored");
+
+const fromMeVsBeg = buildMatchQuality("me", players, matches).opponents.find((o) => o.player.id === "beg")!;
+const fromBegVsMe = buildMatchQuality("beg", players, matches).opponents.find((o) => o.player.id === "me")!;
+eq(fromMeVsBeg.record, { w: 1, d: 0, l: 1 }, "one each against the beginner");
+eq(fromBegVsMe.record, { w: 1, d: 0, l: 1 }, "mirrored");
+
+// A lopsided pair, where getting the side wrong is visible.
+const lop = [m("x1", "ama", "p2", "2022-01-01"), m("x2", "ama", "p2", "2022-02-01"), m("x3", "ama", "p1", "2022-03-01")];
+const meVsAma = buildMatchQuality("me", players, lop).opponents.find((o) => o.player.id === "ama")!;
+const amaVsMe = buildMatchQuality("ama", players, lop).opponents.find((o) => o.player.id === "me")!;
+eq(meVsAma.record, { w: 1, d: 0, l: 2 }, "I lost that series");
+eq(amaVsMe.record, { w: 2, d: 0, l: 1 }, "so they won it");
+eq(meVsAma.record.w, amaVsMe.record.l, "my wins are their losses");
+eq(meVsAma.record.l, amaVsMe.record.w, "and my losses are their wins");
+
 // ---------------------------------------------------------------- nobody
 const empty = buildMatchQuality("me", players, []);
 eq(empty.total, 0, "no matches");

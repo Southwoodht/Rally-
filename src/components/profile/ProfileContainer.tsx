@@ -159,17 +159,29 @@ export function ProfileContainer({
           : places + " places behind " + fullNameOf(above) + ".",
         advice: "Beating higher-level players is the fastest way to close it.",
       };
-    } else if (!isSelf && meId && h[meId]) {
+    } else if (!isSelf && meId) {
       // Somebody else's profile answers the question you actually have about
       // them, which is how you do against them — not how far they are from
       // the player above them, which is their business.
-      const x = h[meId];
-      gap = {
-        headline: x.w === x.l ? "You are level with " + fullNameOf(player) + ", " + x.w + "–" + x.d + "–" + x.l + "."
-          : x.w > x.l ? "You lead " + fullNameOf(player) + " " + x.w + "–" + x.d + "–" + x.l + "."
-          : fullNameOf(player) + " leads you " + x.l + "–" + x.d + "–" + x.w + ".",
-        advice: "Across " + (x.w + x.d + x.l) + (x.w + x.d + x.l === 1 ? " meeting." : " meetings."),
-      };
+      //
+      // Read from the VIEWER's book, not the owner's. `h` above is this
+      // profile's own record, so h[meId] is what they have done to you — and
+      // reading that as yours printed every head-to-head backwards: two
+      // losses to Zaach came out as "You lead Zaach 2–0". It is the same
+      // function the matches screen uses, so the orientation is fixed in one
+      // tested place rather than flipped by hand here.
+      const versus = buildMatchQuality(meId, players, matches).opponents
+        .find((o: any) => o.player?.id === pid);
+      const x = versus?.record;
+      if (x && x.w + x.d + x.l > 0) {
+        const meetings = x.w + x.d + x.l;
+        gap = {
+          headline: x.w === x.l ? "You are level with " + fullNameOf(player) + ", " + x.w + "–" + x.d + "–" + x.l + "."
+            : x.w > x.l ? "You lead " + fullNameOf(player) + " " + x.w + "–" + x.d + "–" + x.l + "."
+            : fullNameOf(player) + " leads you " + x.l + "–" + x.d + "–" + x.w + ".",
+          advice: "Across " + meetings + (meetings === 1 ? " meeting." : " meetings."),
+        };
+      }
     }
 
     const wins = r.w;

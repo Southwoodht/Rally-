@@ -188,6 +188,38 @@ export async function updatePlayerRow(id: string, patch: any) {
   await run(supabase.from("players").update(row).eq("id", id), `updating player ${id}`);
 }
 
+/**
+ * Delete one row, and make sure it actually went.
+ *
+ * A DELETE that RLS refuses is **not an error** in Postgres — it matches no
+ * rows and reports success. So a delete the database quietly declined looked
+ * exactly like one that worked: the row vanished from the screen, saveData
+ * saw no failure, and it was back on the next load. That is not a
+ * hypothetical; the delete-agreement migration was written after it happened
+ * once, and it happened again.
+ *
+ * So: ask for the deleted rows back, and if none came, look. A row that is
+ * still there was refused, and that has to reach saveData as a failure so it
+ * re-reads and shows what the database really holds. A row that is simply
+ * gone is a success — deleting something twice is not an error.
+ */
+async function deleteRow(table: string, id: string) {
+  const { error } = await withSupabaseTimeout(
+    supabase!.from(table).delete().eq("id", id).select("id"),
+    { error: { message: "timed out" } } as any,
+  );
+  if (error) throw error;
+  const check: any = await withSupabaseTimeout(
+    supabase!.from(table).select("id").eq("id", id).maybeSingle(),
+    { data: null, error: null } as any,
+  );
+  if (check?.data) {
+    throw new Error(
+      `Removing from ${table} was refused — you may need the other player to agree first.`,
+    );
+  }
+}
+
 // ---- diff-and-sync, used by RallyApp's saveData for every other mutation
 
 async function syncEntity(
@@ -213,7 +245,7 @@ async function syncEntity(
     }
   }
   for (const item of prev) {
-    if (!nextIds.has(item.id)) ops.push(run(supabase.from(table).delete().eq("id", item.id), `removing from ${table}`));
+    if (!nextIds.has(item.id)) ops.push(deleteRow(table, item.id));
   }
   await Promise.all(ops);
 }
