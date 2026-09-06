@@ -372,7 +372,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   };
 
   const players = gdata.players, matches = gdata.matches;
-  const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, matches), [players, matches]);
+  const { elo, wdl, form, deltas, ratingBefore } = useMemo(() => computeStats(players, matches), [players, matches]);
   // First names alone collide often enough (two Sams, two Charlies) that
   // this always includes the surname when there is one.
   const nameOf = (id) => { const p = players.find((p) => p.id === id); return p ? p.name + (p.last ? " " + p.last : "") : "—"; };
@@ -569,7 +569,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
-  const shared = { players, elo, wdl, form, deltas, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   const main = tab === "home" || tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
