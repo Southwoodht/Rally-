@@ -7,6 +7,7 @@ import { listMyAdminClubs } from "@/lib/clubs";
 import { HeadToHead } from "@/components/compare/HeadToHead";
 import { HelpGuide } from "@/components/help/HelpGuide";
 import { History } from "@/components/games/History";
+import { Home } from "@/components/home/Home";
 import { LogResult } from "@/components/games/LogResult";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { GroupSheet } from "@/components/layout/GroupSheet";
@@ -35,7 +36,7 @@ import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots"
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { gkey } from "@/data/seed";
-import { uid, winPct } from "@/lib/format";
+import { greetingFor, uid, winPct } from "@/lib/format";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
@@ -68,7 +69,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [tableMode, setTableMode] = useState<"standings" | "compare">("standings");
   const [snapshots, setSnapshots] = useState<RankSnapshot[]>([]);
   const [profileId, setProfileId] = useState(null);
-  const [matchDetailId, setMatchDetailId] = useState(null);
+  const [matchDetailId, setMatchDetailId] = useState<string | null>(null);
   const [legacyId, setLegacyId] = useState(null);
   const [profileYear, setProfileYear] = useState<"all" | number>("all");
   const openProfile = (id: any, year?: "all" | number) => { setProfileId(id); setProfileYear(year ?? "all"); };
@@ -381,6 +382,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // records — showing Official movement beside an Elo column would be an
   // arrow about a different table.
   const officialRanks = useMemo(() => rankMaps(players, matches, elo, wdl).off, [players, matches, elo, wdl]);
+  const officialPoints = useMemo(() => computeOfficial(players, matches, wdl), [players, matches, wdl]);
   const movement = useMemo(() => {
     const out: Record<string, number | null> = {};
     for (const id of Object.keys(officialRanks)) {
@@ -491,9 +493,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     else if (rankingMode === "record") arr.sort((a, b) => recScore(b) - recScore(a) || (wdl[b.id]?.w ?? 0) - (wdl[a.id]?.w ?? 0));
     else if (rankingMode === "winpct") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return winPct(rb) - winPct(ra) || rb.gp - ra.gp; });
     else if (rankingMode === "form") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return formScoreOf(b) - formScoreOf(a) || (rb.w ?? 0) - (ra.w ?? 0); });
-    else { const off = computeOfficial(players, matches, wdl); arr.sort((a, b) => ((off[b.id] ?? -1e9) - (off[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0))); }
+    else { const off = officialPoints; arr.sort((a, b) => ((off[b.id] ?? -1e9) - (off[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0))); }
     return arr;
-  }, [players, elo, wdl, form, matches, rankingMode]);
+  }, [players, elo, wdl, form, matches, rankingMode, officialPoints]);
 
   if (loadError) return (
     <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}>
@@ -566,11 +568,70 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     setOnboarded(true); persistSettings({ onboarded: true });
   };
   const pendingForMe = matches.filter((m) => m.status === "pending" && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).length;
+  const homeData = (() => {
+    if (!meId) return null;
+    const mine = matches.filter((m) => m.p1 === meId || m.p2 === meId);
+    const iAm = (m) => (m.p1 === meId ? "p1" : "p2");
+    const first = (id) => players.find((p) => p.id === id)?.name || "them";
+
+    // Where you stand. The place and the arrow both come from officialRanks,
+    // which is also what the weekly snapshot records — one source, so the
+    // three numbers on this card cannot disagree with each other.
+    const rec = wdl[meId];
+    const standing = rec && rec.gp > 0 && officialRanks[meId] ? {
+      rank: officialRanks[meId],
+      rating: Math.round(officialPoints[meId] ?? 0),
+      movement: movement[meId] ?? null,
+      form: (form[meId] || []).slice(-5),
+    } : null;
+
+    // Results you logged that the other player hasn't agreed to yet. Only
+    // yours: nudging asks somebody to confirm something, and a result they
+    // logged is waiting on you, not on them.
+    const pending = mine
+      .filter((m) => m.status === "pending" && m.reportedBy === meId)
+      .map((m) => {
+        const them = first(m.p1 === meId ? m.p2 : m.p1);
+        const remaining = m.loggedAt ? m.loggedAt + 24 * 3600 * 1000 - Date.now() : null;
+        return {
+          matchId: m.id,
+          headline: m.winner === "draw" ? "You drew with " + them
+            : m.winner === iAm(m) ? "You beat " + them : "You lost to " + them,
+          score: m.score || null,
+          waitingOn: them,
+          // Null where there is no loggedAt: those results predate the
+          // auto-confirm sweep and never expire, so the card says nothing
+          // about timing rather than inventing a deadline.
+          autoConfirmsInHours: remaining === null ? null : Math.max(0, Math.ceil(remaining / 3600000)),
+        };
+      });
+
+    // Only a booked fixture can fill this tile. An unbooked one has no when,
+    // and "next up" without a when is not next anything.
+    const bookedNext = (fixtures || []).find((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId));
+    const nextUp = bookedNext
+      ? { opponent: first(bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1), when: bookedNext.booked }
+      : null;
+
+    // The calendar month, not the last thirty days: "this month" is what the
+    // tile says, and people read it as the month they are in.
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const month = mine.filter((m) => m.status !== "pending" && m.date >= monthStart);
+    const w = month.filter((m) => m.winner === iAm(m)).length;
+    const l = month.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
+    const thisMonth = month.length ? { w, l, winRate: Math.round((w / month.length) * 100) } : null;
+
+    return { standing, pending, nextUp, thisMonth };
+  })();
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
-  const main = tab === "home" || tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
+  // Home brings its own header — a greeting and a league name, not a page
+  // title — so the shared one sits this tab out rather than stacking two.
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
+  const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
   // personal league behave like any other one — computeStats only counts a
@@ -599,7 +660,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             </button>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
               <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "8px 0 0", fontSize: 38, lineHeight: 0.95, textTransform: "uppercase", letterSpacing: -0.5 }}>
-                {tab === "home" ? "Home" : tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
+                {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                 <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 12, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
@@ -628,7 +689,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "ladder" && tableMode === "compare" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
         {tab === "ladder" && tableMode === "standings" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
-        {(tab === "home" || tab === "fixtures") && <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />}
+        {tab === "home" && (
+          <Home
+            header={{
+              leagueName: personal ? "Everyone I've played" : (group?.name || "League"),
+              greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
+              onPickLeague: () => setGroupSheet(true),
+              bell: (
+                <>
+                  <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label="Messages" style={{ position: "relative", background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                    <MessengerBird size={18} flap={unreadMsgs > 0} />
+                    {unreadMsgs > 0 && <span style={{ position: "absolute", top: 0, right: 0, minWidth: 15, height: 15, borderRadius: 999, background: BALL, color: COURT, fontFamily: body, fontWeight: 500, fontSize: 9.5, display: "grid", placeItems: "center", padding: "0 3px" }}>{unreadMsgs}</span>}
+                  </button>
+                  <div style={{ background: PANEL, borderRadius: 999, width: 36, height: 36, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                    <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
+                  </div>
+                </>
+              ),
+            }}
+            standing={homeData?.standing}
+            pending={homeData?.pending}
+            nextUp={homeData?.nextUp}
+            thisMonth={homeData?.thisMonth}
+            onEditMatch={setMatchDetailId}
+            onBook={() => setTab("fixtures")}
+          >
+            {feed}
+          </Home>
+        )}
+        {tab === "fixtures" && feed}
         {tab === "global" && <SubHeader title="Global" onBack={() => setTab("ladder")} />}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} />}
         {/* Back to wherever you came from: the Table if a row sent you here,

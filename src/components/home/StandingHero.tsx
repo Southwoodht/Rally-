@@ -77,7 +77,7 @@ export function StandingHero({ rank, rating, movement, form }: StandingHeroProps
                 <MovementIndicator delta={movement} tone="onAccent" size={13} label={movementLabel(movement as number)} />
               )}
             </span>
-            {hasForm && <FormDots form={form!} ink={FEED_LIME_INK} />}
+            {hasForm && <FormDots form={form!} tone="ink" ink={FEED_LIME_INK} />}
           </div>
         </>
       )}

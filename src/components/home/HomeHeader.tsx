@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { ChevronDown } from "lucide-react";
-import { FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tight } from "@/lib/theme";
+import { FEED_TEXT_HI, FEED_TEXT_MID, body, tight } from "@/lib/theme";
 
 // League name, greeting, bell. The greeting arrives finished so the clock
 // lives in one place (greetingFor in lib/format.ts) rather than in a
@@ -12,8 +12,10 @@ export interface HomeHeaderProps {
   /** Already built — "Evening, Sam". */
   greeting: string;
   onPickLeague?: () => void;
-  /** The bell, passed in rather than imported, so this file doesn't depend
-   *  on the notification stack to render. */
+  /** The header's controls — the bell, and whatever else the screen
+   *  carries — passed in rather than imported, so this file doesn't depend
+   *  on the notification stack to render. The caller styles them: this is a
+   *  row, not a single round button, because Home has two of them.  */
   bell?: React.ReactNode;
 }
 
@@ -37,11 +39,7 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
           {greeting}
         </div>
       </div>
-      {bell && (
-        <div style={{ width: 36, height: 36, borderRadius: 18, background: FEED_RAISED, display: "grid", placeItems: "center", flexShrink: 0 }}>
-          {bell}
-        </div>
-      )}
+      {bell && <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>{bell}</div>}
     </div>
   );
 }

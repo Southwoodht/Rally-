@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Clock } from "lucide-react";
 import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
 
@@ -62,7 +62,7 @@ export function PendingConfirmationCard({ item, onNudge, onEdit }: PendingConfir
         </div>
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <button onClick={() => onNudge && onNudge(item.matchId)} style={btn(FEED_LIME, FEED_LIME_INK)}>Nudge</button>
+        {onNudge && <button onClick={() => onNudge(item.matchId)} style={btn(FEED_LIME, FEED_LIME_INK)}>Nudge</button>}
         <button onClick={() => onEdit && onEdit(item.matchId)} style={btn(FEED_RAISED, FEED_TEXT_MID)}>Edit</button>
       </div>
     </div>
@@ -82,8 +82,12 @@ export function PendingStack({ items, onNudge, onEdit, onSeeAll }: {
   onEdit?: (matchId: string) => void;
   onSeeAll?: () => void;
 }) {
+  // Expanding in place rather than going somewhere: the rest of the list is
+  // the same three-line card, and a screen you have to come back from is a
+  // lot of ceremony for two more of them.
+  const [expanded, setExpanded] = useState(false);
   if (!items || !items.length) return null;   // nothing pending renders nothing
-  const shown = items.slice(0, 3);
+  const shown = expanded ? items : items.slice(0, 3);
   const rest = items.length - shown.length;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -92,8 +96,8 @@ export function PendingStack({ items, onNudge, onEdit, onSeeAll }: {
       ))}
       {rest > 0 && (
         <button
-          onClick={onSeeAll}
-          style={{ background: "transparent", border: "none", padding: "2px 0", cursor: onSeeAll ? "pointer" : "default", textAlign: "left", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}
+          onClick={() => (onSeeAll ? onSeeAll() : setExpanded(true))}
+          style={{ background: "transparent", border: "none", padding: "2px 0", cursor: "pointer", textAlign: "left", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}
         >
           +{rest} more
         </button>
