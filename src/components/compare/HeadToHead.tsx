@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import { AlertCircle, ArrowLeftRight, Info } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
+import { SurfaceCard } from "@/components/ui/Surfaces";
+import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelNow, levelVal } from "@/core/levels";
@@ -10,9 +13,26 @@ import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput, mono } from "@/lib/theme";
 import { FEED_THEY_LEAD } from "@/lib/theme";
 import {
-  DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_RAISED,
+  FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_LOSS, FEED_PAGE, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, tabular,
 } from "@/lib/theme";
+
+// The filter chips, matching the Standings row: lime fill when the filter is
+// doing something, a card chip when it is not.
+function FilterChip({ active, onClick, children }: any) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: active ? FEED_LIME : FEED_CARD, border: "none", borderRadius: 999,
+        padding: "7px 14px", cursor: "pointer", fontFamily: body, fontWeight: active ? 500 : 400,
+        fontSize: 12.5, color: active ? FEED_LIME_INK : FEED_TEXT_MID, whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 const sectionLabel: React.CSSProperties = {
   fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
@@ -25,6 +45,11 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   const [a, setA] = useState(initialA || ""); const [b, setB] = useState(initialB || "");
   const [yr, setYr] = useState("all");
   const [venue, setVenue] = useState("");
+  // Read once, then in the way. Behind the icon it stays available without
+  // costing every later visit six lines of screen.
+  const [explainerOpen, setExplainerOpen] = useState(false);
+  // Which filter sheet is open, if any.
+  const [sheet, setSheet] = useState<null | "year" | "venue">(null);
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((x: any, y: any) => y - x), [matches]);
   const scoped = useMemo(() => yr === "all" ? matches : matches.filter((m) => new Date(m.date).getFullYear() === Number(yr)), [matches, yr]);
@@ -52,19 +77,68 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     const even = entries.filter((e) => e.net === 0);
     return { cur, best, top3, winning, losing, even };
   };
-  const Row = ({ label, av, bv, hiA, hiB }: any) => (
-    <div style={{ display: "flex", alignItems: "center", padding: "9px 0", borderTop: "none" }}>
-      <span style={{ ...tabular, flex: 1, fontFamily: body, fontSize: 14, fontWeight: 500, color: hiA ? FEED_LIME : FEED_TEXT_HI, textAlign: "left" }}>{av}</span>
-      <span style={{ width: 118, textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID }}>{label}</span>
-      <span style={{ ...tabular, flex: 1, fontFamily: body, fontSize: 14, fontWeight: 500, color: hiB ? FEED_LIME : FEED_TEXT_HI, textAlign: "right" }}>{bv}</span>
-    </div>
-  );
+/**
+   * One comparison, with the arithmetic done for the reader.
+   *
+   * Two columns of numbers make you subtract them yourself, and most people
+   * don't — the bar is the whole point of the row.
+   *
+   * `na`/`nb` are the numeric values behind the displayed strings. Passing
+   * neither draws no bar, which is right for anything that is not a single
+   * comparable magnitude: a record is three numbers and a level is a name,
+   * and drawing either as a proportion would invent a quantity.
+   *
+   * `base` shifts both values before weighting, for scales that go below
+   * zero. Elo does, and weighting a negative directly yields a negative
+   * width. The base is the LEAGUE's floor rather than the pair's, because
+   * pair-normalising always puts one of two values at the minimum and every
+   * bar would read as a whitewash.
+   */
+  const StatRow = ({ label, av, bv, na, nb, base = 0, lowerWins = false, last = false }: any) => {
+    const both = Number.isFinite(na) && Number.isFinite(nb);
+    const aWins = both && (lowerWins ? na < nb : na > nb);
+    const bWins = both && (lowerWins ? nb < na : nb > na);
+    const sa = both ? Math.max(0, na - base) : 0;
+    const sb = both ? Math.max(0, nb - base) : 0;
+    const total = sa + sb;
+    return (
+      <div style={{ padding: "10px 0", borderBottom: last ? undefined : "0.5px solid " + FEED_HAIRLINE }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 500, color: aWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "left" }}>{av}</span>
+          <span style={{ flex: "none", textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{label}</span>
+          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 500, color: bWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "right" }}>{bv}</span>
+        </div>
+        {both && total > 0 && (
+          <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", marginTop: 7, background: FEED_RAISED }}>
+            <div style={{ width: (sa / total) * 100 + "%", background: aWins ? FEED_LIME : FEED_RAISED }} />
+            <div style={{ width: (sb / total) * 100 + "%", background: bWins ? FEED_LIME : FEED_RAISED }} />
+          </div>
+        )}
+      </div>
+    );
+  };
   const pa = byId[a], pb = byId[b];
   const scopedStats = useMemo(() => computeStats(players, scoped), [players, scoped]);
   const eloS = scopedStats.elo, wdlS = scopedStats.wdl;
   const ra = wdlS[a] || { w: 0, d: 0, l: 0, gp: 0 }, rb = wdlS[b] || { w: 0, d: 0, l: 0, gp: 0 };
   const sa = a ? statsFor(a) : null, sb = b ? statsFor(b) : null;
   const venues = useMemo(() => venuesFor(scoped), [scoped]);
+  // Elo runs below zero, so the bars are weighted from the league's floor
+  // rather than from the pair's — pair-normalising always pins one of two
+  // values at the minimum, and every row would read as a whitewash.
+  const eloFloor = useMemo(() => Math.min(0, ...Object.values(eloS).map((v: any) => Number(v) || 0)), [eloS]);
+  // Whoever the app would not yet place on the global table is also whoever
+  // it should not sound certain about here. One threshold, not two.
+  const thin = useMemo(() => {
+    const out: { name: string; gp: number }[] = [];
+    [a, b].forEach((id) => {
+      if (!id) return;
+      const r = wdlS[id];
+      const gp = r?.gp ?? 0;
+      if (gp < PROVISIONAL_GAMES) out.push({ name: nm(id), gp });
+    });
+    return out;
+  }, [a, b, wdlS]);
   const venuePrediction = useMemo(() => (a && b && venue ? predictProbAtVenue(a, b, scoped, eloS, players, venue) : null), [a, b, scoped, eloS, players, venue]);
   const pctA = a && b ? (venuePrediction ? venuePrediction.pct : Math.round(predictProb(a, b, scoped, eloS, players) * 100)) : 50;
   const explanation = useMemo(() => {
@@ -93,60 +167,147 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     return `Rally favours ${favoredName} — ${top.join(" and ")}.`;
   }, [a, b, scoped, eloS, players, pctA]);
   return (
-    <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 14, lineHeight: 1.45 }}>Pick any two players — works even if they've never played each other.</div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <div style={{ flex: 1 }}><PlayerPicker value={a} onChange={setA} players={players} exclude={b} placeholder="Player A" onCreatePlayer={onCreatePlayer} /></div>
-        <div style={{ flex: 1 }}><PlayerPicker value={b} onChange={setB} players={players} exclude={a} placeholder="Player B" onCreatePlayer={onCreatePlayer} /></div>
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginBottom: 10 }}>
+        <button
+          onClick={() => setExplainerOpen(!explainerOpen)}
+          aria-label="What is this?"
+          aria-expanded={explainerOpen}
+          style={{ background: "transparent", border: "none", padding: 4, cursor: "pointer", display: "grid", placeItems: "center" }}
+        >
+          <Info size={15} color={explainerOpen ? FEED_LIME : FEED_TEXT_MID} strokeWidth={2} />
+        </button>
       </div>
-      <select value={yr} onChange={(e) => setYr(e.target.value)} style={{ ...miniInput, width: "100%", marginBottom: venues.length ? 8 : 16, boxSizing: "border-box" as const }}>
-        <option value="all">All-time</option>
-        {years.map((y: number) => <option key={y} value={String(y)}>{y}</option>)}
-      </select>
-      {venues.length > 0 && (
-        <select value={venue} onChange={(e) => setVenue(e.target.value)} style={{ ...miniInput, width: "100%", marginBottom: 16, boxSizing: "border-box" as const }}>
-          <option value="">Any venue</option>
-          {venues.map((v) => <option key={v} value={v}>At {v}</option>)}
-        </select>
+      {explainerOpen && (
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 14 }}>
+          Pick any two players — this works even if they have never played each other.
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}><PlayerPicker value={a} onChange={setA} players={players} exclude={b} placeholder="Player A" onCreatePlayer={onCreatePlayer} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><PlayerPicker value={b} onChange={setB} players={players} exclude={a} placeholder="Player B" onCreatePlayer={onCreatePlayer} /></div>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+        <FilterChip active={yr !== "all"} onClick={() => setSheet("year")}>{yr === "all" ? "All time" : yr}</FilterChip>
+        {venues.length > 0 && (
+          <FilterChip active={!!venue} onClick={() => setSheet("venue")}>{venue ? "At " + venue : "Any venue"}</FilterChip>
+        )}
+        {/* Comparing the other way round is a thing people do constantly, and
+            it used to cost two trips through the pickers. */}
+        <button
+          onClick={() => { const t = a; setA(b); setB(t); }}
+          aria-label="Swap the two players"
+          disabled={!a && !b}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 5, background: FEED_CARD, border: "none",
+            borderRadius: 999, padding: "7px 12px", cursor: a || b ? "pointer" : "default",
+            fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, opacity: a || b ? 1 : 0.5,
+          }}
+        >
+          <ArrowLeftRight size={13} strokeWidth={2} />Swap
+        </button>
+      </div>
+
+      {sheet && (
+        <div onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "70vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "18px 16px 32px" }}>
+            <div style={{ ...sectionLabel, marginBottom: 12 }}>{sheet === "year" ? "Period" : "Venue"}</div>
+            {(sheet === "year"
+              ? [{ v: "all", l: "All time" }, ...years.map((y: number) => ({ v: String(y), l: String(y) }))]
+              : [{ v: "", l: "Any venue" }, ...venues.map((v: string) => ({ v, l: "At " + v }))]
+            ).map((o: any) => {
+              const on = sheet === "year" ? yr === o.v : venue === o.v;
+              return (
+                <button
+                  key={o.v || "any"}
+                  onClick={() => { if (sheet === "year") setYr(o.v); else setVenue(o.v); setSheet(null); }}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left", background: on ? FEED_RAISED : "transparent",
+                    border: "none", borderRadius: 12, padding: "12px 14px", cursor: "pointer",
+                    fontFamily: body, fontWeight: on ? 500 : 400, fontSize: 15, color: on ? FEED_LIME : FEED_TEXT_HI,
+                  }}
+                >
+                  {o.l}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       )}
       {a && b ? (
         <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 500, color: FEED_TEXT_HI, letterSpacing: "-0.02em" }}>{nm(a)}</span>
-            <span style={{ fontFamily: body, fontSize: 17, fontWeight: 500, color: FEED_TEXT_HI, letterSpacing: "-0.02em" }}>{nm(b)}</span>
-          </div>
           {rivalry && (() => {
             const leader = rivalry.w > rivalry.l ? nm(a) : rivalry.l > rivalry.w ? nm(b) : null;
             const leadRec = rivalry.w >= rivalry.l ? `${rivalry.w}-${rivalry.d}-${rivalry.l}` : `${rivalry.l}-${rivalry.d}-${rivalry.w}`;
             const streakName = rivalry.streak.holder === "me" ? nm(a) : rivalry.streak.holder === "opp" ? nm(b) : null;
             return (
-              <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "12px 14px", marginBottom: 16 }}>
+              <div style={{ background: FEED_CARD, borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
                 <div style={{ ...sectionLabel, color: FEED_LIME, marginBottom: 5 }}>Rivalry · {rivalry.total} matches</div>
                 <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, marginBottom: 3 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
                 <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
               </div>
             );
           })()}
-          <div style={{ ...tabular, display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: body, fontSize: 16, fontWeight: 500, marginBottom: 6 }}><span style={{ color: pctA >= 50 ? FEED_LIME : FEED_TEXT_MID }}>{pctA}%</span><span style={{ fontSize: 11.5, fontWeight: 400, color: FEED_TEXT_LOW }}>predicted win</span><span style={{ color: pctA < 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - pctA}%</span></div>
-          <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", background: FEED_RAISED, marginBottom: 12 }}><div style={{ width: pctA + "%", background: FEED_LIME }} /><div style={{ width: (100 - pctA) + "%", background: DOT_LOSS }} /></div>
-          {venue && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, marginBottom: 14, lineHeight: 1.45 }}>
-              {venuePrediction?.confident ? `Factoring in results at ${venue}.` : `Not enough games at ${venue} yet to say — showing the overall prediction.`}
+          <SurfaceCard radius={18} style={{ marginBottom: 12 }}>
+            <div style={{ textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID, textTransform: "uppercase", letterSpacing: 0.8 }}>Predicted win</div>
+            <div style={{ ...tabular, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
+              <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: pctA >= 50 ? FEED_LIME : FEED_TEXT_MID }}>{pctA}%</span>
+              <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: pctA < 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - pctA}%</span>
             </div>
+            {/* The underdog's half is the loss green, not a red: red against
+                lime frames the other player as an error state, and coral was
+                never in this palette to begin with. */}
+            <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", background: FEED_RAISED, marginTop: 8 }}>
+              <div style={{ width: pctA + "%", background: FEED_LIME }} />
+              <div style={{ width: (100 - pctA) + "%", background: FEED_LOSS }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 6 }}>
+              <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(a)}</span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: "right", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(b)}</span>
+            </div>
+            {(explanation || venue) && (
+              <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 14, paddingTop: 12 }}>
+                {venue && (
+                  <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, lineHeight: 1.5, marginBottom: explanation ? 6 : 0 }}>
+                    {venuePrediction?.confident ? `Factoring in results at ${venue}.` : `Not enough games at ${venue} yet to say — showing the overall prediction.`}
+                  </div>
+                )}
+                {explanation && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{explanation}</div>}
+              </div>
+            )}
+          </SurfaceCard>
+
+          {/* A prediction off four games is not the same object as one off
+              forty-six, and the screen used to present them identically. The
+              threshold is the app's existing one rather than a second number
+              invented here. */}
+          {thin.length > 0 && (
+            <SurfaceCard radius={16} style={{ marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <AlertCircle size={16} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1 }} />
+                <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+                  {thin.map((t: any) => t.name + " has played " + t.gp + (t.gp === 1 ? " match" : " matches")).join(", and ")}.
+                  {" "}Treat the prediction as a rough guide.
+                </div>
+              </div>
+            </SurfaceCard>
           )}
-          {explanation && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 18 }}>{explanation}</div>}
-          <Row label="Head to head" av={aw + "-" + d + "-" + bw} bv={bw + "-" + d + "-" + aw} hiA={aw > bw} hiB={bw > aw} />
-          <Row label="Record" av={ra.w + "-" + ra.d + "-" + ra.l} bv={rb.w + "-" + rb.d + "-" + rb.l} />
-          <Row label="Win rate" av={ra.gp ? Math.round(winPct(ra) * 100) + "%" : "–"} bv={rb.gp ? Math.round(winPct(rb) * 100) + "%" : "–"} hiA={ra.gp && rb.gp && winPct(ra) > winPct(rb)} hiB={ra.gp && rb.gp && winPct(rb) > winPct(ra)} />
-          <Row label="Games" av={ra.gp} bv={rb.gp} hiA={ra.gp > rb.gp} hiB={rb.gp > ra.gp} />
-          <Row label="ELO" av={Math.round(eloS[a] ?? 0)} bv={Math.round(eloS[b] ?? 0)} hiA={(eloS[a] ?? 0) > (eloS[b] ?? 0)} hiB={(eloS[b] ?? 0) > (eloS[a] ?? 0)} />
-          <Row label="Level" av={pa?.level ? pa.level.cat : "–"} bv={pb?.level ? pb.level.cat : "–"} />
-          <Row label="Streak now" av={sa?.cur ?? 0} bv={sb?.cur ?? 0} hiA={(sa?.cur ?? 0) > (sb?.cur ?? 0)} hiB={(sb?.cur ?? 0) > (sa?.cur ?? 0)} />
-          <Row label="Best streak" av={sa?.best ?? 0} bv={sb?.best ?? 0} hiA={(sa?.best ?? 0) > (sb?.best ?? 0)} hiB={(sb?.best ?? 0) > (sa?.best ?? 0)} />
-          <Row label="Winning recs" av={sa?.winning?.length ?? 0} bv={sb?.winning?.length ?? 0} hiA={(sa?.winning?.length ?? 0) > (sb?.winning?.length ?? 0)} hiB={(sb?.winning?.length ?? 0) > (sa?.winning?.length ?? 0)} />
-          <Row label="Losing recs" av={sa?.losing?.length ?? 0} bv={sb?.losing?.length ?? 0} hiA={(sa?.losing?.length ?? 0) < (sb?.losing?.length ?? 0)} hiB={(sb?.losing?.length ?? 0) < (sa?.losing?.length ?? 0)} />
-          <Row label="Home" av={pa?.home || "–"} bv={pb?.home || "–"} />
-          <Row label="Age" av={pa?.age || "–"} bv={pb?.age || "–"} />
+          <SurfaceCard radius={18} style={{ marginBottom: 4 }}>
+            <StatRow label="Head to head" av={aw + "–" + d + "–" + bw} bv={bw + "–" + d + "–" + aw} na={aw} nb={bw} />
+            {/* No bar: 28–6–10 is three numbers, not a magnitude. */}
+            <StatRow label="Record" av={ra.w + "–" + ra.d + "–" + ra.l} bv={rb.w + "–" + rb.d + "–" + rb.l} />
+            <StatRow label="Win rate" av={ra.gp ? Math.round(winPct(ra) * 100) + "%" : "–"} bv={rb.gp ? Math.round(winPct(rb) * 100) + "%" : "–"} na={ra.gp ? winPct(ra) : undefined} nb={rb.gp ? winPct(rb) : undefined} />
+            <StatRow label="Matches played" av={ra.gp} bv={rb.gp} na={ra.gp} nb={rb.gp} />
+            <StatRow label="Elo" av={Math.round(eloS[a] ?? 0)} bv={Math.round(eloS[b] ?? 0)} na={eloS[a] ?? 0} nb={eloS[b] ?? 0} base={eloFloor} />
+            {/* No bar: a level is a name. */}
+            <StatRow label="Level" av={pa?.level ? pa.level.cat : "–"} bv={pb?.level ? pb.level.cat : "–"} />
+            <StatRow label="Streak now" av={sa?.cur ?? 0} bv={sb?.cur ?? 0} na={sa?.cur ?? 0} nb={sb?.cur ?? 0} />
+            <StatRow label="Best streak" av={sa?.best ?? 0} bv={sb?.best ?? 0} na={sa?.best ?? 0} nb={sb?.best ?? 0} />
+            <StatRow label="Winning records" av={sa?.winning?.length ?? 0} bv={sb?.winning?.length ?? 0} na={sa?.winning?.length ?? 0} nb={sb?.winning?.length ?? 0} />
+            <StatRow label="Losing records" av={sa?.losing?.length ?? 0} bv={sb?.losing?.length ?? 0} na={sa?.losing?.length ?? 0} nb={sb?.losing?.length ?? 0} lowerWins />
+            <StatRow label="Home" av={pa?.home || "–"} bv={pb?.home || "–"} />
+            <StatRow label="Age" av={pa?.age || "–"} bv={pb?.age || "–"} last />
+          </SurfaceCard>
           <div style={{ display: "flex", gap: 0, marginTop: 16 }}>
             {([[sa, a], [sb, b]] as any[]).map(([s, pid]: any, i: number) => (
               <div key={i} style={{ flex: 1, minWidth: 0, paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
@@ -157,7 +318,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
               </div>
             ))}
           </div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 22, lineHeight: 1.5, borderTop: "0.5px solid " + FEED_HAIRLINE, paddingTop: 12 }}>Yellow = their record against that player. Grey = that player's level and overall record.</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 22, lineHeight: 1.5, paddingTop: 12 }}>Yellow = their record against that player. Grey = that player's level and overall record.</div>
           <div style={{ display: "flex", gap: 0, marginTop: 8 }}>
             {([[sa, 0], [sb, 1]] as any[]).map(([s, i]: any) => {
               const Line = ({ e }: any) => {

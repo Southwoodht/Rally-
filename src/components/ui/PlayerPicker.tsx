@@ -4,7 +4,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
+import { ChevronDown } from "lucide-react";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL, PANEL2, body, input, miniInput, mono } from "@/lib/theme";
+import { FEED_CARD, FEED_TEXT_HI, FEED_TEXT_MID } from "@/lib/theme";
 
 // Reusable "pick an existing player, or create a new one" control.
 // Used anywhere a player needs selecting — Compare, Log Result, and future
@@ -44,14 +46,27 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{ ...input, display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%", boxSizing: "border-box" as const, textAlign: "left" }}>
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%",
+          background: FEED_CARD, border: "none", borderRadius: 14, padding: "10px 12px",
+          boxSizing: "border-box" as const, textAlign: "left", minWidth: 0,
+        }}
+      >
         {selected ? (
           <>
-            <Avatar player={selected} size={22} />
-            <span style={{ fontFamily: body, fontSize: 14, color: CHALK, flex: 1 }}>{selected.name}{selected.last ? " " + selected.last : ""}</span>
+            <Avatar player={selected} size={26} />
+            {/* Full name, and it never wraps: a wrapped name changes the
+                control's height and the two pickers stop lining up. */}
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {selected.name}{selected.last ? " " + selected.last : ""}
+            </span>
           </>
-        ) : <span style={{ fontFamily: body, fontSize: 14, color: MUTED, flex: 1 }}>{placeholder}</span>}
-        <span style={{ color: MUTED, fontFamily: body, fontSize: 12 }}>▾</span>
+        ) : (
+          <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{placeholder}</span>
+        )}
+        <ChevronDown size={15} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
       </button>
 
       {open && (
