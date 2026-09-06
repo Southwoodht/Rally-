@@ -5,6 +5,7 @@ import { ProfileView } from "@/components/profile/ProfileView";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
 import { computeAchievements } from "@/core/achievements";
 import { levelAt } from "@/core/levels";
+import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { TIER_HEIGHTS } from "@/core/stars";
@@ -218,9 +219,17 @@ export function ProfileContainer({
       years && years > 0 ? years + (years === 1 ? " year playing" : " years playing") : null,
     ].filter(Boolean).join(" · ");
 
+    // The verdict on who they have been playing. The same function the
+    // matches screen runs, so the card and the screen it opens cannot
+    // disagree — this is the summary, that is the working.
+    const quality = buildMatchQuality(pid, players, matches);
+    const playingStyle = quality.total
+      ? { title: quality.verdict || "Not enough to judge", description: shareSentence(quality) }
+      : null;
+
     return {
       record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round(((r.w + r.d * 0.5) / r.gp) * 100) : 0, currentStreak, bestStreak, rankings },
-      gap, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
+      gap, playingStyle, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
       historyTotal: mine.length, meta,
     };
   }, [pid, players, matches, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit]);
@@ -241,6 +250,7 @@ export function ProfileContainer({
       }}
       record={data.record}
       gap={data.gap}
+      playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails } : null}
       rivalries={data.rivalries}
       bestWins={data.bestWins}
       opponents={data.opponents}

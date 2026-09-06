@@ -64,22 +64,25 @@ const Link = ({ label, onClick, arrow = true }: { label: string; onClick?: () =>
     </button>
   ) : null;
 
-/** How many rows a section shows before you ask for the rest. */
-const HISTORY_PREVIEW = 5;
+/** How many rows a section shows before you ask for the rest.
+ *
+ *  History is four because it is a preview of "Your matches" rather than a
+ *  list in its own right — the full one lives on that screen, graded, and
+ *  two versions of the same list is one to keep in step. */
+const HISTORY_PREVIEW = 4;
 const OPPONENTS_PREVIEW = 4;
 
 export function ProfileView(p: ProfileViewProps) {
   const isSelf = p.viewer === "self";
   // Expansion is view state, not data: the container already handed over
   // every row, and how many of them are on screen is nobody else's business.
-  const [allHistory, setAllHistory] = useState(false);
   const [allOpponents, setAllOpponents] = useState(false);
   // Tapping "28 won" asks a question of the list below, so the answer goes
   // there rather than opening a second list somewhere else.
   const [filter, setFilter] = useState<OutcomeFilter>(null);
   const history = p.history || [];
   const filtered = filter ? history.filter((m) => m.outcome === filter) : [];
-  const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
+  const shownHistory = history.slice(0, HISTORY_PREVIEW);
   const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
   // Editing belongs to the owner of the result, wherever the list appears.
   const forViewer = (list: MatchHistoryItem[]) =>
@@ -155,13 +158,7 @@ export function ProfileView(p: ProfileViewProps) {
       {history.length > 0 && (
         <Section
           title="Match history"
-          right={
-            allHistory
-              ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
-              : history.length > HISTORY_PREVIEW
-                ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
-                : undefined
-          }
+          right={<Link label={`All ${p.historyTotal ?? history.length}`} onClick={p.onAllHistory} />}
         >
           {/* Editing is an action on your own result, so it does not travel
               with the list when somebody else is reading it. */}

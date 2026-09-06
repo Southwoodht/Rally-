@@ -20,6 +20,7 @@ import { Friends } from "@/components/social/Friends";
 import { LegacyProfile } from "@/components/profile/LegacyProfile";
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
+import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { MessengerBird } from "@/components/ui/MessengerBird";
@@ -68,6 +69,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // chose once is not a preference worth remembering across launches, and
   // opening the app into Compare would be answering a question nobody asked.
   const [tableMode, setTableMode] = useState<"standings" | "compare">("standings");
+  // Which half of "Your matches" you arrived at. Session only, like the
+  // Table's: the mode is decided by the link you followed, and remembering
+  // it across launches would override that.
+  const [matchesMode, setMatchesMode] = useState<MatchesMode>("quality");
+  // Where Back goes from the level-history screen. It is reached from two
+  // places and should return to whichever one you came from.
+  const [levelsFrom, setLevelsFrom] = useState("profile");
   const [snapshots, setSnapshots] = useState<RankSnapshot[]>([]);
   const [profileId, setProfileId] = useState(null);
   const [matchDetailId, setMatchDetailId] = useState<string | null>(null);
@@ -728,12 +736,25 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             the profile menu otherwise. */}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} />}
+        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
         {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} />}
-        {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab("profile")} />}
+        {tab === "matches" && <SubHeader title="Your matches" onBack={() => setTab("profile")} />}
+        {tab === "matches" && (
+          <YourMatches
+            viewerId={meId}
+            players={players}
+            matches={matches}
+            mode={matchesMode}
+            onMode={setMatchesMode}
+            onOpenPlayer={openProfile}
+            onOpenMatch={setMatchDetailId}
+            onFixLevels={() => { setLevelsFrom("matches"); setTab("levels"); }}
+          />
+        )}
+        {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab(levelsFrom)} />}
         {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
@@ -758,7 +779,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><MessengerBird size={18} flap={unreadMsgs > 0} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 10, color: COURT, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span>{!isClubAdmin && <span style={{ fontFamily: mono, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", color: MUTED }}>set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
             </div>

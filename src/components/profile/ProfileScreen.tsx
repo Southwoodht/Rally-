@@ -9,7 +9,7 @@ import { Empty } from "@/components/ui/atoms";
 // the record are gone: both are rows in the settings list at the foot of the
 // screen now. A card and a paragraph are what you spend when something needs
 // explaining, and "Linked player · Samuel Henry" does not.
-export function ProfileScreen({ players, meId, shared, onSetMe, goH2H, goSettings, goEdit, goFriends }: any) {
+export function ProfileScreen({ players, meId, shared, onSetMe, goH2H, goSettings, goEdit, goFriends, goQuality, goHistory }: any) {
   const me = players.find((p: any) => p.id === meId);
   if (!me) return <Empty msg="Add players in Settings first." />;
   return (
@@ -20,6 +20,8 @@ export function ProfileScreen({ players, meId, shared, onSetMe, goH2H, goSetting
       onSettings={goSettings}
       onFriends={goFriends}
       onLinkedPlayer={goEdit}
+      onStyleDetails={goQuality}
+      onAllHistory={goHistory}
     />
   );
 }

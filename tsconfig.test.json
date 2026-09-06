@@ -18,6 +18,8 @@
     "src/core/constants.ts",
     "src/core/levels.ts",
     "src/core/matchGrade.ts",
-    "src/core/matchGrade.test.ts"
+    "src/core/matchGrade.test.ts",
+    "src/core/matchQuality.ts",
+    "src/core/matchQuality.test.ts"
   ]
 }
