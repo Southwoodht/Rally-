@@ -20,7 +20,6 @@ export function ProfileScreen({ players, meId, shared, onSetMe, goH2H, goSetting
       onSettings={goSettings}
       onFriends={goFriends}
       onLinkedPlayer={goEdit}
-      onAllOpponents={goH2H}
     />
   );
 }

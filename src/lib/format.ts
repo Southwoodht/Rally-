@@ -19,6 +19,11 @@ export const greetingFor = (name: string, at: Date = new Date()): string => {
   return name ? part + ", " + name : part;
 };
 
+// The full name, for the few places with room for it and a reason to be
+// precise — a best win is a thing you tell people about, and "Charlie" is
+// two different players in this league.
+export const fullNameOf = (p: any): string => (p ? p.name + (p.last ? " " + p.last : "") : "Someone");
+
 export const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 
 export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);

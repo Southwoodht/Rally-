@@ -2,7 +2,7 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { shortNameOf } from "@/lib/format";
+import { fullNameOf } from "@/lib/format";
 import { FEED_LIME, FEED_LIME_INK, FEED_LOSS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
 
 // The three wins worth remembering.
@@ -64,7 +64,7 @@ export function BestWins({ wins, onOpenMatch }: BestWinsProps) {
           <Badge place={i + 1} />
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {shortNameOf(w.opponent)}
+              {fullNameOf(w.opponent)}
             </span>
             <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{w.subtitle}</span>
           </span>

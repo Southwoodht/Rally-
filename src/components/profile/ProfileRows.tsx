@@ -9,23 +9,74 @@ import { FEED_LIME, FEED_LOSS, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } from
 
 const RULE = "inset 0 -0.5px 0 " + FEED_LOSS;
 
-export function VerifiedTrophiesRow({ count = 0, onClaim }: { count?: number; onClaim?: () => void }) {
+export interface ProfileTrophy {
+  id: string;
+  competition: string;
+  /** "Champion", "Runner-up", "No. 4". */
+  result?: string | null;
+  season?: string | null;
+  clubName?: string | null;
+  /** True when a club admin recorded it against the player row rather than
+   *  the player claiming it themselves. */
+  recorded?: boolean;
+}
+
+/**
+ * The trophies themselves, not a count of them.
+ *
+ * A row reading "2 trophies" is a locked box: the whole point of a verified
+ * honour is that it says what it was and who vouched for it. The count only
+ * survives as the empty state, where there is nothing to name.
+ */
+export function VerifiedTrophiesRow({ trophies = [], onClaim }: { trophies?: ProfileTrophy[]; onClaim?: () => void }) {
+  if (!trophies.length) {
+    return (
+      <SurfaceCard radius={18} pad="14px 16px">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Trophy size={19} color={FEED_TEXT_MID} strokeWidth={1.8} style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>Verified trophies</div>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>None yet</div>
+          </div>
+          {onClaim && (
+            <button onClick={onClaim} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}>
+              Claim
+            </button>
+          )}
+        </div>
+      </SurfaceCard>
+    );
+  }
+
   return (
-    <SurfaceCard radius={18} pad="14px 16px">
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Trophy size={19} color={FEED_TEXT_MID} strokeWidth={1.8} style={{ flexShrink: 0 }} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>Verified trophies</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>
-            {count > 0 ? count + (count === 1 ? " trophy" : " trophies") : "None yet"}
+    <SurfaceCard radius={18} pad={0} clip>
+      {trophies.map((t, i) => (
+        <div
+          key={t.id}
+          style={{
+            display: "flex", alignItems: "center", gap: 12, padding: "13px 16px",
+            boxShadow: i === trophies.length - 1 && !onClaim ? undefined : RULE,
+          }}
+        >
+          <Trophy size={19} color={FEED_LIME} strokeWidth={1.8} style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {t.result ? t.result + " — " + t.competition : t.competition}
+            </div>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {[t.clubName || "Club", t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
+            </div>
           </div>
         </div>
-        {onClaim && (
-          <button onClick={onClaim} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}>
-            Claim
-          </button>
-        )}
-      </div>
+      ))}
+      {onClaim && (
+        <button
+          onClick={onClaim}
+          style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "12px 16px", cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, textAlign: "left" }}
+        >
+          Claim another
+        </button>
+      )}
     </SurfaceCard>
   );
 }

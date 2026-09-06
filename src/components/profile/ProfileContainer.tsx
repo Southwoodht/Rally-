@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
 import { computeAchievements } from "@/core/achievements";
@@ -8,7 +9,7 @@ import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { TIER_HEIGHTS } from "@/core/stars";
 import { listApprovedTrophiesForPlayer } from "@/lib/trophies";
-import { fmtDate, shortNameOf } from "@/lib/format";
+import { fullNameOf, shortNameOf } from "@/lib/format";
 
 // Everything the profile needs, worked out from the league it belongs to.
 //
@@ -42,19 +43,21 @@ export function ProfileContainer({
 }: any) {
   const pid = player?.id;
   const isSelf = viewer === "self";
-  const [trophyCount, setTrophyCount] = useState(0);
+  const [trophies, setTrophies] = useState<any[]>([]);
+  const [claiming, setClaiming] = useState(false);
+  const [reloadTrophies, setReloadTrophies] = useState(0);
 
   useEffect(() => {
     let alive = true;
     if (!pid) return;
     listApprovedTrophiesForPlayer(pid, player?.auth_id)
-      .then((t) => { if (alive) setTrophyCount(t.length); })
-      // A trophy count nobody could fetch is not zero trophies, but the row
-      // has nowhere to say "unknown" and a wrong count is a small lie beside
-      // a blank one. Left at zero, and the row still opens the real list.
+      .then((t) => { if (alive) setTrophies(t); })
+      // Trophies nobody could fetch are not "no trophies", but the row has
+      // nowhere to say "couldn't load". Left empty, which at least offers the
+      // claim link rather than asserting a number that might be wrong.
       .catch(() => {});
     return () => { alive = false; };
-  }, [pid, player?.auth_id]);
+  }, [pid, player?.auth_id, reloadTrophies]);
 
   const data = useMemo(() => {
     if (!pid) return null;
@@ -186,7 +189,7 @@ export function ProfileContainer({
       };
     });
 
-    const history = [...mine].reverse().slice(0, 4).map((m: any) => {
+    const history = [...mine].reverse().map((m: any) => {
       const o = byId[m.p1 === pid ? m.p2 : m.p1];
       const d = deltas?.[m.id];
       const pending = m.status === "pending";
@@ -222,6 +225,7 @@ export function ProfileContainer({
   if (!player || !data) return null;
 
   return (
+    <>
     <ProfileView
       viewer={viewer}
       header={{
@@ -238,7 +242,20 @@ export function ProfileContainer({
       bestWins={data.bestWins}
       opponents={data.opponents}
       achievements={data.achievements}
-      trophies={{ count: trophyCount, onClaim: onClaimTrophy }}
+      trophies={{
+        list: trophies.map((t: any) => ({
+          id: t.id,
+          competition: t.competition || "Trophy",
+          result: t.result,
+          season: t.season,
+          clubName: t.clubs?.name,
+          recorded: !t.claimed_by,
+        })),
+        // Only your own profile offers it. Claiming a trophy on somebody
+        // else's behalf is exactly what the club-admin flow exists for, and
+        // it is not this button.
+        onClaim: isSelf ? () => setClaiming(true) : undefined,
+      }}
       history={data.history}
       historyTotal={data.historyTotal}
       settings={[
@@ -250,5 +267,13 @@ export function ProfileContainer({
       onAllHistory={onAllHistory}
       onAllOpponents={onAllOpponents}
     />
+    {claiming && (
+      <ClaimTrophyForm
+        claimantName={fullNameOf(player)}
+        onClose={() => setClaiming(false)}
+        onSubmitted={() => setReloadTrophies((n) => n + 1)}
+      />
+    )}
+    </>
   );
 }

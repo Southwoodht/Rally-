@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Achievements, type Achievement } from "@/components/profile/Achievements";
 import { BestWins, type BestWin } from "@/components/profile/BestWins";
 import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps } from "@/components/profile/GapInsight";
@@ -8,7 +8,7 @@ import { OpponentRecords, type OpponentRecord } from "@/components/profile/Oppon
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
 import { RecordCard, type RecordCardProps } from "@/components/profile/RecordCard";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
-import { SettingsList, VerifiedTrophiesRow, type SettingsRow } from "@/components/profile/ProfileRows";
+import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
 import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
 import { FEED_LIME, FEED_TEXT_HI, body } from "@/lib/theme";
 
@@ -35,7 +35,7 @@ export interface ProfileViewProps {
   bestWins?: BestWin[];
   opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[] } | null;
   achievements?: Achievement[];
-  trophies?: { count: number; onClaim?: () => void } | null;
+  trophies?: { list: ProfileTrophy[]; onClaim?: () => void } | null;
   history?: MatchHistoryItem[];
   historyTotal?: number;
   settings?: SettingsRow[];
@@ -57,15 +57,25 @@ function Section({ title, right, children }: { title: string; right?: React.Reac
   );
 }
 
-const Link = ({ label, onClick }: { label: string; onClick?: () => void }) =>
+const Link = ({ label, onClick, arrow = true }: { label: string; onClick?: () => void; arrow?: boolean }) =>
   onClick ? (
     <button onClick={onClick} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 13 }}>
-      {label} ›
+      {label}{arrow ? " ›" : ""}
     </button>
   ) : null;
 
+/** How many rows a section shows before you ask for the rest. */
+const HISTORY_PREVIEW = 5;
+const OPPONENTS_PREVIEW = 4;
+
 export function ProfileView(p: ProfileViewProps) {
   const isSelf = p.viewer === "self";
+  // Expansion is view state, not data: the container already handed over
+  // every row, and how many of them are on screen is nobody else's business.
+  const [allHistory, setAllHistory] = useState(false);
+  const [allOpponents, setAllOpponents] = useState(false);
+  const history = p.history || [];
+  const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
 
   return (
     <div>
@@ -96,9 +106,19 @@ export function ProfileView(p: ProfileViewProps) {
       {p.opponents && (p.opponents.lead.length > 0 || p.opponents.behind.length > 0) && (
         <Section
           title="Head to head"
-          right={<Link label={`All ${p.opponents.lead.length + p.opponents.behind.length}`} onClick={p.onAllOpponents} />}
+          right={
+            allOpponents
+              ? <Link label="Show fewer" onClick={() => setAllOpponents(false)} arrow={false} />
+              : <Link label={`All ${p.opponents.lead.length + p.opponents.behind.length}`} onClick={() => setAllOpponents(true)} />
+          }
         >
-          <OpponentRecords lead={p.opponents.lead} behind={p.opponents.behind} onOpen={p.onOpenPlayer} onAll={p.onAllOpponents} />
+          <OpponentRecords
+            lead={p.opponents.lead}
+            behind={p.opponents.behind}
+            visible={allOpponents ? Number.MAX_SAFE_INTEGER : OPPONENTS_PREVIEW}
+            onOpen={p.onOpenPlayer}
+            onAll={() => setAllOpponents(true)}
+          />
         </Section>
       )}
 
@@ -108,18 +128,24 @@ export function ProfileView(p: ProfileViewProps) {
 
       {p.trophies && (
         <Section title="Verified trophies">
-          <VerifiedTrophiesRow count={p.trophies.count} onClaim={isSelf ? p.trophies.onClaim : undefined} />
+          <VerifiedTrophiesRow trophies={p.trophies.list} onClaim={isSelf ? p.trophies.onClaim : undefined} />
         </Section>
       )}
 
-      {p.history && p.history.length > 0 && (
+      {history.length > 0 && (
         <Section
           title="Match history"
-          right={<Link label={`All ${p.historyTotal ?? p.history.length}`} onClick={p.onAllHistory} />}
+          right={
+            allHistory
+              ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
+              : history.length > HISTORY_PREVIEW
+                ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
+                : undefined
+          }
         >
           {/* Editing is an action on your own result, so it does not travel
               with the list when somebody else is reading it. */}
-          <MatchHistoryList items={isSelf ? p.history : p.history.map((m) => ({ ...m, onEdit: undefined }))} />
+          <MatchHistoryList items={isSelf ? shownHistory : shownHistory.map((m) => ({ ...m, onEdit: undefined }))} />
         </Section>
       )}
 
