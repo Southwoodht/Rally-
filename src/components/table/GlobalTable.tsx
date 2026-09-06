@@ -1,11 +1,16 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { Globe } from "@/components/ui/Globe";
 import { Empty } from "@/components/ui/atoms";
+import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS } from "@/core/constants";
 import { loadGlobalStandings, type GlobalRow } from "@/lib/globalTable";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, mono } from "@/lib/theme";
+import {
+  FEED_CARD, FEED_DEEP, FEED_HAIRLINE, FEED_LIME, FEED_RAISED, FEED_TEXT_DIM,
+  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, body, tabular,
+} from "@/lib/theme";
 
 // A league that nobody created. Every person you can see, ranked on their own
 // record wherever they play — see src/lib/globalTable.ts for why that is the
@@ -18,6 +23,11 @@ import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_
 // either — first, second and third are the same three colours everywhere.
 const PODIUM = ["#e3c14e", "#c3cad1", "#c07a45"];
 
+const label: React.CSSProperties = {
+  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
+  textTransform: "uppercase", letterSpacing: 0.8,
+};
+
 function Face({ row, size = 34, ring }: { row: GlobalRow; size?: number; ring?: string }) {
   const common = {
     width: size, height: size, borderRadius: "50%", flexShrink: 0,
@@ -25,7 +35,7 @@ function Face({ row, size = 34, ring }: { row: GlobalRow; size?: number; ring?: 
   } as const;
   if (row.avatarUrl) return <img src={row.avatarUrl} alt="" style={{ ...common, objectFit: "cover" }} />;
   return (
-    <span style={{ ...common, display: "grid", placeItems: "center", background: PANEL2, fontSize: size * 0.46 }}>
+    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontSize: size * 0.46 }}>
       {row.avatar || (row.name || "?").charAt(0).toUpperCase()}
     </span>
   );
@@ -44,7 +54,7 @@ function resolvePlayer(key: string, players: any[] | undefined) {
   return players.find((p) => p.auth_id === key) || null;
 }
 
-function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
+function Row({ row, place, isMe, open, onToggle, onOpenProfile, last }: any) {
   const r: GlobalRow = row;
   const podium = place <= 3 ? PODIUM[place - 1] : null;
   // A podium place held on a handful of matches is drawn lighter than one
@@ -53,42 +63,58 @@ function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
   const thin = !!r.provisional;
 
   return (
-    <div style={{ borderLeft: podium ? "3px solid " + podium : "3px solid transparent", opacity: thin && podium ? 0.82 : 1 }}>
-      <div style={{ display: "flex", alignItems: "stretch", background: isMe ? PANEL2 : "transparent" }}>
+    <div
+      style={{
+        borderLeft: podium ? "3px solid " + podium : "3px solid transparent",
+        opacity: thin && podium ? 0.82 : 1,
+        borderBottom: last || open ? undefined : "0.5px solid " + FEED_HAIRLINE,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "stretch", background: isMe ? FEED_RAISED : "transparent" }}>
         <button
           onClick={onOpenProfile || onToggle}
           style={{
             display: "flex", alignItems: "center", gap: 11, flex: 1, minWidth: 0, textAlign: "left",
-            background: "transparent", border: "none", padding: "11px 4px 11px 12px", cursor: "pointer",
+            background: "transparent", border: "none", padding: "12px 4px 12px 12px", cursor: "pointer",
           }}
         >
-          <span style={{ fontFamily: mono, fontWeight: 700, fontSize: podium ? 15 : 13, color: podium || (place ? MUTED : LINE), width: 22, flexShrink: 0, opacity: thin ? 0.7 : 1 }}>
+          <span
+            style={{
+              ...tabular, fontFamily: body, fontWeight: 500, fontSize: podium ? 16 : 14,
+              color: podium || (place ? FEED_TEXT_MID : FEED_TEXT_DIM),
+              width: 22, flexShrink: 0, opacity: thin ? 0.7 : 1,
+            }}
+          >
             {place ? place : "–"}
           </span>
           <Face row={r} ring={podium || undefined} />
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <span style={{ fontFamily: body, fontWeight: 700, fontSize: 14.5, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.01em" }}>
                 {r.name}{r.last ? " " + r.last : ""}
               </span>
               {r.level && <LevelBadge level={r.level} tiny />}
             </span>
-            <span style={{ display: "block", fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 2 }}>
+            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
               {r.provisional ? "Provisional — " + r.gp + (r.gp === 1 ? " match" : " matches") : r.leagues > 1 ? r.leagues + " leagues" : r.claimed ? "1 league" : "not claimed — our leagues only"}
             </span>
           </span>
-          <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 13.5, color: CHALK, flexShrink: 0 }}>{rec(r.w, r.d, r.l)}</span>
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, flexShrink: 0 }}>{rec(r.w, r.d, r.l)}</span>
         </button>
+        {/* Drawn, not typed. A "›" is punctuation whose shape the font
+            decides; every other arrow in the app is an icon. */}
         <button
           onClick={onToggle}
           aria-label={open ? "Hide details" : "Show details"}
-          style={{ background: "transparent", border: "none", padding: "0 12px 0 8px", cursor: "pointer", color: BALL, fontFamily: body, fontSize: 12, flexShrink: 0 }}
+          style={{ background: "transparent", border: "none", padding: "0 12px 0 8px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
         >
-          {open ? "▾" : "›"}
+          {open
+            ? <ChevronDown size={16} color={FEED_LIME} strokeWidth={2} />
+            : <ChevronRight size={16} color={FEED_LIME} strokeWidth={2} />}
         </button>
       </div>
       {open && (
-        <div style={{ background: PANEL2, borderRadius: RADIUS_SM, margin: "0 14px 10px", padding: "10px 12px" }}>
+        <div style={{ background: FEED_DEEP, borderRadius: 12, margin: "0 12px 12px", padding: "12px 14px" }}>
           <Line label="Record, all leagues" value={rec(r.w, r.d, r.l)} />
           <Line
             label="Against their own level or better"
@@ -96,13 +122,13 @@ function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
             mutedValue={!r.qgp}
           />
           <Line label="Leagues" value={String(r.leagues)} />
-          <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginTop: 8, borderTop: "1px solid " + LINE, paddingTop: 8 }}>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 10, borderTop: "0.5px solid " + FEED_RAISED, paddingTop: 10 }}>
             {r.claimed
               ? "Ranked on every match they've played, in every league they're in — not just the ones against us."
               : "This player hasn't claimed their profile, so this is only what our leagues have seen of them. Their real record may be very different."}
           </div>
           {!onOpenProfile && (
-            <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginTop: 6 }}>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 6 }}>
               They don&apos;t play in this league, so there&apos;s no profile here to open — this is everything we can see of them.
             </div>
           )}
@@ -112,11 +138,11 @@ function Row({ row, place, isMe, open, onToggle, onOpenProfile }: any) {
   );
 }
 
-function Line({ label, value, mutedValue }: any) {
+function Line({ label: text, value, mutedValue }: any) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "3px 0" }}>
-      <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED, flex: 1 }}>{label}</span>
-      <span style={{ fontFamily: mutedValue ? body : mono, fontWeight: mutedValue ? 500 : 700, fontSize: 12.5, color: mutedValue ? MUTED : CHALK }}>{value}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, flex: 1 }}>{text}</span>
+      <span style={{ ...(mutedValue ? {} : tabular), fontFamily: body, fontWeight: mutedValue ? 400 : 500, fontSize: 13, color: mutedValue ? FEED_TEXT_LOW : FEED_TEXT_HI }}>{value}</span>
     </div>
   );
 }
@@ -140,11 +166,11 @@ function Makeup({ rows }: { rows: GlobalRow[] }) {
 
   if (!counts.length) return null;
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
       {counts.map((c) => (
-        <span key={c.label} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: PANEL2, borderRadius: 999, padding: "4px 10px" }}>
-          <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 12, color: BALL }}>{c.n}</span>
-          <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>{c.label}</span>
+        <span key={c.label} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: FEED_CARD, borderRadius: 999, padding: "5px 11px" }}>
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME }}>{c.n}</span>
+          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{c.label}</span>
         </span>
       ))}
     </div>
@@ -166,39 +192,53 @@ export function GlobalTable({ myAuthId, players, onOpenProfile }: { myAuthId?: s
 
   if (err) {
     return (
-      <div style={{ ...{ background: PANEL, borderRadius: RADIUS, padding: 20, boxShadow: SOFT_SHADOW }, fontFamily: body, fontSize: 13.5, color: CHALK, lineHeight: 1.5 }}>
-        <strong style={{ color: CLAY }}>Global table unavailable.</strong>
-        <div style={{ color: MUTED, marginTop: 6 }}>{err}</div>
-        <div style={{ color: MUTED, marginTop: 8, fontSize: 12.5 }}>
-          If this says the function is missing, the one-off SQL in <span style={{ fontFamily: mono }}>supabase/schema_global_standings.sql</span> hasn&apos;t been run yet.
+      <SurfaceCard radius={18}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_THEY_LEAD }}>Global table unavailable.</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
+          If this says the function is missing, the one-off SQL in supabase/schema_global_standings.sql hasn&apos;t been run yet.
         </div>
-      </div>
+      </SurfaceCard>
     );
   }
   if (!rows) return <Empty msg="Loading the global table…" />;
   if (!rows.length) return <Empty msg="Nobody to rank yet." />;
 
-  // One table, everybody in it. Unrated players used to be listed underneath
-  // in their own block with no place number, which sounds neutral and isn't:
-  // it put a 6-3-10 record below a 0-0-1 one. Somebody who hasn't set a level
-  // is placed on their record like anyone else, and their row still shows no
-  // level badge, so nothing presents them as having claimed one.
+  return <GlobalStandingsList rows={rows} myAuthId={myAuthId} players={players} onOpenProfile={onOpenProfile} open={open} setOpen={setOpen} />;
+}
+
+// One table, everybody in it. Unrated players used to be listed underneath
+// in their own block with no place number, which sounds neutral and isn't: it
+// put a 6-3-10 record below a 0-0-1 one. Somebody who hasn't set a level is
+// placed on their record like anyone else, and their row still shows no level
+// badge, so nothing presents them as having claimed one.
+export function GlobalStandingsList({
+  rows, myAuthId, players, onOpenProfile, open, setOpen,
+}: {
+  rows: GlobalRow[];
+  myAuthId?: string | null;
+  players?: any[];
+  onOpenProfile?: (id: string) => void;
+  open?: string | null;
+  setOpen?: (k: string | null) => void;
+}) {
+  const [ownOpen, setOwnOpen] = useState<string | null>(null);
+  const openKey = open !== undefined ? open : ownOpen;
+  const toggle = setOpen || setOwnOpen;
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
         <Globe size={20} />
-        <span style={{ fontFamily: mono, fontSize: 10.5, textTransform: "uppercase", letterSpacing: 2, color: BALL }}>
-          Everyone, everywhere
-        </span>
+        <span style={label}>Everyone, everywhere</span>
         <span style={{ flex: 1 }} />
-        <span style={{ fontFamily: mono, fontWeight: 700, fontSize: 12, color: MUTED }}>{rows.length}</span>
-        <span style={{ fontFamily: body, fontSize: 11.5, color: MUTED }}>ranked</span>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI }}>{rows.length}</span>
+        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>ranked</span>
       </div>
       <Makeup rows={rows} />
-      <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.55, marginBottom: 14 }}>
         Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level is only a starting assumption: the more someone plays their own level or better, the more their results decide their place and the less their claimed level does. Nobody has to set a level to be ranked — without one we simply assume the middle and let the results talk.
       </div>
-      <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
+      <SurfaceCard radius={18} pad={0} clip>
         {rows.map((r, i) => {
           const p = onOpenProfile ? resolvePlayer(r.key, players) : null;
           return (
@@ -207,13 +247,14 @@ export function GlobalTable({ myAuthId, players, onOpenProfile }: { myAuthId?: s
               row={r}
               place={i + 1}
               isMe={!!myAuthId && r.key === myAuthId}
-              open={open === r.key}
-              onToggle={() => setOpen(open === r.key ? null : r.key)}
+              open={openKey === r.key}
+              last={i === rows.length - 1}
+              onToggle={() => toggle(openKey === r.key ? null : r.key)}
               onOpenProfile={p && onOpenProfile ? () => onOpenProfile(p.id) : null}
             />
           );
         })}
-      </div>
+      </SurfaceCard>
     </>
   );
 }

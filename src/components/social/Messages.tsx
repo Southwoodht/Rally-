@@ -7,7 +7,7 @@ import {
 } from "@/lib/messages";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input, mono } from "@/lib/theme";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { FEED_LIME_INK, FEED_TEXT_MID, tabular } from "@/lib/theme";
+import { FEED_CARD, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
 
 // There's no realtime subscription here on purpose — one poll while the
 // screen is open is a few hundred bytes and needs no extra Supabase setup.
@@ -27,7 +27,7 @@ function Face({ t, size = 38 }: { t: Thread; size?: number }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0 } as const;
   if (t.profile?.avatar_url) return <img src={t.profile.avatar_url} alt="" style={{ ...common, objectFit: "cover" }} />;
   return (
-    <span style={{ ...common, display: "grid", placeItems: "center", background: PANEL2, fontFamily: body, fontWeight: 500, fontSize: size * 0.4, color: CHALK }}>
+    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontFamily: body, fontWeight: 500, fontSize: size * 0.4, color: FEED_TEXT_HI }}>
       {(t.profile?.display_name || "?").charAt(0).toUpperCase()}
     </span>
   );
@@ -43,19 +43,19 @@ function ThreadRowView({ t, onClick }: { t: Thread; onClick: () => void }) {
         border: "none", padding: "13px 14px 13px 11px",
         // An unread conversation should be findable without reading anything:
         // a bar down the edge and a brighter row, not just a small number.
-        background: unread ? PANEL2 : "transparent",
+        background: unread ? FEED_RAISED : "transparent",
         borderLeft: "3px solid " + (unread ? BALL : "transparent"),
       }}
     >
       <Face t={t} size={42} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {t.profile?.display_name}
           </span>
           {unread && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>{t.unread}</span>}
         </span>
-        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 400, fontSize: 13, color: unread ? CHALK : FEED_TEXT_MID, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 400, fontSize: 13, color: unread ? FEED_TEXT_HI : FEED_TEXT_MID, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {t.lastMessage ? (t.lastFromMe ? "You: " : "") + t.lastMessage : "No messages yet"}
         </span>
       </span>
@@ -124,7 +124,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
         <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}><ChevronLeft size={22} color={BALL} strokeWidth={2} /></button>
         <Face t={t} size={40} />
         <span style={{ minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: CHALK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.profile?.display_name}</span>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.profile?.display_name}</span>
           <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
             {t.status === "accepted" ? (msgs ? msgs.length + " message" + (msgs.length === 1 ? "" : "s") : " ") : t.isRequestToMe ? "Message request" : "Request sent — not accepted yet"}
           </span>
@@ -133,7 +133,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
 
       {t.isRequestToMe && (
         <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, padding: 16, marginBottom: 12 }}>
-          <div style={{ fontFamily: body, fontSize: 13.5, color: CHALK, lineHeight: 1.5, marginBottom: 12 }}>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
             <strong>{t.profile?.display_name}</strong> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -156,12 +156,12 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
               <React.Fragment key={m.id}>
                 {newDay && (
                   <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "16px 0 12px" }}>
-                    <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, background: PANEL2, borderRadius: 999, padding: "4px 12px" }}>{dayLabel(m.created_at)}</span>
+                    <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "4px 12px" }}>{dayLabel(m.created_at)}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 8 }}>
                   <div style={{ maxWidth: "78%" }}>
-                    <div style={{ background: mine ? BALL : PANEL2, color: mine ? FEED_LIME_INK : CHALK, borderRadius: 16, borderBottomRightRadius: mine ? 5 : 16, borderBottomLeftRadius: mine ? 16 : 5, padding: "10px 13px", fontFamily: body, fontWeight: 500, fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    <div style={{ background: mine ? BALL : FEED_RAISED, color: mine ? FEED_LIME_INK : FEED_TEXT_HI, borderRadius: 16, borderBottomRightRadius: mine ? 5 : 16, borderBottomLeftRadius: mine ? 16 : 5, padding: "10px 13px", fontFamily: body, fontWeight: 500, fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                       {m.body}
                     </div>
                     <div style={{ fontFamily: body, fontSize: 10.5, color: FEED_TEXT_MID, marginTop: 3, textAlign: mine ? "right" : "left" }}>
@@ -189,7 +189,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
           <BigBtn onClick={send} color={BALL} grow={false} disabled={busy || !text.trim()}>Send</BigBtn>
         </div>
       ) : (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 12, lineHeight: 1.45 }}>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
           Accept the request above to reply.
         </div>
       )}
@@ -235,11 +235,11 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
 
   if (err && !threads) {
     return (
-      <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, padding: 20, fontFamily: body, fontSize: 13.5, color: CHALK, lineHeight: 1.5 }}>
-        <strong style={{ color: CLAY }}>Messages unavailable.</strong>
-        <div style={{ color: MUTED, marginTop: 6 }}>{err}</div>
-        <div style={{ color: MUTED, marginTop: 8, fontSize: 12.5 }}>
-          If this says a table or function is missing, the one-off SQL in <span style={{ fontFamily: mono }}>supabase/schema_messages.sql</span> hasn&apos;t been run yet.
+      <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_THEY_LEAD }}>Messages unavailable.</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
+          If this says a table or function is missing, the one-off SQL in supabase/schema_messages.sql hasn&apos;t been run yet.
         </div>
       </div>
     );

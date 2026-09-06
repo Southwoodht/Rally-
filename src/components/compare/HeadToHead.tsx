@@ -8,6 +8,7 @@ import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/co
 import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput, mono } from "@/lib/theme";
+import { FEED_THEY_LEAD } from "@/lib/theme";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, tabular,
@@ -148,7 +149,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
           <Row label="Age" av={pa?.age || "–"} bv={pb?.age || "–"} />
           <div style={{ display: "flex", gap: 0, marginTop: 16 }}>
             {([[sa, a], [sb, b]] as any[]).map(([s, pid]: any, i: number) => (
-              <div key={i} style={{ flex: 1, minWidth: 0, paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "1px solid " + LINE : "none" }}>
+              <div key={i} style={{ flex: 1, minWidth: 0, paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                 <div style={{ ...sectionLabel, marginBottom: 7, textAlign: i ? "right" : "left" }}>Best wins</div>
                 {s.top3.length ? s.top3.map((w, j) => (
                   <div key={j} style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_HI, padding: "4px 0", textAlign: i ? "right" : "left" }}><span style={{ ...tabular, color: FEED_TEXT_LOW }}>{j + 1}</span>  {nm(w.oid)} <span style={{ ...tabular, color: FEED_TEXT_MID }}>{w.yr}</span></div>
@@ -165,25 +166,25 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
                 return (
                   <button onClick={() => onOpen && onOpen(e.oid)} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", textAlign: i ? "right" : "left" }}>
                     <div style={{ display: "flex", flexDirection: i ? "row-reverse" : "row", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>
-                      <span style={{ fontFamily: body, fontSize: 13, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(e.oid)}</span>
-                      <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 700, color: BALL }}>{e.w}-{e.l}</span>
+                      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(e.oid)}</span>
+                      <span style={{ ...tabular, fontFamily: body, fontSize: 13, fontWeight: 500, color: FEED_LIME }}>{e.w}–{e.l}</span>
                     </div>
-                    <div style={{ fontFamily: mono, fontSize: 9.5, color: MUTED, letterSpacing: 0.5, marginTop: 1 }}>{lvl ? lvl.cat.slice(0, 3).toUpperCase() + " · " : ""}{o.w}-{o.l}</div>
+                    <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 2 }}>{lvl ? lvl.cat + " · " : ""}{o.w}–{o.l}</div>
                   </button>
                 );
               };
               return (
-                <div key={i} style={{ flex: 1, minWidth: 0, textAlign: i ? "right" : "left", paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "1px solid " + LINE : "none" }}>
-                  <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: BALL, marginBottom: 5 }}>Winning rec vs</div>
-                  {s.winning.length ? s.winning.slice(0, 6).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>None</div>}
-                  <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: CLAY, margin: "12px 0 5px" }}>Losing rec vs</div>
-                  {s.losing.length ? s.losing.slice(0, 6).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Nobody</div>}
+                <div key={i} style={{ flex: 1, minWidth: 0, textAlign: i ? "right" : "left", paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
+                  <div style={{ ...sectionLabel, color: FEED_LIME, marginBottom: 6, textAlign: i ? "right" : "left" }}>Winning against</div>
+                  {s.winning.length ? s.winning.slice(0, 6).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>None</div>}
+                  <div style={{ ...sectionLabel, color: FEED_THEY_LEAD, margin: "14px 0 6px", textAlign: i ? "right" : "left" }}>Losing against</div>
+                  {s.losing.length ? s.losing.slice(0, 6).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>Nobody</div>}
                 </div>
               );
             })}
           </div>
-          <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: MUTED, margin: "20px 0 6px" }}>Their matches</div>
-          {games.length ? games.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderTop: "none", fontFamily: body, fontSize: 13, color: CHALK }}><span style={{ color: MUTED, fontFamily: mono, fontSize: 11 }}>{fmtDate(m.date)}</span><span>{winnerLabel(m, nameOf)}{m.score ? <span style={{ color: MUTED }}> · {m.score}</span> : null}</span></div>) : <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
+          <div style={{ ...sectionLabel, margin: "22px 0 8px" }}>Their matches</div>
+          {games.length ? games.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI }}><span style={{ ...tabular, color: FEED_TEXT_MID, flexShrink: 0 }}>{fmtDate(m.date)}</span><span style={{ textAlign: "right" }}>{winnerLabel(m, nameOf)}{m.score ? <span style={{ ...tabular, color: FEED_TEXT_MID }}> · {m.score}</span> : null}</span></div>) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
         </>
       ) : <Empty msg="Pick two players to compare." />}
     </div>
