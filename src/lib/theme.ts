@@ -156,6 +156,19 @@ export const FEED_THEY_LEAD_DIM = "#7E4A4A";
 // Outcome dots. Deliberately louder than the bar colours: a segment of a
 // split bar is read against its neighbours, but a dot in a row of five has
 // to say win, draw or loss on its own.
+/**
+ * The outcome rail down the left of a match row.
+ *
+ * All three are legible against FEED_CARD, measured: lime 7.87:1, red 4.76:1,
+ * grey 4.55:1. The draw was FEED_DRAW and the loss FEED_LOSS, at 2.16:1 and
+ * **1.37:1** — a 3px marker at 1.37 is not a quiet signal, it is an absent
+ * one, and the row read as "wins are marked and nothing else is".
+ *
+ * FEED_LOSS still exists and is still the right quiet green for a scoreline.
+ * It is just not a colour anything can be drawn 3px wide in.
+ */
+export const OUTCOME_RAIL = { W: BALL, D: FEED_TEXT_LOW, L: FEED_THEY_LEAD };
+
 export const DOT_WIN = BALL;
 export const DOT_DRAW = MUTED;
 // The same red as a rank drop, and for the same reason — both mean it went

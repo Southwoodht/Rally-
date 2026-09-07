@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { FEED_DRAW, FEED_LIME, FEED_LOSS, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
+import { FEED_LIME, FEED_LOSS, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
 // Recent matches, as a list you can read down.
 //
@@ -35,7 +35,7 @@ export interface MatchHistoryItem {
   onOpen?: () => void;
 }
 
-const BORDER = { W: FEED_LIME, D: FEED_DRAW, L: FEED_LOSS };
+const BORDER = OUTCOME_RAIL;
 
 // Nobody has agreed to it, so it is not a win yet. Painting the win colour
 // on a row that also says "not counted" is the row disagreeing with itself,

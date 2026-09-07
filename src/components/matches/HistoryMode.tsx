@@ -6,8 +6,8 @@ import { GRADE_LABEL, TESTING_GRADES, UNGRADED_LABEL, type Grade } from "@/core/
 import { type GradedRow, type MatchQuality } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
 import {
-  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_THEY_LEAD,
-  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular,
+  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
+  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular,
 } from "@/lib/theme";
 
 // Every match, graded, newest first.
@@ -27,7 +27,7 @@ const VERB = { W: "Beat", D: "Drew with", L: "Lost to" };
 // the card and was invisible: a 4px signal you cannot see is not a signal.
 // A draw gets the raised colour — present, so the rail never disappears and
 // change the card's shape, but neutral, because a draw is neither.
-const RAIL = { W: FEED_LIME, D: FEED_RAISED, L: FEED_THEY_LEAD };
+const RAIL = OUTCOME_RAIL;
 
 const fmtDate = (ts: number) =>
   new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" });
