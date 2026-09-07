@@ -8,11 +8,25 @@ import {
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input, mono } from "@/lib/theme";
 import { ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
+import { fullNameOf } from "@/lib/format";
 
 // There's no realtime subscription here on purpose — one poll while the
 // screen is open is a few hundred bytes and needs no extra Supabase setup.
 // Worth revisiting if conversations ever get busy.
 const POLL_MS = 15000;
+
+function MessagesHeader({ onBack }: { onBack?: () => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
+      {onBack && (
+        <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}>
+          <ChevronLeft size={22} color={FEED_LIME} strokeWidth={2} />
+        </button>
+      )}
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 28, letterSpacing: "-0.035em", color: FEED_TEXT_HI }}>Messages</span>
+    </div>
+  );
+}
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -23,45 +37,89 @@ const when = (iso: string) => {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 };
 
-function Face({ t, size = 38 }: { t: Thread; size?: number }) {
+/**
+ * Who this conversation is with, named the way the rest of the app names
+ * people.
+ *
+ * `display_name` is whatever the account typed into its profile. The Table
+ * and the match cards use the league player record, and a screen that names
+ * the same person differently from every other screen is a screen you have
+ * to double-check. Friendship is between accounts, so the join is auth_id.
+ *
+ * A conversation that resolves to a player with no name falls back to the
+ * raw string and says so in the console: that is a data problem and it
+ * should be findable, not smoothed over.
+ */
+function nameForThread(t: Thread, players?: any[]): string {
+  const authId = t.profile?.id;
+  const player = authId && players ? players.find((p) => p.auth_id === authId) : null;
+  if (player) {
+    const full = fullNameOf(player);
+    if (full && full !== "Someone") return full;
+    console.warn("Messages: player row has no usable name", { authId, playerId: player.id });
+  }
+  return t.profile?.display_name || "Someone";
+}
+
+function Face({ t, name, size = 44 }: { t: Thread; name: string; size?: number }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0 } as const;
   if (t.profile?.avatar_url) return <img src={t.profile.avatar_url} alt="" style={{ ...common, objectFit: "cover" }} />;
   return (
-    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontFamily: body, fontWeight: 500, fontSize: size * 0.4, color: FEED_TEXT_HI }}>
-      {(t.profile?.display_name || "?").charAt(0).toUpperCase()}
+    // The initial recedes rather than competing with the name beside it.
+    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontFamily: body, fontWeight: 500, fontSize: size * 0.38, color: FEED_TEXT_LOW }}>
+      {(name || "?").charAt(0).toUpperCase()}
     </span>
   );
 }
 
-function ThreadRowView({ t, onClick }: { t: Thread; onClick: () => void }) {
+// The press state has to be CSS — :active cannot be expressed inline. No
+// scale transform: a row that shrinks under the thumb reads as a button, and
+// this is a list.
+const ROW_PAD = 16;
+const AVATAR = 44;
+const ROW_GAP = 12;
+
+const ROW_CSS = `
+.rally-thread-row { transition: background 120ms ease-out; }
+.rally-thread-row:active { background: ${FEED_RAISED} !important; }
+`;
+
+function ThreadRowView({ t, players, onClick, first }: { t: Thread; players?: any[]; onClick: () => void; first?: boolean }) {
   const unread = t.unread > 0;
+  const name = nameForThread(t, players);
   return (
     <button
+      className="rally-thread-row"
       onClick={onClick}
       style={{
+        position: "relative",
         display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", cursor: "pointer",
-        border: "none", padding: "13px 14px 13px 11px",
-        // An unread conversation should be findable without reading anything:
-        // a bar down the edge and a brighter row, not just a small number.
-        background: unread ? FEED_RAISED : "transparent",
-        borderLeft: "3px solid " + (unread ? BALL : "transparent"),
+        border: "none", background: "transparent", minHeight: 72, padding: "12px 16px",
       }}
     >
-      <Face t={t} size={42} />
+      {/* Inset to where the name starts rather than full-bleed, so the column
+          of faces reads as a column and the lines separate the text. A
+          border-top would run the full width. */}
+      {!first && (
+        <span
+          aria-hidden="true"
+          style={{ position: "absolute", top: 0, left: ROW_PAD + AVATAR + ROW_GAP, right: 0, height: 1, background: FEED_RAISED }}
+        />
+      )}
+      <Face t={t} name={name} size={AVATAR} />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {t.profile?.display_name}
-          </span>
-          {unread && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>{t.unread}</span>}
+        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 500, fontSize: 17, letterSpacing: "-0.2px", color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {name}
         </span>
-        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 400, fontSize: 13, color: unread ? FEED_TEXT_HI : FEED_TEXT_MID, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_LOW, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {t.lastMessage ? (t.lastFromMe ? "You: " : "") + t.lastMessage : "No messages yet"}
         </span>
       </span>
-      <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
-        {t.last_message_at && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: unread ? BALL : FEED_TEXT_MID }}>{when(t.last_message_at)}</span>}
-        <ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} />
+      <span style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, alignSelf: "flex-start", marginTop: 2 }}>
+        {t.last_message_at && (
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_LOW }}>{when(t.last_message_at)}</span>
+        )}
+        {unread && <span style={{ width: 8, height: 8, borderRadius: 4, background: FEED_LIME, flexShrink: 0 }} />}
       </span>
     </button>
   );
@@ -79,8 +137,9 @@ const dayLabel = (iso: string) => {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "long" });
 };
 
-function Conversation({ thread, myId, onBack, onChanged }: any) {
+function Conversation({ thread, myId, onBack, onChanged, players }: any) {
   const t: Thread = thread;
+  const who = nameForThread(t, players);
   const [msgs, setMsgs] = useState<MessageRow[] | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -122,9 +181,9 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px", borderBottom: "0.5px solid " + FEED_HAIRLINE, marginBottom: 14 }}>
         <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}><ChevronLeft size={22} color={BALL} strokeWidth={2} /></button>
-        <Face t={t} size={40} />
+        <Face t={t} name={who} size={40} />
         <span style={{ minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.profile?.display_name}</span>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{who}</span>
           <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
             {t.status === "accepted" ? (msgs ? msgs.length + " message" + (msgs.length === 1 ? "" : "s") : " ") : t.isRequestToMe ? "Message request" : "Request sent — not accepted yet"}
           </span>
@@ -134,7 +193,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
       {t.isRequestToMe && (
         <div style={{ background: FEED_CARD, borderRadius: 18, padding: 16, marginBottom: 14 }}>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
-            <span style={{ fontWeight: 500 }}>{t.profile?.display_name}</span> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
+            <span style={{ fontWeight: 500 }}>{who}</span> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={async () => { await acceptThread(t.id); onChanged?.(); }} style={{ flex: 1, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 14 }}>Accept</button>
@@ -148,9 +207,9 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, padding: "24px 0" }}>Loading…</div>
         ) : !msgs.length ? (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
-            <Face t={t} size={56} />
+            <Face t={t} name={who} size={56} />
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginTop: 12 }}>
-              {t.profile?.display_name}
+              {who}
             </div>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
               No messages yet. Say something.
@@ -249,7 +308,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
   );
 }
 
-export function Messages({ startWith, onStarted }: { startWith?: string | null; onStarted?: () => void }) {
+export function Messages({ startWith, onStarted, players, onBack }: { startWith?: string | null; onStarted?: () => void; players?: any[]; onBack?: () => void }) {
   const [threads, setThreads] = useState<Thread[] | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -281,6 +340,8 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
 
   if (err && !threads) {
     return (
+      <>
+      <MessagesHeader onBack={onBack} />
       <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_THEY_LEAD }}>Messages unavailable.</div>
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
@@ -288,31 +349,34 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
           If this says a table or function is missing, the one-off SQL in supabase/schema_messages.sql hasn&apos;t been run yet.
         </div>
       </div>
+      </>
     );
   }
 
   const open = threads?.find((t) => t.id === openId);
-  if (open) return <Conversation thread={open} myId={myId} onBack={() => setOpenId(null)} onChanged={load} />;
+  if (open) return <Conversation thread={open} myId={myId} onBack={() => setOpenId(null)} onChanged={load} players={players} />;
 
-  if (!threads) return <Empty msg="Loading…" />;
+  if (!threads) return <><MessagesHeader onBack={onBack} /><Empty msg="Loading…" /></>;
 
   const requests = threads.filter((t) => t.isRequestToMe);
   const conversations = threads.filter((t) => !t.isRequestToMe);
 
   if (!threads.length) {
-    return <Empty msg="No messages yet. Open someone's profile and tap Message." />;
+    return <><MessagesHeader onBack={onBack} /><Empty msg="No messages yet. Open someone's profile and tap Message." /></>;
   }
 
   return (
     <>
+      <style>{ROW_CSS}</style>
+      <MessagesHeader onBack={onBack} />
       {requests.length > 0 && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
             <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: CHALK }}>Requests</span>
             <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
           </div>
-          <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden", marginBottom: 18 }}>
-            {requests.map((t) => <ThreadRowView key={t.id} t={t} onClick={() => setOpenId(t.id)} />)}
+          <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden", marginBottom: 18 }}>
+            {requests.map((t, i) => <ThreadRowView key={t.id} t={t} players={players} first={i === 0} onClick={() => setOpenId(t.id)} />)}
           </div>
           <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.45, margin: "-10px 0 18px" }}>
             People you aren&apos;t friends with land here first. They can&apos;t see whether you&apos;ve read it, and they can&apos;t hear back until you accept.
@@ -322,13 +386,12 @@ export function Messages({ startWith, onStarted }: { startWith?: string | null; 
       {conversations.length > 0 && (
         <>
           {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
-          <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" }}>
-            {conversations.map((t) => <ThreadRowView key={t.id} t={t} onClick={() => setOpenId(t.id)} />)}
+          <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden" }}>
+            {conversations.map((t, i) => <ThreadRowView key={t.id} t={t} players={players} first={i === 0} onClick={() => setOpenId(t.id)} />)}
           </div>
         </>
       )}
-      {err && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginTop: 10 }}>{err}</div>}
-      <div style={{ height: 1, background: LINE, margin: "18px 0 0" }} />
+      {err && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_THEY_LEAD, marginTop: 10 }}>{err}</div>}
     </>
   );
 }
