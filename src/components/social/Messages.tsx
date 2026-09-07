@@ -6,8 +6,8 @@ import {
   sendMessage, startThread, type MessageRow, type Thread,
 } from "@/lib/messages";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input, mono } from "@/lib/theme";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { FEED_CARD, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
+import { ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
 
 // There's no realtime subscription here on purpose — one poll while the
 // screen is open is a few hundred bytes and needs no extra Supabase setup.
@@ -120,7 +120,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px", borderBottom: "0.5px solid " + FEED_HAIRLINE, marginBottom: 14 }}>
         <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}><ChevronLeft size={22} color={BALL} strokeWidth={2} /></button>
         <Face t={t} size={40} />
         <span style={{ minWidth: 0 }}>
@@ -132,61 +132,107 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
       </div>
 
       {t.isRequestToMe && (
-        <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, padding: 16, marginBottom: 12 }}>
+        <div style={{ background: FEED_CARD, borderRadius: 18, padding: 16, marginBottom: 14 }}>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
-            <strong>{t.profile?.display_name}</strong> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
+            <span style={{ fontWeight: 500 }}>{t.profile?.display_name}</span> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <BigBtn color={BALL} onClick={async () => { await acceptThread(t.id); onChanged?.(); }}>Accept</BigBtn>
-            <BigBtn color={CLAY} onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }}>Delete</BigBtn>
+            <button onClick={async () => { await acceptThread(t.id); onChanged?.(); }} style={{ flex: 1, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 14 }}>Accept</button>
+            <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ flex: 1, background: FEED_RAISED, color: FEED_TEXT_MID, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 14 }}>Delete</button>
           </div>
         </div>
       )}
 
-      <div style={{ background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, padding: "14px 14px", minHeight: 160, maxHeight: "52vh", overflowY: "auto" }}>
-        {!msgs ? <Empty msg="Loading…" />
-          : !msgs.length ? <Empty msg="No messages yet. Say something." />
-          : msgs.map((m, i) => {
-            const mine = m.sender_id === myId;
-            const newDay = i === 0 || dayLabel(msgs[i - 1].created_at) !== dayLabel(m.created_at);
-            // "Seen" belongs on the last thing you sent and nowhere else —
-            // on every bubble it's noise, and on theirs it's meaningless.
-            const isMyLast = mine && !msgs.slice(i + 1).some((x) => x.sender_id === myId);
-            return (
-              <React.Fragment key={m.id}>
-                {newDay && (
-                  <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "16px 0 12px" }}>
-                    <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "4px 12px" }}>{dayLabel(m.created_at)}</span>
+      <div style={{ minHeight: 200 }}>
+        {!msgs ? (
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, padding: "24px 0" }}>Loading…</div>
+        ) : !msgs.length ? (
+          <div style={{ textAlign: "center", padding: "40px 20px" }}>
+            <Face t={t} size={56} />
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginTop: 12 }}>
+              {t.profile?.display_name}
+            </div>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
+              No messages yet. Say something.
+            </div>
+          </div>
+        ) : msgs.map((m, i) => {
+          const mine = m.sender_id === myId;
+          const newDay = i === 0 || dayLabel(msgs[i - 1].created_at) !== dayLabel(m.created_at);
+          const next = msgs[i + 1];
+          // Consecutive messages from one person are one turn in the
+          // conversation, so they sit tight together and only the last of a
+          // run carries the time. A timestamp under every bubble is the
+          // clock shouting over the conversation.
+          const runEnds = !next || next.sender_id !== m.sender_id || dayLabel(next.created_at) !== dayLabel(m.created_at);
+          // "Seen" belongs on the last thing you sent and nowhere else — on
+          // every bubble it's noise, and on theirs it's meaningless.
+          const isMyLast = mine && !msgs.slice(i + 1).some((x) => x.sender_id === myId);
+          return (
+            <React.Fragment key={m.id}>
+              {newDay && (
+                <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 14px" : "18px 0 14px" }}>
+                  <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "4px 12px" }}>{dayLabel(m.created_at)}</span>
+                </div>
+              )}
+              <div style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: runEnds ? 10 : 2 }}>
+                <div style={{ maxWidth: "80%" }}>
+                  <div
+                    style={{
+                      background: mine ? FEED_LIME : FEED_CARD,
+                      color: mine ? FEED_LIME_INK : FEED_TEXT_HI,
+                      borderRadius: 18,
+                      borderBottomRightRadius: mine && runEnds ? 6 : 18,
+                      borderBottomLeftRadius: !mine && runEnds ? 6 : 18,
+                      padding: "9px 14px",
+                      fontFamily: body, fontWeight: 400, fontSize: 15, lineHeight: 1.45,
+                      whiteSpace: "pre-wrap", wordBreak: "break-word",
+                    }}
+                  >
+                    {m.body}
                   </div>
-                )}
-                <div style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: 8 }}>
-                  <div style={{ maxWidth: "78%" }}>
-                    <div style={{ background: mine ? BALL : FEED_RAISED, color: mine ? FEED_LIME_INK : FEED_TEXT_HI, borderRadius: 16, borderBottomRightRadius: mine ? 5 : 16, borderBottomLeftRadius: mine ? 16 : 5, padding: "10px 13px", fontFamily: body, fontWeight: 500, fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                      {m.body}
-                    </div>
-                    <div style={{ fontFamily: body, fontSize: 10.5, color: FEED_TEXT_MID, marginTop: 3, textAlign: mine ? "right" : "left" }}>
+                  {runEnds && (
+                    <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_LOW, marginTop: 4, textAlign: mine ? "right" : "left" }}>
                       {when(m.created_at)}{isMyLast && m.read_at ? " · Seen" : ""}
                     </div>
-                  </div>
+                  )}
                 </div>
-              </React.Fragment>
-            );
-          })}
+              </div>
+            </React.Fragment>
+          );
+        })}
         <div ref={endRef} />
       </div>
 
       {err && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginTop: 8 }}>{err}</div>}
 
       {canWrite ? (
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, position: "sticky", bottom: 0, paddingBottom: 4 }}>
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={t.status === "pending" ? "Send a request…" : "Message…"}
-            style={{ ...input, marginBottom: 0, boxSizing: "border-box" as const }}
+            style={{
+              flex: 1, minWidth: 0, background: FEED_CARD, border: "none", borderRadius: 999,
+              padding: "12px 16px", fontFamily: body, fontWeight: 400, fontSize: 15,
+              color: FEED_TEXT_HI, outline: "none", boxSizing: "border-box" as const,
+            }}
           />
-          <BigBtn onClick={send} color={BALL} grow={false} disabled={busy || !text.trim()}>Send</BigBtn>
+          <button
+            onClick={send}
+            disabled={busy || !text.trim()}
+            aria-label="Send"
+            style={{
+              width: 42, height: 42, borderRadius: 999, border: "none", flexShrink: 0,
+              background: text.trim() ? FEED_LIME : FEED_RAISED,
+              color: text.trim() ? FEED_LIME_INK : FEED_TEXT_LOW,
+              display: "grid", placeItems: "center",
+              cursor: text.trim() && !busy ? "pointer" : "default",
+            }}
+          >
+            <ArrowUp size={19} strokeWidth={2.4} />
+          </button>
         </div>
       ) : (
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
@@ -195,7 +241,7 @@ function Conversation({ thread, myId, onBack, onChanged }: any) {
       )}
 
       {t.status === "accepted" && (
-        <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ background: "transparent", border: "none", padding: "14px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: CLAY }}>
+        <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ background: "transparent", border: "none", padding: "18px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW }}>
           Delete this conversation
         </button>
       )}

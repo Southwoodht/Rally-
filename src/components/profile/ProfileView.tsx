@@ -10,6 +10,7 @@ import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/Pro
 import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
+import { ChevronRight } from "lucide-react";
 import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
 import { FEED_LIME, FEED_TEXT_HI, body } from "@/lib/theme";
 
@@ -67,12 +68,8 @@ const Link = ({ label, onClick, arrow = true }: { label: string; onClick?: () =>
     </button>
   ) : null;
 
-/** How many rows a section shows before you ask for the rest.
- *
- *  History is four because it is a preview of "Your matches" rather than a
- *  list in its own right — the full one lives on that screen, graded, and
- *  two versions of the same list is one to keep in step. */
-const HISTORY_PREVIEW = 4;
+/** How many rows a section shows before you ask for the rest. */
+const HISTORY_PREVIEW = 5;
 const OPPONENTS_PREVIEW = 4;
 
 export function ProfileView(p: ProfileViewProps) {
@@ -80,12 +77,13 @@ export function ProfileView(p: ProfileViewProps) {
   // Expansion is view state, not data: the container already handed over
   // every row, and how many of them are on screen is nobody else's business.
   const [allOpponents, setAllOpponents] = useState(false);
+  const [allHistory, setAllHistory] = useState(false);
   // Tapping "28 won" asks a question of the list below, so the answer goes
   // there rather than opening a second list somewhere else.
   const [filter, setFilter] = useState<OutcomeFilter>(null);
   const history = p.history || [];
   const filtered = filter ? history.filter((m) => m.outcome === filter) : [];
-  const shownHistory = history.slice(0, HISTORY_PREVIEW);
+  const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
   const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
   // Editing belongs to the owner of the result, wherever the list appears.
   const forViewer = (list: MatchHistoryItem[]) =>
@@ -165,11 +163,28 @@ export function ProfileView(p: ProfileViewProps) {
       {history.length > 0 && (
         <Section
           title="Match history"
-          right={<Link label={`All ${p.historyTotal ?? history.length}`} onClick={p.onAllHistory} />}
+          right={
+            allHistory
+              ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
+              : history.length > HISTORY_PREVIEW
+                ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
+                : undefined
+          }
         >
           {/* Editing is an action on your own result, so it does not travel
               with the list when somebody else is reading it. */}
           <MatchHistoryList items={forViewer(shownHistory)} />
+          {/* The graded version is a different question — how good were these
+              results, not what were they — so it is a separate destination
+              rather than what "All 44" now means. */}
+          {isSelf && p.onAllHistory && (
+            <button
+              onClick={p.onAllHistory}
+              style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME }}
+            >
+              Every match, graded <ChevronRight size={14} strokeWidth={2} />
+            </button>
+          )}
         </Section>
       )}
 
