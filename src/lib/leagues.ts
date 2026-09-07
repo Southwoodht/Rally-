@@ -17,6 +17,28 @@ function makeCode(len = 6) {
   return out;
 }
 
+/** owner beats editor beats member, when duplicate rows disagree. */
+const ROLE_RANK: Record<string, number> = { owner: 3, editor: 2, member: 1 };
+
+/**
+ * Your leagues, one card each.
+ *
+ * This reads league_members and returns a row per MEMBERSHIP, so duplicate
+ * membership rows for the same (user, league) produce duplicate cards — five
+ * identical Seacourts, same join code, same counts. Leaving then removed all
+ * of them at once, because leaveLeague deletes by (league_id, user_id) and
+ * that is the correct thing for it to do; the list was what was wrong.
+ *
+ * The dedupe here is a **guard, not the fix**. The fix is the unique
+ * constraint in supabase/schema_league_members_unique.sql; until that is run
+ * the rows keep accumulating and this only stops them being shown.
+ *
+ * It keeps the strongest role rather than the first one seen, and that part
+ * matters beyond tidiness: leagueRole comes straight off whichever card you
+ * tapped, and canManageMatches is gated on it. Pick the card backed by a
+ * "member" row when you are really the owner and you silently lose every
+ * staff permission — including the one that lets you delete a match.
+ */
 export async function listMyLeagues(): Promise<League[]> {
   if (!supabase) return [];
   const { data, error } = await withSupabaseTimeout(
@@ -24,9 +46,23 @@ export async function listMyLeagues(): Promise<League[]> {
     { data: [], error: null } as any,
   );
   if (error) throw error;
-  return (data || [])
+  const rows = (data || [])
     .filter((r: any) => r.leagues)
     .map((r: any) => ({ ...r.leagues, role: r.role }));
+
+  const byId = new Map<string, League>();
+  for (const l of rows) {
+    const seen = byId.get(l.id);
+    if (!seen) { byId.set(l.id, l); continue; }
+    if ((ROLE_RANK[l.role || ""] ?? 0) > (ROLE_RANK[seen.role || ""] ?? 0)) byId.set(l.id, l);
+  }
+  if (byId.size !== rows.length) {
+    console.warn(
+      `listMyLeagues: ${rows.length - byId.size} duplicate membership row(s) hidden. ` +
+      "Run supabase/schema_league_members_unique.sql to stop them accumulating.",
+    );
+  }
+  return [...byId.values()];
 }
 
 /**
@@ -113,7 +149,11 @@ export async function joinLeague(code: string): Promise<League> {
     supabase.from("league_members").insert({ league_id: league.id, user_id: uid, role: "member" }),
     { error: null } as any,
   );
-  // 23505 = already a member, which is fine
+  // 23505 = already a member, which is fine — but that only ever fires if a
+  // unique constraint on (user_id, league_id) exists to raise it. Without
+  // one this insert quietly succeeds every time and stacks up another
+  // membership row, which is exactly how the picker ended up showing the
+  // same league six times. See schema_league_members_unique.sql.
   if (joinError && joinError.code !== "23505") throw joinError;
 
   return { ...league, role: "member" };
