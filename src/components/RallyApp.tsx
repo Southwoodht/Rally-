@@ -246,12 +246,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         syncFixtures(gid, prev.fixtures || [], n.fixtures || []),
         syncPosts(gid, prev.posts || [], n.posts || []),
       ]);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       try {
         const fresh = await fetchLeagueData(gid);
         setGdata({ ...fresh, me: n.me ?? prev.me });
-        flash("Couldn't save — showing what's actually saved");
+        // A refusal knows why it was refused; say that rather than the
+        // generic line, which leaves you with nothing to do about it.
+        flash(e?.userFacing ? e.message : "Couldn't save — showing what's actually saved");
       } catch (reloadError) {
         console.error(reloadError);
         setGdata(prev);

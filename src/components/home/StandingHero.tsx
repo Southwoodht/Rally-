@@ -41,9 +41,11 @@ const movementLabel = (delta: number): string => {
   return (delta > 0 ? "Up " : "Down ") + Math.abs(delta) + " this week";
 };
 
+// Sentence case, like the rest of the app. These two were the last labels
+// still shouting.
 const labelStyle: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2,
-  textTransform: "uppercase", letterSpacing: 0.6,
+  fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_LIME_INK_2,
+  letterSpacing: 0,
 };
 
 export function StandingHero({ rank, rating, movement, form }: StandingHeroProps) {

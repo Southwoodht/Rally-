@@ -83,12 +83,16 @@ export function Robin({
         fill={colours.breast}
       />
 
-      {/* Wing: its own group, rotating about the shoulder. */}
+      {/* Wing: its own group, rotating about the shoulder.
+          It used to overlap the breast, where a paler shape reads as a bite
+          out of the orange rather than as a wing. It sits on the brown flank
+          now, which is where a folded wing is anyway. */}
       <g
         className="rally-robin-wing"
-        style={{ transformBox: "fill-box", transformOrigin: "78% 18%", transform: wingAngle ? `rotate(${wingAngle}deg)` : undefined, ...wingStyle }}
+        style={{ transformBox: "fill-box", transformOrigin: "88% 22%", transform: wingAngle ? `rotate(${wingAngle}deg)` : undefined, ...wingStyle }}
       >
-        <path d="M6.4 10.6 C8.6 9.4 11.4 9.6 13.2 11.2 C11.8 13.8 9.2 15.2 6.6 14.6 C5.4 13.4 5.4 11.7 6.4 10.6 Z" fill={colours.body} opacity={0.82} />
+        <path d="M6.0 10.4 C8.0 9.6 10.0 10.0 11.0 11.4 C10.0 14.0 8.0 15.4 5.9 14.9 C4.9 13.6 4.9 11.6 6.0 10.4 Z" fill="#00000022" />
+        <path d="M6.0 10.4 C8.0 9.6 10.0 10.0 11.0 11.4 C10.0 14.0 8.0 15.4 5.9 14.9 C4.9 13.6 4.9 11.6 6.0 10.4 Z" fill={colours.body} opacity={0.55} />
       </g>
 
       <circle cx="17.9" cy="7.6" r="0.85" fill="#1A1410" />

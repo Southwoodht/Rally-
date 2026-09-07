@@ -214,9 +214,16 @@ async function deleteRow(table: string, id: string) {
     { data: null, error: null } as any,
   );
   if (check?.data) {
-    throw new Error(
-      `Removing from ${table} was refused — you may need the other player to agree first.`,
+    // Tagged so saveData can put THIS on screen instead of its generic
+    // "couldn't save". A refusal has a cause the person can act on; a
+    // network blip does not.
+    const e: any = new Error(
+      table === "matches"
+        ? "That delete was refused. If the other player has an account they need to agree first — otherwise supabase/schema_match_delete_shell_and_pending.sql hasn't been run yet."
+        : `Removing from ${table} was refused.`,
     );
+    e.userFacing = true;
+    throw e;
   }
 }
 

@@ -460,6 +460,23 @@ The real test is the app: if the Global table still shows the network
 ordering, the RPC is being called. If it had failed, the code falls back to
 the old maths and the order visibly changes.
 
+**Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
+is, deleting a match against a shell opponent, and Dispute/Cancel on a
+pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE
+for participants but both of its branches require `delete_requested_by` to be
+set, and those two paths correctly never set it — there is nobody to agree
+with when the opponent has no account, and a pending result is one person's
+claim rather than a shared record. The refusals were silent until
+`deleteRow` started checking (see below), which is what turned a returning
+match into a visible "that delete was refused".
+
+**A DELETE that RLS refuses is not an error in Postgres.** It matches no rows
+and reports success. `deleteRow` in `lib/leagueData.ts` therefore asks for
+the deleted rows back and, if none came, looks to see whether the row is
+still there; a row that survived is raised as a failure so `saveData`
+re-reads and shows what is really stored. Anything writing a delete against
+Supabase needs this check or it will lie.
+
 **Tell him before anything touches existing data.** Additive migrations
 (new columns, new tables, widened policies) are fine to propose; anything
 that rewrites or deletes rows gets flagged explicitly first.
