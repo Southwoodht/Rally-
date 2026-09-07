@@ -6,7 +6,7 @@ import { GRADE_LABEL, TESTING_GRADES, UNGRADED_LABEL, type Grade } from "@/core/
 import { type GradedRow, type MatchQuality } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
 import {
-  FEED_CARD, FEED_DRAW, FEED_LIME, FEED_LIME_INK, FEED_LOSS, FEED_RAISED,
+  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_THEY_LEAD,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular,
 } from "@/lib/theme";
 
@@ -17,7 +17,17 @@ import {
 // this screen says to most people.
 
 const VERB = { W: "Beat", D: "Drew with", L: "Lost to" };
-const BORDER = { W: FEED_LIME, D: FEED_DRAW, L: FEED_LOSS };
+
+// The rail says the outcome and nothing else. A "Not graded" win still gets
+// the lime rail — the chip carries the grading, and one element saying two
+// things is one element saying neither clearly.
+//
+// The loss rail is the same colour the app uses when somebody is ahead of
+// you, at full opacity. It replaces FEED_LOSS, which measured 1.37:1 against
+// the card and was invisible: a 4px signal you cannot see is not a signal.
+// A draw gets the raised colour — present, so the rail never disappears and
+// change the card's shape, but neutral, because a draw is neither.
+const RAIL = { W: FEED_LIME, D: FEED_RAISED, L: FEED_THEY_LEAD };
 
 const fmtDate = (ts: number) =>
   new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" });
@@ -88,8 +98,18 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
   return (
     <div
       onClick={onOpenMatch ? () => onOpenMatch(row.matchId) : undefined}
-      style={{ background: FEED_CARD, borderRadius: 14, borderLeft: "3px solid " + BORDER[row.outcome], padding: "12px 14px", cursor: onOpenMatch ? "pointer" : undefined }}
+      style={{ position: "relative", overflow: "hidden", background: FEED_CARD, borderRadius: 14, padding: "12px 14px", cursor: onOpenMatch ? "pointer" : undefined }}
     >
+      {/* Absolutely positioned rather than a border-left, which would shift
+          the content box and leave the padding measured from the rail instead
+          of from the card edge. */}
+      <span
+        aria-hidden="true"
+        style={{
+          position: "absolute", left: 0, top: 0, bottom: 0, width: 4,
+          background: RAIL[row.outcome], borderRadius: "14px 0 0 14px",
+        }}
+      />
       <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
         <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           <span style={{ fontWeight: 500 }}>{VERB[row.outcome]}</span>{" "}
@@ -101,12 +121,20 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
               {name}
             </button>
           ) : name}
-          {row.score && <span style={{ ...tabular, color: FEED_TEXT_MID }}> · {row.score}</span>}
         </span>
         <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>
           {fmtDate(row.date)}
         </span>
       </div>
+
+      {/* The score gets its own line. Inline it was pushing the name into an
+          ellipsis on any match that went to three sets, which loses the one
+          thing the row is actually about. */}
+      {row.score && (
+        <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3 }}>
+          {row.score}
+        </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
         <Chip grade={g.then} />

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { SurfaceCard, SurfaceTile } from "@/components/ui/Surfaces";
 import { GRADE_LABEL } from "@/core/matchGrade";
 import {
@@ -73,25 +74,105 @@ function Verdict({ q }: { q: MatchQuality }) {
   );
 }
 
-/** (b) The two tiles. The contrast is the point of the whole screen. */
-function Tiles({ q }: { q: MatchQuality }) {
-  const tile = (title: string, r: Record3, lime: boolean) => {
+/**
+ * (b) The two halves of the schedule, and who is in each.
+ *
+ * **Lime is the strong half, not the loud half.** It was on "Below"
+ * originally, to make the imbalance jump out — but lime means "good" on every
+ * other screen in this app, so on this one it was quietly congratulating you
+ * for the easy games. Sam read it and could not say why it was there, which
+ * is the tell. The contrast is still made, by the verdict bar above and by
+ * the two records sitting side by side; it does not need the accent colour
+ * pointing at the wrong half to land.
+ *
+ * Either tile opens the players it counted. A number you cannot look inside
+ * is a number you have to take on trust.
+ */
+function Tiles({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer?: (id: string) => void }) {
+  const [open, setOpen] = useState<null | "above" | "below">(null);
+
+  const tile = (key: "above" | "below", title: string, r: Record3, lime: boolean) => {
     const n = played(r);
     const rate = n >= MIN_FOR_RATE ? Math.round(((r.w + r.d * 0.5) / n) * 100) + "% won" : n ? "too few to judge" : "none yet";
+    const on = open === key;
     return (
-      <div style={{ background: lime ? FEED_LIME : FEED_DEEP, borderRadius: 16, padding: 14, minWidth: 0 }}>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_LOW }}>{title}</div>
-        <div style={{ ...tabular, ...tight(24), fontFamily: body, fontWeight: 500, fontSize: 24, color: lime ? FEED_LIME_INK : FEED_TEXT_HI, marginTop: 4 }}>
+      <button
+        onClick={() => setOpen(on ? null : key)}
+        aria-expanded={on}
+        style={{
+          background: lime ? FEED_LIME : FEED_DEEP, borderRadius: 16, padding: 14, minWidth: 0,
+          border: "1.5px solid " + (on ? (lime ? FEED_LIME_INK_2 : FEED_LIME) : "transparent"),
+          textAlign: "left", cursor: "pointer", width: "100%", boxSizing: "border-box",
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_LOW }}>{title}</span>
+          <ChevronDown
+            size={12}
+            color={lime ? FEED_LIME_INK_2 : FEED_TEXT_LOW}
+            strokeWidth={2}
+            style={{ flexShrink: 0, transform: on ? "rotate(180deg)" : undefined }}
+          />
+        </span>
+        <span style={{ ...tabular, ...tight(24), display: "block", fontFamily: body, fontWeight: 500, fontSize: 24, color: lime ? FEED_LIME_INK : FEED_TEXT_HI, marginTop: 4 }}>
           {n ? recordStr(r) : "–"}
-        </div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_MID, marginTop: 3 }}>{rate}</div>
-      </div>
+        </span>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_MID, marginTop: 3 }}>{rate}</span>
+      </button>
     );
   };
+
+  // Ungraded opponents belong to neither half — no level, no side.
+  const inHalf = (want: "above" | "below") =>
+    q.opponents.filter((o) => o.gap != null && (want === "above" ? o.gap >= 0 : o.gap < 0));
+
+  const list = open ? inHalf(open) : [];
+
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-      {tile("At or above", q.atOrAbove, false)}
-      {tile("Below", q.below, true)}
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {tile("above", "At or above", q.atOrAbove, true)}
+        {tile("below", "Below", q.below, false)}
+      </div>
+
+      {open && (
+        <SurfaceCard radius={16} style={{ marginTop: 10 }}>
+          <div style={{ ...label, marginBottom: 10 }}>
+            {open === "above" ? "At your level or above" : "Below your level"} · {list.length}
+          </div>
+          {list.length === 0 ? (
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}>
+              Nobody yet.
+            </div>
+          ) : list.map((o, i) => (
+            <button
+              key={o.player.id}
+              onClick={onOpenPlayer ? () => onOpenPlayer(o.player.id) : undefined}
+              style={{
+                display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent",
+                border: "none", padding: i ? "9px 0 0" : 0, cursor: onOpenPlayer ? "pointer" : "default", textAlign: "left",
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {fullNameOf(o.player)}
+                </span>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
+                  {o.cat ? o.cat + " · " + o.phrase : "No level recorded"}
+                </span>
+              </span>
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, flexShrink: 0 }}>
+                {recordStr(o.record)}
+              </span>
+            </button>
+          ))}
+          {q.ungraded > 0 && (
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
+              {q.ungraded} {q.ungraded === 1 ? "match is" : "matches are"} in neither half — no level was recorded for those opponents at the time.
+            </div>
+          )}
+        </SurfaceCard>
+      )}
     </div>
   );
 }
@@ -278,7 +359,7 @@ export function QualityMode({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer
   return (
     <div>
       <Verdict q={q} />
-      <div style={{ marginTop: 12 }}><Tiles q={q} /></div>
+      <div style={{ marginTop: 12 }}><Tiles q={q} onOpenPlayer={onOpenPlayer} /></div>
       {q.byLevel.length > 0 && <Section title="By level"><ByLevel q={q} /></Section>}
       {q.winsFrom.above + q.winsFrom.at + q.winsFrom.below > 0 && (
         <Section title="Where your wins come from"><WinsFrom q={q} /></Section>

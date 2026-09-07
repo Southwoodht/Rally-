@@ -679,7 +679,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   return (
     <div style={wrap}>
       <style>{fontImport}</style>
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
+      <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px", paddingTop: "calc(22px + env(safe-area-inset-top))" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
             <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "none", borderRadius: 999, padding: "6px 13px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13 }}>
