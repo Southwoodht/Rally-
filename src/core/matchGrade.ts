@@ -144,13 +144,19 @@ export function gradeAgainstHistory(
   };
 }
 
-/** "one above you" / "your level" / "two below you". Null when ungraded. */
-export function gapPhrase(gap: number | null): string | null {
+/**
+ * "one above you" / "your level" / "two below you". Null when ungraded.
+ *
+ * `self` false swaps to the third person for reading somebody else's
+ * schedule — "one above them" — since "above you" on Charlie's screen would
+ * be describing the wrong person entirely.
+ */
+export function gapPhrase(gap: number | null, self = true): string | null {
   if (gap == null) return null;
-  if (gap === 0) return "your level";
+  if (gap === 0) return self ? "your level" : "their level";
   const n = Math.abs(gap);
   const word = n === 1 ? "one" : n === 2 ? "two" : n === 3 ? "three" : n === 4 ? "four" : String(n);
-  return word + (gap > 0 ? " above you" : " below you");
+  return word + (gap > 0 ? " above " : " below ") + (self ? "you" : "them");
 }
 
 /**

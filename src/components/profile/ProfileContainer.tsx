@@ -41,7 +41,7 @@ export function ProfileContainer({
   player, players, matches, elo, wdl, form, deltas, ratingBefore, meId, group, groups,
   viewer = "self", onOpen, onOpenMatch, onProposeEdit, onSettings, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
-  myAuthId, onMessage,
+  myAuthId, onMessage, onOpenMatches,
 }: any) {
   const pid = player?.id;
   const isSelf = viewer === "self";
@@ -264,7 +264,7 @@ export function ProfileContainer({
       record={data.record}
       gap={data.gap}
       actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage }}
-      playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails } : null}
+      playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails || (onOpenMatches ? () => onOpenMatches(pid, "quality") : undefined) } : null}
       rivalries={data.rivalries}
       bestWins={data.bestWins}
       opponents={data.opponents}
@@ -291,7 +291,7 @@ export function ProfileContainer({
       ]}
       onOpenPlayer={onOpen}
       onOpenMatch={onOpenMatch}
-      onAllHistory={onAllHistory}
+      onAllHistory={onAllHistory || (onOpenMatches ? () => onOpenMatches(pid, "history") : undefined)}
       onAllOpponents={onAllOpponents}
     />
     {claiming && (

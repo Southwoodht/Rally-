@@ -177,7 +177,7 @@ export function ProfileView(p: ProfileViewProps) {
           {/* The graded version is a different question — how good were these
               results, not what were they — so it is a separate destination
               rather than what "All 44" now means. */}
-          {isSelf && p.onAllHistory && (
+          {p.onAllHistory && (
             <button
               onClick={p.onAllHistory}
               style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME }}

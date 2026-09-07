@@ -7,6 +7,9 @@
 
 import { buildMatchQuality, overTimeSentence, rateOf, shareSentence, winsFromSentence } from "./matchQuality";
 
+/** Nothing graded — used by both the self and third-person checks below. */
+const blindLater = { share: null } as any;
+
 let failures = 0;
 let checks = 0;
 
@@ -93,8 +96,35 @@ eq(rateOf({ w: 1, d: 1, l: 1 }), 50, "a draw counts as half");
 // --------------------------------------------------- where the wins are from
 // Wins: adv (above), peer (at), ama + beg (below). The nohist win is in none.
 eq(q.winsFrom, { above: 1, at: 1, below: 2 }, "wins split three ways, ungraded in none");
-eq(winsFromSentence(q), "Half your graded wins came at your level or above, half against somebody below.",
+eq(winsFromSentence(q), "Half of your graded wins came at your level or above, half against somebody below.",
   "an exact split is said as one, not rounded onto the flattering side");
+
+// The same sentences read about somebody else. One template, two voices —
+// the screen is no longer only ever about the person reading it.
+const THEM = { self: false, name: "Charlie" };
+eq(shareSentence(q, THEM), "57% of Charlie's graded matches were against somebody at their level or above — 4 of 7.",
+  "third person names them and then says 'their', never he or she");
+eq(winsFromSentence(q, THEM), "Half of Charlie's graded wins came at their level or above, half against somebody below.",
+  "third person, exact split");
+eq(winsFromSentence({ ...q, winsFrom: { above: 0, at: 0, below: 4 } } as any, THEM),
+  "Every graded win has come against somebody below them.", "third person, all below");
+eq(shareSentence(blindLater, THEM), "None of Charlie's matches can be graded yet.", "third person, nothing graded");
+eq(
+  overTimeSentence([
+    { year: 2020, share: 20, graded: 5, matches: 5 },
+    { year: 2022, share: 70, graded: 5, matches: 5 },
+  ], THEM),
+  "Charlie is playing tougher opposition than they used to — 20% in 2020, 70% in 2022.",
+  "third person trend",
+);
+eq(
+  overTimeSentence([
+    { year: 2020, share: 50, graded: 5, matches: 5 },
+    { year: 2022, share: 55, graded: 5, matches: 5 },
+  ], THEM),
+  "Charlie's schedule has been about as testing as it ever was.",
+  "third person, no trend",
+);
 eq(winsFromSentence({ ...q, winsFrom: { above: 2, at: 1, below: 1 } } as any),
   "75% of your wins came at your level or above.", "a majority up");
 eq(winsFromSentence({ ...q, winsFrom: { above: 0, at: 1, below: 3 } } as any),

@@ -12,6 +12,40 @@ import { gapPhrase, gradeAgainstHistory, verdictFor, type GradedMatch, type Outc
  * players and matches it already has.
  */
 
+/**
+ * Whose schedule this is, and therefore how to say it.
+ *
+ * The screen was written entirely in the second person, which is fine while
+ * it only ever showed you your own matches. Reading somebody else's, every
+ * one of those sentences becomes a lie about who is being described — so the
+ * words come from here rather than being hardcoded.
+ *
+ * Third person uses their name and then "they", never he or she: the app
+ * does not ask anybody their pronouns and guessing from a name gets it wrong
+ * for real people.
+ */
+export interface Voice {
+  /** True when the reader is the subject. */
+  self: boolean;
+  /** Their first name. Ignored when self. */
+  name: string;
+}
+
+export const YOU: Voice = { self: true, name: "" };
+
+/** "your" / "Charlie's" */
+export const poss = (v: Voice) => (v.self ? "your" : v.name + "'s");
+/** "Your" / "Charlie's" */
+export const Poss = (v: Voice) => (v.self ? "Your" : v.name + "'s");
+/** "you" / "Charlie" */
+export const subj = (v: Voice) => (v.self ? "you" : v.name);
+/** "You are" / "Charlie is" */
+export const isVerb = (v: Voice) => (v.self ? "You are" : v.name + " is");
+/** "your" / "their" — the possessive after the subject is already named. */
+export const theirs = (v: Voice) => (v.self ? "your" : "their");
+/** "you" / "them" — object form. */
+export const obj = (v: Voice) => (v.self ? "you" : "them");
+
 export interface Record3 { w: number; d: number; l: number }
 
 const rec = (): Record3 => ({ w: 0, d: 0, l: 0 });
@@ -103,6 +137,7 @@ export function buildMatchQuality(
   viewerId: string,
   players: any[],
   matches: any[],
+  voice: Voice = YOU,
 ): MatchQuality {
   const byId: Record<string, any> = {};
   (players || []).forEach((p) => (byId[p.id] = p));
@@ -171,7 +206,7 @@ export function buildMatchQuality(
         player: r.opponent,
         record: rec(),
         cat: r.grade.opponentCategory,
-        phrase: gapPhrase(r.grade.gap),
+        phrase: gapPhrase(r.grade.gap, voice.self),
         gap: r.grade.gap,
         lastGrade: r.grade.then,
       };
@@ -227,30 +262,30 @@ export function buildMatchQuality(
  * States the denominator out loud, because a percentage of graded matches is
  * not a percentage of matches and the difference is currently most of them.
  */
-export function shareSentence(q: MatchQuality): string {
-  if (q.share == null) return "None of your matches can be graded yet.";
+export function shareSentence(q: MatchQuality, v: Voice = YOU): string {
+  if (q.share == null) return "None of " + poss(v) + " matches can be graded yet.";
   const pct = Math.round(q.share * 100);
   const n = played(q.atOrAbove);
-  return pct + "% of your graded matches were against somebody at your level or above — " +
-    n + " of " + q.graded + ".";
+  return pct + "% of " + poss(v) + " graded matches were against somebody at " +
+    theirs(v) + " level or above — " + n + " of " + q.graded + ".";
 }
 
 /** The one-line conclusion under "Where your wins come from". */
-export function winsFromSentence(q: MatchQuality): string | null {
+export function winsFromSentence(q: MatchQuality, v: Voice = YOU): string | null {
   const { above, at, below } = q.winsFrom;
   const totalWins = above + at + below;
   if (!totalWins) return null;
   const hard = above + at;
-  if (hard === 0) return "Every graded win has come against somebody below you.";
-  if (below === 0) return "Every graded win has come at your level or above.";
+  if (hard === 0) return "Every graded win has come against somebody below " + obj(v) + ".";
+  if (below === 0) return "Every graded win has come at " + theirs(v) + " level or above.";
   // An exact split gets said as an exact split. Rounding a tie to one side
   // and printing "50% came at your level or above" is true and reads as a
   // claim, when the fact is that it went both ways equally.
-  if (hard === below) return "Half your graded wins came at your level or above, half against somebody below.";
+  if (hard === below) return "Half of " + poss(v) + " graded wins came at " + theirs(v) + " level or above, half against somebody below.";
   const pct = Math.round((hard / totalWins) * 100);
   return hard > below
-    ? pct + "% of your wins came at your level or above."
-    : Math.round((below / totalWins) * 100) + "% of your wins came against somebody below you.";
+    ? pct + "% of " + poss(v) + " wins came at " + theirs(v) + " level or above."
+    : Math.round((below / totalWins) * 100) + "% of " + poss(v) + " wins came against somebody below " + obj(v) + ".";
 }
 
 /**
@@ -261,15 +296,15 @@ export function winsFromSentence(q: MatchQuality): string | null {
  * than you used to — 100% in 2019" off the back of a single result is the
  * chart inventing a career arc out of one afternoon.
  */
-export function overTimeSentence(overTime: YearShare[]): string | null {
+export function overTimeSentence(overTime: YearShare[], v: Voice = YOU): string | null {
   const known = overTime.filter((y) => y.share != null && y.graded >= MIN_FOR_RATE);
   if (known.length < 2) return null;
   const first = known[0], last = known[known.length - 1];
   const delta = (last.share as number) - (first.share as number);
-  if (Math.abs(delta) < 10) return "Your schedule has been about as testing as it ever was.";
-  return delta > 0
-    ? "You are playing tougher opposition than you used to — " + first.share + "% in " + first.year + ", " + last.share + "% in " + last.year + "."
-    : "You are playing easier opposition than you used to — " + first.share + "% in " + first.year + ", " + last.share + "% in " + last.year + ".";
+  const span = " — " + first.share + "% in " + first.year + ", " + last.share + "% in " + last.year + ".";
+  if (Math.abs(delta) < 10) return Poss(v) + " schedule has been about as testing as it ever was.";
+  const used = v.self ? " than you used to" : " than they used to";
+  return isVerb(v) + (delta > 0 ? " playing tougher opposition" : " playing easier opposition") + used + span;
 }
 
 /** Fewer than this many years and the chart says nothing worth a card. */

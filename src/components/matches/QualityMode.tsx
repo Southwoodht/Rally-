@@ -4,8 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { SurfaceCard, SurfaceTile } from "@/components/ui/Surfaces";
 import { GRADE_LABEL } from "@/core/matchGrade";
 import {
-  MIN_FOR_RATE, overTimeSentence, shareSentence, winsFromSentence,
-  MIN_YEARS_FOR_CHART, type MatchQuality, type Record3,
+  MIN_FOR_RATE, overTimeSentence, shareSentence, theirs, winsFromSentence,
+  MIN_YEARS_FOR_CHART, YOU, type MatchQuality, type Record3, type Voice,
 } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
 import {
@@ -43,7 +43,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /** (a) The verdict. */
-function Verdict({ q }: { q: MatchQuality }) {
+function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
   const at = played(q.atOrAbove), below = played(q.below);
   const total = at + below;
   return (
@@ -52,7 +52,7 @@ function Verdict({ q }: { q: MatchQuality }) {
         {q.verdict || "Not enough to judge"}
       </div>
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 6 }}>
-        {shareSentence(q)}
+        {shareSentence(q, v)}
       </div>
 
       {total > 0 && (
@@ -88,7 +88,7 @@ function Verdict({ q }: { q: MatchQuality }) {
  * Either tile opens the players it counted. A number you cannot look inside
  * is a number you have to take on trust.
  */
-function Tiles({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer?: (id: string) => void }) {
+function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer?: (id: string) => void }) {
   const [open, setOpen] = useState<null | "above" | "below">(null);
 
   const tile = (key: "above" | "below", title: string, r: Record3, lime: boolean) => {
@@ -138,7 +138,7 @@ function Tiles({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer?: (id: strin
       {open && (
         <SurfaceCard radius={16} style={{ marginTop: 10 }}>
           <div style={{ ...label, marginBottom: 10 }}>
-            {open === "above" ? "At your level or above" : "Below your level"} · {list.length}
+            {open === "above" ? "At " + theirs(v) + " level or above" : "Below " + theirs(v) + " level"} · {list.length}
           </div>
           {list.length === 0 ? (
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}>
@@ -178,7 +178,7 @@ function Tiles({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer?: (id: strin
 }
 
 /** (c) One row per level faced, hardest first. */
-function ByLevel({ q }: { q: MatchQuality }) {
+function ByLevel({ q, v }: { q: MatchQuality; v: Voice }) {
   const most = Math.max(...q.byLevel.map((r) => r.matches), 1);
   return (
     <SurfaceCard radius={16}>
@@ -197,7 +197,7 @@ function ByLevel({ q }: { q: MatchQuality }) {
             <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>{r.cat}</span>
             {r.isMine && (
               <span style={{ fontFamily: body, fontWeight: 400, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px" }}>
-                your level
+                {theirs(v)} level
               </span>
             )}
             <span style={{ flex: 1 }} />
@@ -216,14 +216,14 @@ function ByLevel({ q }: { q: MatchQuality }) {
 }
 
 /** (d) Where the wins come from. */
-function WinsFrom({ q }: { q: MatchQuality }) {
+function WinsFrom({ q, v }: { q: MatchQuality; v: Voice }) {
   const { above, at, below } = q.winsFrom;
   const total = above + at + below;
   if (!total) return null;
   const rows: Array<[string, number, string]> = [
-    ["Above your level", above, FEED_LIME],
-    ["At your level", at, FEED_TEXT_LOW],
-    ["Below your level", below, FEED_TEXT_MID],
+    ["Above " + theirs(v) + " level", above, FEED_LIME],
+    ["At " + theirs(v) + " level", at, FEED_TEXT_LOW],
+    ["Below " + theirs(v) + " level", below, FEED_TEXT_MID],
   ];
   return (
     <SurfaceCard radius={16}>
@@ -240,7 +240,7 @@ function WinsFrom({ q }: { q: MatchQuality }) {
         ))}
       </div>
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 8 }}>
-        {winsFromSentence(q)}
+        {winsFromSentence(q, v)}
       </div>
     </SurfaceCard>
   );
@@ -293,10 +293,10 @@ function Opponents({ q, onOpen }: { q: MatchQuality; onOpen?: (id: string) => vo
 }
 
 /** (f) The share at your level or above, year by year. */
-function OverTime({ q }: { q: MatchQuality }) {
+function OverTime({ q, v }: { q: MatchQuality; v: Voice }) {
   const years = q.overTime;
   if (years.length < MIN_YEARS_FOR_CHART) return null;
-  const summary = overTimeSentence(years);
+  const summary = overTimeSentence(years, v);
   const last = years[years.length - 1];
   return (
     <Section title="Over time">
@@ -344,13 +344,13 @@ function OverTime({ q }: { q: MatchQuality }) {
   );
 }
 
-export function QualityMode({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer?: (id: string) => void }) {
+export function QualityMode({ q, v = YOU, onOpenPlayer }: { q: MatchQuality; v?: Voice; onOpenPlayer?: (id: string) => void }) {
   if (!q.total) {
     return (
       <SurfaceCard radius={18}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No matches yet.</div>
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
-          Log a result and this fills in.
+          {v.self ? "Log a result and this fills in." : "Nothing to judge yet."}
         </div>
       </SurfaceCard>
     );
@@ -358,14 +358,14 @@ export function QualityMode({ q, onOpenPlayer }: { q: MatchQuality; onOpenPlayer
 
   return (
     <div>
-      <Verdict q={q} />
-      <div style={{ marginTop: 12 }}><Tiles q={q} onOpenPlayer={onOpenPlayer} /></div>
-      {q.byLevel.length > 0 && <Section title="By level"><ByLevel q={q} /></Section>}
+      <Verdict q={q} v={v} />
+      <div style={{ marginTop: 12 }}><Tiles q={q} v={v} onOpenPlayer={onOpenPlayer} /></div>
+      {q.byLevel.length > 0 && <Section title="By level"><ByLevel q={q} v={v} /></Section>}
       {q.winsFrom.above + q.winsFrom.at + q.winsFrom.below > 0 && (
-        <Section title="Where your wins come from"><WinsFrom q={q} /></Section>
+        <Section title={"Where " + (v.self ? "your" : v.name + "'s") + " wins come from"}><WinsFrom q={q} v={v} /></Section>
       )}
       {q.opponents.length > 0 && <Section title="Every opponent"><Opponents q={q} onOpen={onOpenPlayer} /></Section>}
-      <OverTime q={q} />
+      <OverTime q={q} v={v} />
       <SurfaceTile style={{ marginTop: 20 }}>
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
           Levels are compared by category, never by sub-level. Level is

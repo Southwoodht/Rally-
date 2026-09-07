@@ -39,7 +39,7 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { greetingFor, uid, winPct } from "@/lib/format";
+import { greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
@@ -75,6 +75,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Table's: the mode is decided by the link you followed, and remembering
   // it across launches would override that.
   const [matchesMode, setMatchesMode] = useState<MatchesMode>("quality");
+  // Whose matches the screen is showing. Yours unless you opened it from
+  // somebody else's profile.
+  const [matchesFor, setMatchesFor] = useState<string | null>(null);
   // Where Back goes from the level-history screen. It is reached from two
   // places and should return to whichever one you came from.
   const [levelsFrom, setLevelsFrom] = useState("profile");
@@ -654,7 +657,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
-  const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
   const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
@@ -750,15 +753,21 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             the profile menu otherwise. */}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesMode("history"); setTab("matches"); }} />}
+        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
         {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} />}
-        {tab === "matches" && <SubHeader title="Your matches" onBack={() => setTab("profile")} />}
+        {tab === "matches" && (
+          <SubHeader
+            title={!matchesFor || matchesFor === meId ? "Your matches" : shortNameOf(players.find((p) => p.id === matchesFor)) + "'s matches"}
+            onBack={() => { if (matchesFor && matchesFor !== meId) openProfile(matchesFor); setMatchesFor(null); setTab("profile"); }}
+          />
+        )}
         {tab === "matches" && (
           <YourMatches
-            viewerId={meId}
+            viewerId={matchesFor || meId}
+            meId={meId}
             players={players}
             matches={matches}
             mode={matchesMode}
