@@ -775,7 +775,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "messages" && <SubHeader title="Messages" onBack={() => setTab("profile")} />}
         {tab === "messages" && <Messages startWith={msgWith} onStarted={() => setMsgWith(null)} />}
         {tab === "friends" && <SubHeader title="Friends" onBack={() => setTab("profile")} />}
-        {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} />}
+        {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }} />}
       </div>
 
       {menuOpen && (

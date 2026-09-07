@@ -41,6 +41,7 @@ export function ProfileContainer({
   player, players, matches, elo, wdl, form, deltas, ratingBefore, meId, group, groups,
   viewer = "self", onOpen, onOpenMatch, onProposeEdit, onSettings, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
+  myAuthId, onMessage,
 }: any) {
   const pid = player?.id;
   const isSelf = viewer === "self";
@@ -262,6 +263,7 @@ export function ProfileContainer({
       }}
       record={data.record}
       gap={data.gap}
+      actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage }}
       playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails } : null}
       rivalries={data.rivalries}
       bestWins={data.bestWins}

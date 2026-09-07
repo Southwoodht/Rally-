@@ -7,7 +7,7 @@ import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, listCard, listRow, miniI
 
 const asPlayer = (p: Profile) => ({ id: p.id, name: p.display_name, avatarUrl: p.avatar_url, avatar: null });
 
-export function Friends({ leagueJoinCode, onBack, flash }: any) {
+export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
   const [me, setMe] = useState<Profile | null>(null);
   const [friends, setFriends] = useState<FriendWithProfile[]>([]);
   const [incoming, setIncoming] = useState<FriendWithProfile[]>([]);
@@ -154,6 +154,7 @@ export function Friends({ leagueJoinCode, onBack, flash }: any) {
                 <Avatar player={asPlayer(row.profile)} size={36} />
                 <span style={{ flex: 1, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>{row.profile.display_name}</span>
                 <div style={{ display: "flex", gap: 6 }}>
+                  {onMessage && actionBtn("Message", () => onMessage(row.profile.id), PANEL2, CHALK)}
                   {leagueJoinCode && actionBtn("Invite to league", () => inviteToLeague(row), PANEL2, CHALK)}
                   {actionBtn("Remove", () => remove(row), "transparent", CLAY)}
                 </div>

@@ -5,6 +5,7 @@ import { BestWins, type BestWin } from "@/components/profile/BestWins";
 import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { OpponentRecords, type OpponentRecord } from "@/components/profile/OpponentRecords";
+import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
 import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
@@ -31,6 +32,8 @@ export interface ProfileViewProps {
    *  you actually have about the person you are looking at. */
   gap?: GapInsightProps | null;
   playingStyle?: PlayingStyleProps | null;
+  /** Message and Add friend. Only meaningful on somebody else's profile. */
+  actions?: ProfileActionsProps | null;
   rivalries?: RivalryCardProps[];
   bestWins?: BestWin[];
   opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[] } | null;
@@ -91,6 +94,10 @@ export function ProfileView(p: ProfileViewProps) {
   return (
     <div>
       <ProfileHeader {...p.header} viewer={p.viewer} />
+
+      {/* Directly under the header, because the reason you are on somebody
+          else's profile is usually that you want to talk to them. */}
+      {!isSelf && p.actions && <ProfileActions {...p.actions} />}
 
       {p.period && (
         <div style={{ marginTop: 18 }}>
