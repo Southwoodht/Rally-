@@ -50,22 +50,48 @@ const when = (iso: string) => {
  * raw string and says so in the console: that is a data problem and it
  * should be findable, not smoothed over.
  */
-function nameForThread(t: Thread, players?: any[]): string {
+function playerForThread(t: Thread, players?: any[]): any | null {
   const authId = t.profile?.id;
-  const player = authId && players ? players.find((p) => p.auth_id === authId) : null;
+  return (authId && players ? players.find((p) => p.auth_id === authId) : null) || null;
+}
+
+function nameForThread(t: Thread, players?: any[]): string {
+  const player = playerForThread(t, players);
   if (player) {
     const full = fullNameOf(player);
     if (full && full !== "Someone") return full;
-    console.warn("Messages: player row has no usable name", { authId, playerId: player.id });
+    console.warn("Messages: player row has no usable name", { authId: t.profile?.id, playerId: player.id });
   }
   return t.profile?.display_name || "Someone";
 }
 
-function Face({ t, name, size = 44 }: { t: Thread; name: string; size?: number }) {
+/**
+ * Their actual face, the same one the Table and the match cards show.
+ *
+ * The order is the shared Avatar's order — photo, then the emoji they picked,
+ * then an initial — because a person who has set an emoji avatar has one
+ * face in this app and it should not disappear the moment you message them.
+ * This was showing a grey letter for everybody in Seacourt, where the
+ * players all have emoji.
+ *
+ * The player record wins over the account's avatar_url: that is the picture
+ * attached to who they are in this league, which is what every other screen
+ * is showing you.
+ */
+function Face({ t, name, player, size = 44 }: { t: Thread; name: string; player?: any; size?: number }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0 } as const;
-  if (t.profile?.avatar_url) return <img src={t.profile.avatar_url} alt="" style={{ ...common, objectFit: "cover" }} />;
+  const photo = player?.avatarUrl || t.profile?.avatar_url;
+  if (photo) return <img src={photo} alt="" style={{ ...common, objectFit: "cover", background: FEED_RAISED }} />;
+  if (player?.avatar) {
+    return (
+      <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontSize: size * 0.52 }}>
+        {player.avatar}
+      </span>
+    );
+  }
   return (
-    // The initial recedes rather than competing with the name beside it.
+    // Only when there is genuinely no face to show. The initial recedes
+    // rather than competing with the name beside it.
     <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontFamily: body, fontWeight: 500, fontSize: size * 0.38, color: FEED_TEXT_LOW }}>
       {(name || "?").charAt(0).toUpperCase()}
     </span>
@@ -86,6 +112,7 @@ const ROW_CSS = `
 
 function ThreadRowView({ t, players, onClick, first }: { t: Thread; players?: any[]; onClick: () => void; first?: boolean }) {
   const unread = t.unread > 0;
+  const player = playerForThread(t, players);
   const name = nameForThread(t, players);
   return (
     <button
@@ -106,7 +133,7 @@ function ThreadRowView({ t, players, onClick, first }: { t: Thread; players?: an
           style={{ position: "absolute", top: 0, left: ROW_PAD + AVATAR + ROW_GAP, right: 0, height: 1, background: FEED_RAISED }}
         />
       )}
-      <Face t={t} name={name} size={AVATAR} />
+      <Face t={t} name={name} player={player} size={AVATAR} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 500, fontSize: 17, letterSpacing: "-0.2px", color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {name}
@@ -140,6 +167,7 @@ const dayLabel = (iso: string) => {
 function Conversation({ thread, myId, onBack, onChanged, players }: any) {
   const t: Thread = thread;
   const who = nameForThread(t, players);
+  const whoPlayer = playerForThread(t, players);
   const [msgs, setMsgs] = useState<MessageRow[] | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -181,7 +209,7 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px", borderBottom: "0.5px solid " + FEED_HAIRLINE, marginBottom: 14 }}>
         <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}><ChevronLeft size={22} color={BALL} strokeWidth={2} /></button>
-        <Face t={t} name={who} size={40} />
+        <Face t={t} name={who} player={whoPlayer} size={40} />
         <span style={{ minWidth: 0 }}>
           <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{who}</span>
           <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
@@ -207,7 +235,7 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, padding: "24px 0" }}>Loading…</div>
         ) : !msgs.length ? (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
-            <Face t={t} name={who} size={56} />
+            <Face t={t} name={who} player={whoPlayer} size={56} />
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginTop: 12 }}>
               {who}
             </div>
