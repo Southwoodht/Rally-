@@ -117,6 +117,16 @@ export interface MatchQuality {
   ungraded: number;
   atOrAbove: Record3;
   below: Record3;
+  /**
+   * Matches nobody can grade, because a level was missing at the time.
+   *
+   * A real bucket rather than a silent drop. These used to be counted
+   * nowhere, so the two tiles summed to `graded` while the screen around
+   * them said `total` — on a roster where almost nobody has a level history
+   * that is not a rounding difference, it is most of the matches.
+   * **atOrAbove + below + unknown === total, for every player, always.**
+   */
+  unknown: Record3;
   /** At-or-above as a share of GRADED matches, 0-1. Null when none are. */
   share: number | null;
   verdict: Verdict | null;
@@ -161,7 +171,7 @@ export function buildMatchQuality(
     };
   });
 
-  const atOrAbove = rec(), below = rec();
+  const atOrAbove = rec(), below = rec(), unknown = rec();
   const winsFrom = { above: 0, at: 0, below: 0 };
   let graded = 0;
 
@@ -172,7 +182,10 @@ export function buildMatchQuality(
 
   rows.forEach((r) => {
     const g = r.grade;
-    if (g.gap == null || !g.opponentCategory) return;   // ungraded: counted nowhere
+    // Ungraded — a level was missing on one side or the other, so there is
+    // no gap to judge. It still happened, so it is still counted: dropping
+    // it here is what made the tiles disagree with the total.
+    if (g.gap == null || !g.opponentCategory) { add(unknown, r.outcome); return; }
     graded++;
     if (g.gap >= 0) { add(atOrAbove, r.outcome); if (r.outcome === "W") { if (g.gap > 0) winsFrom.above++; else winsFrom.at++; } }
     else { add(below, r.outcome); if (r.outcome === "W") winsFrom.below++; }
@@ -248,6 +261,7 @@ export function buildMatchQuality(
     ungraded: rows.length - graded,
     atOrAbove,
     below,
+    unknown,
     share,
     verdict: verdictFor(share),
     byLevel,

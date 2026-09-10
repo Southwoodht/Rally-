@@ -44,8 +44,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 /** (a) The verdict. */
 function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
-  const at = played(q.atOrAbove), below = played(q.below);
-  const total = at + below;
+  const at = played(q.atOrAbove), below = played(q.below), unknown = played(q.unknown);
+  // The bar is every match, not just the gradeable ones. It used to be
+  // at + below, which silently excluded anything ungraded — so the two
+  // segments filled the whole bar while describing a fraction of the
+  // matches, and on this roster that fraction is small.
+  const total = at + below + unknown;
   return (
     <div style={{ background: FEED_LIME, borderRadius: 18, padding: 18 }}>
       <div style={{ ...tight(20), fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_LIME_INK }}>
@@ -57,16 +61,20 @@ function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
 
       {total > 0 && (
         <>
-          {/* Two segments, and the bar is the sentence again in one glance.
-              It is drawn on the lime card so both segments are inks, not
-              colours — a green bar on lime would be invisible. */}
+          {/* Three segments now, and they account for every match. The
+              first two are inks because the bar sits on lime and a green
+              would vanish; the third is the raised green precisely because
+              it should read as a different kind of thing — not a worse
+              opponent, an unknown one. */}
           <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", marginTop: 16, background: FEED_LIME_DIVIDER }}>
             <div style={{ width: (at / total) * 100 + "%", background: FEED_LIME_INK }} />
             <div style={{ width: (below / total) * 100 + "%", background: FEED_LIME_INK_2, opacity: 0.35 }} />
+            <div style={{ width: (unknown / total) * 100 + "%", background: FEED_RAISED }} />
           </div>
-          <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 6 }}>
+          <div style={{ ...tabular, display: "flex", justifyContent: "space-between", gap: 8, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 6 }}>
             <span>{at} at or above</span>
             <span>{below} below</span>
+            {unknown > 0 && <span>{unknown} unknown level</span>}
           </div>
         </>
       )}

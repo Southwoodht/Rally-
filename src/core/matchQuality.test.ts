@@ -230,5 +230,60 @@ eq(empty.opponents, [], "no opponents");
 eq(empty.overTime, [], "no years");
 
 // -------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// The split must account for every match, for every player.
+//
+// It didn't. Ungraded matches were dropped from both buckets, so the two
+// tiles summed to `graded` while the screen around them said `total` — and
+// on a roster where hardly anyone has a level history, that is most of the
+// matches, not a rounding difference.
+
+{
+  const played3 = (r: any) => r.w + r.d + r.l;
+  const P = (id: string, cat: string | null, hasHistory: boolean) => ({
+    id, name: id, last: "X",
+    level: cat ? { cat, sub: "Medium" } : null,
+    levelHistory: hasHistory && cat ? [{ cat, sub: "Medium", from: 2015, to: null }] : null,
+  });
+  // Deliberately mixed: levels with history, levels without, and none at all.
+  const roster = [
+    P("a", "Intermediate", true), P("b", "Advanced", true), P("c", "Advanced", false),
+    P("d", "Beginner", true), P("e", null, false), P("f", "Pro", false), P("g", "Amateur", true),
+  ];
+  const ms: any[] = [];
+  let k = 0;
+  const outcomes = ["p1", "p2", "draw"] as const;
+  for (let i = 0; i < roster.length; i++) {
+    for (let j = i + 1; j < roster.length; j++) {
+      for (let r = 0; r < 3; r++) {
+        ms.push({
+          id: "x" + ++k, p1: roster[i].id, p2: roster[j].id,
+          winner: outcomes[(i + j + r) % 3],
+          date: new Date(2019 + ((i + r) % 6), (j % 12), 5).getTime(),
+          status: k % 9 === 0 ? "pending" : "confirmed",
+        });
+      }
+    }
+  }
+
+  let checked = 0;
+  roster.forEach((p) => {
+    const r: any = buildMatchQuality(p.id, roster, ms);
+    const sum = played3(r.atOrAbove) + played3(r.below) + played3(r.unknown);
+    eq(sum, r.total, `${p.id}: at-or-above + below + unknown accounts for every match`);
+    eq(played3(r.atOrAbove) + played3(r.below), r.graded, `${p.id}: the two graded buckets sum to graded`);
+    eq(played3(r.unknown), r.ungraded, `${p.id}: the unknown bucket is exactly the ungraded count`);
+    eq(r.rows.length, r.total, `${p.id}: rows and total agree`);
+    checked++;
+  });
+  eq(checked, 7, "every player in the roster was reconciled");
+
+  // A player nobody can grade at all still adds up.
+  const lonely: any = buildMatchQuality("e", roster, ms);
+  eq(lonely.graded, 0, "no level, nothing gradeable");
+  eq(played3(lonely.unknown), lonely.total, "and every one of their matches is in the unknown bucket");
+}
+
+
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
 console.log(`PASSED — ${checks}/${checks} checks`);
