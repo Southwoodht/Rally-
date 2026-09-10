@@ -310,17 +310,36 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     </button>
                   )}
 
-                  {/* You can remove a fixture you are in, or any of them if
-                      you run the league. Booking something and then having
-                      no way to un-book it is how a fixture list stops being
+                  {/* Either of the two people in it can call it off, and so
+                      can whoever runs the league. Booking something with no
+                      way to un-book it is how a fixture list stops being
                       believed. */}
                   {onRemoveFixture && (canManage || f.p1 === meId || f.p2 === meId) && (
-                    <button
-                      onClick={() => { if (confirmRemove === f.id) { onRemoveFixture(f.id); setConfirmRemove(null); setOpen(null); } else setConfirmRemove(f.id); }}
-                      style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: confirmRemove === f.id ? DOT_LOSS : FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
-                    >
-                      {confirmRemove === f.id ? "Tap again to remove this fixture" : "Remove fixture"}
-                    </button>
+                    <div style={{ paddingBottom: 16 }}>
+                      {confirmRemove === f.id ? (
+                        <div style={{ background: FEED_RAISED, borderRadius: 14, padding: 14 }}>
+                          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
+                            Cancel your match with {nm(f.p1 === meId ? f.p2 : f.p1)}?
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => { onRemoveFixture(f.id); setConfirmRemove(null); setOpen(null); }}
+                              style={actionBtn(DOT_LOSS, FEED_LIME_INK)}
+                            >
+                              Cancel match
+                            </button>
+                            <button onClick={() => setConfirmRemove(null)} style={actionBtn(FEED_CARD, FEED_TEXT_HI)}>Keep it</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmRemove(f.id)}
+                          style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), width: "100%", flex: "none" }}
+                        >
+                          Cancel match
+                        </button>
+                      )}
+                    </div>
                   )}
 
                   <div style={{ ...label, marginBottom: 7 }}>Enter result</div>
