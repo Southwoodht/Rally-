@@ -184,7 +184,7 @@ const dividerLabel = (iso: string) => {
   return sameDay ? time : dayLabel(iso) + " · " + time;
 };
 
-function Conversation({ thread, myId, onBack, onChanged, players }: any) {
+function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile }: any) {
   const t: Thread = thread;
   const who = nameForThread(t, players);
   const whoPlayer = playerForThread(t, players);
@@ -229,6 +229,13 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "0 0 14px", borderBottom: "0.5px solid " + FEED_HAIRLINE, marginBottom: 14 }}>
         <button onClick={onBack} aria-label="Back" style={{ background: "transparent", border: "none", padding: "0 4px 0 0", cursor: "pointer", display: "grid", placeItems: "center" }}><ChevronLeft size={22} color={BALL} strokeWidth={2} /></button>
+        {/* Their face and name open their profile. You are mid-conversation
+            about a match — "how good is he, actually" is the obvious next
+            question, and the answer was two screens away. */}
+        <button
+          onClick={whoPlayer && onOpenProfile ? () => onOpenProfile(whoPlayer.id) : undefined}
+          style={{ display: "flex", alignItems: "center", gap: 11, flex: 1, minWidth: 0, background: "transparent", border: "none", padding: 0, textAlign: "left", cursor: whoPlayer && onOpenProfile ? "pointer" : "default" }}
+        >
         <Face t={t} name={who} player={whoPlayer} size={40} />
         <span style={{ minWidth: 0 }}>
           <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{who}</span>
@@ -236,6 +243,7 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
             {t.status === "accepted" ? (msgs ? msgs.length + " message" + (msgs.length === 1 ? "" : "s") : " ") : t.isRequestToMe ? "Message request" : "Request sent — not accepted yet"}
           </span>
         </span>
+        </button>
       </div>
 
       {t.isRequestToMe && (
@@ -381,7 +389,7 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
   );
 }
 
-export function Messages({ startWith, onStarted, players, onBack }: { startWith?: string | null; onStarted?: () => void; players?: any[]; onBack?: () => void }) {
+export function Messages({ startWith, onStarted, players, onBack, onOpenProfile }: { startWith?: string | null; onStarted?: () => void; players?: any[]; onBack?: () => void; onOpenProfile?: (playerId: string) => void }) {
   const [threads, setThreads] = useState<Thread[] | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -427,7 +435,7 @@ export function Messages({ startWith, onStarted, players, onBack }: { startWith?
   }
 
   const open = threads?.find((t) => t.id === openId);
-  if (open) return <Conversation thread={open} myId={myId} onBack={() => setOpenId(null)} onChanged={load} players={players} />;
+  if (open) return <Conversation thread={open} myId={myId} onBack={() => setOpenId(null)} onChanged={load} players={players} onOpenProfile={onOpenProfile} />;
 
   if (!threads) return <><MessagesHeader onBack={onBack} /><Empty msg="Loading…" /></>;
 

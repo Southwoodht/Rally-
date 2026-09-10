@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supabase";
-import { COURT, PANEL, CHALK, BALL, MUTED, LINE, display, body, mono } from "@/lib/theme";
+import { BALL, body, CHALK, COURT, display, fontImport, LINE, mono, MUTED, PANEL } from "@/lib/theme";
 import Welcome from "@/components/auth/Welcome";
 import UpdatePassword from "@/components/auth/UpdatePassword";
 import Dashboard from "@/components/dashboard/Dashboard";
@@ -56,6 +56,7 @@ export default function AuthGate() {
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: COURT, display: "grid", placeItems: "center" }}>
+        <style>{fontImport}</style>
         <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, letterSpacing: 2, textTransform: "uppercase" }}>Loading…</div>
       </div>
     );
@@ -73,6 +74,7 @@ function SetupNeeded() {
   };
   return (
     <div style={{ minHeight: "100vh", background: COURT, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <style>{fontImport}</style>
       <div style={{ maxWidth: 460, background: PANEL, border: "none", borderRadius: 16, padding: 22 }}>
         <div style={{ fontFamily: display, fontSize: 30, fontWeight: 800, color: BALL, textTransform: "uppercase" }}>Rally</div>
         <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, margin: "10px 0 12px" }}>Setup needed</div>

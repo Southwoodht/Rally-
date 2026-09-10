@@ -75,7 +75,7 @@ const timeOf = (v: any): number | null => {
   return isNaN(t) ? null : t;
 };
 
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, onResolve, onBook, onAddFixture }: any) {
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, onResolve, onBook, onAddFixture, onRemoveFixture }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
@@ -84,6 +84,9 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, o
   const [scoreText, setScoreText] = useState("");
   const [search, setSearch] = useState("");
   const [booking, setBooking] = useState(false);
+  // Removing is two taps. It is not destructive enough for a dialog, and it
+  // is too destructive for one.
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [newOpp, setNewOpp] = useState("");
   const [newWhen, setNewWhen] = useState("");
 
@@ -302,6 +305,19 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, o
                       style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
                     >
                       Clear booking
+                    </button>
+                  )}
+
+                  {/* You can remove a fixture you are in, or any of them if
+                      you run the league. Booking something and then having
+                      no way to un-book it is how a fixture list stops being
+                      believed. */}
+                  {onRemoveFixture && (canManage || f.p1 === meId || f.p2 === meId) && (
+                    <button
+                      onClick={() => { if (confirmRemove === f.id) { onRemoveFixture(f.id); setConfirmRemove(null); setOpen(null); } else setConfirmRemove(f.id); }}
+                      style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: confirmRemove === f.id ? DOT_LOSS : FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
+                    >
+                      {confirmRemove === f.id ? "Tap again to remove this fixture" : "Remove fixture"}
                     </button>
                   )}
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
-import { COURT, PANEL, PANEL2, CHALK, BALL, CLAY, MUTED, LINE, display, body, mono } from "@/lib/theme";
+import { BALL, body, CHALK, CLAY, COURT, display, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
@@ -115,6 +115,7 @@ export default function Dashboard({ session }: { session: Session }) {
 
   const shell = (children: React.ReactNode) => (
     <div style={{ minHeight: "100vh", background: COURT, padding: "22px 18px 40px" }}>
+      <style>{fontImport}</style>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>
