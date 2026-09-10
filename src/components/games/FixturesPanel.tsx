@@ -87,6 +87,25 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   // Removing is two taps. It is not destructive enough for a dialog, and it
   // is too destructive for one.
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  // A refused save used to close the row and clear the score, so the only
+  // evidence left was that nothing had happened. The form stays open with
+  // what you typed still in it.
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (f: any, winner: "p1" | "p2" | "draw") => {
+    setSaving(true); setSaveError(null);
+    let ok = false;
+    try {
+      ok = (await onResolve(f, winner, scoreText.trim())) !== false;
+    } catch (e) {
+      console.error("Saving a fixture result failed", e);
+      ok = false;
+    }
+    setSaving(false);
+    if (ok) { setOpen(null); setScoreText(""); }
+    else setSaveError("Couldn't save. Try again.");
+  };
   const [newOpp, setNewOpp] = useState("");
   const [newWhen, setNewWhen] = useState("");
 
@@ -329,10 +348,15 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     style={{ ...field, width: "100%", marginBottom: 10 }}
                   />
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => { onResolve(f, "p1", scoreText.trim()); setOpen(null); }} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p1)} won</button>
-                    <button onClick={() => { onResolve(f, "draw", scoreText.trim()); setOpen(null); }} style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 14px" }}>Draw</button>
-                    <button onClick={() => { onResolve(f, "p2", scoreText.trim()); setOpen(null); }} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p2)} won</button>
+                    <button disabled={saving} onClick={() => submit(f, "p1")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p1)} won</button>
+                    <button disabled={saving} onClick={() => submit(f, "draw")} style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 14px" }}>Draw</button>
+                    <button disabled={saving} onClick={() => submit(f, "p2")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p2)} won</button>
                   </div>
+                  {saveError && (
+                    <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>
+                      {saveError}
+                    </div>
+                  )}
                 </div>
               )}
             </SurfaceCard>

@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isClaimed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useState, useEffect, useMemo } from "react";
 import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, ChevronRight, Check, HelpCircle, MessageCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
@@ -239,10 +239,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // The only honest thing to put on screen is what the database really holds.
   // If even the re-read fails we fall back to the pre-save state, since that
   // is at least a view that once existed.
-  const saveData = async (n: LeagueData) => {
+  const saveData = async (n: LeagueData): Promise<boolean> => {
     const prev = gdata;
     setGdata(n);
-    if (!gid) return;
+    if (!gid) return true;
     try {
       await Promise.all([
         syncPlayers(gid, prev.players, n.players),
@@ -250,6 +250,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         syncFixtures(gid, prev.fixtures || [], n.fixtures || []),
         syncPosts(gid, prev.posts || [], n.posts || []),
       ]);
+      return true;
     } catch (e: any) {
       console.error(e);
       try {
@@ -263,6 +264,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         setGdata(prev);
         flash("Couldn't save — your change was undone");
       }
+      return false;
     }
   };
   const importHistoricalResults = async () => {
@@ -346,18 +348,30 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const addFixture = (p1, p2, booked = null) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked }] });
   const removeFixture = (id) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
-  const resolveFixture = (fx, winner, score) => {
+  const resolveFixture = async (fx, winner, score): Promise<boolean> => {
     if (winner === null) {
-      saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== fx.matchId), fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: false, winner: undefined, matchId: undefined } : f) });
-      return;
+      return saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== fx.matchId), fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: false, winner: undefined, matchId: undefined } : f) });
     }
     const mid = uid();
     // Dated from the booking when there was one. Entering Saturday's result
     // on Monday should not file it as Monday's match — the rating replays in
     // date order and the level lookup is by date, so the date is not a label.
     const played = fx.booked ? new Date(fx.booked).getTime() : NaN;
-    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: "confirmed", reportedBy: gdata.me };
-    saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
+    // Whoever isn't me. If they have an account they get to agree first,
+    // exactly as they would if this had been logged through Log a result —
+    // the two routes should not disagree about whether somebody's word is
+    // enough on its own.
+    const byId = (id) => gdata.players.find((p) => p.id === id) || null;
+    const iAmIn = fx.p1 === meId || fx.p2 === meId;
+    // If I played in it, the person who has to agree is the other one. If I
+    // did not — league staff filling in somebody else's result — then either
+    // of them having an account is reason enough to wait, because neither of
+    // them has said a word about it.
+    const needsAgreement = iAmIn
+      ? isClaimed(byId(fx.p1 === meId ? fx.p2 : fx.p1))
+      : (isClaimed(byId(fx.p1)) || isClaimed(byId(fx.p2)));
+    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: needsAgreement ? "pending" : "confirmed", reportedBy: gdata.me, loggedAt: Date.now() };
+    return saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
   };
 
   // Switching leagues reads the real tables, the same way boot() does.
