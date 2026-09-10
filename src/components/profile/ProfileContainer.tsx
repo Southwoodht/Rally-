@@ -46,6 +46,32 @@ export function ProfileContainer({
 }: any) {
   const pid = player?.id;
   const isSelf = viewer === "self";
+
+  // All time, or one year. ProfileView has declared this prop since it was
+  // written and nothing ever supplied it, so the chips have never rendered —
+  // the same way playingStyle sat dead for months. An absent prop renders
+  // nothing and says nothing, which is why these go unnoticed.
+  const [period, setPeriod] = useState<"all" | number>("all");
+
+  // Every year the LEAGUE played, not every year this player did. A year
+  // they sat out is still a year you might want to look at, and finding it
+  // missing reads as the app having lost it.
+  const years = useMemo(
+    () => Array.from(new Set((matches || []).filter((m: any) => countsAsPlayed(m)).map((m: any) => new Date(m.date).getFullYear())))
+      .sort((a: any, b: any) => b - a),
+    [matches],
+  );
+
+  // Carried-in records are the reason this cannot simply filter and
+  // recompute. `wdl` includes initialRecord from onboarding — Zaach is
+  // 32-0-12 there and 2-0-0 in actual match rows — and a carried record has
+  // no date, so it belongs to no year. All time keeps using it. A single
+  // year is counted from that year's matches alone, which is not a
+  // regression but the truth: those thirty wins did not happen in 2024.
+  const scopedMatches = useMemo(
+    () => period === "all" ? (matches || []) : (matches || []).filter((m: any) => new Date(m.date).getFullYear() === period),
+    [matches, period],
+  );
   const [trophies, setTrophies] = useState<any[]>([]);
   const [claiming, setClaiming] = useState(false);
   const [reloadTrophies, setReloadTrophies] = useState(0);
@@ -66,14 +92,22 @@ export function ProfileContainer({
     if (!pid) return null;
     const byId: Record<string, any> = {};
     (players || []).forEach((p: any) => { byId[p.id] = p; });
-    const r = wdl?.[pid] || { w: 0, d: 0, l: 0, gp: 0 };
+    const allTime = wdl?.[pid] || { w: 0, d: 0, l: 0, gp: 0 };
 
-    const mine = (matches || [])
+    const mine = (scopedMatches || [])
       .filter((m: any) => m.p1 === pid || m.p2 === pid)
       .sort((a: any, b: any) => a.date - b.date);
     const played = mine.filter((m: any) => countsAsPlayed(m));
     const outcome = (m: any): "W" | "D" | "L" =>
       m.winner === "draw" ? "D" : ((m.winner === "p1" ? m.p1 : m.p2) === pid ? "W" : "L");
+
+    // For a single year the record is counted from the matches on screen, so
+    // the number and the list behind it cannot disagree — the rule that cost
+    // us 28-versus-31 last time.
+    const r = period === "all" ? allTime : played.reduce(
+      (acc: any, m: any) => { const o = outcome(m); acc[o === "W" ? "w" : o === "D" ? "d" : "l"]++; acc.gp++; return acc; },
+      { w: 0, d: 0, l: 0, gp: 0 },
+    );
 
     let currentStreak = 0;
     for (let i = played.length - 1; i >= 0; i--) { if (outcome(played[i]) === "W") currentStreak++; else break; }
@@ -242,17 +276,27 @@ export function ProfileContainer({
       : null;
 
     return {
-      record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round(((r.w + r.d * 0.5) / r.gp) * 100) : 0, currentStreak, bestStreak, rankings },
+      record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round(((r.w + r.d * 0.5) / r.gp) * 100) : 0, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
       gap, playingStyle, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
       historyTotal: mine.length, meta,
     };
-  }, [pid, players, matches, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit]);
+  }, [pid, players, matches, scopedMatches, period, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit]);
 
   if (!player || !data) return null;
 
   return (
     <>
     <ProfileView
+      period={{
+        key: "period",
+        label: "When",
+        value: period === "all" ? "all" : String(period),
+        options: [
+          { value: "all", label: "All time" },
+          ...years.map((y: number) => ({ value: String(y), label: String(y) })),
+        ],
+        onChange: (v: string) => setPeriod(v === "all" ? "all" : Number(v)),
+      }}
       viewer={viewer}
       header={{
         leagueName: group?.name || "League",
