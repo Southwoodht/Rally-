@@ -40,7 +40,8 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { predictProb } from "@/core/predict";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
@@ -56,6 +57,26 @@ type LeagueData = {
 };
 
 const emptyLeagueData: LeagueData = { players: [], matches: [], fixtures: [], posts: [], me: null };
+
+/**
+ * The line under the opponent's name on Next Up.
+ *
+ * Sam's words, banded by the app's own prediction. It is the only place the
+ * app talks to you rather than reports at you, so the bands are deliberately
+ * coarse: nobody wants a different sentence for 61% and 62%, and a number
+ * that precise would be pretending to a confidence the model does not have.
+ *
+ * Null when there is nothing to predict from — a first meeting is its own
+ * kind of interesting and should not be dressed up as a coin flip.
+ */
+function nextUpLine(pct: number | null): string {
+  if (pct == null) return "First meeting. No history, no excuses.";
+  if (pct >= 65) return "You're the favourite for a reason. Play like it.";
+  if (pct >= 55) return "Slight edge. Don't hand it back.";
+  if (pct >= 45) return "Coin flip. First to blink loses.";
+  if (pct >= 35) return "Rally's been wrong before.";
+  return "Nobody's expecting this one. Show them.";
+}
 
 export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
@@ -657,10 +678,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
     // Only a booked fixture can fill this tile. An unbooked one has no when,
     // and "next up" without a when is not next anything.
-    const bookedNext = (fixtures || []).find((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId));
-    const nextUp = bookedNext
-      ? { opponent: first(bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1), when: bookedNext.booked }
-      : null;
+    //
+    // Sorted, not found. It used to take whichever booked fixture came first
+    // in the array, so "next up" could be three weeks out while one tomorrow
+    // sat below it — the tile was answering a different question to the one
+    // its label asks.
+    const bookedNext = (fixtures || [])
+      .filter((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId))
+      .map((f) => ({ f, t: new Date(f.booked).getTime() }))
+      .filter((x) => !isNaN(x.t))
+      .sort((a, b) => a.t - b.t)[0]?.f;
+
+    let nextUp: any = null;
+    if (bookedNext) {
+      const oppId = bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1;
+      const opp = players.find((p) => p.id === oppId);
+      // Read the prediction engine, never write to it. predictProb returns
+      // null-ish only when it has nothing at all to go on.
+      let pct: number | null = null;
+      try {
+        const raw = predictProb(meId, oppId, matches, elo, players);
+        pct = raw == null || isNaN(raw) ? null : Math.round(raw * 100);
+      } catch { pct = null; }
+      nextUp = {
+        opponent: opp ? fullNameOf(opp) : first(oppId),
+        when: bookedNext.booked,
+        winChance: pct,
+        line: nextUpLine(pct),
+      };
+    }
 
     // The calendar month, not the last thirty days: "this month" is what the
     // tile says, and people read it as the month they are in.

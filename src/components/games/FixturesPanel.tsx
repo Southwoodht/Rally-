@@ -5,7 +5,7 @@ import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { predictProb } from "@/core/predict";
-import { fullNameOf } from "@/lib/format";
+import { formatMatchDateTime, fullNameOf } from "@/lib/format";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
@@ -51,24 +51,6 @@ const toInputValue = (v: any): string => {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
-
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** "Sat 13 Sep, 2:00pm" — and "Today"/"Tomorrow" when that is friendlier. */
-function whenLabel(v: any): string | null {
-  if (!v) return null;
-  const d = new Date(v);
-  if (isNaN(d.getTime())) return null;
-  const h = d.getHours(), m = d.getMinutes();
-  const time = `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")}${h < 12 ? "am" : "pm"}`;
-  const midnight = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const days = Math.round((midnight(d) - midnight(new Date())) / 86400000);
-  if (days === 0) return `Today, ${time}`;
-  if (days === 1) return `Tomorrow, ${time}`;
-  const day = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-  return `${day}, ${time}`;
-}
 
 const timeOf = (v: any): number | null => {
   if (!v) return null;
@@ -268,7 +250,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 9 }}>
                   {(() => {
-                    const when = whenLabel(f.booked);
+                    const when = formatMatchDateTime(f.booked);
                     if (!when) return null;
                     // A booking that has been and gone stops shouting in
                     // lime: it is no longer something to turn up to, it is a
