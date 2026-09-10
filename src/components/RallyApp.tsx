@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useState, useEffect, useMemo } from "react";
 import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, ChevronRight, Check, HelpCircle, MessageCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
@@ -482,7 +483,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   useEffect(() => {
     const DAY = 24 * 3600 * 1000;
     const now = Date.now();
-    const stale = matches.filter((m) => m.status === "pending" && m.loggedAt && now - m.loggedAt > DAY);
+    const stale = matches.filter((m) => isUnconfirmedResult(m) && m.loggedAt && now - m.loggedAt > DAY);
     if (stale.length) {
       const ids = new Set(stale.map((m) => m.id));
       setMatches(matches.map((m) => (ids.has(m.id) ? { ...m, status: "confirmed" } : m)));
@@ -507,7 +508,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const arr = players.filter((p) => !p.inactive);
     const avgOpp = {};
     players.forEach((p) => { avgOpp[p.id] = { sum: 0, n: 0 }; });
-    matches.filter((m) => m.status !== "pending").forEach((m) => {
+    matches.filter((m) => countsAsPlayed(m)).forEach((m) => {
       if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; }
       if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; }
     });
@@ -601,7 +602,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // How many active players nobody has recorded a level history for. Their
   // matches count flat, so this is a number worth carrying into the menu.
   const missingLevelHistory = players.filter((p) => !p.inactive && !(p.levelHistory && p.levelHistory.length)).length;
-  const pendingForMe = matches.filter((m) => m.status === "pending" && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).length;
+  const pendingForMe = matches.filter((m) => isUnconfirmedResult(m) && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).length;
   const homeData = (() => {
     if (!meId) return null;
     const mine = matches.filter((m) => m.p1 === meId || m.p2 === meId);
@@ -623,7 +624,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     // yours: nudging asks somebody to confirm something, and a result they
     // logged is waiting on you, not on them.
     const pending = mine
-      .filter((m) => m.status === "pending" && m.reportedBy === meId)
+      .filter((m) => isUnconfirmedResult(m) && m.reportedBy === meId)
       .map((m) => {
         const them = first(m.p1 === meId ? m.p2 : m.p1);
         const remaining = m.loggedAt ? m.loggedAt + 24 * 3600 * 1000 - Date.now() : null;
@@ -651,7 +652,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     // tile says, and people read it as the month they are in.
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const month = mine.filter((m) => m.status !== "pending" && m.date >= monthStart);
+    const month = mine.filter((m) => countsAsPlayed(m) && m.date >= monthStart);
     const w = month.filter((m) => m.winner === iAm(m)).length;
     const l = month.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
     const thisMonth = month.length ? { w, l, winRate: Math.round((w / month.length) * 100) } : null;
@@ -723,7 +724,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "ladder" && tableMode === "compare" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
         {tab === "ladder" && tableMode === "standings" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
-        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(mt.status === "pending" ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
             header={{

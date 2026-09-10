@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 import { computeAchievements } from "@/core/achievements";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
@@ -11,7 +12,7 @@ import { winPct } from "@/lib/format";
 export function computeSeasonSummary(playerId: string, players: any[], matches: any[], year: number) {
   const yearStart = new Date(year, 0, 1).getTime();
   const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
-  const confirmed = matches.filter((m) => m.status !== "pending");
+  const confirmed = matches.filter((m) => countsAsPlayed(m));
   const beforeYear = confirmed.filter((m) => m.date < yearStart).sort((a, b) => a.date - b.date);
   const uptoEnd = confirmed.filter((m) => m.date <= yearEnd).sort((a, b) => a.date - b.date);
   const inYear = confirmed.filter((m) => m.date >= yearStart && m.date <= yearEnd);

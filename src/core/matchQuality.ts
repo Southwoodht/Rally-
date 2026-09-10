@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 import { LEVELS } from "./constants";
 import { gapPhrase, gradeAgainstHistory, verdictFor, type GradedMatch, type Outcome, type Verdict } from "./matchGrade";
 
@@ -144,7 +145,7 @@ export function buildMatchQuality(
   const me = byId[viewerId];
 
   const mine = (matches || [])
-    .filter((m) => m.status !== "pending" && (m.p1 === viewerId || m.p2 === viewerId))
+    .filter((m) => countsAsPlayed(m) && (m.p1 === viewerId || m.p2 === viewerId))
     .sort((a, b) => b.date - a.date);
 
   const rows: GradedRow[] = mine.map((m) => {

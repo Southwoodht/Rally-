@@ -1,9 +1,10 @@
+import { countsAsPlayed } from "./matchStatus";
 import { levelAt, levelNow, levelVal } from "@/core/levels";
 
 export function predictProb(a, b, matches, elo, players) {
   const eA = (elo && elo[a]) || 0, eB = (elo && elo[b]) || 0;
   const eloExp = 1 / (1 + Math.pow(10, (eB - eA) / 400));
-  const h2h = matches.filter((m) => m.status !== "pending" && ((m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a))).sort((x, y) => y.date - x.date);
+  const h2h = matches.filter((m) => countsAsPlayed(m) && ((m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a))).sort((x, y) => y.date - x.date);
   let aScore = 0, wSum = 0;
   h2h.forEach((m, i) => { const w = Math.pow(0.9, i); let s; if (m.winner === "draw") s = 0.5; else { const aWon = (m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a); s = aWon ? 1 : 0; } aScore += w * s; wSum += w; });
   const nH2H = h2h.length;
@@ -17,7 +18,7 @@ export function predictProb(a, b, matches, elo, players) {
   // you counts for more than a win over someone well below you, and vice
   // versa for a loss. Unrated matches fall back to an even weight.
   const formRate = (pid) => {
-    const gs = matches.filter((m) => m.status !== "pending" && (m.p1 === pid || m.p2 === pid)).sort((x, y) => y.date - x.date).slice(0, 8);
+    const gs = matches.filter((m) => countsAsPlayed(m) && (m.p1 === pid || m.p2 === pid)).sort((x, y) => y.date - x.date).slice(0, 8);
     const me = find(pid);
     let sc = 0, wSum = 0;
     gs.forEach((m, i) => {
@@ -66,7 +67,7 @@ export function predictProbAtVenue(a, b, matches, elo, players, venue: string): 
   const basePct = Math.round(predictProb(a, b, matches, elo, players) * 100);
   const v = (venue || "").trim().toLowerCase();
   if (!v) return { pct: basePct, confident: false };
-  const atVenue = (pid) => (matches || []).filter((m) => m.status !== "pending" && (m.p1 === pid || m.p2 === pid) && (m.venue || "").trim().toLowerCase() === v);
+  const atVenue = (pid) => (matches || []).filter((m) => countsAsPlayed(m) && (m.p1 === pid || m.p2 === pid) && (m.venue || "").trim().toLowerCase() === v);
   const gA = atVenue(a), gB = atVenue(b);
   if (gA.length < MIN_VENUE_GAMES || gB.length < MIN_VENUE_GAMES) return { pct: basePct, confident: false };
   const rate = (games, pid) => {
@@ -84,7 +85,7 @@ export function predictProbAtVenue(a, b, matches, elo, players, venue: string): 
 // Deliberately returns numbers/facts only — no text — so callers can phrase it.
 export function explainFactors(a, b, matches, elo, players) {
   const eA = (elo && elo[a]) || 0, eB = (elo && elo[b]) || 0;
-  const confirmed = matches.filter((m) => m.status !== "pending");
+  const confirmed = matches.filter((m) => countsAsPlayed(m));
   const h2h = confirmed.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a));
   let aw = 0, bw = 0, d = 0;
   h2h.forEach((m) => { if (m.winner === "draw") d++; else if ((m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a)) aw++; else bw++; });

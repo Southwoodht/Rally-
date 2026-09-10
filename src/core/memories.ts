@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 // "This time last year you beat X 6-4" — only ever surfaces a match that
 // genuinely happened close to today's date in a past year. No fabricated
 // memories: if nothing falls within the window, there's simply no memory
@@ -13,7 +14,7 @@ export interface Memory {
 
 export function findMemory(playerId: string, matches: any[], nameOf: (id: string) => string): Memory | null {
   const now = new Date();
-  const candidates = (matches || []).filter((m) => (m.p1 === playerId || m.p2 === playerId) && m.status !== "pending");
+  const candidates = (matches || []).filter((m) => (m.p1 === playerId || m.p2 === playerId) && countsAsPlayed(m));
   if (!candidates.length) return null;
 
   for (let yearsBack = 1; yearsBack <= 10; yearsBack++) {

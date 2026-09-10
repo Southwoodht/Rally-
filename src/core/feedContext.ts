@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 // The one short phrase on the right of a scoreline card's lime bar.
 //
 // It has to be the fact as it stood *then*, not now: a card for a match in
@@ -27,7 +28,7 @@ export function feedContexts(matches: any[], nameOf: (id: string) => string): Re
 
   const pair = (a: string, b: string) => a + "|" + b;
 
-  for (const m of [...matches].filter((x) => x.status !== "pending").sort((a, b) => a.date - b.date)) {
+  for (const m of [...matches].filter((x) => countsAsPlayed(x)).sort((a, b) => a.date - b.date)) {
     if (m.winner === "draw") {
       streak[m.p1] = 0;
       streak[m.p2] = 0;

@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { ProfileView } from "@/components/profile/ProfileView";
@@ -70,7 +71,7 @@ export function ProfileContainer({
     const mine = (matches || [])
       .filter((m: any) => m.p1 === pid || m.p2 === pid)
       .sort((a: any, b: any) => a.date - b.date);
-    const played = mine.filter((m: any) => m.status !== "pending");
+    const played = mine.filter((m: any) => countsAsPlayed(m));
     const outcome = (m: any): "W" | "D" | "L" =>
       m.winner === "draw" ? "D" : ((m.winner === "p1" ? m.p1 : m.p2) === pid ? "W" : "L");
 
@@ -207,7 +208,7 @@ export function ProfileContainer({
     const history = [...mine].reverse().map((m: any) => {
       const o = byId[m.p1 === pid ? m.p2 : m.p1];
       const d = deltas?.[m.id];
-      const pending = m.status === "pending";
+      const pending = isUnconfirmedResult(m);
       return {
         matchId: m.id,
         outcome: outcome(m),

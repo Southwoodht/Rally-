@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
 import { winPct } from "@/lib/format";
@@ -18,7 +19,7 @@ export interface CareerRow {
 }
 
 export function computeCareerTable(players: any[], matches: any[]): CareerRow[] {
-  const confirmed = matches.filter((m) => m.status !== "pending");
+  const confirmed = matches.filter((m) => countsAsPlayed(m));
   const rows: CareerRow[] = [];
   players.forEach((p) => {
     const bouts = confirmed.filter((m) => m.p1 === p.id || m.p2 === p.id);
@@ -116,7 +117,7 @@ function preMatchRatings(playerId: string, players: any[], confirmed: any[]) {
 }
 
 export function computeLegacyProfile(playerId: string, players: any[], matches: any[]): LegacyProfile {
-  const confirmed = matches.filter((m) => m.status !== "pending").sort((a, b) => a.date - b.date);
+  const confirmed = matches.filter((m) => countsAsPlayed(m)).sort((a, b) => a.date - b.date);
   const bouts = confirmed.filter((m) => m.p1 === playerId || m.p2 === playerId);
   const byId: Record<string, any> = {}; players.forEach((p) => { byId[p.id] = p; });
   const player = byId[playerId];

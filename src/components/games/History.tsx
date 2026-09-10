@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useState, useMemo } from "react";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
@@ -26,10 +27,10 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   const [draft, setDraft] = useState("");
   const [asAnnouncement, setAsAnnouncement] = useState(false);
   const announcements = useMemo(() => (posts || []).filter((p) => p.isAnnouncement).sort((a, b) => b.date - a.date), [posts]);
-  const pending = useMemo(() => matches.filter((m) => m.status === "pending").sort((a, b) => b.date - a.date), [matches]);
+  const pending = useMemo(() => matches.filter((m) => isUnconfirmedResult(m)).sort((a, b) => b.date - a.date), [matches]);
   const pendingEdits = useMemo(() => matches.filter((m) => m.pendingEdit).sort((a, b) => (b.pendingEdit?.proposedAt || 0) - (a.pendingEdit?.proposedAt || 0)), [matches]);
   const pendingDeletes = useMemo(() => matches.filter((m) => m.deleteRequestedBy).sort((a, b) => (b.deleteRequestedAt || 0) - (a.deleteRequestedAt || 0)), [matches]);
-  const confirmed = useMemo(() => matches.filter((m) => m.status !== "pending").sort((a, b) => b.date - a.date), [matches]);
+  const confirmed = useMemo(() => matches.filter((m) => countsAsPlayed(m)).sort((a, b) => b.date - a.date), [matches]);
   const events = useMemo(() => buildEvents(players, matches, null), [players, matches]);
   const feedList = useMemo(() => {
     if (feedFilter === "mine") return confirmed.filter((m) => m.p1 === meId || m.p2 === meId);

@@ -9,6 +9,8 @@
 // Nothing here touches the metric. Everything below only ever separates
 // players the metric has already declared equal.
 
+import { countsAsPlayed } from "./matchStatus";
+
 export interface RankCandidate {
   id: string;
   /** For the final, purely presentational ordering. */
@@ -138,7 +140,7 @@ export function assignRanks(candidates: RankCandidate[], h2h: H2HWins = {}): Ran
 export function buildH2H(matches: any[]): H2HWins {
   const h2h: H2HWins = {};
   for (const m of matches) {
-    if (m.status === "pending" || m.winner === "draw") continue;
+    if (!countsAsPlayed(m) || m.winner === "draw") continue;
     const w = m.winner === "p1" ? m.p1 : m.p2;
     const l = m.winner === "p1" ? m.p2 : m.p1;
     if (!h2h[w]) h2h[w] = {};

@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 import { WIN_QUALITY_DIVISOR } from "@/core/constants";
 import { levelAt, levelVal } from "@/core/levels";
 import { winPct } from "@/lib/format";
@@ -14,7 +15,7 @@ export function overallScore(p, elo, wdl) {
 export function computeOfficial(players, matches, wdl) {
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
   const qual = {}; const winQuality = {}; players.forEach((p) => { qual[p.id] = 0; winQuality[p.id] = []; });
-  matches.filter((m) => m.status !== "pending" && m.winner !== "draw").forEach((m) => {
+  matches.filter((m) => countsAsPlayed(m) && m.winner !== "draw").forEach((m) => {
     const wid = m.winner === "p1" ? m.p1 : m.p2, lid = m.winner === "p1" ? m.p2 : m.p1;
     // Quality 1 for an opponent with no recorded level: the win counts, the
     // level term doesn't move it either way.

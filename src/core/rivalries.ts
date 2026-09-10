@@ -1,3 +1,4 @@
+import { countsAsPlayed, isUnconfirmedResult } from "./matchStatus";
 // A rivalry is a repeated head-to-head that's actually meaningful — not
 // every opponent someone has faced once. Everything here is derived live
 // from confirmed matches; nothing is persisted or invented.
@@ -15,7 +16,7 @@ export interface HeadToHeadStats {
 
 function h2hFor(playerId: string, oppId: string, matches: any[]): HeadToHeadStats {
   const ms = matches
-    .filter((m) => m.status !== "pending" && ((m.p1 === playerId && m.p2 === oppId) || (m.p1 === oppId && m.p2 === playerId)))
+    .filter((m) => countsAsPlayed(m) && ((m.p1 === playerId && m.p2 === oppId) || (m.p1 === oppId && m.p2 === playerId)))
     .sort((a, b) => a.date - b.date);
   let w = 0, d = 0, l = 0;
   ms.forEach((m) => {
@@ -39,7 +40,7 @@ function h2hFor(playerId: string, oppId: string, matches: any[]): HeadToHeadStat
 export function computeRivalries(playerId: string, matches: any[]): HeadToHeadStats[] {
   const oppIds = new Set<string>();
   matches.forEach((m) => {
-    if (m.status === "pending") return;
+    if (isUnconfirmedResult(m)) return;
     if (m.p1 === playerId) oppIds.add(m.p2);
     else if (m.p2 === playerId) oppIds.add(m.p1);
   });
@@ -119,7 +120,7 @@ export function topRivalries(
 
 function recentOutcomes(playerId: string, oppId: string, matches: any[], n: number): Array<"W" | "D" | "L"> {
   return matches
-    .filter((m) => m.status !== "pending" && ((m.p1 === playerId && m.p2 === oppId) || (m.p1 === oppId && m.p2 === playerId)))
+    .filter((m) => countsAsPlayed(m) && ((m.p1 === playerId && m.p2 === oppId) || (m.p1 === oppId && m.p2 === playerId)))
     .sort((a, b) => a.date - b.date)
     .slice(-n)
     .map((m) => (m.winner === "draw" ? "D" : ((m.winner === "p1" ? m.p1 : m.p2) === playerId ? "W" : "L")));

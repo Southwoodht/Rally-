@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 import { computeOfficial } from "@/core/official";
 import { computeStats } from "@/core/elo";
 
@@ -13,7 +14,7 @@ export interface Achievement {
 // persisted, so there's no stale/fake state to drift from the real record.
 export function computeAchievements(playerId: string, matches: any[]): Achievement[] {
   const conf = matches
-    .filter((m) => m.status !== "pending" && (m.p1 === playerId || m.p2 === playerId))
+    .filter((m) => countsAsPlayed(m) && (m.p1 === playerId || m.p2 === playerId))
     .sort((a, b) => a.date - b.date);
 
   const winAt: Record<number, number | null> = { 1: null, 10: null, 25: null, 50: null };

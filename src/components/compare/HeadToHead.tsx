@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed } from "@/core/matchStatus";
 import React, { useState, useMemo } from "react";
 import { AlertCircle, ArrowLeftRight, Info } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
@@ -51,7 +52,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   // Which filter sheet is open, if any.
   const [sheet, setSheet] = useState<null | "year" | "venue">(null);
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
-  const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((x: any, y: any) => y - x), [matches]);
+  const years = useMemo(() => Array.from(new Set(matches.filter((m) => countsAsPlayed(m)).map((m) => new Date(m.date).getFullYear()))).sort((x: any, y: any) => y - x), [matches]);
   const scoped = useMemo(() => yr === "all" ? matches : matches.filter((m) => new Date(m.date).getFullYear() === Number(yr)), [matches, yr]);
   const nm = (id) => byId[id] ? byId[id].name + (byId[id].last ? " " + byId[id].last : "") : nameOf(id);
   const games = useMemo(() => { if (!a || !b) return []; return scoped.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a)).sort((x, y) => y.date - x.date); }, [a, b, scoped]);
@@ -59,7 +60,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   let aw = 0, bw = 0, d = 0;
   games.forEach((m) => { if (m.winner === "draw") d++; else if ((m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a)) aw++; else bw++; });
   const statsFor = (pid) => {
-    const conf = scoped.filter((m) => m.status !== "pending" && (m.p1 === pid || m.p2 === pid)).sort((x, y) => x.date - y.date);
+    const conf = scoped.filter((m) => countsAsPlayed(m) && (m.p1 === pid || m.p2 === pid)).sort((x, y) => x.date - y.date);
     const res = (m) => m.winner === "draw" ? "D" : ((m.winner === "p1" && m.p1 === pid) || (m.winner === "p2" && m.p2 === pid)) ? "W" : "L";
     const opp = (m) => m.p1 === pid ? m.p2 : m.p1;
     let cur = 0; for (let i = conf.length - 1; i >= 0; i--) { if (res(conf[i]) === "W") cur++; else break; }

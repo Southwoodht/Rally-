@@ -1,11 +1,12 @@
 "use client";
+import { countsAsPlayed } from "@/core/matchStatus";
 import React from "react";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
 
 export function buildEvents(players, matches, wdl) {
-  const conf = matches.filter((m) => m.status !== "pending").sort((a, b) => a.date - b.date);
+  const conf = matches.filter((m) => countsAsPlayed(m)).sort((a, b) => a.date - b.date);
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
   const nm = (id) => byId[id] ? byId[id].name + (byId[id].last ? " " + byId[id].last : "") : "Someone";
   const ev: Array<{ id: string; date: number; icon: string; text: string }> = [];

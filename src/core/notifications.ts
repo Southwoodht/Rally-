@@ -1,3 +1,4 @@
+import { isUnconfirmedResult } from "./matchStatus";
 import { computeAchievements } from "@/core/achievements";
 
 // In-app only — no push, no persisted read/unread state. Two tiers:
@@ -23,7 +24,7 @@ export function computeLocalNotifications(meId: string, players: any[], matches:
   const now = Date.now();
   const nm = (id: string) => { const p = players.find((x) => x.id === id); return p ? p.name + (p.last ? " " + p.last : "") : nameOf(id); };
 
-  matches.filter((m) => m.status === "pending" && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).forEach((m) => {
+  matches.filter((m) => isUnconfirmedResult(m) && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).forEach((m) => {
     const other = nm(m.p1 === meId ? m.p2 : m.p1);
     out.push({ id: "confirm_" + m.id, icon: "⏳", text: `${other} logged a result — confirm or dispute it`, date: m.loggedAt || m.date, action: "confirm", matchId: m.id });
   });

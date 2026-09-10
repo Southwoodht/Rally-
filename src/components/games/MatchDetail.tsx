@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useRef, useState } from "react";
 import { MatchCard } from "@/components/games/MatchCard";
 import { orientToWinner, parseSets } from "@/core/sets";
@@ -92,7 +93,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   const needsApproval = !!(opponentOfMe && opponentOfMe.auth_id);
 
   const ctx = matchContext(players, matches, match);
-  const confirmedH2h = (matches || []).filter((m: any) => m.status !== "pending" && ((m.p1 === match.p1 && m.p2 === match.p2) || (m.p1 === match.p2 && m.p2 === match.p1)));
+  const confirmedH2h = (matches || []).filter((m: any) => countsAsPlayed(m) && ((m.p1 === match.p1 && m.p2 === match.p2) || (m.p1 === match.p2 && m.p2 === match.p1)));
   let h2hP1 = 0, h2hP2 = 0, h2hD = 0;
   confirmedH2h.forEach((m: any) => { if (m.winner === "draw") h2hD++; else if ((m.winner === "p1" && m.p1 === match.p1) || (m.winner === "p2" && m.p2 === match.p1)) h2hP1++; else h2hP2++; });
 
@@ -108,7 +109,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   // app said on the day.
   const reconstructed = !match.prediction && ctx ? (() => {
     try {
-      const before = (matches || []).filter((m: any) => m.status !== "pending" && m.date < match.date);
+      const before = (matches || []).filter((m: any) => countsAsPlayed(m) && m.date < match.date);
       const eloThen = { [match.p1]: ctx.eloBefore.p1 ?? 0, [match.p2]: ctx.eloBefore.p2 ?? 0 };
       return { p1Pct: Math.round(predictProb(match.p1, match.p2, before, eloThen, players) * 100) };
     } catch { return null; }
@@ -116,7 +117,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   const prediction = match.prediction || reconstructed;
   const favoredId = prediction ? (prediction.p1Pct >= 50 ? match.p1 : match.p2) : null;
   const favoredPct = prediction ? (prediction.p1Pct >= 50 ? prediction.p1Pct : 100 - prediction.p1Pct) : null;
-  const predictionResolved = match.status !== "pending" && !isDraw;
+  const predictionResolved = countsAsPlayed(match) && !isDraw;
   const predictionCorrect = predictionResolved && favoredId ? ((match.winner === "p1" && favoredId === match.p1) || (match.winner === "p2" && favoredId === match.p2)) : null;
 
   const beginEdit = () => {
@@ -192,7 +193,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
           onOpenProfile={onOpenProfile}
         />
 
-        {match.status === "pending" && <Notice tone="lime">Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</Notice>}
+        {isUnconfirmedResult(match) && <Notice tone="lime">Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</Notice>}
         {match.pendingEdit && <Notice tone="lime">Edit pending agreement</Notice>}
         {match.deleteRequestedBy && <Notice tone="clay">Delete pending agreement</Notice>}
 

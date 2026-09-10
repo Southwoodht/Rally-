@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed } from "@/core/matchStatus";
 import React, { useState, useMemo, useEffect } from "react";
 import { LegacyTable } from "@/components/table/LegacyTable";
 import { PredictionCard } from "@/components/table/PredictionCard";
@@ -37,7 +38,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   }, [scopeKey, scope]);
   const inSeason = !!(season && scope === "season");
   const [tableYr, setTableYr] = useState<"all" | number>("all");
-  const years = useMemo(() => Array.from(new Set(matches.filter((m) => m.status !== "pending").map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
+  const years = useMemo(() => Array.from(new Set(matches.filter((m) => countsAsPlayed(m)).map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
   const seasonFiltered = useMemo(() => inSeason ? matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end)) : matches, [matches, inSeason, season]);
   const filtered = useMemo(() => tableYr === "all" ? seasonFiltered : seasonFiltered.filter((m) => new Date(m.date).getFullYear() === tableYr), [seasonFiltered, tableYr]);
   const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, filtered), [players, filtered]);
@@ -45,7 +46,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const ranked = useMemo(() => {
     const arr = players.filter((p) => !p.inactive);
     const avgOpp = {}; players.forEach((p) => { avgOpp[p.id] = { sum: 0, n: 0 }; });
-    filtered.filter((m) => m.status !== "pending").forEach((m) => { if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; } if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; } });
+    filtered.filter((m) => countsAsPlayed(m)).forEach((m) => { if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; } if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; } });
     const rec = (p) => { const r = wdl[p.id] || { gp: 0 }; if (!r.gp) return -1; const act = r.gp / (r.gp + 5); const ao = avgOpp[p.id].n ? avgOpp[p.id].sum / avgOpp[p.id].n : 0; const of = Math.max(0.5, Math.min(2, 1 + ao / 200)); return winPct(r) * act * of; };
     const formScoreOf = (p) => (form[p.id] || []).slice(-5).reduce((s, x) => s + (x === "W" ? 1 : x === "L" ? -1 : 0), 0);
     if (mode === "elo") arr.sort((a, b) => (elo[b.id] ?? START_ELO) - (elo[a.id] ?? START_ELO));
@@ -63,7 +64,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const recentlyActiveIds = useMemo(() => {
     const cutoff = Date.now() - ACTIVE_WINDOW_MS;
     const ids = new Set<string>();
-    matches.filter((m) => m.status !== "pending" && m.date >= cutoff).forEach((m) => { ids.add(m.p1); ids.add(m.p2); });
+    matches.filter((m) => countsAsPlayed(m) && m.date >= cutoff).forEach((m) => { ids.add(m.p1); ids.add(m.p2); });
     return ids;
   }, [matches]);
   const activeRanked = useMemo(() => ranked.filter((p) => recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
@@ -83,7 +84,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   }, [players, elo, form, wdl]);
 
   const recap = useMemo(() => {
-    const confirmed = filtered.filter((m) => m.status !== "pending");
+    const confirmed = filtered.filter((m) => countsAsPlayed(m));
     if (!confirmed.length) return null;
     const anchor = Math.max(...confirmed.map((m) => m.date));
     const win = confirmed.filter((m) => m.date >= anchor - WEEK);
@@ -104,7 +105,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     const out: Record<string, string[]> = {};
     players.forEach((p: any) => {
       const mine = filtered
-        .filter((m: any) => m.status !== "pending" && (m.p1 === p.id || m.p2 === p.id))
+        .filter((m: any) => countsAsPlayed(m) && (m.p1 === p.id || m.p2 === p.id))
         .sort((a: any, b: any) => a.date - b.date)
         .slice(-5);
       out[p.id] = mine.map((m: any) => ratingForMatch(p, byId[m.p1 === p.id ? m.p2 : m.p1], m.date).color);

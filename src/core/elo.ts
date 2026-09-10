@@ -1,3 +1,4 @@
+import { countsAsPlayed } from "./matchStatus";
 import { K, LV_FACTOR, LV_MAX, LV_MIN, MARGIN_WEIGHT, START_ELO } from "@/core/constants";
 import { levelAt, levelVal } from "@/core/levels";
 import { shareForPlayer } from "@/core/sets";
@@ -16,7 +17,7 @@ export function computeStats(players, matches) {
     form[p.id] = [];
     byId[p.id] = p;
   });
-  [...matches].filter((m) => m.status !== "pending").sort((a, b) => a.date - b.date).forEach((m) => {
+  [...matches].filter((m) => countsAsPlayed(m)).sort((a, b) => a.date - b.date).forEach((m) => {
     if (!(m.p1 in elo) || !(m.p2 in elo)) return;
     const e1 = elo[m.p1], e2 = elo[m.p2];
     // What each player was rated walking on court. Recorded here because

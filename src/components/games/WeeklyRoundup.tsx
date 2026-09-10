@@ -1,4 +1,5 @@
 "use client";
+import { countsAsPlayed } from "@/core/matchStatus";
 import React, { useEffect, useMemo, useState } from "react";
 import { WeeklyRoundupCard, type RoundupResult, type RoundupSwing } from "@/components/games/WeeklyRoundupCard";
 import { feedContexts } from "@/core/feedContext";
@@ -42,7 +43,7 @@ export function WeeklyRoundup({ players, matches, elo, wdl, meId, leagueId }: an
     const to = new Date(week + "T23:59:59").getTime();
 
     const inWeek = (matches || []).filter(
-      (m: any) => m.status !== "pending" && m.date >= from && m.date <= to,
+      (m: any) => countsAsPlayed(m) && m.date >= from && m.date <= to,
     );
     if (!inWeek.length) return null;
 

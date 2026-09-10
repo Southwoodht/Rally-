@@ -75,7 +75,7 @@ const rowToPlayer = (r: any) => ({
   initialElo: r.initial_elo ?? undefined,
 });
 
-const matchToRow = (leagueId: string, m: any) => ({
+const matchToRow = (leagueId: string, m: any) => (assertWritable(m), {
   id: m.id,
   league_id: leagueId,
   p1: m.p1,
@@ -93,6 +93,20 @@ const matchToRow = (leagueId: string, m: any) => ({
   delete_requested_by: m.deleteRequestedBy ?? null,
   delete_requested_at: m.deleteRequestedAt ? new Date(m.deleteRequestedAt).toISOString() : null,
 });
+
+const NO_RESULT = new Set(["proposed", "scheduled", "awaiting", "cancelled", "declined"]);
+
+/**
+ * A match with no winner is only legitimate while it is a booking. Anything
+ * else is a bug upstream, and writing it would put a row into the ratings'
+ * reach that nothing can score — so it is refused here, loudly, rather than
+ * stored and puzzled over later.
+ */
+const assertWritable = (m: any) => {
+  if (!m.winner && !NO_RESULT.has(m.status)) {
+    throw new Error(`Refusing to save match ${m.id}: status "${m.status}" needs a winner.`);
+  }
+};
 
 const rowToMatch = (r: any) => ({
   id: r.id,
