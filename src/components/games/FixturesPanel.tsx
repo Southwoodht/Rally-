@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Calendar, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
+import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { predictProb } from "@/core/predict";
 import { fullNameOf } from "@/lib/format";
@@ -75,7 +76,7 @@ const timeOf = (v: any): number | null => {
   return isNaN(t) ? null : t;
 };
 
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, onResolve, onBook, onAddFixture, onRemoveFixture }: any) {
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
@@ -132,7 +133,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const q = search.trim().toLowerCase();
   const shown = q ? ordered.filter((f: any) => (nm(f.p1) + " " + nm(f.p2)).toLowerCase().includes(q)) : ordered;
 
-  const canBookNew = !!(onAddFixture && meId);
+  const canBookNew = !!(onAddFixture && meId && onCreatePlayer);
   const opponents = useMemo(
     () => players.filter((p: any) => p.id !== meId).sort((a: any, b: any) => fullNameOf(a).localeCompare(fullNameOf(b))),
     [players, meId],
@@ -156,14 +157,16 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       ) : (
         <SurfaceCard radius={16} pad="14px">
           <div style={{ ...label, marginBottom: 7 }}>Who against</div>
-          <select
-            value={newOpp}
-            onChange={(e) => setNewOpp(e.target.value)}
-            style={{ ...field, width: "100%", marginBottom: 12, appearance: "none" as const }}
-          >
-            <option value="">Pick a player…</option>
-            {opponents.map((p: any) => <option key={p.id} value={p.id}>{fullNameOf(p)}</option>)}
-          </select>
+          <div style={{ marginBottom: 12 }}>
+            <PlayerPicker
+              players={opponents}
+              value={newOpp}
+              onChange={setNewOpp}
+              onCreatePlayer={onCreatePlayer}
+              exclude={meId}
+              placeholder="Pick or add a player…"
+            />
+          </div>
 
           <div style={{ ...label, marginBottom: 7 }}>When</div>
           <input

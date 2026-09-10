@@ -79,7 +79,6 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     setConfirmClear(false);
     setClearYear("all");
   };
-  if (players.length < 2) return <div style={card}><Empty msg="Add at least two players in Settings before logging a game." /></div>;
   const numIn = (v, set, ph) => <input value={v} onChange={(e) => set(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder={ph} style={{ ...input, boxSizing: "border-box" as const }} />;
   return (
     <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
