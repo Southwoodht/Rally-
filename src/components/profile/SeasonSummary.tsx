@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { Glyph } from "@/components/ui/Glyph";
 import { computeSeasonTrophies } from "@/core/achievements";
 import { computeSeasonSummary } from "@/core/season";
 import { fmtDate } from "@/lib/format";
@@ -58,7 +59,7 @@ export function SeasonSummary({ player, players, matches, year, fixtures, group,
               ))}
               {s.achievements.map((a: any) => (
                 <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>{a.icon}</span>
+                  <Glyph name={a.icon} size={15} />
                   <span style={{ fontFamily: body, fontSize: 13, color: CHALK }}>{a.label}</span>
                 </div>
               ))}

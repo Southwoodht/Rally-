@@ -1,5 +1,6 @@
 "use client";
 import { countsAsPlayed, isAgreed, isUnconfirmedResult } from "@/core/matchStatus";
+import { Glyph } from "@/components/ui/Glyph";
 import React, { useState, useMemo } from "react";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
@@ -243,7 +244,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             return <div style={listCard}>{items.map((it) => {
               if (it.kind === "event") return (
                 <div key={it.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: "none" }}>
-                  <span style={{ fontSize: 17 }}>{it.e.icon}</span>
+                  <Glyph name={it.e.icon} size={16} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: body, fontSize: 14, color: BALL }}>{it.e.text}</div>
                     <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(it.e.date)}</div>

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { Glyph } from "@/components/ui/Glyph";
 import { BALL, CHALK, MUTED, PANEL2, body, listCard, mono } from "@/lib/theme";
 
 interface Point { label: string; text: string; }
@@ -98,7 +99,7 @@ function Section({ s, open, onToggle }: { s: Sect; open: boolean; onToggle: () =
   return (
     <div>
       <button onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "14px 16px", cursor: "pointer", textAlign: "left" }}>
-        <span style={{ fontSize: 18, flexShrink: 0 }}>{s.icon}</span>
+        <Glyph name={s.icon} size={17} />
         <span style={{ flex: 1, fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>{s.title}</span>
         <span style={{ fontFamily: mono, fontSize: 12, color: BALL, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>▾</span>
       </button>

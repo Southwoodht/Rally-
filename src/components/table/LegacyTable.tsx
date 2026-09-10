@@ -16,7 +16,7 @@ export function LegacyTable({ players, matches, onOpen }: any) {
   return (
     <div>
       <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14 }}>
-        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 6 }}>🏛️ Legacy</div>
+        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 6 }}>Legacy</div>
         <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5 }}>Active rankings measure current form. Legacy ranks by <strong style={{ color: CHALK }}>career matches played</strong> — everyone who's ever played, not just who's active now.</div>
       </div>
       {career.length > 8 && (

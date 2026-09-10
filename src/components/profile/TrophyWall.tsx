@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { Glyph } from "@/components/ui/Glyph";
 import { computeAchievements, computeSeasonTrophies } from "@/core/achievements";
 import { BALL, CHALK, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme";
 
@@ -28,7 +29,7 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
         {achievements.map((a) => (
           <div key={a.id} style={{ background: a.achieved ? PANEL2 : "transparent", opacity: a.achieved ? 1 : 0.4, border: "1px solid " + (a.achieved ? BALL : LINE), borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
-            <div style={{ fontSize: 18 }}>{a.icon}</div>
+            <Glyph name={a.icon} size={17} />
             <div style={{ fontFamily: mono, fontSize: 8.5, color: a.achieved ? CHALK : MUTED, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.3, lineHeight: 1.3 }}>{a.label}</div>
             {a.achieved && a.date != null && <div style={{ fontFamily: mono, fontSize: 8, color: MUTED, marginTop: 2 }}>{new Date(a.date).getFullYear()}</div>}
           </div>
