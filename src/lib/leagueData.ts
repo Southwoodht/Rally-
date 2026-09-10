@@ -118,6 +118,13 @@ const rowToMatch = (r: any) => ({
   deleteRequestedAt: r.delete_requested_at ? new Date(r.delete_requested_at).getTime() : undefined,
 });
 
+/** A date we can store, or nothing. Never a throw. */
+const toIsoOrNull = (v: any): string | null => {
+  if (!v) return null;
+  const t = new Date(v).getTime();
+  return isNaN(t) ? null : new Date(t).toISOString();
+};
+
 const fixtureToRow = (leagueId: string, f: any) => ({
   id: f.id,
   league_id: leagueId,
@@ -126,7 +133,7 @@ const fixtureToRow = (leagueId: string, f: any) => ({
   done: !!f.done,
   winner: f.winner ?? null,
   match_id: f.matchId ?? null,
-  booked: f.booked ? new Date(f.booked).toISOString() : null,
+  booked: toIsoOrNull(f.booked),
 });
 
 const rowToFixture = (r: any) => ({

@@ -342,7 +342,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
-  const addFixture = (p1, p2) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false }] });
+  const addFixture = (p1, p2, booked = null) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked }] });
   const removeFixture = (id) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
   const resolveFixture = (fx, winner, score) => {
@@ -351,7 +351,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       return;
     }
     const mid = uid();
-    const match = { id: mid, date: Date.now(), p1: fx.p1, p2: fx.p2, winner, score: score || "", status: "confirmed", reportedBy: gdata.me };
+    // Dated from the booking when there was one. Entering Saturday's result
+    // on Monday should not file it as Monday's match — the rating replays in
+    // date order and the level lookup is by date, so the date is not a label.
+    const played = fx.booked ? new Date(fx.booked).getTime() : NaN;
+    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: "confirmed", reportedBy: gdata.me };
     saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
   };
 
@@ -660,7 +664,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
