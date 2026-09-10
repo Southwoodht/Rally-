@@ -164,6 +164,26 @@ const dayLabel = (iso: string) => {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "long" });
 };
 
+/** Consecutive messages from one person inside this window are one turn. */
+const GROUP_WINDOW_MS = 2 * 60 * 1000;
+
+/** The clock only interrupts the conversation once this much has passed. */
+const DIVIDER_GAP_MS = 60 * 60 * 1000;
+
+/**
+ * The divider between two stretches of conversation.
+ *
+ * A different day gets the day and the time, because "14:20" on its own is a
+ * lie about which afternoon. The same day gets the time alone — the day is
+ * already established further up.
+ */
+const dividerLabel = (iso: string) => {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const sameDay = new Date().toDateString() === d.toDateString();
+  return sameDay ? time : dayLabel(iso) + " · " + time;
+};
+
 function Conversation({ thread, myId, onBack, onChanged, players }: any) {
   const t: Thread = thread;
   const who = nameForThread(t, players);
@@ -245,42 +265,67 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
           </div>
         ) : msgs.map((m, i) => {
           const mine = m.sender_id === myId;
-          const newDay = i === 0 || dayLabel(msgs[i - 1].created_at) !== dayLabel(m.created_at);
-          const next = msgs[i + 1];
-          // Consecutive messages from one person are one turn in the
-          // conversation, so they sit tight together and only the last of a
-          // run carries the time. A timestamp under every bubble is the
-          // clock shouting over the conversation.
-          const runEnds = !next || next.sender_id !== m.sender_id || dayLabel(next.created_at) !== dayLabel(m.created_at);
+          const prev = msgs[i - 1], next = msgs[i + 1];
+          const at = (x: any) => new Date(x.created_at).getTime();
+
+          // A burst of messages from one person is one turn in the
+          // conversation. Two minutes is the window: long enough to cover
+          // somebody typing three thoughts in a row, short enough that
+          // picking the thread back up after lunch reads as a new turn.
+          const grouped = (a: any, b: any) => !!a && !!b && a.sender_id === b.sender_id && Math.abs(at(b) - at(a)) <= GROUP_WINDOW_MS;
+          const withPrev = grouped(prev, m);
+          const withNext = grouped(m, next);
+
+          // The clock only interrupts when real time has passed. Anything
+          // under an hour and the conversation is still the same
+          // conversation, so a divider would just be the clock talking over
+          // it. A day boundary always clears the hour, so this covers it.
+          const divider = i === 0 || at(m) - at(prev) > DIVIDER_GAP_MS;
+
           // "Seen" belongs on the last thing you sent and nowhere else — on
           // every bubble it's noise, and on theirs it's meaningless.
           const isMyLast = mine && !msgs.slice(i + 1).some((x) => x.sender_id === myId);
+
+          // Where two bubbles touch, the corner between them tightens on the
+          // sender's side only. The outer edge keeps its full radius, so a
+          // run reads as one shape rather than a stack of separate ones.
+          const tight = 4, round = 18;
           return (
             <React.Fragment key={m.id}>
-              {newDay && (
-                <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 14px" : "18px 0 14px" }}>
-                  <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "4px 12px" }}>{dayLabel(m.created_at)}</span>
+              {divider && (
+                <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "20px 0 12px" }}>
+                  <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
+                    {dividerLabel(m.created_at)}
+                  </span>
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: mine ? "flex-end" : "flex-start", marginBottom: runEnds ? 10 : 2 }}>
-                <div style={{ maxWidth: "80%" }}>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 8, justifyContent: mine ? "flex-end" : "flex-start", marginBottom: withNext ? 4 : 12 }}>
+                {/* Their face sits beside the last bubble of their run only.
+                    The gutter is held open for the rest so the column of
+                    bubbles doesn't step sideways as a run goes on. */}
+                {!mine && (withNext
+                  ? <span style={{ width: 28, flexShrink: 0 }} />
+                  : <Face t={t} name={who} player={whoPlayer} size={28} />)}
+                <div style={{ maxWidth: "75%" }}>
                   <div
                     style={{
-                      background: mine ? FEED_LIME : FEED_CARD,
+                      background: mine ? FEED_LIME : FEED_RAISED,
                       color: mine ? FEED_LIME_INK : FEED_TEXT_HI,
-                      borderRadius: 18,
-                      borderBottomRightRadius: mine && runEnds ? 6 : 18,
-                      borderBottomLeftRadius: !mine && runEnds ? 6 : 18,
-                      padding: "9px 14px",
+                      borderRadius: round,
+                      borderTopRightRadius: mine && withPrev ? tight : round,
+                      borderBottomRightRadius: mine && withNext ? tight : round,
+                      borderTopLeftRadius: !mine && withPrev ? tight : round,
+                      borderBottomLeftRadius: !mine && withNext ? tight : round,
+                      padding: "8px 12px",
                       fontFamily: body, fontWeight: 400, fontSize: 15, lineHeight: 1.45,
                       whiteSpace: "pre-wrap", wordBreak: "break-word",
                     }}
                   >
                     {m.body}
                   </div>
-                  {runEnds && (
-                    <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_LOW, marginTop: 4, textAlign: mine ? "right" : "left" }}>
-                      {when(m.created_at)}{isMyLast && m.read_at ? " · Seen" : ""}
+                  {isMyLast && m.read_at && !withNext && (
+                    <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 4, textAlign: "right" }}>
+                      Seen
                     </div>
                   )}
                 </div>
@@ -301,8 +346,8 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={t.status === "pending" ? "Send a request…" : "Message…"}
             style={{
-              flex: 1, minWidth: 0, background: FEED_CARD, border: "none", borderRadius: 999,
-              padding: "12px 16px", fontFamily: body, fontWeight: 400, fontSize: 15,
+              flex: 1, minWidth: 0, height: 40, background: FEED_CARD, border: "none", borderRadius: 20,
+              padding: "0 16px", fontFamily: body, fontWeight: 400, fontSize: 15,
               color: FEED_TEXT_HI, outline: "none", boxSizing: "border-box" as const,
             }}
           />
@@ -311,7 +356,7 @@ function Conversation({ thread, myId, onBack, onChanged, players }: any) {
             disabled={busy || !text.trim()}
             aria-label="Send"
             style={{
-              width: 42, height: 42, borderRadius: 999, border: "none", flexShrink: 0,
+              width: 40, height: 40, borderRadius: 20, border: "none", flexShrink: 0,
               background: text.trim() ? FEED_LIME : FEED_RAISED,
               color: text.trim() ? FEED_LIME_INK : FEED_TEXT_LOW,
               display: "grid", placeItems: "center",
