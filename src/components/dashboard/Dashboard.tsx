@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
 import { BALL, body, CHALK, CLAY, COURT, display, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
@@ -32,6 +33,22 @@ export default function Dashboard({ session }: { session: Session }) {
       return;
     }
     try {
+      // A held invite is redeemed once, before the league list decides what
+      // to show — otherwise somebody arriving on a link gets dropped on the
+      // create-or-join screen with the thing they were invited to nowhere in
+      // sight.
+      const pending = takePendingJoin();
+      if (pending) {
+        try {
+          const joined = await joinLeague(pending);
+          const mineNow = await listMyLeagues();
+          setLeagues(mineNow);
+          setActive(joined); setView("app");
+          return;
+        } catch {
+          setError(BAD_INVITE);
+        }
+      }
       const mine = await listMyLeagues();
       setLeagues(mine);
       // Only worth asking when there's a choice to make.
@@ -44,6 +61,16 @@ export default function Dashboard({ session }: { session: Session }) {
       setView("empty");
     }
   };
+
+  // An invite link is ?join=CODE. Read it before anything else, because a
+  // signed-out visitor is about to be sent through sign-up and the query
+  // string will not survive the round trip — without stashing it the link
+  // works for people who already have an account and quietly does nothing
+  // for the people it was written for.
+  useEffect(() => {
+    const code = readJoinParam();
+    if (code) stashPendingJoin(code);
+  }, []);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
   // If running in dev with ?__dev_auto=1, mount a debug league immediately
