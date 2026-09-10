@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import { Calendar, Check, Plus, Search } from "lucide-react";
+import { Calendar, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { predictProb } from "@/core/predict";
@@ -118,13 +118,15 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   // A list of arranged games is a diary, and a diary that isn't in order is
   // a list you have to read all of to use.
   const ordered = useMemo(() => {
-    const rank = (f: any) => (f.done ? 2 : timeOf(f.booked) != null ? 0 : 1);
-    return [...fixtures].sort((a: any, b: any) => {
-      const ra = rank(a), rb = rank(b);
-      if (ra !== rb) return ra - rb;
-      if (ra === 0) return (timeOf(a.booked) as number) - (timeOf(b.booked) as number);
-      return 0;
-    });
+    const rank = (f: any) => (timeOf(f.booked) != null ? 0 : 1);
+    return fixtures
+      .filter((f: any) => !f.done)
+      .sort((a: any, b: any) => {
+        const ra = rank(a), rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        if (ra === 0) return (timeOf(a.booked) as number) - (timeOf(b.booked) as number);
+        return 0;
+      });
   }, [fixtures]);
 
   const q = search.trim().toLowerCase();
@@ -221,30 +223,11 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
         <div style={{ width: (total ? (done / total) * 100 : 0) + "%", height: "100%", background: FEED_LIME }} />
       </div>
 
-      {shown.length === 0 && <Empty msg="No fixtures match that search." />}
+      {shown.length === 0 && <Empty msg={q ? "No fixtures match that search." : "Nothing left to play. Every fixture has a result."} />}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {shown.map((f: any) => (
-          f.done ? (
-            // Played: it is a result now, so it reads as one.
-            <SurfaceCard key={f.id} radius={16} pad="12px 14px">
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Check size={16} color={FEED_LIME} strokeWidth={2.4} style={{ flexShrink: 0 }} />
-                <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {f.winner === "draw"
-                    ? <><span style={{ color: FEED_TEXT_HI }}>{nm(f.p1)}</span> drew <span style={{ color: FEED_TEXT_HI }}>{nm(f.p2)}</span></>
-                    : <><span style={{ fontWeight: 500, color: FEED_TEXT_HI }}>{nm(f.winner === "p1" ? f.p1 : f.p2)}</span> beat {nm(f.winner === "p1" ? f.p2 : f.p1)}</>}
-                  {f.score ? <span style={{ ...tabular }}> · {f.score}</span> : null}
-                </span>
-                <button
-                  onClick={() => onResolve(f, null)}
-                  style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "4px 0 4px 8px", cursor: "pointer", flexShrink: 0 }}
-                >
-                  Undo
-                </button>
-              </div>
-            </SurfaceCard>
-          ) : (
+          (
             <SurfaceCard key={f.id} radius={16} pad="12px 14px">
               <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -296,7 +279,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                   })()}
                   <span style={{ flex: 1 }} />
                   <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
-                    {open === f.id ? "Close" : timeOf(f.booked) != null && (timeOf(f.booked) as number) < Date.now() ? "Enter result" : "Book or enter result"}
+                    {open === f.id ? "Close" : timeOf(f.booked) != null && (timeOf(f.booked) as number) < Date.now() ? "Add the result" : "Book or enter result"}
                   </span>
                 </div>
               </button>
