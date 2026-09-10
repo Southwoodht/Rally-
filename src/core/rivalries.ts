@@ -40,7 +40,7 @@ function h2hFor(playerId: string, oppId: string, matches: any[]): HeadToHeadStat
 export function computeRivalries(playerId: string, matches: any[]): HeadToHeadStats[] {
   const oppIds = new Set<string>();
   matches.forEach((m) => {
-    if (isUnconfirmedResult(m)) return;
+    if (!countsAsPlayed(m)) return;
     if (m.p1 === playerId) oppIds.add(m.p2);
     else if (m.p2 === playerId) oppIds.add(m.p1);
   });

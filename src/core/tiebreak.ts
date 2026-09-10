@@ -9,7 +9,7 @@
 // Nothing here touches the metric. Everything below only ever separates
 // players the metric has already declared equal.
 
-import { countsAsPlayed } from "./matchStatus";
+import { isAgreed } from "./matchStatus";
 
 export interface RankCandidate {
   id: string;
@@ -140,7 +140,20 @@ export function assignRanks(candidates: RankCandidate[], h2h: H2HWins = {}): Ran
 export function buildH2H(matches: any[]): H2HWins {
   const h2h: H2HWins = {};
   for (const m of matches) {
-    if (!countsAsPlayed(m) || m.winner === "draw") continue;
+    // Deliberately `isAgreed`, not `countsAsPlayed`, and the two now differ.
+    //
+    // An unconfirmed result counts towards your rating — you played it, you
+    // wrote it down, it is yours. A tie-break is a different claim: it says
+    // "A is above B *because* A beat B", and it would let one person put
+    // themselves above another on a match that other person has not yet
+    // agreed to, possibly has not seen. A rating moving is an aggregate
+    // drifting; a tie-break is one named match deciding a position.
+    //
+    // So agreement is still required here, and only here. Sam's brief
+    // extended unconfirmed results to ratings and said nothing about
+    // tie-breaks; this keeps the narrower protection that was already
+    // deliberate rather than dropping it as a side effect.
+    if (!isAgreed(m) || m.winner === "draw") continue;
     const w = m.winner === "p1" ? m.p1 : m.p2;
     const l = m.winner === "p1" ? m.p2 : m.p1;
     if (!h2h[w]) h2h[w] = {};

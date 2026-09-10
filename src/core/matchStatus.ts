@@ -57,16 +57,28 @@ const warned = new Set<string>();
  * Does this match count as played — in ratings, records, tables, everything
  * that treats a match as a fact about who is better?
  *
- * Unconfirmed results are excluded, which is the behaviour the app has
- * always had and a decision that was made deliberately: the profile tile and
- * the list behind it must agree, and they agree on 28 rather than 31. If
- * that reverses, it reverses here, once, with before-and-after numbers —
- * not by a caller quietly asking a different question.
+ * **Unconfirmed results count.** This reversed on 2026-09-10, and it is the
+ * reversal of a real earlier decision, so here is both halves.
+ *
+ * They used to be excluded, and the argument was that a tile and the list
+ * behind it must agree. That still holds — it is why `isAgreed` exists
+ * below — but excluding them solved it at the wrong end. The match happened.
+ * Somebody played it, somebody wrote it down, and the app then declined to
+ * count it until a second person tapped a button. That is what produced
+ * Sam counting 31 wins against a tile saying 28: his mental model was right
+ * and the app's was the odd one.
+ *
+ * Measured before flipping, per the numbers-first rule: zero pending matches
+ * existed in production, so nothing moved on the day. What changes from here
+ * is that a result you log is yours immediately rather than tomorrow.
+ *
+ * The chip stays. Counting a result and flagging that nobody has agreed it
+ * are different jobs, and the row does both.
  */
 export function countsAsPlayed(m: any): boolean {
   const s = m?.status;
   if (NOT_PLAYED.has(s)) return false;
-  if (UNCONFIRMED.has(s)) return false;
+  if (UNCONFIRMED.has(s)) return true;
   if (s === "confirmed") return true;
   // Unknown. Behave exactly as the old denylist did rather than silently
   // dropping real results out of the ratings — but say so, because a status
@@ -82,6 +94,17 @@ export function countsAsPlayed(m: any): boolean {
 /** A result exists — agreed or not. The lists that show pending, marked. */
 export function hasResult(m: any): boolean {
   return countsAsPlayed(m) || UNCONFIRMED.has(m?.status);
+}
+
+/**
+ * Both sides have agreed this result.
+ *
+ * Narrower than `countsAsPlayed`, and the difference matters wherever
+ * agreed and unagreed results are shown as two separate lists — use this for
+ * the "confirmed" half, or a pending match appears in both at once.
+ */
+export function isAgreed(m: any): boolean {
+  return m?.status === "confirmed";
 }
 
 /** Somebody entered a result and the other side hasn't agreed it yet. */

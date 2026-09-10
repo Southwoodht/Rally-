@@ -137,6 +137,14 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+        {/* The result counts from the moment it is logged, so it is here —
+            but nobody has agreed it yet, and the row should not pretend
+            otherwise. Counting a result and flagging it are different jobs. */}
+        {row.pending && (
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "3px 9px" }}>
+            Unconfirmed
+          </span>
+        )}
         <Chip grade={g.then} />
         {g.then && g.now && (
           <>

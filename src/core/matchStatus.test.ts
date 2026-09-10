@@ -1,4 +1,4 @@
-import { countsAsPlayed, hasResult, isBooking, isUnconfirmedResult } from "./matchStatus";
+import { countsAsPlayed, hasResult, isAgreed, isBooking, isUnconfirmedResult } from "./matchStatus";
 
 let pass = 0, fail = 0;
 const eq = (got: any, want: any, msg: string) => {
@@ -17,17 +17,26 @@ const m = (status?: any) => ({ id: "m", p1: "a", p2: "b", winner: "p1", status }
   eq(hasResult(m(s)), false, `"${s}" has no result`);
 });
 
-// Behaviour that must NOT change. Matches carry only these two values today,
-// and both answer exactly what `!== "pending"` answered.
+// A result counts from the moment somebody logs it. This reversed on
+// 2026-09-10 — measured first: zero pending matches existed in production,
+// so nothing moved on the day.
 eq(countsAsPlayed(m("confirmed")), true, "confirmed counts, as it always has");
-eq(countsAsPlayed(m("pending")), false, "pending does not count, as it never has");
+eq(countsAsPlayed(m("pending")), true, "an unconfirmed result counts too");
 eq(isUnconfirmedResult(m("pending")), true, "pending is an unconfirmed result");
 eq(hasResult(m("pending")), true, "pending has a result, it just isn't agreed");
+
+// Counting a result and flagging that nobody has agreed it are different
+// questions, and the split is what stops a pending match being listed twice
+// on a screen that shows agreed and unagreed side by side.
+eq(isAgreed(m("confirmed")), true, "confirmed is agreed");
+eq(isAgreed(m("pending")), false, "pending is NOT agreed, even though it counts");
+eq(isAgreed(m("reported")), false, "nor is reported");
+eq(isAgreed(m("scheduled")), false, "nor is a booking");
 
 // `reported` is the booking flow's name for `pending`. Same state, so the
 // rename can happen without a data migration and without a gap where one of
 // them is unrecognised.
-eq(countsAsPlayed(m("reported")), false, "reported behaves as pending");
+eq(countsAsPlayed(m("reported")), true, "reported behaves as pending");
 eq(isUnconfirmedResult(m("reported")), true, "reported is an unconfirmed result");
 eq(isBooking(m("reported")), false, "reported is not a booking — it has a result");
 

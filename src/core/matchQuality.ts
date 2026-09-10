@@ -1,4 +1,4 @@
-import { countsAsPlayed } from "./matchStatus";
+import { countsAsPlayed, isUnconfirmedResult } from "./matchStatus";
 import { LEVELS } from "./constants";
 import { gapPhrase, gradeAgainstHistory, verdictFor, type GradedMatch, type Outcome, type Verdict } from "./matchGrade";
 
@@ -167,6 +167,7 @@ export function buildMatchQuality(
       outcome,
       opponent: byId[oid],
       score: m.score ?? null,
+      pending: isUnconfirmedResult(m),
       grade: gradeAgainstHistory(outcome, me, byId[oid], m.date),
     };
   });

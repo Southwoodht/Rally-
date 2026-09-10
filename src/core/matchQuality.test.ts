@@ -2,8 +2,9 @@
 //
 // The headline is a percentage, and the complaint that started this screen
 // was a percentage being wrong, so the counting is worth pinning down —
-// especially the two rules that are easy to get backwards: pending matches
-// are not matches, and an ungraded match is counted in neither bucket.
+// especially the two rules that are easy to get backwards: a booking is not
+// a match, and an ungraded match belongs to the unknown bucket rather than
+// to neither.
 
 import { buildMatchQuality, overTimeSentence, rateOf, shareSentence, winsFromSentence } from "./matchQuality";
 
@@ -48,14 +49,29 @@ const matches = [
   m("7", "beg", "p2", "2022-09-01"),    // one to forget
   m("8", "nohist", "p1", "2022-10-01"), // ungraded
   m("9", "nohist", "p2", "2022-11-01"), // ungraded
-  m("10", "adv", "p1", "2022-12-01", { status: "pending" }), // not a match yet
+  m("10", "adv", "p1", "2022-12-01", { status: "scheduled" }), // booked, not played
 ];
 
 const q = buildMatchQuality("me", players, matches);
 
 // ------------------------------------------------------------- the totals
-eq(q.total, 9, "pending is excluded from the total");
-eq(q.rows.some((r) => r.matchId === "10"), false, "the pending row is not in the list");
+eq(q.total, 9, "a booking is excluded from the total");
+eq(q.rows.some((r) => r.matchId === "10"), false, "the booked row is not in the list");
+
+// An unconfirmed result is the opposite case and it is easy to conflate with
+// the one above: it HAS a result, so it counts, and it is only the agreement
+// that is missing. The row carries `pending` so the screen can say so.
+{
+  const withUnagreed = buildMatchQuality("me", players, [
+    ...matches, m("11", "adv", "p1", "2022-12-02", { status: "pending" }),
+  ]);
+  eq(withUnagreed.total, 10, "an unconfirmed result DOES count");
+  const row: any = withUnagreed.rows.find((r: any) => r.matchId === "11");
+  eq(!!row, true, "and it is in the list");
+  eq(row?.pending, true, "flagged, so the row can show it is not agreed");
+  const agreed: any = withUnagreed.rows.find((r: any) => r.matchId === "1");
+  eq(agreed?.pending, false, "an agreed result is not flagged");
+}
 eq(q.graded, 7, "seven of nine grade");
 eq(q.ungraded, 2, "two cannot be graded");
 eq(q.rows[0].matchId, "9", "rows are newest first");

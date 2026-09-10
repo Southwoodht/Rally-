@@ -1,4 +1,4 @@
-import { countsAsPlayed, isUnconfirmedResult } from "./matchStatus";
+import { countsAsPlayed } from "./matchStatus";
 import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { winPct } from "@/lib/format";
@@ -32,12 +32,17 @@ const rankFromOfficial = (players, offMap, wdl) => {
 };
 
 // Reconstructs ELO and Official rank exactly as they stood immediately before
-// and after one specific match, by replaying the confirmed match history up
-// to that point. Only meaningful for confirmed matches — a still-pending
-// result hasn't been folded into anyone's rating yet, so this returns null
-// rather than showing a number that doesn't reflect reality.
+// and after one specific match, by replaying the match history up to that
+// point.
+//
+// It used to refuse a pending match, on the grounds that a result nobody had
+// agreed to hadn't been folded into anyone's rating yet. That stopped being
+// true when unconfirmed results started counting — the rating moves the
+// moment the result is logged, so the detail screen can and should show what
+// it did. The "Awaiting confirmation" notice on that screen still says
+// nobody has agreed it.
 export function matchContext(players, matches, target) {
-  if (!target || isUnconfirmedResult(target)) return null;
+  if (!target) return null;
   const confirmed = [...matches].filter((m) => countsAsPlayed(m)).sort((a, b) => a.date - b.date);
   const idx = confirmed.findIndex((m) => m.id === target.id);
   if (idx === -1) return null;
