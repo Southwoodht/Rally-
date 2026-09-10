@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:core": "tsc -p tsconfig.test.json && node .test-out/core/matchStatus.test.js && node .test-out/core/tiebreak.test.js && node .test-out/core/matchGrade.test.js && node .test-out/core/matchQuality.test.js"
+    "test:core": "tsc -p tsconfig.test.json && node .test-out/core/matchStatus.test.js && node .test-out/core/booking.test.js && node .test-out/core/tiebreak.test.js && node .test-out/core/matchGrade.test.js && node .test-out/core/matchQuality.test.js"
   },
   "dependencies": {
     "lucide-react": "^0.383.0",

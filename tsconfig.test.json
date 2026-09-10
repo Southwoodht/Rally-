@@ -22,6 +22,8 @@
     "src/core/matchQuality.ts",
     "src/core/matchQuality.test.ts",
     "src/core/matchStatus.ts",
-    "src/core/matchStatus.test.ts"
+    "src/core/matchStatus.test.ts",
+    "src/core/booking.ts",
+    "src/core/booking.test.ts"
   ]
 }
