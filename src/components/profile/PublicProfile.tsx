@@ -298,7 +298,7 @@ export function PublicProfile({ id }: { id: string }) {
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 12 }}>Friends</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
             {friends.slice(0, 8).map((f) => (
-              <a key={f.id} href={"/players/" + f.profile.id} style={{ textDecoration: "none", textAlign: "center", width: 58 }}>
+              <a key={f.id} href={"/?profile=" + encodeURIComponent(f.profile.id)} style={{ textDecoration: "none", textAlign: "center", width: 58 }}>
                 <Avatar player={{ id: f.profile.id, name: f.profile.display_name, avatarUrl: f.profile.avatar_url }} size={44} />
                 <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {(f.profile.display_name || "").split(/\s+/)[0]}

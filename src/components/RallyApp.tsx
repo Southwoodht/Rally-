@@ -157,7 +157,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [myAuthId, setMyAuthId] = useState<string | null>(null);
   // Where /players/[id] sends you back to. Both carry an account id, because
   // that is the only identity a page outside a league has to work with.
-  const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge"; authId: string } | null>(null);
+  const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge" | "profile"; authId: string } | null>(null);
   // Who the booking form should open with already chosen.
   const [challengeWith, setChallengeWith] = useState<string | null>(null);
 
@@ -170,8 +170,20 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // recorded in the report rather than faked here.
   useEffect(() => {
     if (!pendingIntent || loading) return;
-    const target = (gdata.players || []).find((p) => p.auth_id === pendingIntent.authId);
-    if (pendingIntent.kind === "message") {
+    // Either shape. Search hands over an account id; anything already
+    // holding a league row hands over that. Accepting both means a link to
+    // somebody's profile works from wherever it was written, which is the
+    // same tolerance /players/[id] already has.
+    const target = (gdata.players || []).find((p) => p.auth_id === pendingIntent.authId)
+      || (gdata.players || []).find((p) => p.id === pendingIntent.authId);
+    if (pendingIntent.kind === "profile") {
+      // The real profile, the one with rivalries, best wins and a head to
+      // head — not a summary. It only exists where the league data behind it
+      // is loaded, which is here. Somebody in no league of mine has no such
+      // profile to show, so they get the public page instead.
+      if (target) { setProfileId(target.id); setProfileYear("all"); }
+      else if (typeof window !== "undefined") { window.location.replace("/players/" + encodeURIComponent(pendingIntent.authId)); return; }
+    } else if (pendingIntent.kind === "message") {
       setMsgWith(pendingIntent.authId);
       setTab("messages");
     } else if (target) {
@@ -189,11 +201,17 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       const url = new URL(window.location.href);
       const message = url.searchParams.get("message");
       const challenge = url.searchParams.get("challenge");
-      if (!message && !challenge) return;
-      setPendingIntent(message ? { kind: "message", authId: message } : { kind: "challenge", authId: challenge as string });
+      const profile = url.searchParams.get("profile");
+      if (!message && !challenge && !profile) return;
+      setPendingIntent(
+        profile ? { kind: "profile", authId: profile }
+          : message ? { kind: "message", authId: message }
+          : { kind: "challenge", authId: challenge as string },
+      );
       // Out of the address bar, so a reload doesn't re-run it.
       url.searchParams.delete("message");
       url.searchParams.delete("challenge");
+      url.searchParams.delete("profile");
       window.history.replaceState({}, "", url.toString());
     } catch { /* a malformed url is not worth a crash */ }
   }, []);

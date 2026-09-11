@@ -135,7 +135,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
             {incoming.map((row) => (
               <div key={row.id} style={listRow}>
                 <Avatar player={asPlayer(row.profile)} size={36} />
-                <a href={"/players/" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
+                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
                 <div style={{ display: "flex", gap: 6 }}>
                   {actionBtn("Accept", () => accept(row))}
                   {actionBtn("Decline", () => remove(row), "transparent", MUTED)}
@@ -159,7 +159,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
             {friends.map((row) => (
               <div key={row.id} style={listRow}>
                 <Avatar player={asPlayer(row.profile)} size={36} />
-                <a href={"/players/" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
+                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
                 <div style={{ display: "flex", gap: 6 }}>
                   {onMessage && actionBtn("Message", () => onMessage(row.profile.id), PANEL2, CHALK)}
                   {leagueJoinCode && actionBtn("Invite to league", () => inviteToLeague(row), PANEL2, CHALK)}

@@ -99,9 +99,19 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
     return [...rows].sort((a, b) => rank(a) - rank(b) || (a.display_name || "").localeCompare(b.display_name || ""));
   }, [rows, friendIds, leagueAuthIds]);
 
+  /**
+   * Open somebody from a search result.
+   *
+   * Back into the app rather than off to /players/[id], because the profile
+   * worth landing on is the one the app already builds — rivalries, best
+   * wins, head to head, league placings — and that only exists where the
+   * league data behind it is loaded. RallyApp resolves the account to a
+   * player row and opens it; if they are in none of your leagues it forwards
+   * to the public page, which is all there is to show for a stranger.
+   */
   const open = (p: { id: string; display_name?: string; name?: string; avatar_url: string | null }) => {
     rememberProfile({ id: p.id, name: p.display_name || p.name || "Player", avatar_url: p.avatar_url });
-    window.location.href = "/players/" + encodeURIComponent(p.id);
+    window.location.href = "/?profile=" + encodeURIComponent(p.id);
   };
 
   const row = (key: string, name: string, sub: string | null, avatarUrl: string | null, onClick: () => void) => (
