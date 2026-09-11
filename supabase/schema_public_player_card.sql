@@ -122,7 +122,7 @@ begin
               'score', r.score,
               'opponent', trim(coalesce(op.name,'') || ' ' || coalesce(op.last,''))
             ) order by r.date desc), '[]'::jsonb)
-       from (select * from mine order by date desc limit 10) r
+       from (select * from mine order by date desc limit 100) r
        join public.players op
          on op.id = case when r.my_side = 'p1' then r.p2 else r.p1 end),
     (select count(*)::int from between_us where winner = your_side),
