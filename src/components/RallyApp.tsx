@@ -42,6 +42,7 @@ import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { predictProb } from "@/core/predict";
+import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
@@ -579,7 +580,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const showSuggestion = claimUI.candidate && !declinedCandidate;
     return (
       <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 100, overflowY: "auto" }}>
-        <style>{fontImport}</style>
+        <style dangerouslySetInnerHTML={{ __html: fontImport }} />
         {showSuggestion ? (
           <PlayerClaim player={claimUI.candidate} onClaim={() => resolveClaim(claimUI.candidate)} onNotMe={() => setDeclinedCandidate(true)} />
         ) : (
@@ -689,6 +690,30 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       .filter((x) => !isNaN(x.t))
       .sort((a, b) => a.t - b.t)[0]?.f;
 
+    // The other half of the booking loop. A match whose time has been and
+    // gone, with no result — ask about it on Home rather than waiting for
+    // somebody to remember to visit Fixtures.
+    //
+    // Measured from the END of the match, not its start: being asked how it
+    // went while you are still on court is worse than not being asked.
+    //
+    // And it stops asking after AUTO_CANCEL_DAYS. A card that has been
+    // ignored for a week is not going to be answered, and one that never
+    // goes away teaches you to look past that part of the screen. The
+    // fixture stays on Fixtures, still enterable — giving up on asking is
+    // not the same as deciding it never happened.
+    const nowMs = Date.now();
+    const awaitingResult = (fixtures || [])
+      .filter((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId))
+      .map((f) => ({ f, ends: new Date(f.booked).getTime() + DEFAULT_DURATION_MINUTES * 60000 }))
+      .filter((x) => !isNaN(x.ends) && nowMs > x.ends && nowMs < x.ends + AUTO_CANCEL_DAYS * 86400000)
+      .sort((a, b) => a.ends - b.ends)
+      .map(({ f }) => {
+        const oppId = f.p1 === meId ? f.p2 : f.p1;
+        const opp = players.find((p) => p.id === oppId);
+        return { fixtureId: f.id, opponent: opp ? fullNameOf(opp) : first(oppId), opponentFirst: first(oppId), meIsP1: f.p1 === meId, when: f.booked };
+      });
+
     let nextUp: any = null;
     if (bookedNext) {
       const oppId = bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1;
@@ -717,7 +742,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const l = month.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
     const thisMonth = month.length ? { w, l, winRate: Math.round((w / month.length) * 100) } : null;
 
-    return { standing, pending, nextUp, thisMonth };
+    return { standing, pending, nextUp, thisMonth, awaitingResult };
   })();
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
@@ -746,7 +771,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <style>{fontImport}</style>
+      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px", paddingTop: "calc(22px + env(safe-area-inset-top))" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
@@ -806,6 +831,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             pending={homeData?.pending}
             nextUp={homeData?.nextUp}
             thisMonth={homeData?.thisMonth}
+            awaitingResult={homeData?.awaitingResult}
+            onResolveFixture={(fixtureId, winner, score) => {
+              const fx = (fixtures || []).find((f) => f.id === fixtureId);
+              // No fixture means it has already gone — treat that as a
+              // failure so the card keeps the score rather than clearing it.
+              return fx ? resolveFixture(fx, winner, score) : Promise.resolve(false);
+            }}
+            onCancelFixture={removeFixture}
             onEditMatch={setMatchDetailId}
             onBook={() => setTab("fixtures")}
           >

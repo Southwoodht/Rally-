@@ -28,7 +28,7 @@ export function Onboarding({ me, onFinish }: any) {
   const setBlock = (i, cat, sub) => setLevels((L) => ({ ...L, [i]: { cat: cat ?? L[i]?.cat ?? "Beginner", sub: sub ?? L[i]?.sub ?? "Medium" } }));
   return (
     <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 100, overflowY: "auto" }}>
-      <style>{fontImport}</style>
+      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "40px 20px 60px" }}>
         <div style={{ fontFamily: body, fontWeight: 600, color: BALL, fontSize: 13 }}>Welcome{me ? ", " + me.name : ""}</div>
         <h1 style={{ fontFamily: body, fontWeight: 700, color: CHALK, margin: "6px 0 22px", fontSize: 28, lineHeight: 1.2 }}>Set up your ladder</h1>

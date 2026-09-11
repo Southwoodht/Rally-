@@ -142,7 +142,7 @@ export default function Dashboard({ session }: { session: Session }) {
 
   const shell = (children: React.ReactNode) => (
     <div style={{ minHeight: "100vh", background: COURT, padding: "22px 18px 40px" }}>
-      <style>{fontImport}</style>
+      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>

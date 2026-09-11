@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { AwaitingResult, ResultPrompt } from "@/components/home/ResultPrompt";
 import { HomeHeader, type HomeHeaderProps } from "@/components/home/HomeHeader";
 import { HomeTiles, type NextUp, type ThisMonth } from "@/components/home/HomeTiles";
 import { PendingStack, type PendingConfirmation } from "@/components/home/PendingConfirmationCard";
@@ -26,6 +27,9 @@ export interface HomeProps {
   nextUp?: NextUp | null;
   thisMonth?: ThisMonth | null;
   onNudge?: (matchId: string) => void;
+  awaitingResult?: AwaitingResult[];
+  onResolveFixture?: (fixtureId: string, winner: "p1" | "p2" | "draw", score: string) => Promise<boolean> | void;
+  onCancelFixture?: (fixtureId: string) => void;
   onEditMatch?: (matchId: string) => void;
   onSeeAllPending?: () => void;
   onBook?: () => void;
@@ -34,8 +38,8 @@ export interface HomeProps {
 }
 
 export function Home({
-  header, standing, pending, nextUp, thisMonth,
-  onNudge, onEditMatch, onSeeAllPending, onBook, children,
+  header, standing, pending, nextUp, thisMonth, awaitingResult,
+  onNudge, onEditMatch, onSeeAllPending, onBook, onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   const hasPending = !!pending && pending.length > 0;
   return (
@@ -46,6 +50,12 @@ export function Home({
         <div style={{ marginBottom: 12 }}>
           <StandingHero {...standing} />
         </div>
+      )}
+
+      {/* Above pending confirmations: a result nobody has entered is a
+          bigger gap than one waiting to be agreed. */}
+      {!!awaitingResult?.length && onResolveFixture && (
+        <ResultPrompt items={awaitingResult} onResolve={onResolveFixture} onCancel={onCancelFixture} />
       )}
 
       {hasPending && (
