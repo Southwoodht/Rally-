@@ -33,7 +33,16 @@ emit, so an `@/core/...` import compiles and then fails at run time.
 Two build failures on this machine were environmental, not code. `EINVAL
 readlink .next/...` means the dev server is running and holding the
 directory `next build` wants to clear — stop the preview first. `ENOSPC`
-means the disk is full, which it very nearly is.
+means the disk is full, which it has genuinely been.
+
+**The repo lives at `C:devally`, and deliberately not in OneDrive.** It
+was moved there on 2026-09-10. OneDrive was syncing `node_modules` and
+`.next` — `.gitignore` means nothing to it — which made every build slow and
+kept a few hundred megabytes of regenerable junk permanently on a nearly full
+disk. `.next/cache` alone regrows to ~100MB per build, so **clear `.next`
+after a build gate** rather than leaving it sitting there. If a session's
+preview server reports `'next' is not recognized`, it is pointed at the old
+OneDrive path, which no longer has `node_modules`; reopen on `C:devally`.
 
 `README.md` is from the original prototype conversion and is **stale** in
 places — it says `storage.ts` uses browser storage (it's Supabase now) and
@@ -189,6 +198,23 @@ regrades every past match on the next render.
 - `globalTable.ts` — the cross-league table. Also `leagues.ts`, `friends.ts`,
   `messages.ts`, `profiles.ts`, `clubs.ts`, `trophies.ts`,
   `myLeaguePlaces.ts`, `historyImport.ts`, `photo.ts`.
+- `invite.ts` — invite links, added 2026-09-11. There is **no invites
+  table**: a link is the league's existing six-character join code in a URL
+  (`?join=WDZDTQ`), redeemed through the same `joinLeague()` the typed form
+  uses. Building a second system alongside a working one is how the two come
+  to disagree. The code is stashed in `localStorage` across sign-up, because
+  an email round trip eats the query string and the signed-out visitor is
+  who the link is mostly for; it is stripped from the address bar once read,
+  so a reload can't re-run a join. **No expiry and no single use** — the join
+  code is read out loud in clubhouses, so a link gives away nothing the
+  current flow doesn't. Real expiry needs a real table.
+- `format.ts` — also `formatMatchDateTime`, the one way an upcoming match
+  says when it is: "Sat 12 Sep 2026 · 2:00pm", **always Europe/London**. A
+  club plays where the club is, so somebody checking fixtures from a hotel in
+  Spain should read the time they will turn up at, not that time shifted an
+  hour. `formatMatchDate` is the same vocabulary without a time nobody
+  recorded. Every screen showing a booking uses these — before them, Fixtures
+  had grown its own formatter and Coming up rendered the stored value raw.
 - `theme.ts` — every colour and style token. Court green `#15352a`, ball
   yellow `#d9e84b`, clay `#cb6d47`, chalk `#f5f2e9`.
 
@@ -275,6 +301,25 @@ rather than rewarding a dominant one. Sam's own examples all wanted exactly
 that — 7-6 is a bad win, 6-5 is a good loss — but he has never ruled on
 whether a thrashing should actively pay more. Don't assume either way.
 
+**Finishing a fixture and logging a result follow the same agreement rule.**
+`resolveFixture` used to hardcode `status: "confirmed"`, so completing a
+fixture against somebody with an account force-confirmed a result they had
+never seen — straight past the rule the rest of the app enforces. It now runs
+the same test Log a result always has: the other participant having an
+`auth_id` means they agree first. Where league staff fill in a result for two
+other people, **either** of them having an account is enough to wait, which is
+stricter than the participant case on purpose — neither of them has said a
+word about it.
+
+**A name match may become a suggestion and never a decision — and the check
+is wider than exact.** `PlayerPicker.findLikeness` matches on first name,
+full name or nickname, all case-blind, because the duplicate people actually
+create is "Charlie" when Charlie Henry already exists: a surname typed once
+and forgotten walks straight past an exact-match check. It only ever asks
+("Did you mean Charlie Henry?"). Nothing merges and nothing is chosen
+automatically — see the Charlie incident above for why that line is drawn
+where it is.
+
 **Careers from before Rally existed belong in Legacy and trophies, not the
 global table.** A peak the app never saw isn't something it can honestly
 rank. Don't try to make the global table account for it.
@@ -310,9 +355,21 @@ app: while a thread is pending only its starter can write to it.
   half of the old rule that still stands, and stands harder: **never set
   words in the numbers font.** An uppercase mono label reads as a code, not
   as something you can tap.
-- **No emoji as icons.** Draw an SVG in the app's own colours. A 🔔 renders
-  as Apple's glossy 3D bell on iPhone and something else on Android, so it
-  never matches the app. See `Bell.tsx` and `Robin.tsx`.
+- **No emoji as icons**, and as of 2026-09-11 there are none left in the UI.
+  Draw an SVG in the app's own colours. A 🔔 renders as Apple's glossy 3D
+  bell on iPhone and something else on Android, so it never matches the app.
+  See `Bell.tsx` and `Robin.tsx`.
+  `components/ui/Glyph.tsx` maps every legacy glyph string to a drawn lucide
+  icon. It exists because `core/achievements.ts` and `core/notifications.ts`
+  label themselves with a character, and core should not know what a screen
+  looks like — so the translation happens at the point of drawing and their
+  strings stay as they are. **If you add an icon key in core, add it to the
+  map**: an unrecognised glyph draws nothing, deliberately, because a wrong
+  icon is worse than none and a gap gets reported.
+  Still emoji, and known: `theme.ts AVATARS` and therefore every player
+  avatar. Fixing it needs a drawn set, a change to `Avatar`, **and** a
+  migration, because existing players have the character stored on their row
+  and changing only the picker splits a club between two styles.
 - **The unread count is robins, not a number.** `MessageRobins.tsx`: one bird
   per unread up to three, and below four the birds *are* the badge — a dot
   beside three robins says the same number twice. Robins because Victorian
@@ -366,6 +423,25 @@ Built and live:
   The club admin tab lists every player in the club with a control to record
   an honour against them; a trophy can be worth points, at the admin's
   discretion, and an owner can take down one of their own.
+
+Left partial by the 10 Sep brief (`RALLY_FIX_BRIEF.md`, written up in
+`RALLY_FIX_REPORT.md`):
+
+- **Cancelling a match doesn't tell the opponent.** Cancel deletes the
+  fixture, so there is nothing left to notify from, and notifications are
+  assembled in `core/`. Doing it properly is three things that must land
+  together: an additive migration adding `cancelled_at` / `cancelled_by` to
+  fixtures, the code keeping the row and filtering it out everywhere, and the
+  inbox item built in `NotificationBell` (a component, so allowed). The
+  middle one breaks Cancel until the SQL is run, which is why it wasn't
+  started.
+- **Home cannot run without a league.** `RallyApp` takes a `leagueId` and
+  reads that league on mount, so Dashboard's `else setView("empty")` is not a
+  guard to delete — it is the only branch there is. Running league-less is a
+  boot-path change for every user. The no-league screen itself was rebuilt;
+  the rest wasn't, and shouldn't be attempted without a working preview.
+  This is also what blocks Friendlies: `league_id` null is allowed by the
+  schema and handled in `core/booking.ts`, but no UI can reach it.
 
 Approved, not built:
 
@@ -460,6 +536,14 @@ The real test is the app: if the Global table still shows the network
 ordering, the RPC is being called. If it had failed, the code falls back to
 the old maths and the order visibly changes.
 
+**Written 2026-09-11: `schema_fixture_delete_participants.sql`.** One policy,
+no data touched. DELETE on fixtures was staff-only, which was fine when only
+an owner could generate a season and stopped being fine once anybody could
+book a match. Until it is run, Cancel match works for owners and editors
+only; a participant's attempt fails **visibly** rather than silently, because
+`deleteRow` checks whether the row survived. Sam was given it on 2026-09-11 —
+confirm before assuming it ran.
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE
@@ -516,6 +600,28 @@ gitignored. Never commit it, never paste its contents anywhere.
   and next sign-in offers them the claim list so they pick their own record.
   Charlie Easey was one of these. There may be others: any `players` row
   with a non-null `auth_id` and zero matches is a candidate.
+
+- **The four syncs are not atomic, and nothing says so.** `saveData` runs
+  `syncPlayers` / `syncMatches` / `syncFixtures` / `syncPosts` in one
+  `Promise.all`, and each runs its own writes in another. There is no
+  transaction anywhere. Resolving a fixture is an *insert* into matches and
+  an *update* to fixtures as independent requests, so a fixture can end up
+  marked `done` with a `match_id` pointing at a match that was never
+  created. Not hypothetical in shape, though it is not what bit on 2026-09-11
+  — that one wrote nothing at all.
+- **`assertWritable` scans every match in the league, not just the new one.**
+  It is a plain `throw` inside the loop that builds the write ops, so one
+  malformed row — no winner, status outside the booking set — aborts
+  `syncMatches` **before a single row is written**, while the other three
+  syncs are already away in their own promises. Every match write in that
+  league would fail from then on, with the error pointing nowhere near the
+  cause.
+- **A score typed with no winner tapped is lost silently.** The three winner
+  buttons on a fixture *are* the submit; closing the row discards what you
+  typed and nothing mentions it.
+- **`matchToRow` drops `loggedAt`.** Both `LogResult` and `resolveFixture`
+  set it on the match object and there is no column for it, so it never
+  persists. Harmless today; misleading if anything starts reading it.
 
 **A list presented as the contents of a number must contain that number's
 contents.** Sam counted 31 wins on his profile where the tile said 28. The
