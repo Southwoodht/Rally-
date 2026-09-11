@@ -11,11 +11,11 @@ their profile, and can message, friend or challenge them. No league needed.
 
 ## CHECKLIST
 
-- [ ] **Phase 0 — Diagnose** (read-only)
-  - [ ] 0.1 Why can a no-league account not view a profile? RLS, query or UI?
-  - [ ] 0.2 Profile photos: where stored, public or private, why initials?
-  - [ ] 0.3 What every name and avatar tap does today, surface by surface
-  - [ ] 0.4 Do /players/[id], player search or friends already exist?
+- [x] **Phase 0 — Diagnose** (read-only)
+  - [x] 0.1 Why can a no-league account not view a profile? RLS, query or UI?
+  - [x] 0.2 Profile photos: where stored, public or private, why initials?
+  - [x] 0.3 What every name and avatar tap does today, surface by surface
+  - [x] 0.4 Do /players/[id], player search or friends already exist?
 - [ ] **Phase 1 — Profiles visible to everyone**
   - [ ] Any signed-in user can view any player's profile
   - [ ] Never expose email, phone or account settings
@@ -34,6 +34,100 @@ their profile, and can message, friend or challenge them. No league needed.
   - [ ] Recents when empty; "No one called ..." when nothing matches
 - [ ] **Phase 4 — Wrap up**
   - [ ] Report complete, SQL listed, tap test done from a no-league account
+
+## PHASE 0 — DIAGNOSIS
+
+### 0.1 Why a no-league account cannot view a profile
+
+**Not RLS on `profiles`. Not a filtered query. The profile UI does not take a
+person — it takes a league player row.**
+
+Profiles open through `openProfile(id)` in `RallyApp.tsx:121`, which sets
+`profileId` and renders `ProfileModal`. That `id` is a `players.id` — a row
+that exists **once per person per league** — and `RallyApp` only ever holds
+one league's worth of them (`gdata.players`, fetched by `fetchLeagueData(gid)`).
+
+So for the test account:
+
+- it has no leagues, therefore `players` is `[]`, therefore there is no id to
+  pass and nothing to render;
+- and even with a league, `openProfile` can only reach people **in that
+  league**, because that is the entire universe of ids it has.
+
+There is no route, no lookup by person, and no screen that takes an account
+rather than a league membership. `src/app` contains no subdirectories at all.
+
+RLS matters too, but second: `players` and `matches` are league-scoped, so
+the test account genuinely cannot read Samuel Henry's player row or his
+results. Any profile showing record, form or recent matches to a stranger
+needs a security-definer function, the same shape as `global_standings()`.
+See **SQL TO RUN**.
+
+### 0.2 Photos — there is no bucket, and the column that would work is never written
+
+**No storage bucket exists.** Photos are JPEG **data URLs in text columns**,
+produced by `readPhotoAsDataUrl` (`lib/photo.ts`) and stored inline. So
+"public or private bucket" has no answer — the question doesn't apply.
+
+There are two places a picture can live, and the app uses the wrong one for
+this purpose:
+
+| Column | Written by | Readable by |
+|---|---|---|
+| `players.avatar_url` | `MyProfile.onPickPhoto` → `setField("avatarUrl", …)` | league members only |
+| `profiles.avatar_url` | **nothing, ever** | any signed-in user |
+
+Samuel Henry's photo is on his **player row in Seacourt**. `profiles.avatar_url`
+is read in three places (`Friends.tsx:9`, `Messages.tsx:84`,
+`globalTable.ts:307`) and written in none.
+
+So the test account cannot read the player row, falls back to
+`profiles.avatar_url`, finds null, and draws the initial. **"S" is not a
+loading failure — it is the correct rendering of a photo that was never put
+anywhere the test account could see.**
+
+The fix is a code change, not a policy one: write the photo to `profiles`
+as well as the player row. Existing photos need a one-off backfill — SQL
+below, not run.
+
+### 0.3 What a name or avatar tap does today
+
+| Surface | Tappable? | Goes to |
+|---|---|---|
+| Messages list | yes | `openProfile` → modal (league-scoped) |
+| Chat header | yes (added 10 Sep) | `openProfile` → modal |
+| Friends list | **no** | nothing — names are not tappable at all |
+| Search (inside Friends) | **no** | nothing — results are rows with actions, not links |
+| Table rows | yes | `openProfile` → modal |
+| Match cards | yes | `openProfile` → modal |
+| Newsfeed | yes | `openProfile` → modal |
+| Inbox / notification bell | yes | `openProfile` → modal |
+
+Every one that works goes to the same league-scoped modal. The two that do
+nothing — Friends and search — are exactly the two that deal in **accounts**
+rather than league players, which is the same split as 0.1.
+
+### 0.4 What already exists
+
+- **`/players/[id]`** — does not exist. `src/app` has no subdirectories.
+- **Player search** — exists, but only inside `social/Friends.tsx`. It calls
+  `searchProfiles()` (`lib/profiles.ts:33`), which queries `profiles` by
+  `display_name ilike %q%` plus an exact `friend_code`. Deliberately two
+  queries rather than a built `.or()` string, to keep user input out of
+  PostgREST filter syntax. It is not reachable from Home or Table, results
+  are not tappable, and it searches accounts only.
+- **Friends** — complete and working. `lib/friends.ts` has the full set
+  (list, incoming, outgoing, request, accept, remove) and `social/Friends.tsx`
+  is the UI. Keyed on `auth_id`.
+- **Profile components** — `profile/ProfileModal.tsx` over `ProfileContainer`
+  / `ProfileView`. Reusable, but every one of them expects league data
+  (players, matches, elo) passed down from `RallyApp`.
+
+**Conclusion.** The pieces for Phase 3 mostly exist and need connecting. Phase
+1 and 2 need a way to read a person who is not in your league, which is new
+and needs SQL.
+
+---
 
 ## FOUND, NOT FIXED
 
