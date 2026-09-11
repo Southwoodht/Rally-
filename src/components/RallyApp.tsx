@@ -1,7 +1,7 @@
 "use client";
 import { countsAsPlayed, isClaimed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useState, useEffect, useMemo } from "react";
-import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, ChevronRight, Check, HelpCircle, MessageCircle } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -1011,6 +1011,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                {/* Finding somebody is a top-level thing to want, and until
+                    now the only way to reach a person was to already share a
+                    league with them. */}
+                <a href="/search" aria-label="Find a player" style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, textDecoration: "none" }}>
+                  <Search size={18} strokeWidth={2} />
+                </a>
                 <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
                   <MessageRobins count={unreadMsgs} />
                 </button>
@@ -1046,6 +1052,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               onPickLeague: () => setGroupSheet(true),
               bell: (
                 <>
+                  {/* Same as the other header: finding somebody is a
+                      top-level thing to want. */}
+                  <a href="/search" aria-label="Find a player" style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, textDecoration: "none" }}>
+                    <Search size={18} strokeWidth={2} />
+                  </a>
                   <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
                     <MessageRobins count={unreadMsgs} />
                   </button>
