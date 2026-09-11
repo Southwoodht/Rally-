@@ -18,7 +18,7 @@ re-derive the reasoning from the commit log every session.
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
 | Rollback tag | `v1.1-global-table` (also `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
-| Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run build` |
+| Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
 There is no CI. The build passing locally is the only gate before a push
 becomes a live deploy, so run it — and **read its exit code**, not its
@@ -499,6 +499,32 @@ From Sam's original 13, still undone:
 
 **Sam runs the SQL himself.** Write the file into `supabase/`, tell him it's
 there, and let him paste it in. Don't try to apply migrations.
+
+**The schema is in this repo. Read it before writing SQL.**
+`supabase/schema.sql` and `supabase/schema_players_matches.sql` contain the
+actual `create table` statements — every column, with its type and default.
+
+This is written in capitals because not reading them cost Sam an evening on
+2026-09-11. A session inferred the columns of `players` from `playerToRow`
+in `leagueData.ts`, saw no `updated_at`, declared the column invented and
+"fixed" working SQL to avoid it. `players.updated_at` exists — it is
+`timestamptz not null default now()`, which is exactly *why* the app never
+writes it and why it is absent from the mapper. **A column missing from a row
+mapper is evidence about the app, not about the database.**
+
+`npm run check:sql` now guards this. It builds the known schema from the
+`create table` statements plus every `add column` in `supabase/`, plus the
+row mappers, and flags any qualified column reference with no evidence behind
+it. It is in the gate. An unknown column is a prompt to go and verify, not
+proof of a bug — if it is real, add it to `EXTRA_COLUMNS` in the script.
+
+**Two ways Postgres will let bad SQL through, both seen the same day.**
+`create or replace function` checks plpgsql *syntax* and not table names, so
+a function naming a column that does not exist is created successfully and
+fails only when called. And every name in `returns table (...)` is also a
+variable inside the body, so an unqualified column of the same name raises
+"column reference is ambiguous" — again only at call time. The second one is
+why `public_player_card()` carries `#variable_conflict use_column`.
 
 Already run: `schema_global_standings.sql`, `schema_messages.sql`,
 `schema_level_val_18.sql`, `schema_global_standings_margin.sql`,
