@@ -248,9 +248,13 @@ export function PublicProfile({ id }: { id: string }) {
       ) : (
         <SurfaceCard radius={20} pad="16px" style={{ marginBottom: 12 }}>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
-            Their record is not available yet — it needs one database update
-            that has not been run. Everything else on this page works.
+            Their record isn&apos;t showing. Everything else on this page works.
           </div>
+          {card.statsProblem && (
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 8 }}>
+              {card.statsProblem}
+            </div>
+          )}
         </SurfaceCard>
       )}
 

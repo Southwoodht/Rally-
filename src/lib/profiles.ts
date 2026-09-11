@@ -118,6 +118,15 @@ export interface PublicPlayerCard {
     /** You against them. Computed server-side, where both halves are visible. */
     h2h: { w: number; d: number; l: number } | null;
   } | null;
+  /**
+   * Why there are no stats, when there are none.
+   *
+   * This existed as a console.warn and nothing else, so a profile with no
+   * record looked identical whether the function was missing, erroring,
+   * timing out, or correctly reporting somebody with no matches. Three
+   * separate guesses were spent on that. The screen can now say which.
+   */
+  statsProblem: string | null;
 }
 
 export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerCard | null> {
@@ -127,8 +136,17 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
   const base = row as Profile;
 
   let stats: PublicPlayerCard["stats"] = null;
+  let statsProblem: string | null = null;
   try {
     const data: any = await withSupabaseTimeout(supabase.rpc("public_player_card", { p_auth_id: authId }), FAILED as any);
+    if (data === (FAILED as any)) {
+      statsProblem = "Timed out reading their record.";
+    } else if (data.error) {
+      statsProblem = data.error.message || "The record query was refused.";
+      console.error("public_player_card failed", data.error);
+    } else if (!data.data || (Array.isArray(data.data) && !data.data.length)) {
+      statsProblem = "No record came back for this account.";
+    }
     if (data !== (FAILED as any) && !data.error && data.data) {
       const d = Array.isArray(data.data) ? data.data[0] : data.data;
       if (d) {
@@ -147,11 +165,12 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
         };
       }
     }
-  } catch (e) {
-    // The function not being installed is the expected case until the SQL is
-    // run, and it must not take the whole profile down with it.
-    console.warn("public_player_card unavailable — showing the profile without a record", e);
+  } catch (e: any) {
+    // A missing function must not take the whole profile down with it — but
+    // it must not be silent either.
+    statsProblem = e?.message || "Couldn't read their record.";
+    console.error("public_player_card unavailable", e);
   }
 
-  return { id: base.id, display_name: base.display_name, avatar_url: base.avatar_url, friend_code: base.friend_code, stats };
+  return { id: base.id, display_name: base.display_name, avatar_url: base.avatar_url, friend_code: base.friend_code, stats, statsProblem };
 }
