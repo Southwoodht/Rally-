@@ -14,7 +14,7 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, body, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, input, LINE, listCard, miniInput, mono, MUTED, PANEL, PANEL2, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -159,7 +159,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
         </div>
       )}
       {scope === "fixtures" ? (
-        <FixturesPanel fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId} onResolve={onResolveFixture} onBook={onBookFixture} onAddFixture={onAddFixture} onRemoveFixture={onRemoveFixture} onCreatePlayer={onCreatePlayer} canManage={canEditMatches} />
+        <FixturesPanel fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId} onResolve={onResolveFixture} onBook={onBookFixture} onAddFixture={onAddFixture} onRemoveFixture={onRemoveFixture} onCreatePlayer={onCreatePlayer} canManage={canEditMatches} challengeWith={challengeWith} />
       ) : (
         <div>
           {/* The week that just ended, above the feed of individual results.

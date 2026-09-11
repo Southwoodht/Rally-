@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
@@ -58,7 +58,7 @@ const timeOf = (v: any): number | null => {
   return isNaN(t) ? null : t;
 };
 
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer }: any) {
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
@@ -89,7 +89,15 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
     if (ok) { setOpen(null); setScoreText(""); }
     else setSaveError("Couldn't save. Try again.");
   };
-  const [newOpp, setNewOpp] = useState("");
+  const [newOpp, setNewOpp] = useState(challengeWith || "");
+  // Arriving from somebody's profile with Challenge tapped: open the form
+  // with them already chosen, so the tap lands where it promised rather than
+  // on a picker you have to fill in again.
+  useEffect(() => {
+    if (!challengeWith) return;
+    setNewOpp(challengeWith);
+    setBooking(true);
+  }, [challengeWith]);
   const [newWhen, setNewWhen] = useState("");
 
   const done = fixtures.filter((f: any) => f.done).length;

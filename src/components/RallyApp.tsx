@@ -118,7 +118,23 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [matchDetailId, setMatchDetailId] = useState<string | null>(null);
   const [legacyId, setLegacyId] = useState(null);
   const [profileYear, setProfileYear] = useState<"all" | number>("all");
-  const openProfile = (id: any, year?: "all" | number) => { setProfileId(id); setProfileYear(year ?? "all"); };
+  /**
+   * Open somebody's profile.
+   *
+   * Every name and avatar in the app already went through here, so pointing
+   * this one function at /players/[id] moves the table, match cards, the
+   * feed, the inbox, Messages and the chat header all at once.
+   *
+   * The id passed is a league players.id; the page accepts that shape as
+   * well as an account id, so nothing else had to change.
+   *
+   * Your own row still opens the modal — it is your editable profile, and
+   * the page is deliberately read-only.
+   */
+  const openProfile = (id: any, year?: "all" | number) => {
+    if (id && id !== meId && typeof window !== "undefined") { window.location.href = "/players/" + encodeURIComponent(id); return; }
+    setProfileId(id); setProfileYear(year ?? "all");
+  };
   const [groupSheet, setGroupSheet] = useState(false);
   // Standby view: the Table tab shows the people you've played instead of a
   // league. The league still loads underneath — this changes what's shown,
@@ -136,6 +152,48 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [declinedCandidate, setDeclinedCandidate] = useState(false);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
   const [myAuthId, setMyAuthId] = useState<string | null>(null);
+  // Where /players/[id] sends you back to. Both carry an account id, because
+  // that is the only identity a page outside a league has to work with.
+  const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge"; authId: string } | null>(null);
+  // Who the booking form should open with already chosen.
+  const [challengeWith, setChallengeWith] = useState<string | null>(null);
+
+  // Acting on where the profile page sent us, once the league is loaded.
+  //
+  // Message needs only an account id and so always works. Challenge needs a
+  // player row in a league we share, because a fixture belongs to a league —
+  // if we share none, there is nothing to book yet and saying so is better
+  // than opening an empty picker. That gap is the Friendly work, which is
+  // recorded in the report rather than faked here.
+  useEffect(() => {
+    if (!pendingIntent || loading) return;
+    const target = (gdata.players || []).find((p) => p.auth_id === pendingIntent.authId);
+    if (pendingIntent.kind === "message") {
+      setMsgWith(pendingIntent.authId);
+      setTab("messages");
+    } else if (target) {
+      setChallengeWith(target.id);
+      setTab("fixtures");
+    } else {
+      flash("You'll need a league in common before you can book a match.");
+    }
+    setPendingIntent(null);
+  }, [pendingIntent, loading, gdata.players]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const url = new URL(window.location.href);
+      const message = url.searchParams.get("message");
+      const challenge = url.searchParams.get("challenge");
+      if (!message && !challenge) return;
+      setPendingIntent(message ? { kind: "message", authId: message } : { kind: "challenge", authId: challenge as string });
+      // Out of the address bar, so a reload doesn't re-run it.
+      url.searchParams.delete("message");
+      url.searchParams.delete("challenge");
+      window.history.replaceState({}, "", url.toString());
+    } catch { /* a malformed url is not worth a crash */ }
+  }, []);
 
   // Two prompts that both want the top of Home. They are queued rather than
   // stacked: arriving to three cards asking for something is worse than
@@ -766,6 +824,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const group = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null, requireSetup: undefined, season: undefined };
   const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
 
+
   /**
    * Asked once, then never again.
    *
@@ -919,7 +978,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
