@@ -42,6 +42,11 @@ import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
+import { SEED_GROUP_DATA } from "@/data/seed";
+
+/** Kept in step with the id Dashboard mounts for ?__dev_auto=1. */
+const DEV_LEAGUE_ID = "g_debug";
+const DEV_SEED_KEY = "g_main";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { WhatsNew } from "@/components/home/WhatsNew";
 import { RELEASE } from "@/lib/whatsNew";
@@ -208,6 +213,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
      setLoading(true);
      setLoadError(false);
      try {
+      // The dev league runs entirely offline, on the seed data.
+      //
+      // ?__dev_auto=1 mounts a league whose id is "g_debug", which is not a
+      // uuid, so fetchLeagueData has always failed on it and the app has
+      // always sat on "Loading…" forever. The shortcut could never show the
+      // app it exists to show.
+      //
+      // That is not a small thing. A crash shipped today that no typecheck,
+      // build or component preview could have caught, because it only
+      // happened on the transition from loading to loaded — the one
+      // transition nobody could reach locally. Being able to open the real
+      // app with realistic data is the check that was missing.
+      //
+      // Guarded the same way the shortcut itself is: never in production, so
+      // it cannot become a way past the login.
+      if (leagueId === DEV_LEAGUE_ID) {
+        if (process.env.NODE_ENV === "production") { setLoadError(true); setLoading(false); return; }
+        const seeded = SEED_GROUP_DATA[DEV_SEED_KEY];
+        setGroups([{ id: leagueId, name: "Dev League" }]);
+        setGid(leagueId);
+        setGdata({ players: seeded.players, matches: seeded.matches, fixtures: [], posts: [], me: seeded.players[0]?.id ?? null });
+        setOnboarded(true);
+        setLoading(false);
+        return;
+      }
+
       // One real league, from Supabase. No demo data — a new league starts empty.
       const cur = leagueId;
       const gs = [{ id: leagueId, name: leagueName || "League", ownerId: null }];
