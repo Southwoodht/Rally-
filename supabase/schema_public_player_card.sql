@@ -36,7 +36,7 @@ update public.profiles pr
     select distinct on (auth_id) auth_id, avatar_url
       from public.players
      where auth_id is not null and avatar_url is not null
-     order by auth_id, updated_at desc nulls last
+     order by auth_id, claimed_at desc nulls last, id
   ) pl
  where pr.id = pl.auth_id
    and pr.avatar_url is null;
@@ -65,7 +65,7 @@ begin
   return query
   with me as (
     -- Every league row this person owns. One human, several memberships.
-    select p.id, p.nick, p.level, p.home, p.updated_at
+    select p.id, p.nick, p.level, p.home, p.claimed_at
       from public.players p
      where p.auth_id = p_auth_id
   ),
@@ -95,7 +95,7 @@ begin
   latest as (
     -- The most recently touched league row wins for the descriptive bits.
     -- Somebody in two clubs has two of each and we have to pick one.
-    select nick, level, home from me order by updated_at desc nulls last limit 1
+    select nick, level, home from me order by claimed_at desc nulls last, id limit 1
   )
   select
     (select l.nick from latest l),
