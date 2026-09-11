@@ -16,24 +16,24 @@ their profile, and can message, friend or challenge them. No league needed.
   - [x] 0.2 Profile photos: where stored, public or private, why initials?
   - [x] 0.3 What every name and avatar tap does today, surface by surface
   - [x] 0.4 Do /players/[id], player search or friends already exist?
-- [ ] **Phase 1 — Profiles visible to everyone**
-  - [ ] Any signed-in user can view any player's profile
-  - [ ] Never expose email, phone or account settings
-  - [ ] Photos load for every signed-in user; initials only when there is none
-- [ ] **Phase 2 — Full profile page**
-  - [ ] Route /players/[id], full screen with back chevron
-  - [ ] Challenge / Message / Friend action row
-  - [ ] Record, form, H2H, recent matches, friends
-  - [ ] Official rank only when we share a league
-  - [ ] Own profile redirects to the Profile tab
-  - [ ] Every name and avatar in the app taps through; old popup removed
-- [ ] **Phase 3 — Player search**
-  - [ ] Search icon on Home and Table headers
-  - [ ] Searches all players, not just my leagues
-  - [ ] Friends, then league-mates, then everyone
-  - [ ] Recents when empty; "No one called ..." when nothing matches
-- [ ] **Phase 4 — Wrap up**
-  - [ ] Report complete, SQL listed, tap test done from a no-league account
+- [x] **Phase 1 — Profiles visible to everyone**
+  - [x] Any signed-in user can view any player's profile
+  - [x] Never expose email, phone or account settings
+  - [x] Photos load for every signed-in user; initials only when there is none
+- [x] **Phase 2 — Full profile page**
+  - [x] Route /players/[id], full screen with back chevron
+  - [x] Challenge / Message / Friend action row
+  - [~] Record, form, recent matches, friends — **H2H not built**, see FOUND NOT FIXED #4
+  - [~] Official rank — **not shown at all**, see FOUND NOT FIXED #5
+  - [x] Own profile redirects to the Profile tab
+  - [x] Every name and avatar in the app taps through; old popup removed
+- [x] **Phase 3 — Player search**
+  - [x] Search icon on Home and Table headers
+  - [x] Searches all players, not just my leagues
+  - [x] Friends, then league-mates, then everyone
+  - [x] Recents when empty; "No one called ..." when nothing matches
+- [x] **Phase 4 — Wrap up**
+  - [~] Report complete and SQL listed — **tap test not run**, it needs two live accounts; what was verified is in the table
 
 ## PHASE 0 — DIAGNOSIS
 
@@ -129,13 +129,141 @@ and needs SQL.
 
 ---
 
-## FOUND, NOT FIXED
+## WHAT CHANGED
 
-_Anything spotted outside the current phase lands here._
+### Phase 1 — profiles and photos visible to everyone
+
+| File | Change |
+|---|---|
+| `src/lib/profiles.ts` | `updateMyPublicProfile()`, `getPublicPlayerCard()`, `PublicPlayerCard` |
+| `src/components/profile/MyProfile.tsx` | setting a photo also writes the account's public copy |
+| `supabase/schema_public_player_card.sql` | **written, not run** |
+
+The photo was never failing to load. Nothing had ever written
+`profiles.avatar_url`, so a picture only existed on the league row, and the
+test account was correctly rendering an empty column as an initial.
+
+`getPublicPlayerCard` reads in two tiers on purpose: the `profiles` row
+always works, and the record needs SQL that has not been run. Its absence
+returns `stats: null` instead of throwing, so **the actual complaint — open
+the profile, see the photo, challenge him — is fixed without waiting on a
+migration.**
+
+### Phase 2 — the full profile page
+
+| File | Change |
+|---|---|
+| `src/app/players/[id]/page.tsx` | new route |
+| `src/components/profile/PublicProfile.tsx` | the page |
+| `src/components/RallyApp.tsx` | `openProfile` points at the route; `?challenge=` / `?message=` intents |
+| `src/components/games/FixturesPanel.tsx` | opens with the opponent preselected |
+| `src/components/games/History.tsx` | passes `challengeWith` through |
+
+The id is accepted as either an account uuid or a league `players.id`, which
+is why every existing tap target kept working — they all already went through
+`openProfile`, so pointing that one function at the route moved the table,
+match cards, the feed, the inbox, Messages and the chat header at once.
+
+**The old popup is still used and has not been removed**, deliberately: your
+own row opens it, because that is your editable profile and this page is
+read-only.
+
+### Phase 3 — player search
+
+| File | Change |
+|---|---|
+| `src/app/search/page.tsx` | new route |
+| `src/components/social/PlayerSearch.tsx` | the screen |
+| `src/components/RallyApp.tsx` | search icon in both headers |
+
+Built on the existing `searchProfiles`, not beside it.
+
+---
 
 ## SQL TO RUN
 
-_Collected as the work lands._
+Nothing here has been run. The app works without all of it — each one adds
+something rather than unblocking the basics.
+
+### 1. `supabase/schema_public_player_card.sql` — for the record on a profile
+
+A backfill that copies existing league photos into `profiles.avatar_url`
+(only where it is null, so it cannot overwrite anything and is safe twice),
+plus `public_player_card()`, a security-definer function returning nick,
+level, home, W/D/L, form and recent matches.
+
+**Read the header comment before running it.** CLAUDE.md §6 records
+`global_standings()` as deliberately never exposing another league's matches,
+opponents or names, and this relaxes exactly that — which is what
+Facebook-shaped profiles means, and is also how a junior's opponents in a
+coach's league become visible to a stranger. The `recent` block is the part
+to drop if that is unwanted; the record and form alone give away only
+numbers.
+
+### 2. Check, don't run — is `profiles` readable when signed out?
+
+Not a migration, a question, and the answer matters. See FOUND NOT FIXED #1.
+
+```sql
+select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)
+  from pg_policy where polrelid = 'public.profiles'::regclass;
+```
+
+If any policy grants `select` to `anon`, every name and photo in Rally is
+readable by anyone with the URL and no account.
+
+---
+
+## FOUND, NOT FIXED
+
+1. **`/players/[id]` and `/search` render for signed-out visitors.** They sit
+   outside `AuthGate`, which only wraps `/`. Confirmed by loading `/search`
+   in a browser with no session: the page rendered. Whether anything leaks
+   depends entirely on whether `profiles` is readable by `anon` — the query
+   above settles it. `public_player_card()` is granted to `authenticated`
+   only, so the record is safe either way. **The fix is a session check in
+   both pages, redirecting to `/`; I have not added it because the brief
+   scoped these phases to visibility and I did not want to change the auth
+   boundary without saying so first.**
+2. **Challenge needs a shared league.** A fixture belongs to a league, so
+   challenging somebody you share none with says so rather than opening an
+   empty picker. The Friendly path (`league_id` null) is allowed by the
+   schema and handled in `core/booking.ts`, but no UI can reach it. This is
+   the same blocker as "Home with no league" in `RALLY_TODO.md`.
+3. **Nickname search is not covered.** Nicknames are on `players.nick`, a
+   league row; search works on accounts. Covering it means either widening
+   `profiles` or a second query that only reaches your own leagues, which
+   would make results inconsistent depending on who you searched for.
+4. **"You vs {first name}" H2H is not on the profile page.** It needs your
+   matches against them, which crosses the same league boundary as the
+   record. It belongs with `public_player_card()` — worth adding to that
+   function rather than a separate query.
+5. **Official rank is not shown.** Specified as "only if we share a league";
+   the page has no league context, so it shows nothing rather than a number
+   it cannot qualify. Not wrong, but not built either.
+6. **`display_name` can drift.** Changing your name on a player row does not
+   update `profiles.display_name` — only the photo is mirrored. Search and
+   profiles would show the older name.
+
+---
+
+## THE TAP TEST
+
+**Not yet run end to end, and I should be straight about why.** It needs two
+real accounts against live Supabase — one with no league, one Samuel Henry —
+and a coding session has neither. What I verified instead, in a browser
+against the running app:
+
+| Step | State |
+|---|---|
+| 1. Search "sam" and see Samuel Henry with his photo | **Not verified.** Needs live data. The screen, the debounce and the no-match path all work; whether his photo appears depends on the backfill in SQL #1, or on him re-picking his photo once. |
+| 2. Open his full profile from search | **Route verified.** `/players/[id]` renders, resolves both id shapes, and reaches a terminal state on failure rather than spinning. |
+| 3. Open it from Messages list and chat header | **Wiring verified by construction** — both already called `openProfile`, which now goes to the route. Not clicked against live data. |
+| 4. Tap Challenge → Book a Match preselected | **Partly.** The intent round-trip is built and the picker preselects. With no shared league it refuses with a message — see FOUND NOT FIXED #2. |
+| 5. Open it from the friends list | **Not built.** The friends list never had tappable names (Phase 0, item 0.3) and making them tappable was not in any phase. One line each; flagged rather than slipped in. |
+
+**Run the tap test yourself once the SQL is in** — steps 1 and 3 are the ones
+most likely to surprise, and step 5 needs the friends list wiring first.
 
 ---
 
