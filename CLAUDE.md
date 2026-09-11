@@ -557,6 +557,26 @@ could book a match. **Cancel match therefore works for the two people in a
 fixture as well as for league staff** — that is live, not pending. It drops
 and recreates by name, so it is safe to re-run.
 
+**Run on 2026-09-11, all three:** `schema_message_images.sql` (one nullable
+`image_url` on messages), `schema_match_nudge.sql` (`nudged_at` /
+`nudged_by` plus `nudge_match()`) and `schema_public_player_card.sql`.
+
+That last one is the one to know about. It backfilled existing league photos
+into `profiles.avatar_url` — only where empty, so nothing was overwritten —
+and added `public_player_card()` and `search_player_accounts()`.
+
+**It deliberately relaxes the rule stated above about `global_standings()`.**
+Any signed-in account can now read any player's record, form, recent matches
+*and the names of their opponents*, in any league. Sam chose the full version
+on 2026-09-11 having been shown the narrower one (record and form only, no
+opponent names). Do not treat the old "never another league's matches,
+opponents, members or name" line as still true of profiles — it holds for
+`global_standings()` and no longer for `public_player_card()`.
+
+Both new functions are granted to `authenticated` only, never `anon`, and
+`search_player_accounts()` returns account ids rather than rows, so what can
+be *found* widened without what can be *read* widening.
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE
