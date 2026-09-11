@@ -31,6 +31,7 @@ export interface HomeProps {
   onResolveFixture?: (fixtureId: string, winner: "p1" | "p2" | "draw", score: string) => Promise<boolean> | void;
   onCancelFixture?: (fixtureId: string) => void;
   levelRecheck?: React.ReactNode;
+  whatsNew?: React.ReactNode;
   onEditMatch?: (matchId: string) => void;
   onSeeAllPending?: () => void;
   onBook?: () => void;
@@ -39,7 +40,7 @@ export interface HomeProps {
 }
 
 export function Home({
-  header, standing, pending, nextUp, thisMonth, awaitingResult, levelRecheck,
+  header, standing, pending, nextUp, thisMonth, awaitingResult, levelRecheck, whatsNew,
   onNudge, onEditMatch, onSeeAllPending, onBook, onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   const hasPending = !!pending && pending.length > 0;
@@ -53,6 +54,7 @@ export function Home({
         </div>
       )}
 
+      {whatsNew}
       {levelRecheck}
 
       {/* Above pending confirmations: a result nobody has entered is a

@@ -42,6 +42,8 @@ import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
+import { WhatsNew } from "@/components/home/WhatsNew";
+import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
 import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
@@ -128,6 +130,41 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [declinedCandidate, setDeclinedCandidate] = useState(false);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
   const [myAuthId, setMyAuthId] = useState<string | null>(null);
+
+  // Two prompts that both want the top of Home. They are queued rather than
+  // stacked: arriving to three cards asking for something is worse than
+  // arriving to one, and neither is urgent.
+  const WHATS_NEW_KEY = "whatsNew.seen";
+  const [newsSeen, setNewsSeen] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    let live = true;
+    storage.get(WHATS_NEW_KEY)
+      .then((r) => { if (live) setNewsSeen(r?.value ?? null); })
+      .catch(() => { if (live) setNewsSeen(RELEASE); });
+    return () => { live = false; };
+  }, []);
+  const closeWhatsNew = () => {
+    setNewsSeen(RELEASE);
+    storage.set(WHATS_NEW_KEY, RELEASE).catch((e) => console.error("Couldn't remember what's new", e));
+  };
+
+  const LEVEL_RECHECK_KEY = "levelRecheck.v6";
+  const [levelAsked, setLevelAsked] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    storage.get(LEVEL_RECHECK_KEY)
+      .then((r) => { if (live) setLevelAsked(!!r?.value); })
+      // A failed read must not look like "never asked" — that is how somebody
+      // gets the same card every time the network hiccups.
+      .catch(() => { if (live) setLevelAsked(true); });
+    return () => { live = false; };
+  }, []);
+
+  const closeLevelRecheck = () => {
+    setLevelAsked(true);
+    storage.set(LEVEL_RECHECK_KEY, String(Date.now())).catch((e) => console.error("Couldn't remember the level prompt", e));
+  };
+
 
   useEffect(() => {
     listMyAdminClubs().then((cs) => setIsClubAdmin(cs.length > 0)).catch(() => {});
@@ -645,23 +682,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
    * now, because a prompt that returns after you declined it is not a prompt,
    * it is nagging.
    */
-  const LEVEL_RECHECK_KEY = "levelRecheck.v6";
-  const [levelAsked, setLevelAsked] = useState<boolean | null>(null);
-  useEffect(() => {
-    let live = true;
-    storage.get(LEVEL_RECHECK_KEY)
-      .then((r) => { if (live) setLevelAsked(!!r?.value); })
-      // A failed read must not look like "never asked" — that is how somebody
-      // gets the same card every time the network hiccups.
-      .catch(() => { if (live) setLevelAsked(true); });
-    return () => { live = false; };
-  }, [meId]);
-
-  const closeLevelRecheck = () => {
-    setLevelAsked(true);
-    storage.set(LEVEL_RECHECK_KEY, String(Date.now())).catch((e) => console.error("Couldn't remember the level prompt", e));
-  };
-
 
   // Gated on the real league_members.role from Postgres, not the group's
   // ownerId field — that field is never actually persisted anywhere, so it
@@ -888,7 +908,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             nextUp={homeData?.nextUp}
             thisMonth={homeData?.thisMonth}
             onNudge={nudgeMatch}
-            levelRecheck={levelAsked === false && meId ? (
+            whatsNew={newsSeen !== undefined && newsSeen !== RELEASE ? <WhatsNew onDismiss={closeWhatsNew} /> : null}
+            levelRecheck={newsSeen === RELEASE && levelAsked === false && meId ? (
               <LevelRecheck
                 current={players.find((p) => p.id === meId)?.level || null}
                 onPick={(cat, sub) => {
