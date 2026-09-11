@@ -60,7 +60,12 @@ returns table (
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $
+-- The names in `returns table` above are also variables in here, so a bare
+-- column with the same name — nick, level, home, wins, form, recent — is
+-- ambiguous and raises at call time. This says columns win, and every
+-- reference below is qualified anyway. Both, because this failed twice.
+#variable_conflict use_column
 begin
   return query
   with me as (
@@ -95,7 +100,7 @@ begin
   latest as (
     -- The most recently touched league row wins for the descriptive bits.
     -- Somebody in two clubs has two of each and we have to pick one.
-    select nick, level, home from me order by claimed_at desc nulls last, id limit 1
+    select me.nick, me.level, me.home from me order by me.claimed_at desc nulls last, me.id limit 1
   )
   select
     (select l.nick from latest l),
