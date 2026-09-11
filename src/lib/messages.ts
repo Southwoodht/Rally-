@@ -153,3 +153,27 @@ export async function unreadMessageCount(): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Ask somebody to confirm a result you logged.
+ *
+ * Two halves that must not drift: the message is the delivery and
+ * `matches.nudged_at` is the record. A message can be deleted; the record has
+ * to survive that, or the 24-hour limit forgets itself.
+ *
+ * The limit is enforced by `nudge_match()` server-side and not by this
+ * function, and certainly not by a disabled button. It throws when it refuses
+ * and the reason is worth showing — "Already nudged in the last 24 hours" is
+ * something the person can act on.
+ *
+ * The stamp goes first. If the message send fails afterwards you have a
+ * recorded nudge with nothing delivered, which is the harmless way round: the
+ * worst case is waiting a day to try again. The other order risks nagging
+ * somebody repeatedly, which is the whole thing this limit exists to stop.
+ */
+export async function nudgeAboutMatch(matchId: string, otherAuthId: string, text: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  await run(supabase.rpc("nudge_match", { p_match_id: matchId }), "sending the nudge");
+  const threadId = await startThread(otherAuthId);
+  await sendMessage(threadId, text);
+}

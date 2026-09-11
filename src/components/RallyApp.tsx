@@ -29,7 +29,7 @@ import { MessageRobins } from "@/components/ui/MessageRobins";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
-import { unreadMessageCount } from "@/lib/messages";
+import { unreadMessageCount , nudgeAboutMatch } from "@/lib/messages";
 import { LeagueHome } from "@/components/table/LeagueHome";
 import PlayerClaim from "@/components/auth/PlayerClaim";
 import { Avatar } from "@/components/ui/Avatar";
@@ -370,6 +370,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const addFixture = (p1, p2, booked = null) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked }] });
   const removeFixture = (id) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
+  /**
+   * Chase a result you logged.
+   *
+   * The message is how it arrives; matches.nudged_at is what the app
+   * remembers. A refusal is worth reading out loud — "already nudged in the
+   * last 24 hours" tells you what to do, where a generic failure does not.
+   */
+  const nudgeMatch = async (matchId: string) => {
+    const m = gdata.matches.find((x) => x.id === matchId);
+    if (!m) return;
+    const otherId = m.p1 === meId ? m.p2 : m.p1;
+    const other = gdata.players.find((p) => p.id === otherId);
+    if (!other?.auth_id) { flash("They haven't got an account to nudge."); return; }
+    const me = gdata.players.find((p) => p.id === meId);
+    const mine = me ? fullNameOf(me) : "Someone";
+    try {
+      await nudgeAboutMatch(matchId, other.auth_id,
+        `${mine} logged your match and it's waiting on you — confirm or dispute it in Rally.`);
+      setGdata({ ...gdata, matches: gdata.matches.map((x) => x.id === matchId ? { ...x, nudgedAt: Date.now() } : x) });
+      flash("Nudged " + fullNameOf(other));
+    } catch (e: any) {
+      console.error("Nudge failed", e);
+      flash(e?.message || "Couldn't nudge just now");
+    }
+  };
+
   const resolveFixture = async (fx, winner, score): Promise<boolean> => {
     if (winner === null) {
       return saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== fx.matchId), fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: false, winner: undefined, matchId: undefined } : f) });
@@ -674,6 +700,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           // auto-confirm sweep and never expire, so the card says nothing
           // about timing rather than inventing a deadline.
           autoConfirmsInHours: remaining === null ? null : Math.max(0, Math.ceil(remaining / 3600000)),
+          nudgedAt: m.nudgedAt ?? null,
         };
       });
 
@@ -831,6 +858,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             pending={homeData?.pending}
             nextUp={homeData?.nextUp}
             thisMonth={homeData?.thisMonth}
+            onNudge={nudgeMatch}
             awaitingResult={homeData?.awaitingResult}
             onResolveFixture={(fixtureId, winner, score) => {
               const fx = (fixtures || []).find((f) => f.id === fixtureId);

@@ -109,6 +109,7 @@ const assertWritable = (m: any) => {
 };
 
 const rowToMatch = (r: any) => ({
+  nudgedAt: r.nudged_at ? new Date(r.nudged_at).getTime() : null,
   id: r.id,
   date: new Date(r.date).getTime(),
   p1: r.p1,

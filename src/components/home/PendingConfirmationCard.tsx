@@ -28,12 +28,23 @@ export interface PendingConfirmation {
    * The card says nothing about timing rather than inventing a deadline.
    */
   autoConfirmsInHours?: number | null;
+  /** When they were last chased, or null. Drives the button's own label. */
+  nudgedAt?: number | null;
 }
 
 export interface PendingConfirmationCardProps {
   item: PendingConfirmation;
   onNudge?: (matchId: string) => void;
   onEdit?: (matchId: string) => void;
+}
+
+/** "20m ago", "2h ago", "yesterday" — short enough to sit on a button. */
+function agoLabel(ms: number): string {
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return Math.max(1, mins) + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return "yesterday";
 }
 
 const btn = (fill: string, ink: string): React.CSSProperties => ({
@@ -62,7 +73,23 @@ export function PendingConfirmationCard({ item, onNudge, onEdit }: PendingConfir
         </div>
       </div>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        {onNudge && <button onClick={() => onNudge(item.matchId)} style={btn(FEED_LIME, FEED_LIME_INK)}>Nudge</button>}
+        {/* The button says what happened rather than going grey. "Nudged 2h
+            ago" answers the question the greyness would raise, and the real
+            limit is server-side anyway — this label is a courtesy, not the
+            rule. */}
+        {onNudge && (() => {
+          const since = item.nudgedAt ? Date.now() - item.nudgedAt : null;
+          const recent = since != null && since < 24 * 3600 * 1000;
+          return (
+            <button
+              onClick={() => !recent && onNudge(item.matchId)}
+              disabled={recent}
+              style={recent ? btn(FEED_RAISED, FEED_TEXT_MID) : btn(FEED_LIME, FEED_LIME_INK)}
+            >
+              {recent ? "Nudged " + agoLabel(since!) : "Nudge"}
+            </button>
+          );
+        })()}
         <button onClick={() => onEdit && onEdit(item.matchId)} style={btn(FEED_RAISED, FEED_TEXT_MID)}>Edit</button>
       </div>
     </div>
