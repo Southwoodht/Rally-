@@ -254,6 +254,25 @@ export function PublicProfile({ id }: { id: string }) {
         </SurfaceCard>
       )}
 
+      {/* You against them. Only when you have actually played — a 0-0-0
+          head to head is not a fact about a rivalry, it is the absence of
+          one, and printing it invents a history. */}
+      {s?.h2h && (
+        <SurfaceCard radius={20} pad="16px" style={{ marginBottom: 12 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>
+            You v {(card.display_name || "them").trim().split(/s+/)[0]}
+          </div>
+          <div style={{ display: "flex", gap: 18 }}>
+            {([["Won", s.h2h.w], ["Drawn", s.h2h.d], ["Lost", s.h2h.l]] as Array<[string, number]>).map(([label, n]) => (
+              <div key={label}>
+                <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 24, color: label === "Won" ? FEED_LIME : FEED_TEXT_HI }}>{n}</div>
+                <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      )}
+
       {!!s?.recent?.length && (
         <SurfaceCard radius={20} pad="16px" style={{ marginBottom: 12 }}>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Recent matches</div>

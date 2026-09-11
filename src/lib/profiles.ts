@@ -40,6 +40,24 @@ export async function searchProfiles(query: string, excludeId?: string): Promise
   ]);
   const seen = new Map<string, Profile>();
   for (const row of [...((byCode as Profile[]) || []), ...((byName as Profile[]) || [])]) seen.set(row.id, row);
+
+  // Nicknames live on league rows, which a stranger cannot read, so matching
+  // them needs a function. Without it, searching "Cheese" finds nobody unless
+  // you are already in their league — the same word giving different answers
+  // to different people. Absent until the SQL is run, and its absence just
+  // means names-only, which is what happened before.
+  try {
+    const res: any = await withSupabaseTimeout(supabase.rpc("search_player_accounts", { p_query: q }), FAILED as any);
+    const ids: string[] = res !== (FAILED as any) && !res.error ? (res.data || []).map((r: any) => r.auth_id).filter(Boolean) : [];
+    const missing = ids.filter((id) => !seen.has(id));
+    if (missing.length) {
+      const extra = await run(supabase.from("profiles").select("*").in("id", missing), "searching players");
+      for (const row of (extra as Profile[]) || []) seen.set(row.id, row);
+    }
+  } catch (e) {
+    console.warn("Nickname search unavailable", e);
+  }
+
   const rows = Array.from(seen.values());
   return excludeId ? rows.filter((r) => r.id !== excludeId) : rows;
 }
@@ -97,6 +115,8 @@ export interface PublicPlayerCard {
     losses: number;
     form: string[];
     recent: Array<{ id: string; date: string; won: boolean | null; score: string | null; opponent: string }>;
+    /** You against them. Computed server-side, where both halves are visible. */
+    h2h: { w: number; d: number; l: number } | null;
   } | null;
 }
 
@@ -121,6 +141,9 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
           losses: d.losses ?? 0,
           form: d.form ?? [],
           recent: d.recent ?? [],
+          h2h: (d.h2h_w ?? 0) + (d.h2h_d ?? 0) + (d.h2h_l ?? 0) > 0
+            ? { w: d.h2h_w ?? 0, d: d.h2h_d ?? 0, l: d.h2h_l ?? 0 }
+            : null,
         };
       }
     }

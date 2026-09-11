@@ -52,7 +52,10 @@ returns table (
   draws  int,
   losses int,
   form   text[],
-  recent jsonb
+  recent jsonb,
+  h2h_w  int,
+  h2h_d  int,
+  h2h_l  int
 )
 language plpgsql
 security definer
@@ -72,6 +75,22 @@ begin
       from public.matches m
      where m.status = 'confirmed'
        and (m.p1 in (select id from me) or m.p2 in (select id from me))
+  ),
+  you as (
+    -- The caller. auth.uid() is available inside a security-definer
+    -- function, which is what makes "you vs them" computable here rather
+    -- than needing a second round trip that could not see both sides.
+    select id from public.players where auth_id = auth.uid()
+  ),
+  between_us as (
+    select m.*,
+           case when m.p1 in (select id from you) then 'p1' else 'p2' end as your_side
+      from public.matches m
+     where m.status = 'confirmed'
+       and (
+         (m.p1 in (select id from you) and m.p2 in (select id from me))
+         or (m.p2 in (select id from you) and m.p1 in (select id from me))
+       )
   ),
   latest as (
     -- The most recently touched league row wins for the descriptive bits.
@@ -100,7 +119,10 @@ begin
             ) order by r.date desc), '[]'::jsonb)
        from (select * from mine order by date desc limit 10) r
        join public.players op
-         on op.id = case when r.my_side = 'p1' then r.p2 else r.p1 end);
+         on op.id = case when r.my_side = 'p1' then r.p2 else r.p1 end),
+    (select count(*)::int from between_us where winner = your_side),
+    (select count(*)::int from between_us where winner = 'draw'),
+    (select count(*)::int from between_us where winner <> 'draw' and winner <> your_side);
 end;
 $$;
 
@@ -108,3 +130,34 @@ $$;
 -- not on the open internet.
 revoke all on function public.public_player_card(uuid) from public;
 grant execute on function public.public_player_card(uuid) to authenticated;
+
+
+-- 3. Search, including nicknames ------------------------------------------
+--
+-- searchProfiles() in the app queries `profiles` and so can only match a
+-- display name. Nicknames live on `players.nick`, a league row, which a
+-- stranger cannot read — so without this, searching "Cheese" finds nobody
+-- unless you are already in their league, and searching the same word gives
+-- different answers to different people.
+--
+-- Returns account ids only. The caller then reads those profiles through the
+-- policies that already exist, so this widens what can be *found* without
+-- widening what can be *read*.
+
+create or replace function public.search_player_accounts(p_query text)
+returns table (auth_id uuid)
+language sql
+security definer
+set search_path = public
+as $$
+  select distinct p.auth_id
+    from public.players p
+   where p.auth_id is not null
+     and p_query is not null
+     and length(btrim(p_query)) >= 2
+     and p.nick ilike '%' || btrim(p_query) || '%'
+   limit 20;
+$$;
+
+revoke all on function public.search_player_accounts(text) from public;
+grant execute on function public.search_player_accounts(text) to authenticated;

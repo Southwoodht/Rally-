@@ -23,7 +23,7 @@ their profile, and can message, friend or challenge them. No league needed.
 - [x] **Phase 2 — Full profile page**
   - [x] Route /players/[id], full screen with back chevron
   - [x] Challenge / Message / Friend action row
-  - [~] Record, form, recent matches, friends — **H2H not built**, see FOUND NOT FIXED #4
+  - [x] Record, form, H2H, recent matches, friends
   - [~] Official rank — **not shown at all**, see FOUND NOT FIXED #5
   - [x] Own profile redirects to the Profile tab
   - [x] Every name and avatar in the app taps through; old popup removed
@@ -216,7 +216,7 @@ readable by anyone with the URL and no account.
 
 ## FOUND, NOT FIXED
 
-1. **`/players/[id]` and `/search` render for signed-out visitors.** They sit
+1. ~~**`/players/[id]` and `/search` render for signed-out visitors.**~~ **FIXED** — both check for a session and offer a way back instead of rendering. Original note: They sit
    outside `AuthGate`, which only wraps `/`. Confirmed by loading `/search`
    in a browser with no session: the page rendered. Whether anything leaks
    depends entirely on whether `profiles` is readable by `anon` — the query
@@ -230,18 +230,18 @@ readable by anyone with the URL and no account.
    empty picker. The Friendly path (`league_id` null) is allowed by the
    schema and handled in `core/booking.ts`, but no UI can reach it. This is
    the same blocker as "Home with no league" in `RALLY_TODO.md`.
-3. **Nickname search is not covered.** Nicknames are on `players.nick`, a
+3. ~~**Nickname search is not covered.**~~ **FIXED**, and it needed SQL: `search_player_accounts()` matches `players.nick` and returns account ids only, so what can be *found* widens without what can be *read* widening. Merged into `searchProfiles`; absent until the SQL runs, which just means names-only. Original note: Nicknames are on `players.nick`, a
    league row; search works on accounts. Covering it means either widening
    `profiles` or a second query that only reaches your own leagues, which
    would make results inconsistent depending on who you searched for.
-4. **"You vs {first name}" H2H is not on the profile page.** It needs your
+4. ~~**"You vs {first name}" H2H is not on the profile page.**~~ **FIXED** — added to `public_player_card()`, which can see both halves because `auth.uid()` is available inside a security-definer function. Only rendered when you have actually played: a 0-0-0 head to head is the absence of a rivalry, not a fact about one. Original note: It needs your
    matches against them, which crosses the same league boundary as the
    record. It belongs with `public_player_card()` — worth adding to that
    function rather than a separate query.
 5. **Official rank is not shown.** Specified as "only if we share a league";
    the page has no league context, so it shows nothing rather than a number
    it cannot qualify. Not wrong, but not built either.
-6. **`display_name` can drift.** Changing your name on a player row does not
+6. ~~**`display_name` can drift.**~~ **FIXED** — a name change mirrors to the account row, like the photo. Original note: Changing your name on a player row does not
    update `profiles.display_name` — only the photo is mirrored. Search and
    profiles would show the older name.
 
