@@ -5,6 +5,7 @@ import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { readPhotoAsDataUrl } from "@/lib/photo";
+import { updateMyPublicProfile } from "@/lib/profiles";
 import { BALL, CHALK, MUTED, NICKS, body, card, miniInput } from "@/lib/theme";
 
 const PHOTO_SIZE = 160;
@@ -13,7 +14,19 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
   const me = players.find((p) => p.id === meId);
   const fileRef = useRef<HTMLInputElement>(null);
   if (!me) return <Empty msg="Pick who you are first." />;
-  const setField = (key, val) => setPlayers(players.map((p) => p.id === meId ? { ...p, [key]: val } : p));
+  const setField = (key, val) => {
+    setPlayers(players.map((p) => p.id === meId ? { ...p, [key]: val } : p));
+    // A photo on a league row is only visible to that league. The account's
+    // own profile row is what everybody else can read, and nothing had ever
+    // written to it — which is the whole reason a stranger sees your initial
+    // instead of your face. Keep the public copy in step.
+    //
+    // Deliberately fire-and-forget: failing to update the public copy is not
+    // a reason to refuse somebody their own profile picture.
+    if (key === "avatarUrl") {
+      updateMyPublicProfile({ avatar_url: val }).catch((e) => console.warn("Couldn't update the public photo", e));
+    }
+  };
   const setLevel = (cat, sub) => setPlayers(players.map((p) => p.id === meId ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
   const L = ({ children }: any) => <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
   const onPickPhoto = async (file: File) => {
