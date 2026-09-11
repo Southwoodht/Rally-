@@ -29,7 +29,7 @@ import { MessageRobins } from "@/components/ui/MessageRobins";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
-import { unreadMessageCount , nudgeAboutMatch } from "@/lib/messages";
+import { nudgeAboutMatch, sendMessage, startThread, unreadMessageCount } from "@/lib/messages";
 import { LeagueHome } from "@/components/table/LeagueHome";
 import PlayerClaim from "@/components/auth/PlayerClaim";
 import { Avatar } from "@/components/ui/Avatar";
@@ -40,7 +40,7 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { WhatsNew } from "@/components/home/WhatsNew";
@@ -431,7 +431,44 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
   const addFixture = (p1, p2, booked = null) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked }] });
-  const removeFixture = (id) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
+  /**
+   * Call off an arranged match, and say so.
+   *
+   * Telling them was the part I left out, on the grounds that it needed a
+   * soft cancel and a migration: the row is deleted, so there is nothing
+   * left for the notification builder to read. The reasoning was sound and
+   * the conclusion was wrong — the message does not have to be derived from
+   * the row. It can just be sent, now, while we still know what was
+   * cancelled. The nudge already works exactly this way.
+   *
+   * Only somebody with an account gets told, because a shell player has
+   * nowhere to be told. And the cancellation stands whether or not the
+   * message gets through: being unable to tell them is not a reason to keep
+   * a match in the diary that nobody is turning up to.
+   */
+  const removeFixture = async (id) => {
+    const fx = (gdata.fixtures || []).find((f) => f.id === id);
+    const ok = await saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
+    if (!ok || !fx) return ok;
+
+    const otherId = fx.p1 === meId ? fx.p2 : fx.p2 === meId ? fx.p1 : null;
+    const other = otherId ? gdata.players.find((p) => p.id === otherId) : null;
+    if (!other?.auth_id) return ok;
+
+    const me = gdata.players.find((p) => p.id === meId);
+    const mine = me ? fullNameOf(me) : "Someone";
+    const when = fx.booked ? formatMatchDateTime(fx.booked) : null;
+    try {
+      const threadId = await startThread(other.auth_id);
+      await sendMessage(threadId, when
+        ? `${mine} cancelled your match on ${when}.`
+        : `${mine} cancelled your match.`);
+    } catch (e) {
+      console.error("Cancelled the match but couldn't tell them", e);
+      flash("Match cancelled — couldn't message " + fullNameOf(other));
+    }
+    return ok;
+  };
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
   /**
    * Chase a result you logged.
