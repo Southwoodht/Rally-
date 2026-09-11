@@ -52,6 +52,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
   const [meId, setMeId] = useState<string | null>(null);
   const [recents, setRecents] = useState<Recent[]>([]);
   const [searching, setSearching] = useState(false);
+  const [signedOut, setSignedOut] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -61,6 +62,8 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
     (async () => {
       try {
         const mine = await currentUserId();
+        // Outside AuthGate, same as the profile page.
+        if (!mine) { if (live) setSignedOut(true); return; }
         if (live) setMeId(mine);
         const fs = await listFriends();
         if (live) setFriendIds(new Set(fs.map((f) => f.profile.id)));
@@ -141,7 +144,13 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
           Find a player
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 9, background: FEED_RAISED, borderRadius: 14, padding: "0 13px", marginBottom: 16 }}>
+        {signedOut && (
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+            Sign in to search for players. <a href="/" style={{ color: FEED_TEXT_HI }}>Go to Rally</a>
+          </div>
+        )}
+
+        {!signedOut && <div style={{ display: "flex", alignItems: "center", gap: 9, background: FEED_RAISED, borderRadius: 14, padding: "0 13px", marginBottom: 16 }}>
           <SearchIcon size={17} color={FEED_TEXT_MID} strokeWidth={2} />
           <input
             ref={inputRef}
@@ -154,7 +163,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
               color: FEED_TEXT_HI, fontFamily: body, fontWeight: 400, fontSize: 15.5, outline: "none",
             }}
           />
-        </div>
+        </div>}
 
         {!q.trim() && !!recents.length && (
           <>

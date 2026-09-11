@@ -38,7 +38,7 @@ export function PublicProfile({ id }: { id: string }) {
   const [friendState, setFriendState] = useState<FriendState>("unknown");
   const [friendRowId, setFriendRowId] = useState<string | null>(null);
   const [friends, setFriends] = useState<FriendWithProfile[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "unclaimed" | "missing">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "unclaimed" | "missing" | "signedOut">("loading");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -46,6 +46,11 @@ export function PublicProfile({ id }: { id: string }) {
     (async () => {
       try {
         const mine = await currentUserId();
+        // These routes sit outside AuthGate, which only wraps "/". Without
+        // this a signed-out visitor got the page — and whether that leaked
+        // anything came down to whether the profiles table happens to be
+        // readable by anon, which is not a thing to leave to chance.
+        if (!mine) { if (live) setState("signedOut"); return; }
         if (live) setMeId(mine);
 
         let resolved: string | null = /^[0-9a-f-]{36}$/i.test(id) ? id : null;
@@ -108,6 +113,20 @@ export function PublicProfile({ id }: { id: string }) {
 
   if (state === "loading") {
     return shell(<div style={{ fontFamily: body, color: FEED_TEXT_MID, padding: 30, textAlign: "center" }}>Loading…</div>);
+  }
+
+  if (state === "signedOut") {
+    return shell(
+      <SurfaceCard radius={20} pad="22px 18px">
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>Sign in to see profiles</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>
+          Rally profiles are for people with an account.
+        </div>
+        <a href="/" style={{ display: "block", textAlign: "center", background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 16, padding: "12px 14px", marginTop: 16, textDecoration: "none", fontFamily: body, fontWeight: 500, fontSize: 15 }}>
+          Go to Rally
+        </a>
+      </SurfaceCard>
+    );
   }
 
   if (state === "unclaimed") {

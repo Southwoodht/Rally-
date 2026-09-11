@@ -26,6 +26,15 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
     if (key === "avatarUrl") {
       updateMyPublicProfile({ avatar_url: val }).catch((e) => console.warn("Couldn't update the public photo", e));
     }
+    // Same for the name, or search and every profile page keeps showing who
+    // you used to be.
+    if (key === "name" || key === "last") {
+      const me2 = players.find((p) => p.id === meId) || {};
+      const first = key === "name" ? val : (me2 as any).name;
+      const last = key === "last" ? val : (me2 as any).last;
+      const full = [first, last].filter(Boolean).join(" ").trim();
+      if (full) updateMyPublicProfile({ display_name: full }).catch((e) => console.warn("Couldn't update the public name", e));
+    }
   };
   const setLevel = (cat, sub) => setPlayers(players.map((p) => p.id === meId ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
   const L = ({ children }: any) => <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
