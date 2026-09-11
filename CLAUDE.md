@@ -536,13 +536,12 @@ The real test is the app: if the Global table still shows the network
 ordering, the RPC is being called. If it had failed, the code falls back to
 the old maths and the order visibly changes.
 
-**Written 2026-09-11: `schema_fixture_delete_participants.sql`.** One policy,
-no data touched. DELETE on fixtures was staff-only, which was fine when only
-an owner could generate a season and stopped being fine once anybody could
-book a match. Until it is run, Cancel match works for owners and editors
-only; a participant's attempt fails **visibly** rather than silently, because
-`deleteRow` checks whether the row survived. Sam was given it on 2026-09-11 —
-confirm before assuming it ran.
+**Run on 2026-09-11: `schema_fixture_delete_participants.sql`.** One policy,
+no data touched. DELETE on fixtures had been staff-only, which was fine when
+only an owner could generate a season and stopped being fine once anybody
+could book a match. **Cancel match therefore works for the two people in a
+fixture as well as for league staff** — that is live, not pending. It drops
+and recreates by name, so it is safe to re-run.
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
