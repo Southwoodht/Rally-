@@ -95,7 +95,11 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const done = fixtures.filter((f: any) => f.done).length;
   const total = fixtures.length;
 
-  const openRow = (f: any) => { setOpen(open === f.id ? null : f.id); setWhenText(toInputValue(f.booked)); setScoreText(""); };
+  // Opening a DIFFERENT row clears the score; closing and reopening the same
+  // one keeps it. Both halves matter: a score typed against Zaach must not
+  // reappear under Hugh, and closing a row by accident should not throw away
+  // what you had just typed into it.
+  const openRow = (f: any) => { if (open !== f.id) setScoreText(""); setSaveError(null); setOpen(open === f.id ? null : f.id); setWhenText(toInputValue(f.booked)); setScoreText(""); };
 
   // Soonest booking first, then everything unbooked, then what's been played.
   // A list of arranged games is a diary, and a diary that isn't in order is

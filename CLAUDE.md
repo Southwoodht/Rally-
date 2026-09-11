@@ -622,19 +622,23 @@ gitignored. Never commit it, never paste its contents anywhere.
   marked `done` with a `match_id` pointing at a match that was never
   created. Not hypothetical in shape, though it is not what bit on 2026-09-11
   — that one wrote nothing at all.
-- **`assertWritable` scans every match in the league, not just the new one.**
-  It is a plain `throw` inside the loop that builds the write ops, so one
-  malformed row — no winner, status outside the booking set — aborts
-  `syncMatches` **before a single row is written**, while the other three
-  syncs are already away in their own promises. Every match write in that
-  league would fail from then on, with the error pointing nowhere near the
-  cause.
-- **A score typed with no winner tapped is lost silently.** The three winner
-  buttons on a fixture *are* the submit; closing the row discards what you
-  typed and nothing mentions it.
-- **`matchToRow` drops `loggedAt`.** Both `LogResult` and `resolveFixture`
-  set it on the match object and there is no column for it, so it never
-  persists. Harmless today; misleading if anything starts reading it.
+- **`assertWritable` throwing takes the whole matches sync with it.** It is a
+  plain `throw` inside the loop that builds the write ops, so a match it
+  refuses aborts `syncMatches` **before a single row is written**, while the
+  other three syncs are already away in their own promises — a save that is
+  half applied and reported as one failure.
+  (Corrected 2026-09-11: an earlier note here claimed it scanned every match
+  in the league and that one bad row would block all writes forever. It does
+  not. `toRow` is only called for rows being inserted or changed, so an
+  untouched bad row is never validated.)
+- ~~A score typed with no winner tapped is lost silently.~~ Fixed
+  2026-09-11: the text survives closing and reopening the same row, and is
+  cleared when you open a different one so it cannot reappear against the
+  wrong opponent.
+- ~~`matchToRow` drops `loggedAt`.~~ **Wrong, withdrawn 2026-09-11.** There
+  is no `logged_at` column because none is needed: `rowToMatch` derives
+  `loggedAt` from `created_at`, which Postgres sets. Setting it locally at
+  creation is a harmless nicety the reload replaces.
 
 **A list presented as the contents of a number must contain that number's
 contents.** Sam counted 31 wins on his profile where the tile said 28. The

@@ -37,6 +37,11 @@ a coding session.
       server HTML and re-rendering from scratch
 - [x] **The nudge** — chase a pending result. Needs SQL (below).
 - [x] **Re-pick your level** — asked once, "Not now" is a real answer
+- [x] **Pictures in messages** — needs SQL (below)
+- [x] **Emoji avatars → a drawn set** — no migration needed after all; the
+      stored emoji is treated as an id and drawn, so existing players changed
+      the moment it deployed
+- [x] **A score typed with no winner is no longer lost**
 - [x] **Head-to-Head favourite %** — turned out to be already built; the note
       in CLAUDE.md predated the scoreboard rebuild. Numbers checked, left
       alone. If something specific is wrong with this screen, say what.
@@ -46,9 +51,6 @@ a coding session.
 ## To do
 
 - [ ] **"What's new"** — as a local notification, NOT a post to the league
-- [ ] **Emoji avatars → a drawn set** — needs `Avatar` changed and a
-      migration, because players have the character stored on their row
-- [ ] **Pictures in messages**
 - [ ] **Home with no league** — currently you cannot get past create-or-join
 - [ ] **Friendlies** — a match with no league. Blocked by the above.
 - [ ] **Book anyone** — friends, player code, search, not just the league
@@ -56,10 +58,11 @@ a coding session.
 - [ ] **Fancy loading screen**
 - [ ] **The four syncs are not atomic** — a fixture can be marked played with
       no result behind it
-- [ ] **`assertWritable` scans every match** — one bad row would block every
-      match write in the league
-- [ ] **A score typed with no winner tapped is lost silently**
-- [ ] **`matchToRow` drops `loggedAt`** — set, never stored
+- [ ] **`assertWritable` throwing takes the whole matches sync with it** —
+      not as bad as I first wrote it: it only validates rows being written,
+      so an untouched bad row is never seen. Two earlier entries here were
+      wrong and have been withdrawn (it does not scan every match, and
+      `loggedAt` is persisted — via `created_at`).
 
 ## Last, by Sam's instruction
 
@@ -95,6 +98,13 @@ for the same command are OR'd, so an extra UPDATE policy on `matches` would
 have *widened* access and let the reporter rewrite any column on a pending
 match. The 24-hour limit is enforced inside the function instead.
 
-### 3. Pending — written as the work lands
+### 3. `supabase/schema_message_images.sql` — NEEDED
+
+One nullable `image_url` column on `messages`. No policy changes: the
+existing message policies already decide who can see a row.
+
+**Until this runs, sending a picture fails.** Text messages are unaffected.
+
+### 4. Pending — written as the work lands
 
 Collected here as each feature needs one.
