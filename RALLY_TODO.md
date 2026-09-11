@@ -49,11 +49,27 @@ a coding session.
 - [x] **The crash** — hooks below an early return; a check now runs in the gate
 - [x] **The dev league actually loads**, which is how the coloured-circle
       avatars got caught
+- [x] **Profiles for everyone** — /players/[id], search, tappable friends,
+      photo and name mirrored to the account row, signed-out routes closed
+- [x] **Search opens the real profile** — the one with rivalries, best wins
+      and head to head, not a summary of it
+- [x] **The profile is full screen**, not an 88vh sheet
+- [x] **A guard for SQL written blind** — `npm run check:sql`, in the gate
 - [x] **Head-to-Head favourite %** — turned out to be already built; the note
       in CLAUDE.md predated the scoreboard rebuild. Numbers checked, left
       alone. If something specific is wrong with this screen, say what.
 
 ## In progress
+
+## Checked on screen, 2026-09-11 night
+
+Home, Table, Fixtures and Profile all render correctly in the dev league
+with drawn avatars, correct records and the search icon in both headers.
+Zero emoji anywhere. Opening a player from the Table gives the full profile
+full screen; Back returns you where you were.
+
+Not checkable without live Supabase: search results, messages, and the
+public profile page for somebody outside your leagues.
 
 ## To do
 
