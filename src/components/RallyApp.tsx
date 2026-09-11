@@ -305,11 +305,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     setGdata(n);
     if (!gid) return true;
     try {
+      // Ordered, because three of these four reference each other.
+      //
+      // They used to go out together. That is faster and it is wrong in two
+      // ways that both produce a half-saved league:
+      //
+      // A match points at two players. Create a new opponent in the picker
+      // and log a result against them in the same breath — which is exactly
+      // what the picker is for — and the match could reach the database
+      // before the player it names.
+      //
+      // A resolved fixture points at the match that resolved it. If the
+      // match insert fails and the fixture update does not, the fixture is
+      // marked played with nothing behind it, and Fixtures now hides played
+      // ones, so the evidence disappears too.
+      //
+      // Awaiting each in turn means a failure stops the ones that depend on
+      // it, so a refused save leaves less behind. It is not a transaction —
+      // only Postgres can give us that — but it turns "half saved in an
+      // arbitrary order" into "saved up to the point it failed".
+      //
+      // Posts reference nothing and nothing references them, so they still
+      // go in parallel and cost no extra time.
       await Promise.all([
-        syncPlayers(gid, prev.players, n.players),
-        syncMatches(gid, prev.matches, n.matches),
-        syncFixtures(gid, prev.fixtures || [], n.fixtures || []),
         syncPosts(gid, prev.posts || [], n.posts || []),
+        (async () => {
+          await syncPlayers(gid, prev.players, n.players);
+          await syncMatches(gid, prev.matches, n.matches);
+          await syncFixtures(gid, prev.fixtures || [], n.fixtures || []);
+        })(),
       ]);
       return true;
     } catch (e: any) {
