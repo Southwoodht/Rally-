@@ -82,37 +82,39 @@ a coding session.
 
 ## SQL to run
 
-Nothing here has been run. Each is additive and touches no existing rows.
+Three files, none run. Paste them in any order — they do not depend on each
+other. **Everything already deployed works without them**; each one turns on
+something extra, and the app degrades quietly rather than breaking where one
+is missing.
 
-### 1. Already given to Sam, and run on 2026-09-11
+### 1. `supabase/schema_message_images.sql`
+One nullable column on `messages`. Without it, sending a picture fails.
 
-`supabase/schema_fixture_delete_participants.sql` — done, no action.
+### 2. `supabase/schema_match_nudge.sql`
+Two columns on `matches` plus `nudge_match()`. Without it, the Nudge button
+fails with a visible message.
 
-### 2. `supabase/schema_match_nudge.sql` — NEEDED
+### 3. `supabase/schema_public_player_card.sql`
+The biggest one, and the only one with a decision in it.
 
-Two columns on `matches` (`nudged_at`, `nudged_by`) and a `nudge_match()`
-function. Additive; no existing policy changes and no rows touched.
+- backfills existing league photos into `profiles.avatar_url` (only where
+  empty, safe to run twice)
+- `public_player_card()` — record, form, recent matches, and you-v-them
+- `search_player_accounts()` — so searching a nickname finds people
 
-**Until this runs, the Nudge button fails with a visible message.** Everything
-else works without it.
+**Read its header before running.** It deliberately relaxes the rule in
+CLAUDE.md §6 that a league's matches and opponents are never visible outside
+it. That is what Facebook-shaped profiles means, and it is also how a
+junior's opponents in a coach's league become visible to a stranger. The
+`recent` block is the part to drop if you would rather not.
 
-Worth knowing why it is a function and not a policy: permissive RLS policies
-for the same command are OR'd, so an extra UPDATE policy on `matches` would
-have *widened* access and let the reporter rewrite any column on a pending
-match. The 24-hour limit is enforced inside the function instead.
+### And one thing to check, not run
 
-### 3. `supabase/schema_message_images.sql` — NEEDED
+```sql
+select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)
+  from pg_policy where polrelid = 'public.profiles'::regclass;
+```
 
-One nullable `image_url` column on `messages`. No policy changes: the
-existing message policies already decide who can see a row.
-
-**Until this runs, sending a picture fails.** Text messages are unaffected.
-
-### 4. Soft cancel — NO LONGER NEEDED
-
-Withdrawn. Cancelling now messages the opponent directly instead of leaving
-a row for the notification builder to read, so there is nothing to migrate.
-
-### 5. Pending — written as the work lands
-
-Collected here as each feature needs one.
+If anything there grants `select` to `anon`, every name and photo in Rally
+is readable without an account. The app no longer relies on the answer — both
+new pages check for a session now — but it is worth knowing.
