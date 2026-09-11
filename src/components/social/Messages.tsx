@@ -6,7 +6,8 @@ import {
   sendMessage, startThread, type MessageRow, type Thread,
 } from "@/lib/messages";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input, mono } from "@/lib/theme";
-import { ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUp, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
+import { readImageForMessage } from "@/lib/photo";
 import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
 import { fullNameOf } from "@/lib/format";
 
@@ -216,13 +217,36 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
   // database would still say no.
   const canWrite = t.status === "accepted" || t.started_by === myId;
 
+  const [pending, setPending] = useState<string | null>(null);
+  // Tapping a photo opens it properly. A 240px-wide scoreboard is not a
+  // scoreboard anybody can read.
+  const [lightbox, setLightbox] = useState<string | null>(null);
+
   const send = async () => {
     const v = text.trim();
-    if (!v || busy) return;
+    // A picture on its own is a message; only both being empty is nothing.
+    if ((!v && !pending) || busy) return;
     setBusy(true);
-    try { await sendMessage(t.id, v); setText(""); await load(); onChanged?.(); }
+    try { await sendMessage(t.id, v, pending); setText(""); setPending(null); await load(); onChanged?.(); }
     catch (e: any) { setErr(e?.message || "Couldn't send that."); }
     finally { setBusy(false); }
+  };
+
+  /**
+   * Attach a photo.
+   *
+   * It is held in state and sent with the next message rather than sent the
+   * instant it is picked — so you can say what it is, and so picking the
+   * wrong one is a thing you undo rather than apologise for.
+   */
+  const attach = async (file?: File | null) => {
+    if (!file) return;
+    setErr("");
+    try { setPending(await readImageForMessage(file)); }
+    catch (e: any) {
+      console.error("Reading that image failed", e);
+      setErr(e?.message === "not-an-image" ? "That isn't an image." : "Couldn't read that photo.");
+    }
   };
 
   return (
@@ -324,11 +348,23 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
                       borderBottomRightRadius: mine && withNext ? tight : round,
                       borderTopLeftRadius: !mine && withPrev ? tight : round,
                       borderBottomLeftRadius: !mine && withNext ? tight : round,
-                      padding: "8px 12px",
+                      // A picture fills its bubble; text needs breathing
+                      // room. Padding only when there are words.
+                      padding: m.image_url && !m.body ? 0 : "8px 12px",
                       fontFamily: body, fontWeight: 400, fontSize: 15, lineHeight: 1.45,
                       whiteSpace: "pre-wrap", wordBreak: "break-word",
+                      overflow: "hidden",
                     }}
                   >
+                    {m.image_url && (
+                      <button
+                        onClick={() => setLightbox(m.image_url!)}
+                        aria-label="View photo"
+                        style={{ display: "block", background: "transparent", border: "none", padding: 0, margin: m.body ? "0 0 6px" : 0, cursor: "pointer", width: "100%" }}
+                      >
+                        <img src={m.image_url} alt="" style={{ display: "block", width: "100%", borderRadius: m.body ? 10 : round, maxHeight: 320, objectFit: "cover" }} />
+                      </button>
+                    )}
                     {m.body}
                   </div>
                   {isMyLast && m.read_at && !withNext && (
@@ -347,7 +383,28 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
       {err && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginTop: 8 }}>{err}</div>}
 
       {canWrite ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, position: "sticky", bottom: 0, paddingBottom: 4 }}>
+        <div style={{ marginTop: 16, position: "sticky", bottom: 0, paddingBottom: 4 }}>
+        {/* What you are about to send, with a way out of it. */}
+        {pending && (
+          <div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}>
+            <img src={pending} alt="" style={{ maxWidth: 160, maxHeight: 160, borderRadius: 14, display: "block" }} />
+            <button
+              onClick={() => setPending(null)}
+              aria-label="Remove photo"
+              style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, border: "none", background: "rgba(0,0,0,0.62)", color: "#fff", cursor: "pointer", display: "grid", placeItems: "center" }}
+            >
+              <X size={15} strokeWidth={2.4} />
+            </button>
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <label
+            aria-label="Add a photo"
+            style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, background: FEED_CARD, color: FEED_TEXT_MID, display: "grid", placeItems: "center", cursor: "pointer" }}
+          >
+            <ImagePlus size={19} strokeWidth={2} />
+            <input type="file" accept="image/*" onChange={(e) => { attach(e.target.files?.[0]); e.currentTarget.value = ""; }} style={{ display: "none" }} />
+          </label>
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -361,22 +418,32 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
           />
           <button
             onClick={send}
-            disabled={busy || !text.trim()}
+            disabled={busy || (!text.trim() && !pending)}
             aria-label="Send"
             style={{
               width: 40, height: 40, borderRadius: 20, border: "none", flexShrink: 0,
-              background: text.trim() ? FEED_LIME : FEED_RAISED,
-              color: text.trim() ? FEED_LIME_INK : FEED_TEXT_LOW,
+              background: text.trim() || pending ? FEED_LIME : FEED_RAISED,
+              color: text.trim() || pending ? FEED_LIME_INK : FEED_TEXT_LOW,
               display: "grid", placeItems: "center",
-              cursor: text.trim() && !busy ? "pointer" : "default",
+              cursor: (text.trim() || pending) && !busy ? "pointer" : "default",
             }}
           >
             <ArrowUp size={19} strokeWidth={2.4} />
           </button>
         </div>
+        </div>
       ) : (
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
           Accept the request above to reply.
+        </div>
+      )}
+
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}
+        >
+          <img src={lightbox} alt="" style={{ maxWidth: "94vw", maxHeight: "86vh", borderRadius: 16, objectFit: "contain" }} />
         </div>
       )}
 

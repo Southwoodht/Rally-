@@ -22,6 +22,7 @@ export interface MessageRow {
   thread_id: string;
   sender_id: string;
   body: string;
+  image_url?: string | null;
   created_at: string;
   read_at: string | null;
 }
@@ -110,13 +111,15 @@ export async function listMessages(threadId: string): Promise<MessageRow[]> {
   )) || [];
 }
 
-export async function sendMessage(threadId: string, body: string): Promise<void> {
+export async function sendMessage(threadId: string, body: string, imageUrl?: string | null): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   const myId = await currentUserId();
   if (!myId) throw new Error("You need to be signed in.");
   const text = body.trim();
-  if (!text) return;
-  await run(supabase.from("messages").insert({ thread_id: threadId, sender_id: myId, body: text.slice(0, 4000) }), "sending");
+  // A picture on its own is a message. Only the pair being empty is nothing
+  // to send.
+  if (!text && !imageUrl) return;
+  await run(supabase.from("messages").insert({ thread_id: threadId, sender_id: myId, body: text.slice(0, 4000), image_url: imageUrl || null }), "sending");
 }
 
 export async function acceptThread(threadId: string): Promise<void> {
