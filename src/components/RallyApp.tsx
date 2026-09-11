@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isClaimed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useState, useEffect, useMemo } from "react";
 import { Trophy, Swords, Plus, Clock, User, Users, Settings as Gear, ChevronLeft, ChevronDown, ChevronRight, Check, HelpCircle, MessageCircle } from "lucide-react";
 import { storage } from "@/lib/storage";
@@ -40,7 +40,8 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { predictProb } from "@/core/predict";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
@@ -56,6 +57,26 @@ type LeagueData = {
 };
 
 const emptyLeagueData: LeagueData = { players: [], matches: [], fixtures: [], posts: [], me: null };
+
+/**
+ * The line under the opponent's name on Next Up.
+ *
+ * Sam's words, banded by the app's own prediction. It is the only place the
+ * app talks to you rather than reports at you, so the bands are deliberately
+ * coarse: nobody wants a different sentence for 61% and 62%, and a number
+ * that precise would be pretending to a confidence the model does not have.
+ *
+ * Null when there is nothing to predict from — a first meeting is its own
+ * kind of interesting and should not be dressed up as a coin flip.
+ */
+function nextUpLine(pct: number | null): string {
+  if (pct == null) return "First meeting. No history, no excuses.";
+  if (pct >= 65) return "You're the favourite for a reason. Play like it.";
+  if (pct >= 55) return "Slight edge. Don't hand it back.";
+  if (pct >= 45) return "Coin flip. First to blink loses.";
+  if (pct >= 35) return "Rally's been wrong before.";
+  return "Nobody's expecting this one. Show them.";
+}
 
 export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
@@ -239,10 +260,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // The only honest thing to put on screen is what the database really holds.
   // If even the re-read fails we fall back to the pre-save state, since that
   // is at least a view that once existed.
-  const saveData = async (n: LeagueData) => {
+  const saveData = async (n: LeagueData): Promise<boolean> => {
     const prev = gdata;
     setGdata(n);
-    if (!gid) return;
+    if (!gid) return true;
     try {
       await Promise.all([
         syncPlayers(gid, prev.players, n.players),
@@ -250,6 +271,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         syncFixtures(gid, prev.fixtures || [], n.fixtures || []),
         syncPosts(gid, prev.posts || [], n.posts || []),
       ]);
+      return true;
     } catch (e: any) {
       console.error(e);
       try {
@@ -263,6 +285,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         setGdata(prev);
         flash("Couldn't save — your change was undone");
       }
+      return false;
     }
   };
   const importHistoricalResults = async () => {
@@ -346,18 +369,30 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const addFixture = (p1, p2, booked = null) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked }] });
   const removeFixture = (id) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.id !== id) });
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
-  const resolveFixture = (fx, winner, score) => {
+  const resolveFixture = async (fx, winner, score): Promise<boolean> => {
     if (winner === null) {
-      saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== fx.matchId), fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: false, winner: undefined, matchId: undefined } : f) });
-      return;
+      return saveData({ ...gdata, matches: gdata.matches.filter((m) => m.id !== fx.matchId), fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: false, winner: undefined, matchId: undefined } : f) });
     }
     const mid = uid();
     // Dated from the booking when there was one. Entering Saturday's result
     // on Monday should not file it as Monday's match — the rating replays in
     // date order and the level lookup is by date, so the date is not a label.
     const played = fx.booked ? new Date(fx.booked).getTime() : NaN;
-    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: "confirmed", reportedBy: gdata.me };
-    saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
+    // Whoever isn't me. If they have an account they get to agree first,
+    // exactly as they would if this had been logged through Log a result —
+    // the two routes should not disagree about whether somebody's word is
+    // enough on its own.
+    const byId = (id) => gdata.players.find((p) => p.id === id) || null;
+    const iAmIn = fx.p1 === meId || fx.p2 === meId;
+    // If I played in it, the person who has to agree is the other one. If I
+    // did not — league staff filling in somebody else's result — then either
+    // of them having an account is reason enough to wait, because neither of
+    // them has said a word about it.
+    const needsAgreement = iAmIn
+      ? isClaimed(byId(fx.p1 === meId ? fx.p2 : fx.p1))
+      : (isClaimed(byId(fx.p1)) || isClaimed(byId(fx.p2)));
+    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: needsAgreement ? "pending" : "confirmed", reportedBy: gdata.me, loggedAt: Date.now() };
+    return saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
   };
 
   // Switching leagues reads the real tables, the same way boot() does.
@@ -643,10 +678,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
     // Only a booked fixture can fill this tile. An unbooked one has no when,
     // and "next up" without a when is not next anything.
-    const bookedNext = (fixtures || []).find((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId));
-    const nextUp = bookedNext
-      ? { opponent: first(bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1), when: bookedNext.booked }
-      : null;
+    //
+    // Sorted, not found. It used to take whichever booked fixture came first
+    // in the array, so "next up" could be three weeks out while one tomorrow
+    // sat below it — the tile was answering a different question to the one
+    // its label asks.
+    const bookedNext = (fixtures || [])
+      .filter((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId))
+      .map((f) => ({ f, t: new Date(f.booked).getTime() }))
+      .filter((x) => !isNaN(x.t))
+      .sort((a, b) => a.t - b.t)[0]?.f;
+
+    let nextUp: any = null;
+    if (bookedNext) {
+      const oppId = bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1;
+      const opp = players.find((p) => p.id === oppId);
+      // Read the prediction engine, never write to it. predictProb returns
+      // null-ish only when it has nothing at all to go on.
+      let pct: number | null = null;
+      try {
+        const raw = predictProb(meId, oppId, matches, elo, players);
+        pct = raw == null || isNaN(raw) ? null : Math.round(raw * 100);
+      } catch { pct = null; }
+      nextUp = {
+        opponent: opp ? fullNameOf(opp) : first(oppId),
+        when: bookedNext.booked,
+        winChance: pct,
+        line: nextUpLine(pct),
+      };
+    }
 
     // The calendar month, not the last thirty days: "this month" is what the
     // tile says, and people read it as the month they are in.
@@ -665,7 +725,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a

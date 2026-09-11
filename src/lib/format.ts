@@ -58,3 +58,37 @@ export const deleteTimeoutNote = (requestedAt: number | undefined | null) => {
   const hrs = Math.ceil(remaining / 3600000);
   return hrs <= 1 ? "deletes automatically within the hour" : hrs < 24 ? `deletes automatically in ~${hrs}h` : "deletes automatically in ~1 day";
 };
+
+/**
+ * The one way an upcoming match says when it is.
+ *
+ * "Sat 12 Sep 2026 · 2:00pm", always Europe/London. Every screen that shows a
+ * booking uses this, because the alternative — and what was there before — is
+ * each screen inventing its own, and one of them printing the raw timestamp.
+ *
+ * London rather than the device's zone on purpose: a club plays where the
+ * club is. Somebody checking their fixtures from a hotel in Spain should read
+ * the time they will actually turn up at, not that time shifted an hour.
+ */
+export function formatMatchDateTime(value: any): string {
+  const d = new Date(value);
+  if (!value || isNaN(d.getTime())) return "";
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", year: "numeric",
+  }).format(d);
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London", hour: "numeric", minute: "2-digit", hour12: true,
+  }).format(d).replace(/\s?([ap])\.?m\.?/i, (_m, p) => p.toLowerCase() + "m");
+  // en-GB renders "Sat, 12 Sept 2026"; the comma and the four-letter Sept are
+  // both noise at this size.
+  return day.replace(/,/g, "").replace(/\bSept\b/, "Sep") + " · " + time;
+}
+
+/** A past match's date. Same vocabulary, without a time nobody recorded. */
+export function formatMatchDate(value: any): string {
+  const d = new Date(value);
+  if (!value || isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric",
+  }).format(d).replace(/,/g, "").replace(/\bSept\b/, "Sep");
+}

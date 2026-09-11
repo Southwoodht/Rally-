@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { inviteUrl } from "@/lib/invite";
 import { acceptFriendRequest, FriendWithProfile, listFriends, listIncomingRequests, listOutgoingRequests, removeFriendship, sendFriendRequest } from "@/lib/friends";
 import { getMyProfile, Profile, searchProfiles } from "@/lib/profiles";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, listCard, listRow, miniInput, mono } from "@/lib/theme";
@@ -63,12 +64,18 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
     try { await removeFriendship(row.id); await reload(); }
     catch (e) { console.error(e); flash && flash("Couldn't remove"); }
   };
+  // A link rather than the bare code. Both end up in the same place, but one
+  // of them asks the other person to find the join screen and type WDZDTQ
+  // without getting a character wrong.
   const inviteToLeague = async (row: FriendWithProfile) => {
     if (!leagueJoinCode) { flash && flash("No league code available"); return; }
+    const link = inviteUrl(leagueJoinCode);
     try {
-      await navigator.clipboard.writeText(leagueJoinCode);
-      flash && flash(`League code copied — send it to ${row.profile.display_name}`);
+      await navigator.clipboard.writeText(link || leagueJoinCode);
+      flash && flash(`Invite link copied — send it to ${row.profile.display_name}`);
     } catch {
+      // Clipboard refused, which it does on some browsers without a gesture
+      // it recognises. The code still works typed in, so say it.
       flash && flash(`League code: ${leagueJoinCode}`);
     }
   };

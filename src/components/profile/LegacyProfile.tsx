@@ -43,7 +43,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL }}>🏛️ Rally Legacy</div>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL }}>Rally Legacy</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
 
@@ -87,7 +87,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.timeline.length > 1 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>🌎 Career highlights</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Career highlights</div>
                 {legacy.timeline.map((t, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0" }}>
                     <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 700, color: BALL, width: 42, flexShrink: 0 }}>{t.year}</span>
@@ -99,7 +99,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.bestWins.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>👑 Best wins</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Best wins</div>
                 {legacy.bestWins.map((w, i) => (
                   <button key={i} onClick={() => onOpenMatch && onOpenMatch(w.match.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 6, cursor: onOpenMatch ? "pointer" : "default", textAlign: "left" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -115,7 +115,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
 
             {legacy.splits.length > 0 && (
               <div style={{ marginTop: 20 }}>
-                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>📊 Playing profile</div>
+                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Playing profile</div>
                 {legacy.splits.map((s) => {
                   const pct = s.n ? Math.round(((s.w + s.d * 0.5) / s.n) * 100) : 0;
                   return (

@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
-import { BALL, body, CHALK, CLAY, COURT, display, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
+import { BALL, body, CHALK, CLAY, COURT, display, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
@@ -32,6 +33,22 @@ export default function Dashboard({ session }: { session: Session }) {
       return;
     }
     try {
+      // A held invite is redeemed once, before the league list decides what
+      // to show — otherwise somebody arriving on a link gets dropped on the
+      // create-or-join screen with the thing they were invited to nowhere in
+      // sight.
+      const pending = takePendingJoin();
+      if (pending) {
+        try {
+          const joined = await joinLeague(pending);
+          const mineNow = await listMyLeagues();
+          setLeagues(mineNow);
+          setActive(joined); setView("app");
+          return;
+        } catch {
+          setError(BAD_INVITE);
+        }
+      }
       const mine = await listMyLeagues();
       setLeagues(mine);
       // Only worth asking when there's a choice to make.
@@ -44,6 +61,16 @@ export default function Dashboard({ session }: { session: Session }) {
       setView("empty");
     }
   };
+
+  // An invite link is ?join=CODE. Read it before anything else, because a
+  // signed-out visitor is about to be sent through sign-up and the query
+  // string will not survive the round trip — without stashing it the link
+  // works for people who already have an account and quietly does nothing
+  // for the people it was written for.
+  useEffect(() => {
+    const code = readJoinParam();
+    if (code) stashPendingJoin(code);
+  }, []);
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
   // If running in dev with ?__dev_auto=1, mount a debug league immediately
@@ -195,31 +222,40 @@ export default function Dashboard({ session }: { session: Session }) {
         );
       })}
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-        <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>➕ Create</div></button>
-        <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>🔑 Join</div></button>
+        <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>Create</div></button>
+        <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>Join</div></button>
       </div>
     </div>
   );
 
   return shell(
     <>
-      <div style={{ background: PANEL2, border: "none", borderRadius: 14, padding: 20, marginBottom: 18, textAlign: "center" }}>
-        <div style={{ fontSize: 30 }}>🎾</div>
-        <div style={{ fontFamily: body, fontSize: 19, fontWeight: 700, color: CHALK, marginTop: 8 }}>No leagues yet</div>
-        <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6, lineHeight: 1.5 }}>Start one for your club or mates, or join an existing league with a code.</div>
+      {/* Not a dead end and not an error — most people arrive here with no
+          league because they have not made one yet, and the screen should
+          read as the next step rather than as something missing. Join comes
+          first because somebody sent you a code far more often than you set
+          out to run a club. */}
+      <div style={{ background: FEED_CARD, borderRadius: 20, padding: 22, marginBottom: 16 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 22, letterSpacing: "-0.02em", color: FEED_TEXT_HI }}>
+          You&apos;re not in a league yet
+        </div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>
+          Join one with a code or an invite link, or start your own for your club or your mates.
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 12 }}>
-        <button style={tile} onClick={() => { setError(""); setView("create"); }}>
-          <div style={{ fontSize: 20 }}>➕</div>
-          <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, marginTop: 8 }}>Create league</div>
-          <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, lineHeight: 1.4 }}>Set up a ladder and invite players.</div>
-        </button>
-        <button style={tile} onClick={() => { setError(""); setView("join"); }}>
-          <div style={{ fontSize: 20 }}>🔑</div>
-          <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, marginTop: 8 }}>Join league</div>
-          <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, lineHeight: 1.4 }}>Enter a code from the organiser.</div>
-        </button>
-      </div>
+
+      <button
+        onClick={() => { setError(""); setView("join"); }}
+        style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16, marginBottom: 10 }}
+      >
+        Join a league
+      </button>
+      <button
+        onClick={() => { setError(""); setView("create"); }}
+        style={{ width: "100%", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16 }}
+      >
+        Create a league
+      </button>
     </>
   );
 }

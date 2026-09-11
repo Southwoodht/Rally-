@@ -2,18 +2,24 @@
 import React from "react";
 import { CalendarPlus } from "lucide-react";
 import { StatNumeral } from "@/components/ui/Surfaces";
-import { FEED_CARD, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body } from "@/lib/theme";
+import { formatMatchDateTime } from "@/lib/format";
+import { FEED_CARD, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
 
 // Two tiles, side by side, never three. At phone width a third column turns
 // readable numbers into cramped ones — and there is no arrangement of three
 // that doesn't force the middle one to be the shortest.
 
 export interface NextUp {
-  /** Their first name, already resolved. */
+  /** Their full name. A first name alone is ambiguous in a club with two
+   *  Charlies, and this is the one line telling you who to turn up against. */
   opponent: string;
-  /** Already formatted — "Sat 13 Sep · 10:00". Only booked fixtures have a
-   *  time at all, so an unbooked one can't fill this tile. */
-  when: string;
+  /** The stored booking time. Formatted here, not by the caller, so every
+   *  screen showing a booking says it the same way. */
+  when: any;
+  /** What the app reckons, in words. */
+  line?: string | null;
+  /** Your chance, rounded. Null when there is nothing to go on. */
+  winChance?: number | null;
 }
 
 export interface ThisMonth {
@@ -42,7 +48,18 @@ export function HomeTiles({ nextUp, thisMonth, onBook }: {
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {nextUp.opponent}
           </div>
-          <div style={line(FEED_TEXT_MID)}>{nextUp.when}</div>
+          <div style={{ ...line(FEED_TEXT_MID), ...tabular }}>{formatMatchDateTime(nextUp.when)}</div>
+          {/* What the app reckons, said the way somebody would say it. The
+              number is the app's; the sentence is for the person reading it
+              ten minutes before they leave the house. */}
+          {nextUp.line && (
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
+              {nextUp.line}
+              {nextUp.winChance != null && (
+                <span style={{ ...tabular, color: FEED_LIME, marginLeft: 6 }}>{nextUp.winChance}%</span>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <button onClick={onBook} style={{ ...tile, textAlign: "left", border: "none", cursor: onBook ? "pointer" : "default", display: "block", width: "100%" }}>

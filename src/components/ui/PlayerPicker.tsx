@@ -4,7 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL, PANEL2, body, input, miniInput, mono } from "@/lib/theme";
 import { FEED_CARD, FEED_TEXT_HI, FEED_TEXT_MID } from "@/lib/theme";
 
@@ -33,11 +33,34 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
   const close = () => { setOpen(false); reset(); };
   const pick = (id: string) => { onChange(id); close(); };
 
+  /**
+   * Somebody who might already be this person.
+   *
+   * Wider than an exact name match, because the duplicate that actually gets
+   * created is "Charlie" when Charlie Henry is already there — a surname
+   * typed once and forgotten is enough to slip a second row past an exact
+   * check. First name, full name and nickname all count, all case-blind.
+   *
+   * It only ever asks. Nothing merges, nothing is picked automatically: this
+   * codebase has a name-matching incident in its history and the rule from it
+   * is that a name match may become a suggestion and never a decision.
+   */
+  const findLikeness = (first: string, last: string) => {
+    const f = normalizePlayerName(first);
+    const full = normalizePlayerName(first + " " + last);
+    return players.find((p: any) => {
+      if (p.id === exclude) return false;
+      const pFull = normalizePlayerName((p.name || "") + " " + (p.last || ""));
+      const pFirst = normalizePlayerName(p.name || "");
+      const pNick = normalizePlayerName(p.nick || "");
+      return pFull === full || pFirst === f || (!!pNick && pNick === f);
+    });
+  };
+
   const tryCreate = () => {
     const nm = newName.trim();
     if (!nm) { setErr("Enter a name."); return; }
-    const full = normalizePlayerName(nm + " " + newLast.trim());
-    const existing = players.find((p) => normalizePlayerName((p.name || "") + " " + (p.last || "")) === full);
+    const existing = findLikeness(nm, newLast.trim());
     if (existing && !collision) { setCollision(existing); return; }
     const created = { id: uid(), name: nm, last: newLast.trim() || undefined, avatar: newAvatar, auth_id: null };
     onCreatePlayer(created);
@@ -80,10 +103,22 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
             {mode === "pick" ? (
               <>
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" autoFocus style={{ ...miniInput, fontFamily: body, width: "100%", marginBottom: 12, boxSizing: "border-box" as const }} />
-                <button onClick={() => setMode("create")} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "11px 12px", marginBottom: 12, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 700 }}>
-                  <span style={{ fontSize: 16 }}>＋</span> Create new player
+                <button onClick={() => setMode("create")} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: PANEL, borderRadius: 14, padding: "11px 12px", marginBottom: 12, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 700, border: "none" }}>
+                  <Plus size={16} strokeWidth={2.6} /> Create new player
                 </button>
-                {shown.length === 0 && <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>No players match.</div>}
+                {/* Searching for somebody who isn't there is the moment you
+                    find out they need adding, so the answer belongs right
+                    there rather than back up at the generic button. */}
+                {shown.length === 0 && term && (
+                  <button
+                    onClick={() => { const parts = q.trim().split(/s+/); setNewName(parts[0] || ""); setNewLast(parts.slice(1).join(" ")); setMode("create"); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: BALL, borderRadius: 14, padding: "11px 12px", marginBottom: 10, cursor: "pointer", color: COURT, fontFamily: body, fontSize: 14, fontWeight: 700, border: "none", textAlign: "left" }}
+                  >
+                    <Plus size={16} strokeWidth={2.6} />
+                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Add &ldquo;{q.trim()}&rdquo; as a new player</span>
+                  </button>
+                )}
+                {shown.length === 0 && !term && <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "10px 0" }}>Nobody here yet. Create the first player above.</div>}
                 {shown.map((p) => (
                   <button key={p.id} onClick={() => pick(p.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", borderTop: "none", padding: "10px 2px", cursor: "pointer", textAlign: "left" }}>
                     <Avatar player={p} size={32} />
@@ -118,7 +153,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
                       <div style={{ fontFamily: body, fontSize: 13, color: CHALK }}><strong>{collision.name}{collision.last ? " " + collision.last : ""}</strong> is already picked in the other slot — choose a different name, or continue below to create a separate person who happens to share it.</div>
                     ) : (
                       <>
-                        <div style={{ fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 8 }}>A player called <strong>{collision.name}{collision.last ? " " + collision.last : ""}</strong> already exists.</div>
+                        <div style={{ fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 8 }}>Did you mean <strong>{collision.name}{collision.last ? " " + collision.last : ""}</strong>?</div>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => pick(collision.id)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "9px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: BALL, color: COURT, fontWeight: 600 }}>Use them</button>
                           <button onClick={tryCreate} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "9px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: "transparent", color: MUTED, fontWeight: 600 }}>Different person</button>

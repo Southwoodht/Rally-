@@ -1,12 +1,13 @@
 "use client";
 import React from "react";
+import { Glyph } from "@/components/ui/Glyph";
 import { BALL, CHALK, LINE, MUTED, PANEL, body, display, mono } from "@/lib/theme";
 
 export function RecapCard({ recap, nameOf, leagueName }: any) {
   const Row = ({ icon, label, value }: any) => value ? (
     <div style={{ display: "flex", gap: 10, padding: "8px 0", borderTop: "none", alignItems: "center" }}>
-      <span style={{ fontSize: 15 }}>{icon}</span>
-      <span style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: MUTED, width: 96 }}>{label}</span>
+      <Glyph name={icon} size={15} />
+      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: MUTED, width: 96 }}>{label}</span>
       <span style={{ flex: 1, fontFamily: body, fontSize: 13, color: CHALK }}>{value}</span>
     </div>
   ) : null;

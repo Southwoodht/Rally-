@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { Glyph } from "@/components/ui/Glyph";
 import { Bell } from "@/components/ui/Bell";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { computeLocalNotifications, Notification } from "@/core/notifications";
@@ -125,7 +126,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
                 disabled={!(n.matchId || (n.action === "friend" && onGoFriends) || (n.action === "review" && onGoAdmin))}
                 style={{ display: "flex", gap: 10, width: "100%", background: "transparent", border: "none", borderTop: "none", padding: "11px 2px", cursor: n.matchId || n.action === "friend" || n.action === "review" ? "pointer" : "default", textAlign: "left" }}
               >
-                <span style={{ fontSize: 17, flexShrink: 0 }}>{n.icon}</span>
+                <Glyph name={n.icon} size={16} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: body, fontSize: 13.5, fontWeight: n.action !== "none" && !seen.has(n.id) ? 600 : 400, color: n.action !== "none" && !seen.has(n.id) ? BALL : CHALK }}>{n.text}</div>
                   <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, marginTop: 2 }}>{new Date(n.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>

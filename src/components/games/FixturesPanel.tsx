@@ -1,10 +1,11 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import { Calendar, Check, Plus, Search } from "lucide-react";
+import { Calendar, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
+import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { predictProb } from "@/core/predict";
-import { fullNameOf } from "@/lib/format";
+import { formatMatchDateTime, fullNameOf } from "@/lib/format";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
@@ -51,31 +52,13 @@ const toInputValue = (v: any): string => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** "Sat 13 Sep, 2:00pm" — and "Today"/"Tomorrow" when that is friendlier. */
-function whenLabel(v: any): string | null {
-  if (!v) return null;
-  const d = new Date(v);
-  if (isNaN(d.getTime())) return null;
-  const h = d.getHours(), m = d.getMinutes();
-  const time = `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")}${h < 12 ? "am" : "pm"}`;
-  const midnight = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  const days = Math.round((midnight(d) - midnight(new Date())) / 86400000);
-  if (days === 0) return `Today, ${time}`;
-  if (days === 1) return `Tomorrow, ${time}`;
-  const day = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-  return `${day}, ${time}`;
-}
-
 const timeOf = (v: any): number | null => {
   if (!v) return null;
   const t = new Date(v).getTime();
   return isNaN(t) ? null : t;
 };
 
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, onResolve, onBook, onAddFixture, onRemoveFixture }: any) {
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
@@ -87,6 +70,25 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   // Removing is two taps. It is not destructive enough for a dialog, and it
   // is too destructive for one.
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  // A refused save used to close the row and clear the score, so the only
+  // evidence left was that nothing had happened. The form stays open with
+  // what you typed still in it.
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (f: any, winner: "p1" | "p2" | "draw") => {
+    setSaving(true); setSaveError(null);
+    let ok = false;
+    try {
+      ok = (await onResolve(f, winner, scoreText.trim())) !== false;
+    } catch (e) {
+      console.error("Saving a fixture result failed", e);
+      ok = false;
+    }
+    setSaving(false);
+    if (ok) { setOpen(null); setScoreText(""); }
+    else setSaveError("Couldn't save. Try again.");
+  };
   const [newOpp, setNewOpp] = useState("");
   const [newWhen, setNewWhen] = useState("");
 
@@ -99,19 +101,21 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   // A list of arranged games is a diary, and a diary that isn't in order is
   // a list you have to read all of to use.
   const ordered = useMemo(() => {
-    const rank = (f: any) => (f.done ? 2 : timeOf(f.booked) != null ? 0 : 1);
-    return [...fixtures].sort((a: any, b: any) => {
-      const ra = rank(a), rb = rank(b);
-      if (ra !== rb) return ra - rb;
-      if (ra === 0) return (timeOf(a.booked) as number) - (timeOf(b.booked) as number);
-      return 0;
-    });
+    const rank = (f: any) => (timeOf(f.booked) != null ? 0 : 1);
+    return fixtures
+      .filter((f: any) => !f.done)
+      .sort((a: any, b: any) => {
+        const ra = rank(a), rb = rank(b);
+        if (ra !== rb) return ra - rb;
+        if (ra === 0) return (timeOf(a.booked) as number) - (timeOf(b.booked) as number);
+        return 0;
+      });
   }, [fixtures]);
 
   const q = search.trim().toLowerCase();
   const shown = q ? ordered.filter((f: any) => (nm(f.p1) + " " + nm(f.p2)).toLowerCase().includes(q)) : ordered;
 
-  const canBookNew = !!(onAddFixture && meId);
+  const canBookNew = !!(onAddFixture && meId && onCreatePlayer);
   const opponents = useMemo(
     () => players.filter((p: any) => p.id !== meId).sort((a: any, b: any) => fullNameOf(a).localeCompare(fullNameOf(b))),
     [players, meId],
@@ -135,14 +139,16 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       ) : (
         <SurfaceCard radius={16} pad="14px">
           <div style={{ ...label, marginBottom: 7 }}>Who against</div>
-          <select
-            value={newOpp}
-            onChange={(e) => setNewOpp(e.target.value)}
-            style={{ ...field, width: "100%", marginBottom: 12, appearance: "none" as const }}
-          >
-            <option value="">Pick a player…</option>
-            {opponents.map((p: any) => <option key={p.id} value={p.id}>{fullNameOf(p)}</option>)}
-          </select>
+          <div style={{ marginBottom: 12 }}>
+            <PlayerPicker
+              players={opponents}
+              value={newOpp}
+              onChange={setNewOpp}
+              onCreatePlayer={onCreatePlayer}
+              exclude={meId}
+              placeholder="Pick or add a player…"
+            />
+          </div>
 
           <div style={{ ...label, marginBottom: 7 }}>When</div>
           <input
@@ -202,30 +208,11 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
         <div style={{ width: (total ? (done / total) * 100 : 0) + "%", height: "100%", background: FEED_LIME }} />
       </div>
 
-      {shown.length === 0 && <Empty msg="No fixtures match that search." />}
+      {shown.length === 0 && <Empty msg={q ? "No fixtures match that search." : "Nothing left to play. Every fixture has a result."} />}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {shown.map((f: any) => (
-          f.done ? (
-            // Played: it is a result now, so it reads as one.
-            <SurfaceCard key={f.id} radius={16} pad="12px 14px">
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Check size={16} color={FEED_LIME} strokeWidth={2.4} style={{ flexShrink: 0 }} />
-                <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {f.winner === "draw"
-                    ? <><span style={{ color: FEED_TEXT_HI }}>{nm(f.p1)}</span> drew <span style={{ color: FEED_TEXT_HI }}>{nm(f.p2)}</span></>
-                    : <><span style={{ fontWeight: 500, color: FEED_TEXT_HI }}>{nm(f.winner === "p1" ? f.p1 : f.p2)}</span> beat {nm(f.winner === "p1" ? f.p2 : f.p1)}</>}
-                  {f.score ? <span style={{ ...tabular }}> · {f.score}</span> : null}
-                </span>
-                <button
-                  onClick={() => onResolve(f, null)}
-                  style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "4px 0 4px 8px", cursor: "pointer", flexShrink: 0 }}
-                >
-                  Undo
-                </button>
-              </div>
-            </SurfaceCard>
-          ) : (
+          (
             <SurfaceCard key={f.id} radius={16} pad="12px 14px">
               <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -263,7 +250,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 9 }}>
                   {(() => {
-                    const when = whenLabel(f.booked);
+                    const when = formatMatchDateTime(f.booked);
                     if (!when) return null;
                     // A booking that has been and gone stops shouting in
                     // lime: it is no longer something to turn up to, it is a
@@ -277,7 +264,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                   })()}
                   <span style={{ flex: 1 }} />
                   <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
-                    {open === f.id ? "Close" : timeOf(f.booked) != null && (timeOf(f.booked) as number) < Date.now() ? "Enter result" : "Book or enter result"}
+                    {open === f.id ? "Close" : timeOf(f.booked) != null && (timeOf(f.booked) as number) < Date.now() ? "Add the result" : "Book or enter result"}
                   </span>
                 </div>
               </button>
@@ -308,17 +295,36 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     </button>
                   )}
 
-                  {/* You can remove a fixture you are in, or any of them if
-                      you run the league. Booking something and then having
-                      no way to un-book it is how a fixture list stops being
+                  {/* Either of the two people in it can call it off, and so
+                      can whoever runs the league. Booking something with no
+                      way to un-book it is how a fixture list stops being
                       believed. */}
                   {onRemoveFixture && (canManage || f.p1 === meId || f.p2 === meId) && (
-                    <button
-                      onClick={() => { if (confirmRemove === f.id) { onRemoveFixture(f.id); setConfirmRemove(null); setOpen(null); } else setConfirmRemove(f.id); }}
-                      style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: confirmRemove === f.id ? DOT_LOSS : FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
-                    >
-                      {confirmRemove === f.id ? "Tap again to remove this fixture" : "Remove fixture"}
-                    </button>
+                    <div style={{ paddingBottom: 16 }}>
+                      {confirmRemove === f.id ? (
+                        <div style={{ background: FEED_RAISED, borderRadius: 14, padding: 14 }}>
+                          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
+                            Cancel your match with {nm(f.p1 === meId ? f.p2 : f.p1)}?
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => { onRemoveFixture(f.id); setConfirmRemove(null); setOpen(null); }}
+                              style={actionBtn(DOT_LOSS, FEED_LIME_INK)}
+                            >
+                              Cancel match
+                            </button>
+                            <button onClick={() => setConfirmRemove(null)} style={actionBtn(FEED_CARD, FEED_TEXT_HI)}>Keep it</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmRemove(f.id)}
+                          style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), width: "100%", flex: "none" }}
+                        >
+                          Cancel match
+                        </button>
+                      )}
+                    </div>
                   )}
 
                   <div style={{ ...label, marginBottom: 7 }}>Enter result</div>
@@ -329,10 +335,15 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     style={{ ...field, width: "100%", marginBottom: 10 }}
                   />
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => { onResolve(f, "p1", scoreText.trim()); setOpen(null); }} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p1)} won</button>
-                    <button onClick={() => { onResolve(f, "draw", scoreText.trim()); setOpen(null); }} style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 14px" }}>Draw</button>
-                    <button onClick={() => { onResolve(f, "p2", scoreText.trim()); setOpen(null); }} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p2)} won</button>
+                    <button disabled={saving} onClick={() => submit(f, "p1")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p1)} won</button>
+                    <button disabled={saving} onClick={() => submit(f, "draw")} style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 14px" }}>Draw</button>
+                    <button disabled={saving} onClick={() => submit(f, "p2")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p2)} won</button>
                   </div>
+                  {saveError && (
+                    <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>
+                      {saveError}
+                    </div>
+                  )}
                 </div>
               )}
             </SurfaceCard>

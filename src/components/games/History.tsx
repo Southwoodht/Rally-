@@ -1,19 +1,20 @@
 "use client";
 import { countsAsPlayed, isAgreed, isUnconfirmedResult } from "@/core/matchStatus";
+import { Glyph } from "@/components/ui/Glyph";
 import React, { useState, useMemo } from "react";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
-import { autoConfirmNote, deleteTimeoutNote, fmtDate, winnerLabel } from "@/lib/format";
+import { autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, winnerLabel } from "@/lib/format";
 import { PlayerLink } from "@/components/ui/PlayerLink";
 import { MatchCard } from "@/components/games/MatchCard";
 import { WeeklyRoundup } from "@/components/games/WeeklyRoundup";
 import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, mono, wrap } from "@/lib/theme";
+import { BALL, body, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, input, LINE, listCard, miniInput, mono, MUTED, PANEL, PANEL2, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -158,7 +159,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
         </div>
       )}
       {scope === "fixtures" ? (
-        <FixturesPanel fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId} onResolve={onResolveFixture} onBook={onBookFixture} onAddFixture={onAddFixture} onRemoveFixture={onRemoveFixture} canManage={canEditMatches} />
+        <FixturesPanel fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId} onResolve={onResolveFixture} onBook={onBookFixture} onAddFixture={onAddFixture} onRemoveFixture={onRemoveFixture} onCreatePlayer={onCreatePlayer} canManage={canEditMatches} />
       ) : (
         <div>
           {/* The week that just ended, above the feed of individual results.
@@ -185,7 +186,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           )}
           {announcements.length > 0 && (
             <div style={{ marginBottom: 18 }}>
-              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 8 }}>📌 Announcements</div>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 8 }}>Announcements</div>
               {announcements.map((p) => (
                 <div key={p.id} style={{ display: "flex", gap: 10, background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
@@ -199,18 +200,22 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           )}
           {(() => {
             const s = new Set(customSel);
-            const up = (fixtures || []).filter((f) => !f.done && f.booked).filter((f) => feedFilter === "mine" ? (f.p1 === meId || f.p2 === meId) : feedFilter === "custom" ? (s.has(f.p1) && s.has(f.p2)) : true);
+            const up = (fixtures || [])
+              .filter((f) => !f.done && f.booked)
+              .filter((f) => feedFilter === "mine" ? (f.p1 === meId || f.p2 === meId) : feedFilter === "custom" ? (s.has(f.p1) && s.has(f.p2)) : true)
+              // Soonest first. "Coming up" in stored order is not coming up.
+              .sort((a, b) => new Date(a.booked).getTime() - new Date(b.booked).getTime());
             if (!up.length) return null;
             return (
               <div style={{ marginBottom: 18 }}>
-                <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 8 }}>📅 Coming up</div>
+                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 8 }}>Coming up</div>
                 {up.map((f) => { const p1 = Math.round(predictProb(f.p1, f.p2, matches, elo, players) * 100); return (
                   <div key={f.id} style={{ background: PANEL, border: "none", borderRadius: 14, padding: 12, marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{nm(f.p1)} v {nm(f.p2)}</span>
-                      <span style={{ fontFamily: mono, fontSize: 10, color: COURT, background: BALL, borderRadius: 4, padding: "2px 6px" }}>{f.booked}</span>
+                      <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{formatMatchDateTime(f.booked)}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontFamily: mono, fontSize: 10, color: MUTED, marginBottom: 3 }}><span>{nm(f.p1)} {p1}%</span><span>{100 - p1}% {nm(f.p2)}</span></div>
+                    <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginBottom: 4 }}><span>{nm(f.p1)} {p1}%</span><span>{100 - p1}% {nm(f.p2)}</span></div>
                     <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: PANEL2 }}><div style={{ width: p1 + "%", background: BALL }} /><div style={{ width: (100 - p1) + "%", background: MUTED }} /></div>
                   </div>
                 ); })}
@@ -224,7 +229,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           {canEditMatches && (
             <button onClick={() => setAsAnnouncement(!asAnnouncement)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", padding: 0, marginBottom: 14, cursor: "pointer" }}>
               <span style={{ width: 14, height: 14, borderRadius: 3, border: "1px solid " + (asAnnouncement ? BALL : LINE), background: asAnnouncement ? BALL : "transparent" }} />
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: asAnnouncement ? BALL : MUTED }}>📌 Post as announcement</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: asAnnouncement ? BALL : MUTED }}>Post as announcement</span>
             </button>
           )}
           {(() => {
@@ -239,7 +244,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             return <div style={listCard}>{items.map((it) => {
               if (it.kind === "event") return (
                 <div key={it.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderBottom: "none" }}>
-                  <span style={{ fontSize: 17 }}>{it.e.icon}</span>
+                  <Glyph name={it.e.icon} size={16} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: body, fontSize: 14, color: BALL }}>{it.e.text}</div>
                     <div style={{ fontFamily: mono, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(it.e.date)}</div>

@@ -123,7 +123,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <button onClick={() => !locked && setAvOpen(avOpen === p.id ? null : p.id)} style={{ background: "transparent", border: "none", padding: 0, cursor: locked ? "default" : "pointer" }}><Avatar player={p} size={36} /></button>
                 {p.auth_id ? (
-                  <span style={{ flex: 1, fontFamily: body, color: CHALK, fontSize: 15 }}>{p.name}{p.last ? " " + p.last : ""}<span style={{ color: MUTED, fontSize: 11, marginLeft: 8, fontFamily: body, fontWeight: 600 }}>🔒 account</span></span>
+                  <span style={{ flex: 1, fontFamily: body, color: CHALK, fontSize: 15 }}>{p.name}{p.last ? " " + p.last : ""}<span style={{ color: MUTED, fontSize: 11, marginLeft: 8, fontFamily: body, fontWeight: 600 }}> account</span></span>
                 ) : (
                   <input value={p.name} onChange={(e) => setField(p.id, "name", e.target.value)} placeholder="First name" style={{ ...miniInput, flex: 1, fontFamily: body, fontSize: 15, padding: "7px 8px", boxSizing: "border-box" as const }} />
                 )}
