@@ -41,6 +41,7 @@ import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots"
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { LevelRecheck } from "@/components/home/LevelRecheck";
 import { predictProb } from "@/core/predict";
 import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
 import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
@@ -634,6 +635,34 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   const group = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null, requireSetup: undefined, season: undefined };
   const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
+
+  /**
+   * Asked once, then never again.
+   *
+   * Kept in user_storage rather than on the player row: it is a fact about
+   * this person's relationship with the app, not about the player, and it
+   * needs no migration. Answering counts as being asked — so does saying not
+   * now, because a prompt that returns after you declined it is not a prompt,
+   * it is nagging.
+   */
+  const LEVEL_RECHECK_KEY = "levelRecheck.v6";
+  const [levelAsked, setLevelAsked] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    storage.get(LEVEL_RECHECK_KEY)
+      .then((r) => { if (live) setLevelAsked(!!r?.value); })
+      // A failed read must not look like "never asked" — that is how somebody
+      // gets the same card every time the network hiccups.
+      .catch(() => { if (live) setLevelAsked(true); });
+    return () => { live = false; };
+  }, [meId]);
+
+  const closeLevelRecheck = () => {
+    setLevelAsked(true);
+    storage.set(LEVEL_RECHECK_KEY, String(Date.now())).catch((e) => console.error("Couldn't remember the level prompt", e));
+  };
+
+
   // Gated on the real league_members.role from Postgres, not the group's
   // ownerId field — that field is never actually persisted anywhere, so it
   // silently fell back to "whoever's currently looking at the screen" and
@@ -859,6 +888,17 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             nextUp={homeData?.nextUp}
             thisMonth={homeData?.thisMonth}
             onNudge={nudgeMatch}
+            levelRecheck={levelAsked === false && meId ? (
+              <LevelRecheck
+                current={players.find((p) => p.id === meId)?.level || null}
+                onPick={(cat, sub) => {
+                  setPlayers(players.map((p) => p.id === meId ? { ...p, level: { cat, sub } } : p));
+                  closeLevelRecheck();
+                  flash("Level updated");
+                }}
+                onDismiss={closeLevelRecheck}
+              />
+            ) : null}
             awaitingResult={homeData?.awaitingResult}
             onResolveFixture={(fixtureId, winner, score) => {
               const fx = (fixtures || []).find((f) => f.id === fixtureId);
