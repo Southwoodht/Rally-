@@ -121,18 +121,21 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   /**
    * Open somebody's profile.
    *
-   * Every name and avatar in the app already went through here, so pointing
-   * this one function at /players/[id] moves the table, match cards, the
-   * feed, the inbox, Messages and the chat header all at once.
+   * Anybody in this league gets the real one — the full profile with their
+   * record, form, rivalries and history, rendered full screen rather than as
+   * a sheet. Everything it needs is already loaded, so there is no fetch and
+   * no flash of an empty page, and Back puts you exactly where you were.
    *
-   * The id passed is a league players.id; the page accepts that shape as
-   * well as an account id, so nothing else had to change.
-   *
-   * Your own row still opens the modal — it is your editable profile, and
-   * the page is deliberately read-only.
+   * Routing every tap to /players/[id] was wrong and briefly shipped that
+   * way. That page can only show what a stranger is allowed to read, so
+   * sending league-mates to it quietly swapped the profile Sam knows for a
+   * thinner one — a downgrade for the common case in order to serve the rare
+   * one. The route is for people this app has no data on: somebody found in
+   * search, or a friend in another club.
    */
   const openProfile = (id: any, year?: "all" | number) => {
-    if (id && id !== meId && typeof window !== "undefined") { window.location.href = "/players/" + encodeURIComponent(id); return; }
+    const known = (gdata.players || []).some((p) => p.id === id);
+    if (id && !known && typeof window !== "undefined") { window.location.href = "/players/" + encodeURIComponent(id); return; }
     setProfileId(id); setProfileYear(year ?? "all");
   };
   const [groupSheet, setGroupSheet] = useState(false);
