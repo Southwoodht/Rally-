@@ -1,25 +1,36 @@
 "use client";
 import React from "react";
-import { AVATARS, MUTED, avCell, miniInput, mono } from "@/lib/theme";
+import { AvatarArt } from "@/components/ui/AvatarArt";
+import { AVATARS, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, body } from "@/lib/theme";
 
-// A curated quick-pick grid for the common cases, plus a free-text field so
-// literally any emoji is choosable — typed or pasted via the device's own
-// emoji keyboard (Win+. on Windows, Cmd+Ctrl+Space on Mac, the emoji key on
-// mobile) — rather than us trying to embed the entire Unicode emoji set.
+/**
+ * Pick a drawn avatar, or your initial.
+ *
+ * There used to be a free-text box here that accepted any emoji you could
+ * paste. It has gone, and that is the point rather than a casualty: the
+ * sixteen below are drawn by Rally and look the same on every device, and an
+ * arbitrary pasted emoji is drawn by the operating system and does not. One
+ * pasted 🐙 would put the one un-styleable thing in the app back on a
+ * profile.
+ *
+ * Nobody loses a picture: a real photo is still the better option and is
+ * still there.
+ */
 export function AvatarPicker({ value, onChange }: any) {
-  const isCustom = !!value && !AVATARS.includes(value);
+  const cell = (on: boolean): React.CSSProperties => ({
+    width: 42, height: 42, borderRadius: 13, display: "grid", placeItems: "center",
+    cursor: "pointer", background: on ? FEED_LIME : FEED_RAISED, border: "none",
+  });
   return (
-    <div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-        <button onClick={() => onChange(null)} style={avCell(!value)}><span style={{ fontFamily: mono, fontSize: 10, color: MUTED }}>A–Z</span></button>
-        {AVATARS.map((a) => <button key={a} onClick={() => onChange(a)} style={avCell(value === a)}><span style={{ fontSize: 18 }}>{a}</span></button>)}
-      </div>
-      <input
-        value={isCustom ? value : ""}
-        onChange={(e) => { const v = e.target.value; onChange(v || null); }}
-        placeholder="Or type/paste any emoji…"
-        style={{ ...miniInput, width: "100%", boxSizing: "border-box" as const }}
-      />
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+      <button onClick={() => onChange(null)} style={cell(!value)} aria-label="Use my initial">
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: value ? FEED_TEXT_MID : FEED_LIME_INK }}>A–Z</span>
+      </button>
+      {AVATARS.map((a: string) => (
+        <button key={a} onClick={() => onChange(a)} style={cell(value === a)} aria-label={"Avatar " + a}>
+          <AvatarArt id={a} size={21} />
+        </button>
+      ))}
     </div>
   );
 }
