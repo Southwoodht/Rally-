@@ -42,6 +42,13 @@ a coding session.
       stored emoji is treated as an id and drawn, so existing players changed
       the moment it deployed
 - [x] **A score typed with no winner is no longer lost**
+- [x] **"What's new"** — your own Home, not a post to the league
+- [x] **Fancy loading screen** — bouncing ball, used on all three waits
+- [x] **Cancel tells the opponent** — a message, no migration needed after all
+- [x] **The four syncs are ordered** — players, then matches, then fixtures
+- [x] **The crash** — hooks below an early return; a check now runs in the gate
+- [x] **The dev league actually loads**, which is how the coloured-circle
+      avatars got caught
 - [x] **Head-to-Head favourite %** — turned out to be already built; the note
       in CLAUDE.md predated the scoreboard rebuild. Numbers checked, left
       alone. If something specific is wrong with this screen, say what.
@@ -54,10 +61,6 @@ a coding session.
 - [ ] **Home with no league** — currently you cannot get past create-or-join
 - [ ] **Friendlies** — a match with no league. Blocked by the above.
 - [ ] **Book anyone** — friends, player code, search, not just the league
-- [ ] **Cancel tells the opponent** — needs a soft cancel; SQL below
-- [ ] **Fancy loading screen**
-- [ ] **The four syncs are not atomic** — a fixture can be marked played with
-      no result behind it
 - [ ] **`assertWritable` throwing takes the whole matches sync with it** —
       not as bad as I first wrote it: it only validates rows being written,
       so an untouched bad row is never seen. Two earlier entries here were
@@ -105,6 +108,11 @@ existing message policies already decide who can see a row.
 
 **Until this runs, sending a picture fails.** Text messages are unaffected.
 
-### 4. Pending — written as the work lands
+### 4. Soft cancel — NO LONGER NEEDED
+
+Withdrawn. Cancelling now messages the opponent directly instead of leaving
+a row for the notification builder to read, so there is nothing to migrate.
+
+### 5. Pending — written as the work lands
 
 Collected here as each feature needs one.
