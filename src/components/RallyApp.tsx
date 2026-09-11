@@ -42,6 +42,7 @@ import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { WhatsNew } from "@/components/home/WhatsNew";
 import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
@@ -638,7 +639,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       </div>
     </div>
   );
-  if (loading) return <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}><div style={{ color: MUTED, fontFamily: body }}>Loading…</div></div>;
+  if (loading) return <LoadingScreen />;
 
   if (claimUI) {
     const showSuggestion = claimUI.candidate && !declinedCandidate;

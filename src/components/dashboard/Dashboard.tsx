@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
 import { BALL, body, CHALK, CLAY, COURT, display, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
@@ -158,9 +159,7 @@ export default function Dashboard({ session }: { session: Session }) {
     </div>
   );
 
-  if (view === "loading") return shell(
-    <div style={{ fontFamily: body, fontSize: 14, color: MUTED, textAlign: "center", padding: 30 }}>Loading…</div>
-  );
+  if (view === "loading") return <LoadingScreen label="Getting your leagues" />;
 
   if (view === "create") return shell(
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>

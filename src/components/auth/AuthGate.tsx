@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supabase";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { BALL, body, CHALK, COURT, display, fontImport, LINE, mono, MUTED, PANEL } from "@/lib/theme";
 import Welcome from "@/components/auth/Welcome";
 import UpdatePassword from "@/components/auth/UpdatePassword";
@@ -55,10 +56,10 @@ export default function AuthGate() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: COURT, display: "grid", placeItems: "center" }}>
+      <>
         <style dangerouslySetInnerHTML={{ __html: fontImport }} />
-        <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, letterSpacing: 2, textTransform: "uppercase" }}>Loading…</div>
-      </div>
+        <LoadingScreen label="Signing you in" />
+      </>
     );
   }
 
