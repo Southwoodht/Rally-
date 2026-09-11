@@ -129,6 +129,34 @@ and needs SQL.
 
 ---
 
+## CORRECTION — what "a profile" actually meant
+
+I built this wrong twice before Sam sent screenshots of what he meant.
+
+The profile he wanted is the one the app already has: stars, record, form,
+win rate, streaks, league placings, rivalries, best wins, head to head. I
+read "full profile page" as "build a profile page" and wrote a new, thinner
+one — then routed every tap to it, which downgraded the common case
+(somebody in your league) to serve the rare one (somebody outside it).
+
+**Why a standalone route could never be right.** That profile is assembled
+from the whole league — every match, every player, ratings replayed over
+history. `ProfileContainer` takes all of it as props from `RallyApp`. A page
+outside the app has none of that, so anything built there is necessarily a
+worse copy of a screen that already exists.
+
+**What it is now.** Search and the friends list link to `/?profile=<id>`,
+back into the app, and `RallyApp` opens the profile it already builds —
+full screen, instantly, no fetch. `/players/[id]` remains only as the
+fallback for somebody in none of your leagues, where a record genuinely
+cannot be read.
+
+**Consequence worth knowing:** the `public_player_card()` SQL matters much
+less than it did. Searching anyone in Seacourt now reaches the real profile
+without it. The function only feeds the stranger case.
+
+---
+
 ## WHAT CHANGED
 
 ### Phase 1 — profiles and photos visible to everyone
