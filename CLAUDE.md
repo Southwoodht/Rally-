@@ -445,6 +445,14 @@ Left partial by the 10 Sep brief (`RALLY_FIX_BRIEF.md`, written up in
 
 Approved, not built:
 
+- ~~**The nudge**~~ — **built 2026-09-11, needs `schema_match_nudge.sql` run.**
+  The limit is enforced in `nudge_match()`, a security-definer function, and
+  **not** in RLS: permissive policies for one command are OR'd, so an extra
+  UPDATE policy on `matches` would have widened access rather than narrowed
+  it and handed the reporter every column on a pending match. `nudged_at` is
+  read back in `rowToMatch` and deliberately not written by `matchToRow`, so
+  an unrelated save cannot reset somebody's 24 hours. Original spec follows.
+
 - **The nudge.** A pending result sits there until the opponent confirms it,
   and there is currently no way to ask them. Designed with Sam and specified
   down to the detail: delivery goes through the existing message system, but
@@ -454,12 +462,18 @@ Approved, not built:
   limit is **enforced in RLS, not by disabling a button**: a disabled button
   is a suggestion. The button then reads "Nudged 2h ago". One added column.
 - **Fancy loading screen on first app load.**
-- **Head-to-Head** is missing the favourite % and needs simplifying.
-- **Prompt everyone to re-pick their level** now six categories exist, so the
-  empty Amateur and Semi-pro tiers fill by self-selection. This isn't only
-  tidiness: it's also the repair for the one-off ELO shift the new scale
-  caused, because the pairs that moved apart move back when the person
-  between them takes up the new tier.
+- ~~**Head-to-Head** is missing the favourite %~~ — **it isn't, and hasn't
+  been since the scoreboard rollout.** "Predicted win" shows both
+  percentages, a bar and a sentence naming the favourite and why. Verified
+  against fixture data on 2026-09-11. The "needs simplifying" half is
+  unactioned: the screen is dense but organised, and nobody has said what
+  specifically is wrong with it.
+- ~~**Prompt everyone to re-pick their level**~~ — **done 2026-09-11.**
+  `home/LevelRecheck.tsx`, shown once on Home. The flag is in `user_storage`
+  (`levelRecheck.v6`), not on the player row: it is a fact about the person's
+  relationship with the app, and it needs no migration. Declining counts as
+  being asked, and a failed read is treated as asked, so a network hiccup
+  cannot resurrect the card.
 - **A "what's new" notification** listing recent updates.
   **ASK SAM BEFORE POSTING ANYTHING TO HIS LEAGUE — it goes to everyone.**
 

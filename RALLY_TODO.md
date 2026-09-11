@@ -35,16 +35,16 @@ a coding session.
       stops asking after a week
 - [x] **Hydration bug on the login screen** — the page was throwing away its
       server HTML and re-rendering from scratch
+- [x] **The nudge** — chase a pending result. Needs SQL (below).
+- [x] **Re-pick your level** — asked once, "Not now" is a real answer
+- [x] **Head-to-Head favourite %** — turned out to be already built; the note
+      in CLAUDE.md predated the scoreboard rebuild. Numbers checked, left
+      alone. If something specific is wrong with this screen, say what.
 
 ## In progress
 
-- [ ] **The nudge** — chase a pending result. Button exists, was never wired.
-      Needs `nudged_at`; SQL below.
-
 ## To do
 
-- [ ] **Head-to-Head** — missing the favourite %, and needs simplifying
-- [ ] **Re-pick your level** — prompt everyone now six categories exist
 - [ ] **"What's new"** — as a local notification, NOT a post to the league
 - [ ] **Emoji avatars → a drawn set** — needs `Avatar` changed and a
       migration, because players have the character stored on their row
@@ -82,6 +82,19 @@ Nothing here has been run. Each is additive and touches no existing rows.
 
 `supabase/schema_fixture_delete_participants.sql` — done, no action.
 
-### 2. Pending — written as the work lands
+### 2. `supabase/schema_match_nudge.sql` — NEEDED
 
-Collected here as each feature needs one. Currently none outstanding.
+Two columns on `matches` (`nudged_at`, `nudged_by`) and a `nudge_match()`
+function. Additive; no existing policy changes and no rows touched.
+
+**Until this runs, the Nudge button fails with a visible message.** Everything
+else works without it.
+
+Worth knowing why it is a function and not a policy: permissive RLS policies
+for the same command are OR'd, so an extra UPDATE policy on `matches` would
+have *widened* access and let the reporter rewrite any column on a pending
+match. The 24-hour limit is enforced inside the function instead.
+
+### 3. Pending — written as the work lands
+
+Collected here as each feature needs one.
