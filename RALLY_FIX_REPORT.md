@@ -1,5 +1,52 @@
 # RALLY FIX REPORT
 
+---
+
+# RUN 2 — PROFILES FOR EVERYONE (11 Sep 2026)
+
+**The complaint:** a second test account with no league, friended to Samuel
+Henry, cannot open his profile, cannot see his photo, cannot challenge him.
+Profiles should work like Facebook — any signed-in user finds anyone, opens
+their profile, and can message, friend or challenge them. No league needed.
+
+## CHECKLIST
+
+- [ ] **Phase 0 — Diagnose** (read-only)
+  - [ ] 0.1 Why can a no-league account not view a profile? RLS, query or UI?
+  - [ ] 0.2 Profile photos: where stored, public or private, why initials?
+  - [ ] 0.3 What every name and avatar tap does today, surface by surface
+  - [ ] 0.4 Do /players/[id], player search or friends already exist?
+- [ ] **Phase 1 — Profiles visible to everyone**
+  - [ ] Any signed-in user can view any player's profile
+  - [ ] Never expose email, phone or account settings
+  - [ ] Photos load for every signed-in user; initials only when there is none
+- [ ] **Phase 2 — Full profile page**
+  - [ ] Route /players/[id], full screen with back chevron
+  - [ ] Challenge / Message / Friend action row
+  - [ ] Record, form, H2H, recent matches, friends
+  - [ ] Official rank only when we share a league
+  - [ ] Own profile redirects to the Profile tab
+  - [ ] Every name and avatar in the app taps through; old popup removed
+- [ ] **Phase 3 — Player search**
+  - [ ] Search icon on Home and Table headers
+  - [ ] Searches all players, not just my leagues
+  - [ ] Friends, then league-mates, then everyone
+  - [ ] Recents when empty; "No one called ..." when nothing matches
+- [ ] **Phase 4 — Wrap up**
+  - [ ] Report complete, SQL listed, tap test done from a no-league account
+
+## FOUND, NOT FIXED
+
+_Anything spotted outside the current phase lands here._
+
+## SQL TO RUN
+
+_Collected as the work lands._
+
+---
+
+# RUN 1 — the 10 Sep brief (historical)
+
 Branch `fix/booking-flow`. Brief saved at `RALLY_FIX_BRIEF.md`.
 
 ---
