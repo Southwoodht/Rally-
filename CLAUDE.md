@@ -16,7 +16,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback tag | `v1.1-global-table` (also `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback tag | **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -607,6 +607,35 @@ opponents, members or name" line as still true of profiles — it holds for
 Both new functions are granted to `authenticated` only, never `anon`, and
 `search_player_accounts()` returns account ids rather than rows, so what can
 be *found* widened without what can be *read* widening.
+
+### Waiting to be run, as of 2026-09-12
+
+Sam is away. **Nothing here breaks the app if it is never run** — each one
+turns something on, and the code degrades with an explanation rather than an
+error. Do not rewrite these files while they are pending; he has the text.
+
+1. **`schema_public_player_card.sql`** — needs re-running. It has been run
+   twice already, and has since gained `age`, `level_history`,
+   `opponent_id` and `opponent_avatar`, and the recent-match limit went from
+   10 to 100 (which is what makes best-streak correct). Without the re-run a
+   public profile simply shows less.
+2. **`schema_friendly_players.sql`** — matches outside a league. Drops the
+   `not null` on `players.league_id`, adds `created_by`, and adds policies
+   for league-less rows. Until it runs, the "Just me and my mates" button
+   shows a screen naming the file and saying leagues are unaffected — which
+   they are.
+3. **`schema_match_delete_shell_and_pending.sql`** — the long-standing one
+   below.
+
+**Still unanswered, and worth knowing:** is `public.profiles` readable by
+`anon`? If it is, every name and photo in Rally is readable without an
+account. The app no longer depends on the answer — `/players/[id]` and
+`/search` both require a session — but nobody has checked:
+
+```sql
+select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)
+  from pg_policy where polrelid = 'public.profiles'::regclass;
+```
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a

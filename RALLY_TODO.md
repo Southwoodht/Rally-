@@ -1,104 +1,105 @@
-# Rally — the list, ticked off as it goes
+# Rally — where things stand
 
-Live tracker. Sam checks this rather than asking. Sources: the 10 Sep brief
-(`RALLY_FIX_BRIEF.md`), Sam's "have we missed loads" message of 10 Sep, and
-CLAUDE.md §5.
+Last updated **12 Sep 2026**, before Sam's holiday.
 
-**All SQL Sam needs to run is collected at the bottom.** Nothing is run from
-a coding session.
+Rollback point: `rally-pre-holiday-2026-09-12`. Everything below that date is
+deployed, gated (tsc · check:sql · hook-order · 268 tests · build) and live.
 
 ---
 
-## Done and deployed
+## Read this first if you are picking it up cold
 
-- [x] **Fonts load before the app** — sign-in and the league picker had no
-      webfont, so the first screen was the one screen not in Rally's typeface
-- [x] **Tap a name in Messages → their profile**
-- [x] **See their photo in Messages**
-- [x] **Delete / cancel a fixture** — either participant or league staff
-- [x] **Unconfirmed results count towards ratings**
-- [x] **Fixture results follow the same agreement rule as logging** — was
-      force-confirming results the opponent had never seen
-- [x] **Nothing lingers on Fixtures** — resolved fixtures leave the list
-- [x] **Cancel an upcoming match** — confirm sheet, records nothing
-- [x] **Add a player while logging** — the two-player block is gone, and an
-      empty search offers "Add '<name>' as a new player"
-- [x] **Wider duplicate detection** — first name, full name or nickname, and
-      it only ever asks
-- [x] **Book a match uses the real player picker**, not a bare dropdown
-- [x] **League invite links** — `?join=CODE`, survives sign-up
-- [x] **One date format everywhere** — "Sat 12 Sep 2026 · 2:00pm", London
-- [x] **Next Up fixed** — full name, formatted date, actually the next one,
-      and a line about your chances
-- [x] **No emoji in the UI** — drawn icons via `Glyph.tsx`
-- [x] **"How did it go?"** — Home asks once a match should have finished, and
-      stops asking after a week
-- [x] **Hydration bug on the login screen** — the page was throwing away its
-      server HTML and re-rendering from scratch
-- [x] **The nudge** — chase a pending result. Needs SQL (below).
-- [x] **Re-pick your level** — asked once, "Not now" is a real answer
-- [x] **Pictures in messages** — needs SQL (below)
-- [x] **Emoji avatars → a drawn set** — no migration needed after all; the
-      stored emoji is treated as an id and drawn, so existing players changed
-      the moment it deployed
-- [x] **A score typed with no winner is no longer lost**
-- [x] **"What's new"** — your own Home, not a post to the league
-- [x] **Fancy loading screen** — bouncing ball, used on all three waits
-- [x] **Cancel tells the opponent** — a message, no migration needed after all
-- [x] **The four syncs are ordered** — players, then matches, then fixtures
-- [x] **The crash** — hooks below an early return; a check now runs in the gate
-- [x] **The dev league actually loads**, which is how the coloured-circle
-      avatars got caught
-- [x] **Profiles for everyone** — /players/[id], search, tappable friends,
-      photo and name mirrored to the account row, signed-out routes closed
-- [x] **Search opens the real profile** — the one with rivalries, best wins
-      and head to head, not a summary of it
-- [x] **The profile is full screen**, not an 88vh sheet
-- [x] **A guard for SQL written blind** — `npm run check:sql`, in the gate
-- [x] **Head-to-Head favourite %** — turned out to be already built; the note
-      in CLAUDE.md predated the scoreboard rebuild. Numbers checked, left
-      alone. If something specific is wrong with this screen, say what.
+**Two migrations are written and not run.** Neither breaks anything. The app
+degrades with an explanation instead of an error, so leaving them is safe —
+but two features are dark until they go in. See **SQL to run** below.
 
-## In progress
+**The schema is in this repo.** `supabase/schema.sql` and
+`supabase/schema_players_matches.sql` hold the real `create table`
+statements. Read them before writing SQL. `npm run check:sql` enforces it.
 
-## Checked on screen, 2026-09-11 night
+---
 
-Home, Table, Fixtures and Profile all render correctly in the dev league
-with drawn avatars, correct records and the search icon in both headers.
-Zero emoji anywhere. Opening a player from the Table gives the full profile
-full screen; Back returns you where you were.
+## Done and live
 
-Not checkable without live Supabase: search results, messages, and the
-public profile page for somebody outside your leagues.
+The whole of the 10 Sep brief, the profiles work, and a run of fixes:
 
-## To do
+- **Booking loop closes** — Home asks "How did it go?" once a match should
+  have finished, and stops asking after a week
+- **The nudge** — chase a result you logged, once a day, enforced server-side
+- **Cancel a match** — confirm sheet, and it messages the other person
+- **Add players mid-flow** — no more "two players first"; wider duplicate
+  detection that asks and never decides
+- **Invite links** — `?join=CODE`, survives sign-up
+- **One date format** everywhere, Europe/London
+- **Next Up** — full name, real next match, a line about your chances
+- **Re-pick your level** — asked once
+- **What's new** — your own Home, never a post to the league
+- **Drawn avatars** — including the coloured circles the whole club uses
+- **Pictures in messages**
+- **A loading screen** worth looking at
+- **Profiles for everyone** — `/players/[id]`, player search, tappable
+  friends, photo and name mirrored to the account row
+- **Search opens the real profile**, not a summary of one
+- **Profiles are full screen**, not a sheet
+- **Saves are ordered** — players, then matches, then fixtures
 
-- [ ] **"What's new"** — as a local notification, NOT a post to the league
-- [ ] **Home with no league** — currently you cannot get past create-or-join
-- [ ] **Friendlies** — a match with no league. Blocked by the above.
-- [ ] **Book anyone** — friends, player code, search, not just the league
-- [ ] **`assertWritable` throwing takes the whole matches sync with it** —
-      not as bad as I first wrote it: it only validates rows being written,
-      so an untouched bad row is never seen. Two earlier entries here were
-      wrong and have been withdrawn (it does not scan every match, and
-      `loggedAt` is persisted — via `created_at`).
+### Fixes worth remembering
 
-## Last, by Sam's instruction
+- A crash from hooks below an early return. There is now a check in the gate.
+- A hydration bug that made the login screen discard its server HTML.
+- `resolveFixture` force-confirming results the opponent never agreed to.
+- A score typed with no winner being lost silently.
+- `/players/[id]` and `/search` rendering for signed-out visitors.
 
-- [ ] **Doubles** — ~70% of the club. Plan written in
-      `docs/doubles-readiness.md`. Needs a conversation before code.
+---
 
-## Needed from Sam
+## Still to do
 
-- [ ] **The original 13.** CLAUDE.md records items 7, 10, 11, 12 and 13 as
-      untouched but never says what they are. Send the list and they go in
-      above.
+- [ ] **Friendlies, end to end.** The SQL and the app path are both written.
+      Not verified end to end — the friendly boot needs a real session, and
+      the dev league cannot provide one. **Try it first after running the
+      migration.**
+- [ ] **Home with no league.** Still only reachable as Friendlies. `RallyApp`
+      takes a `leagueId` and reads that league on mount; running truly
+      league-less is a boot-path change for every user.
+- [ ] **Book anyone outside your league.** Challenge needs a shared league,
+      because a fixture belongs to one. Friendlies is the groundwork.
+- [ ] **Public profile gaps**, all deliberate: rankings need a shared league,
+      best wins need opponent ratings replayed over league history, and the
+      head-to-head card hides when you have never played them.
+- [ ] **`assertWritable` throwing takes the whole matches sync with it** — a
+      save half applied, reported as one failure.
+- [ ] **Doubles** — ~70% of the club, and last by Sam's instruction.
+      `docs/doubles-readiness.md` is the written plan. **Talk it through
+      before building.**
 
 ---
 
 ## SQL to run
 
-**Nothing outstanding.** All three were run on 2026-09-11:
-`schema_message_images.sql`, `schema_match_nudge.sql` and
-`schema_public_player_card.sql` (full version, including opponent names on
-recent matches). Recorded in CLAUDE.md §6.
+Both are additive. Nothing is rewritten and no existing row changes.
+
+### 1. `supabase/schema_public_player_card.sql` — re-run
+
+Already run twice; it has since gained `age`, `level_history`,
+`opponent_id` and `opponent_avatar`, and the recent-match limit went from 10
+to 100 (which is what makes best-streak right). **Without it a public
+profile just shows less** — no meta line, no rivalries.
+
+### 2. `supabase/schema_friendly_players.sql` — new
+
+Matches outside a league. Drops the `not null` on `players.league_id`, adds
+`created_by`, and adds policies for league-less rows. **Until it runs, "Just
+me and my mates" shows a screen naming the file and saying leagues are
+unaffected** — which they are.
+
+### And one thing to check, not run
+
+```sql
+select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)
+  from pg_policy where polrelid = 'public.profiles'::regclass;
+```
+
+If anything there grants `select` to `anon`, every name and photo in Rally is
+readable without an account. The app no longer depends on the answer — both
+new pages require a session — but nobody has checked.
