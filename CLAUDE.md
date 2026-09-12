@@ -587,6 +587,11 @@ and recreates by name, so it is safe to re-run.
 `image_url` on messages), `schema_match_nudge.sql` (`nudged_at` /
 `nudged_by` plus `nudge_match()`) and `schema_public_player_card.sql`.
 
+`schema_public_player_card.sql` was re-run on **2026-09-12** with two
+corrections: `recent` returns 100 matches rather than 10, so a profile can
+compute form, win rate and streaks rather than only listing a few; and the
+opening $$ of its body had been mangled to a single $ (see §8).
+
 That last one is the one to know about. It backfilled existing league photos
 into `profiles.avatar_url` — only where empty, so nothing was overwritten —
 and added `public_player_card()` and `search_player_accounts()`.
@@ -709,6 +714,14 @@ outlast the load entirely.
 ---
 
 ## 8. Gotchas worth knowing
+
+- **`$$` in a String.replace REPLACEMENT means one literal `$`.** So any
+  script that rewrites SQL through `replace()` silently halves the dollar
+  quotes on a function body, turning `as $$` into `as $`. It is invisible
+  when reading the diff, and Postgres rejects the whole file. This cost Sam a
+  paste on 2026-09-12. **Pass a function as the replacement** —
+  `replace(a, () => b)` — which turns off `$`-substitution entirely; `$&` and
+  `$1` have the same problem. `npm run check:sql` now catches the result.
 
 - A `\u....` escape written in JSX *text* is a JavaScript escape, not a JSX
   one, so it renders as the literal characters. Bit us on seven chevrons
