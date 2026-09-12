@@ -9,9 +9,11 @@ deployed, gated (tsc · check:sql · hook-order · 268 tests · build) and live.
 
 ## Read this first if you are picking it up cold
 
-**Two migrations are written and not run.** Neither breaks anything. The app
-degrades with an explanation instead of an error, so leaving them is safe —
-but two features are dark until they go in. See **SQL to run** below.
+**All migrations are run as of 12 Sep 2026.** Nothing is pending.
+
+The one that changed an invariant: `players.league_id` is no longer
+`not null`, so a player can exist outside any league. Anything assuming a
+player has a league must cope with null.
 
 **The schema is in this repo.** `supabase/schema.sql` and
 `supabase/schema_players_matches.sql` hold the real `create table`
@@ -75,25 +77,11 @@ The whole of the 10 Sep brief, the profiles work, and a run of fixes:
 
 ---
 
-## SQL to run
+## SQL
 
-Both are additive. Nothing is rewritten and no existing row changes.
+**Nothing outstanding.** Both were run on 12 Sep 2026.
 
-### 1. `supabase/schema_public_player_card.sql` — re-run
-
-Already run twice; it has since gained `age`, `level_history`,
-`opponent_id` and `opponent_avatar`, and the recent-match limit went from 10
-to 100 (which is what makes best-streak right). **Without it a public
-profile just shows less** — no meta line, no rivalries.
-
-### 2. `supabase/schema_friendly_players.sql` — new
-
-Matches outside a league. Drops the `not null` on `players.league_id`, adds
-`created_by`, and adds policies for league-less rows. **Until it runs, "Just
-me and my mates" shows a screen naming the file and saying leagues are
-unaffected** — which they are.
-
-### And one thing to check, not run
+### One thing to check, not run
 
 ```sql
 select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)

@@ -608,7 +608,24 @@ Both new functions are granted to `authenticated` only, never `anon`, and
 `search_player_accounts()` returns account ids rather than rows, so what can
 be *found* widened without what can be *read* widening.
 
-### Waiting to be run, as of 2026-09-12
+### Run on 2026-09-12, both
+
+`schema_public_player_card.sql` (re-run, dropped and recreated because the
+return type had gained `age`, `level_history` and the h2h columns) and
+**`schema_friendly_players.sql`**.
+
+That second one is the one to know about. **`players.league_id` is no longer
+`not null`** — a player row can exist outside any league, which is what makes
+a Friendly possible. `created_by` was added so a league-less shell has an
+owner, since there is no club to appeal to about one; league rows leave it
+null and are governed by the league policies exactly as before. The read and
+insert policies were rewritten and are byte-identical for league rows; every
+new clause is gated on `league_id is null`.
+
+**So "a player belongs to a league" is no longer an invariant.** Anything
+that assumes `players.league_id` is present needs to cope with null.
+
+### Previously waiting, now historical
 
 Sam is away. **Nothing here breaks the app if it is never run** — each one
 turns something on, and the code degrades with an explanation rather than an
