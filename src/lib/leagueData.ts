@@ -15,10 +15,35 @@ import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 
 const FETCH_FAILED = Symbol("league-data-fetch-failed");
 
+/**
+ * Friendlies — matches that belong to no league.
+ *
+ * A sentinel rather than a real id, so the whole app can go on treating
+ * "which league am I in" as one string. Everything downstream — computeStats,
+ * the table, a profile, the fixtures list — only ever receives players and
+ * matches, so handing it a league-less set makes all of it work unchanged.
+ * That is the same trick the dev league uses, and the reason §8's note about
+ * computeStats only counting a match when both players are in the list is
+ * load-bearing here too.
+ *
+ * It can never collide with a league id: leagues are uuids.
+ */
+export const FRIENDLY_LEAGUE_ID = "__friendly";
+export const isFriendlyLeague = (id?: string | null) => id === FRIENDLY_LEAGUE_ID;
+
+/** The value that goes in the column. Null is what "no league" is stored as. */
+const columnLeagueId = (leagueId: string): string | null => (isFriendlyLeague(leagueId) ? null : leagueId);
+
 async function selectAll(table: string, leagueId: string): Promise<any[]> {
   if (!supabase) return [];
+  // RLS does the narrowing for league-less rows: you see a match you played
+  // in, and a player row you own or made. Asking for "league_id is null"
+  // cannot over-fetch, because the policy has already decided.
+  const query = isFriendlyLeague(leagueId)
+    ? supabase.from(table).select("*").is("league_id", null)
+    : supabase.from(table).select("*").eq("league_id", leagueId);
   const result = await withSupabaseTimeout(
-    supabase.from(table).select("*").eq("league_id", leagueId),
+    query,
     FETCH_FAILED as any,
   );
   if (result === (FETCH_FAILED as any)) throw new Error(`Timed out loading "${table}" for league ${leagueId}.`);
@@ -51,6 +76,10 @@ const playerToRow = (leagueId: string, p: any) => ({
   avatar: p.avatar ?? null,
   avatar_url: p.avatarUrl ?? null,
   auth_id: p.auth_id ?? null,
+  // Only ever set on a league-less row, where there is no club to appeal to
+  // about a shell somebody got wrong. Null on a league player, which is what
+  // every existing row already is.
+  created_by: p.created_by ?? null,
   claimed_at: p.claimedAt ? new Date(p.claimedAt).toISOString() : null,
   inactive: !!p.inactive,
   initial_record: p.initialRecord ?? null,
@@ -69,6 +98,7 @@ const rowToPlayer = (r: any) => ({
   avatar: r.avatar ?? null,
   avatarUrl: r.avatar_url ?? undefined,
   auth_id: r.auth_id ?? null,
+  created_by: r.created_by ?? null,
   claimedAt: r.claimed_at ? new Date(r.claimed_at).getTime() : undefined,
   inactive: !!r.inactive,
   initialRecord: r.initial_record ?? undefined,
@@ -199,7 +229,12 @@ export async function fetchLeagueData(leagueId: string) {
 
 export async function insertPlayerRow(leagueId: string, p: any) {
   if (!supabase) return;
-  await run(supabase.from("players").insert(playerToRow(leagueId, p)), `adding player ${p.id}`);
+  // columnLeagueId, not leagueId. This is the one write path that does not
+  // go through syncEntity, so it has to translate the friendly sentinel
+  // itself — otherwise it tries to put "__friendly" into a uuid column and
+  // the insert fails at exactly the moment somebody is creating their first
+  // player.
+  await run(supabase.from("players").insert(playerToRow(columnLeagueId(leagueId) as any, p)), `adding player ${p.id}`);
 }
 
 export async function updatePlayerRow(id: string, patch: any) {
@@ -252,13 +287,16 @@ async function deleteRow(table: string, id: string) {
 // ---- diff-and-sync, used by RallyApp's saveData for every other mutation
 
 async function syncEntity(
-  leagueId: string,
+  leagueIdRaw: string,
   table: string,
   prev: any[],
   next: any[],
-  toRow: (leagueId: string, x: any) => any,
+  toRow: (leagueId: any, x: any) => any,
 ) {
   if (!supabase || prev === next) return;
+  // The sentinel never reaches a row. Translated once here so the four
+  // mappers do not each have to remember.
+  const leagueId: any = columnLeagueId(leagueIdRaw);
   const prevMap = new Map(prev.map((x) => [x.id, x]));
   const nextIds = new Set(next.map((x) => x.id));
   const ops: Promise<any>[] = [];

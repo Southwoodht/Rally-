@@ -43,6 +43,7 @@ import { computeOfficial } from "@/core/official";
 import { formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
 import { SEED_GROUP_DATA } from "@/data/seed";
+import { FRIENDLY_LEAGUE_ID, isFriendlyLeague } from "@/lib/leagueData";
 
 /** Kept in step with the id Dashboard mounts for ?__dev_auto=1. */
 const DEV_LEAGUE_ID = "g_debug";
@@ -313,6 +314,37 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         setGroups([{ id: leagueId, name: "Dev League" }]);
         setGid(leagueId);
         setGdata({ players: seeded.players, matches: seeded.matches, fixtures: [], posts: [], me: seeded.players[0]?.id ?? null });
+        setOnboarded(true);
+        setLoading(false);
+        return;
+      }
+
+      // Friendlies. fetchLeagueData already knows to ask for league-less
+      // rows, so the only extra work is making sure YOU have a row — a match
+      // names two players.id, and somebody who has never joined a league has
+      // never had one.
+      if (isFriendlyLeague(leagueId)) {
+        const { data: userData } = await supabase!.auth.getUser();
+        const authId = (userData as any)?.user?.id ?? null;
+        let data = await fetchLeagueData(leagueId);
+        let mine = authId ? data.players.find((p: any) => p.auth_id === authId) : null;
+        if (authId && !mine) {
+          // Created once, on first use, rather than at sign-up: most people
+          // never need one, and a row nobody asked for is a row somebody has
+          // to explain later.
+          mine = { id: uid(), name: displayName || "Me", auth_id: authId, created_by: authId } as any;
+          try {
+            await insertPlayerRow(leagueId, mine);
+            data = await fetchLeagueData(leagueId);
+          } catch (e) {
+            console.error("Couldn't create your friendly player row", e);
+            setLoadError(true); setLoading(false); return;
+          }
+          mine = data.players.find((p: any) => p.auth_id === authId) || mine;
+        }
+        setGroups([{ id: leagueId, name: "Friendlies" }]);
+        setGid(leagueId);
+        setGdata({ ...data, me: mine?.id ?? null });
         setOnboarded(true);
         setLoading(false);
         return;

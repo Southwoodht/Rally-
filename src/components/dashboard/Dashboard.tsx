@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
+import { FRIENDLY_LEAGUE_ID } from "@/lib/leagueData";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
 import { BALL, body, CHALK, CLAY, COURT, display, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
@@ -220,6 +221,14 @@ export default function Dashboard({ session }: { session: Session }) {
           </div>
         );
       })}
+      <button
+        onClick={() => { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); }}
+        style={{ ...tile, width: "100%", marginBottom: 8, display: "block", boxSizing: "border-box" as const, textAlign: "left" }}
+      >
+        <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>Friendlies</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>Matches outside any league</div>
+      </button>
+
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
         <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>Create</div></button>
         <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>Join</div></button>
@@ -251,9 +260,23 @@ export default function Dashboard({ session }: { session: Session }) {
       </button>
       <button
         onClick={() => { setError(""); setView("create"); }}
-        style={{ width: "100%", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16 }}
+        style={{ width: "100%", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16, marginBottom: 18 }}
       >
         Create a league
+      </button>
+
+      {/* The third answer, and for some people the only one they want. A
+          league is a commitment — a name, a code, people to invite. Two mates
+          who play on a Tuesday need none of it, and making them set one up
+          first is asking them to run a club before they can record a game. */}
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
+        Or skip the league entirely — just log matches against your mates.
+      </div>
+      <button
+        onClick={() => { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); }}
+        style={{ width: "100%", background: FEED_CARD, color: FEED_TEXT_HI, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16 }}
+      >
+        Just me and my mates
       </button>
     </>
   );
