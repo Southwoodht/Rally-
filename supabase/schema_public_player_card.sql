@@ -48,6 +48,8 @@ returns table (
   nick   text,
   level  jsonb,
   home   text,
+  age    text,
+  level_history jsonb,
   wins   int,
   draws  int,
   losses int,
@@ -70,7 +72,7 @@ begin
   return query
   with me as (
     -- Every league row this person owns. One human, several memberships.
-    select p.id, p.nick, p.level, p.home, p.claimed_at
+    select p.id, p.nick, p.level, p.home, p.age, p.level_history, p.claimed_at
       from public.players p
      where p.auth_id = p_auth_id
   ),
@@ -100,12 +102,15 @@ begin
   latest as (
     -- The most recently touched league row wins for the descriptive bits.
     -- Somebody in two clubs has two of each and we have to pick one.
-    select me.nick, me.level, me.home from me order by me.claimed_at desc nulls last, me.id limit 1
+    select me.nick, me.level, me.home, me.age, me.level_history
+      from me order by me.claimed_at desc nulls last, me.id limit 1
   )
   select
     (select l.nick from latest l),
     (select to_jsonb(l.level) from latest l),
     (select l.home from latest l),
+    (select l.age from latest l),
+    (select l.level_history from latest l),
     (select count(*)::int from mine where winner = my_side),
     (select count(*)::int from mine where winner = 'draw'),
     (select count(*)::int from mine where winner <> 'draw' and winner <> my_side),
@@ -120,7 +125,9 @@ begin
               'date', r.date,
               'won', case when r.winner = 'draw' then null else (r.winner = r.my_side) end,
               'score', r.score,
-              'opponent', trim(coalesce(op.name,'') || ' ' || coalesce(op.last,''))
+              'opponent', trim(coalesce(op.name,'') || ' ' || coalesce(op.last,'')),
+              'opponent_id', op.id,
+              'opponent_avatar', op.avatar
             ) order by r.date desc), '[]'::jsonb)
        from (select * from mine order by date desc limit 100) r
        join public.players op

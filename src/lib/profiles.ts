@@ -110,11 +110,20 @@ export interface PublicPlayerCard {
     nick: string | null;
     level: { cat: string; sub: string } | null;
     home: string | null;
+    age: string | null;
+    /** Drives "9 years playing" — the first entry's start year is the start. */
+    levelHistory: any[] | null;
     wins: number;
     draws: number;
     losses: number;
     form: string[];
-    recent: Array<{ id: string; date: string; won: boolean | null; score: string | null; opponent: string }>;
+    recent: Array<{
+      id: string; date: string; won: boolean | null; score: string | null;
+      opponent: string;
+      /** So a rivalry can be tapped through to, and drawn with their avatar. */
+      opponentId: string | null;
+      opponentAvatar: string | null;
+    }>;
     /** You against them. Computed server-side, where both halves are visible. */
     h2h: { w: number; d: number; l: number } | null;
   } | null;
@@ -154,11 +163,18 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
           nick: d.nick ?? null,
           level: d.level ?? null,
           home: d.home ?? null,
+          age: d.age ?? null,
+          levelHistory: d.level_history ?? null,
           wins: d.wins ?? 0,
           draws: d.draws ?? 0,
           losses: d.losses ?? 0,
           form: d.form ?? [],
-          recent: d.recent ?? [],
+          recent: (d.recent ?? []).map((m: any) => ({
+            id: m.id, date: m.date, won: m.won ?? null, score: m.score ?? null,
+            opponent: m.opponent || "",
+            opponentId: m.opponent_id ?? null,
+            opponentAvatar: m.opponent_avatar ?? null,
+          })),
           h2h: (d.h2h_w ?? 0) + (d.h2h_d ?? 0) + (d.h2h_l ?? 0) > 0
             ? { w: d.h2h_w ?? 0, d: d.h2h_d ?? 0, l: d.h2h_l ?? 0 }
             : null,

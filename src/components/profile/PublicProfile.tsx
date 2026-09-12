@@ -5,6 +5,7 @@ import { GapInsight } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RecordCard } from "@/components/profile/RecordCard";
+import { RivalryCard } from "@/components/profile/RivalryCard";
 import type { FormBarItem } from "@/components/profile/FormBars";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { getPublicPlayerCard, type PublicPlayerCard } from "@/lib/profiles";
@@ -186,6 +187,44 @@ export function PublicProfile({ id }: { id: string }) {
     }
   };
 
+  // "23 · Seacourt · 9 years playing", assembled the way ProfileContainer
+  // assembles it — from the first entry in their level history.
+  const startedRaw: any = s?.levelHistory?.[0]?.from;
+  const startYear = startedRaw == null ? null
+    : typeof startedRaw === "number" ? startedRaw
+    : parseInt(String(startedRaw).split("-")[0], 10);
+  const years = startYear ? new Date().getFullYear() - startYear : null;
+  const meta = [
+    s?.age || null,
+    s?.home || null,
+    years && years > 0 ? years + (years === 1 ? " year playing" : " years playing") : null,
+  ].filter(Boolean).join(" · ");
+
+  /**
+   * Who they play, from the match list.
+   *
+   * Computed here rather than with core/rivalries, which scores by closeness
+   * and recency across a whole league and needs players and ratings this page
+   * does not have. This is the plainer question — who have you played most —
+   * and the card is the one the real profile already uses.
+   */
+  const rivalries = (() => {
+    const by = new Map<string, { id: string | null; name: string; avatar: string | null; w: number; d: number; l: number; last: string; seq: Array<"W" | "D" | "L"> }>();
+    for (const m of recent) {
+      const key = m.opponentId || m.opponent;
+      if (!key) continue;
+      const o = outcomeOf(m);
+      const cur = by.get(key) || { id: m.opponentId, name: m.opponent || "someone", avatar: m.opponentAvatar, w: 0, d: 0, l: 0, last: m.date, seq: [] as Array<"W" | "D" | "L"> };
+      if (o === "W") cur.w++; else if (o === "D") cur.d++; else cur.l++;
+      cur.seq.push(o);
+      by.set(key, cur);
+    }
+    return [...by.values()]
+      .filter((r) => r.w + r.d + r.l >= 2)
+      .sort((a, b) => (b.w + b.d + b.l) - (a.w + a.d + a.l))
+      .slice(0, 3);
+  })();
+
   const h2h = s?.h2h;
   const full = card.display_name || first;
   const headline = h2h
@@ -201,7 +240,7 @@ export function PublicProfile({ id }: { id: string }) {
       <ProfileHeader
         leagueName={s?.home || "Rally"}
         player={asPlayer}
-        meta={s?.nick ? "“" + s.nick + "”" : undefined}
+        meta={meta || undefined}
         levelLabel={s?.level ? s.level.cat + " · " + s.level.sub : undefined}
         viewer="other"
       />
@@ -229,6 +268,24 @@ export function PublicProfile({ id }: { id: string }) {
           {headline && (
             <div style={{ marginTop: 12 }}>
               <GapInsight headline={headline} advice={"Across " + (h2h!.w + h2h!.d + h2h!.l) + " meetings."} />
+            </div>
+          )}
+
+          {!!rivalries.length && (
+            <div style={{ marginTop: 22 }}>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Rivalries</div>
+              {rivalries.map((r) => (
+                <div key={r.id || r.name} style={{ marginBottom: 8 }}>
+                  <RivalryCard
+                    me={asPlayer}
+                    them={{ id: r.id || r.name, name: r.name, avatar: r.avatar }}
+                    w={r.w} d={r.d} l={r.l}
+                    recent={r.seq.slice(0, 5).reverse()}
+                    total={r.w + r.d + r.l}
+                    lastPlayed={formatMatchDate(r.last)}
+                  />
+                </div>
+              ))}
             </div>
           )}
 
