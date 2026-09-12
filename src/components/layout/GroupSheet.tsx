@@ -4,7 +4,7 @@ import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, Chevr
 import { BigBtn } from "@/components/ui/atoms";
 import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, input, listCard, listRow } from "@/lib/theme";
 
-export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClose, personal, onPersonal }: any) {
+export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClose, personal, onPersonal, friendly, onFriendly = "/?league=friendly" }: any) {
   const [name, setName] = useState("");
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
@@ -23,6 +23,26 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
             </button>
           </div>
         </div>
+        {/* Friendlies. This sheet is the only league switcher reachable from
+            inside the app, and somebody with exactly one league never sees
+            the Dashboard at all — load() sends them straight in — so putting
+            this only on the Dashboard made it unreachable for most people,
+            Sam included. */}
+        <div style={{ ...listCard, marginBottom: 14 }}>
+          <div style={{ ...listRow, cursor: "default" }}>
+            <button
+              onClick={() => { if (typeof window !== "undefined") window.location.href = onFriendly; }}
+              style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
+            >
+              <span style={{ width: 22, height: 22, borderRadius: 10, display: "grid", placeItems: "center", background: friendly ? BALL : "transparent", border: friendly ? "none" : "1.5px solid " + MUTED }} />
+              <span>
+                <span style={{ display: "block", fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Just me and my mates</span>
+                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>Matches outside any league</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
         <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Your leagues</div>
         <div style={listCard}>
           {groups.map((g) => {
@@ -42,6 +62,14 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New league name…" onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} style={{ ...input, marginBottom: 0, boxSizing: "border-box" as const }} />
           <BigBtn onClick={() => { if (name.trim()) { onAdd(name.trim()); setName(""); } }} color={BALL} grow={false}>Create</BigBtn>
         </div>
+        {friendly && (
+          <button
+            onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}
+            style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15 }}
+          >
+            Back to your leagues
+          </button>
+        )}
         <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Each league keeps its own players, results and rankings — your mates and your work crew stay totally separate.</div>
       </div>
     </div>

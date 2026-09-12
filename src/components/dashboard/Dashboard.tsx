@@ -35,6 +35,15 @@ export default function Dashboard({ session }: { session: Session }) {
       return;
     }
     try {
+      // "?league=friendly" — arriving from the switcher inside the app.
+      // Checked before the league list, because somebody with exactly one
+      // league is otherwise sent straight into it and never gets a choice.
+      if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("league") === "friendly") {
+        setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any);
+        setView("app");
+        return;
+      }
+
       // A held invite is redeemed once, before the league list decides what
       // to show — otherwise somebody arriving on a link gets dropped on the
       // create-or-join screen with the thing they were invited to nowhere in

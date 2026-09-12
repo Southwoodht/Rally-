@@ -5,6 +5,7 @@ import { GapInsight } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RecordCard } from "@/components/profile/RecordCard";
+import { OpponentRecords } from "@/components/profile/OpponentRecords";
 import { RivalryCard } from "@/components/profile/RivalryCard";
 import type { FormBarItem } from "@/components/profile/FormBars";
 import { SurfaceCard } from "@/components/ui/Surfaces";
@@ -208,7 +209,7 @@ export function PublicProfile({ id }: { id: string }) {
    * does not have. This is the plainer question — who have you played most —
    * and the card is the one the real profile already uses.
    */
-  const rivalries = (() => {
+  const byOpponent = (() => {
     const by = new Map<string, { id: string | null; name: string; avatar: string | null; w: number; d: number; l: number; last: string; seq: Array<"W" | "D" | "L"> }>();
     for (const m of recent) {
       const key = m.opponentId || m.opponent;
@@ -219,11 +220,28 @@ export function PublicProfile({ id }: { id: string }) {
       cur.seq.push(o);
       by.set(key, cur);
     }
-    return [...by.values()]
-      .filter((r) => r.w + r.d + r.l >= 2)
-      .sort((a, b) => (b.w + b.d + b.l) - (a.w + a.d + a.l))
-      .slice(0, 3);
+    return [...by.values()];
   })();
+
+  const rivalries = byOpponent
+    .filter((r) => r.w + r.d + r.l >= 2)
+    .sort((a, b) => (b.w + b.d + b.l) - (a.w + a.d + a.l))
+    .slice(0, 3);
+
+  /**
+   * Everyone they have played, split by who is ahead.
+   *
+   * The same OpponentRecords the real profile uses. No level label: that
+   * would need each opponent's level, and the card returns their name,
+   * avatar and id but not what they claim to be — one join further than the
+   * payload can afford at a hundred matches.
+   */
+  const asOpponent = (r: typeof byOpponent[number]) => ({
+    player: { id: r.id || r.name, name: r.name, avatar: r.avatar },
+    w: r.w, d: r.d, l: r.l,
+  });
+  const opponentsLead = byOpponent.filter((r) => r.w > r.l).map(asOpponent);
+  const opponentsBehind = byOpponent.filter((r) => r.l > r.w).map(asOpponent);
 
   const h2h = s?.h2h;
   const full = card.display_name || first;
@@ -286,6 +304,13 @@ export function PublicProfile({ id }: { id: string }) {
                   />
                 </div>
               ))}
+            </div>
+          )}
+
+          {(!!opponentsLead.length || !!opponentsBehind.length) && (
+            <div style={{ marginTop: 22 }}>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Their opponents</div>
+              <OpponentRecords lead={opponentsLead} behind={opponentsBehind} />
             </div>
           )}
 
