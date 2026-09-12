@@ -9,7 +9,9 @@ import { OpponentRecords } from "@/components/profile/OpponentRecords";
 import { RivalryCard } from "@/components/profile/RivalryCard";
 import type { FormBarItem } from "@/components/profile/FormBars";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { getPublicPlayerCard, type PublicPlayerCard } from "@/lib/profiles";
+import { getPublicLeagueSnapshot, getPublicPlayerCard, type PublicPlayerCard } from "@/lib/profiles";
+import { ProfileContainer } from "@/components/profile/ProfileContainer";
+import { computeStats } from "@/core/elo";
 import { acceptFriendRequest, getFriendshipWith, sendFriendRequest } from "@/lib/friends";
 import { currentUserId } from "@/lib/messages";
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
@@ -53,6 +55,15 @@ export function PublicProfile({ id }: { id: string }) {
   const [friendRowId, setFriendRowId] = useState<string | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unclaimed" | "missing" | "signedOut">("loading");
   const [busy, setBusy] = useState(false);
+  /**
+   * The whole league behind them, when we can get it.
+   *
+   * With it, this page renders the real ProfileContainer and is identical to
+   * the profile you see from inside that league — because it is the same
+   * component over the same input. Without it, the summary below. That is
+   * the difference Sam kept seeing, and it was never about missing data.
+   */
+  const [snapshot, setSnapshot] = useState<{ players: any[]; matches: any[] } | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -81,6 +92,12 @@ export function PublicProfile({ id }: { id: string }) {
         if (!c) { setState("missing"); return; }
         setCard(c);
         setState("ready");
+
+        // Best-effort and never blocking: the summary is already on screen
+        // by the time this lands, and the page upgrades itself if it works.
+        getPublicLeagueSnapshot(resolved)
+          .then((snap) => { if (live) setSnapshot(snap); })
+          .catch(() => {});
 
         if (mine !== resolved) {
           try {
@@ -132,6 +149,42 @@ export function PublicProfile({ id }: { id: string }) {
   if (state === "signedOut") return note("Sign in to see profiles", "Rally profiles are for people with an account.", true);
   if (state === "unclaimed") return note("Not on Rally yet", "This player has a record in a league but no account, so there is no profile to open. Their results still count wherever they have played.");
   if (state === "missing" || !card) return note("No such player", "That profile does not exist, or it is not shared with you.");
+
+  /**
+   * The real profile, when the league behind it is readable.
+   *
+   * Not a copy of ProfileContainer and not a variant of it — it IS
+   * ProfileContainer, over players and matches loaded from that league and
+   * computeStats run on them here, exactly as RallyApp does. So it is not
+   * "close to" the profile Sam sees on his own account; it is the same
+   * screen.
+   *
+   * viewer="other" is what turns off settings, editing and the linked
+   * player, which is the only difference that should exist between reading
+   * your own profile and somebody else's.
+   */
+  if (snapshot && authId) {
+    const them = snapshot.players.find((pl: any) => pl.auth_id === authId);
+    if (them) {
+      const stats: any = computeStats(snapshot.players, snapshot.matches);
+      return shell(
+        <ProfileContainer
+          player={them}
+          players={snapshot.players}
+          matches={snapshot.matches}
+          elo={stats.elo}
+          wdl={stats.wdl}
+          form={stats.form}
+          deltas={stats.deltas}
+          ratingBefore={stats.ratingBefore}
+          meId={null}
+          group={{ name: them.home || "Rally" }}
+          viewer="other"
+          onOpen={(pid: string) => { if (typeof window !== "undefined") window.location.href = "/players/" + encodeURIComponent(pid); }}
+        />
+      );
+    }
+  }
 
   const isMe = !!meId && meId === authId;
   const s = card.stats;

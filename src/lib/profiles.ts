@@ -1,4 +1,5 @@
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
+import { rowToMatch, rowToPlayer } from "@/lib/leagueData";
 
 export interface Profile {
   id: string;
@@ -189,4 +190,33 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
   }
 
   return { id: base.id, display_name: base.display_name, avatar_url: base.avatar_url, friend_code: base.friend_code, stats, statsProblem };
+}
+
+/**
+ * The league behind somebody's profile.
+ *
+ * This is what makes a stranger's profile identical to the one you see from
+ * inside a league rather than a thinner copy of it. The rich profile is not
+ * stored anywhere — ProfileContainer computes it in the browser from the
+ * whole league, running computeStats over its players and matches. Give a
+ * viewer that same input and the same component produces the same screen.
+ *
+ * Null when the function is not installed, or when the person has never
+ * played a league match. Both mean the same thing to the caller: fall back
+ * to the summary card.
+ */
+export async function getPublicLeagueSnapshot(authId: string): Promise<{ players: any[]; matches: any[] } | null> {
+  if (!supabase) return null;
+  try {
+    const res: any = await withSupabaseTimeout(supabase.rpc("public_league_snapshot", { p_auth_id: authId }), FAILED as any);
+    if (res === (FAILED as any) || res.error || !res.data) return null;
+    const row = Array.isArray(res.data) ? res.data[0] : res.data;
+    const players = (row?.players || []).map(rowToPlayer);
+    const matches = (row?.matches || []).map(rowToMatch);
+    if (!players.length) return null;
+    return { players, matches };
+  } catch (e) {
+    console.warn("public_league_snapshot unavailable — showing the summary profile", e);
+    return null;
+  }
 }

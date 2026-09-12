@@ -86,7 +86,7 @@ const playerToRow = (leagueId: string, p: any) => ({
   initial_elo: p.initialElo ?? null,
 });
 
-const rowToPlayer = (r: any) => ({
+export const rowToPlayer = (r: any) => ({
   id: r.id,
   name: r.name,
   last: r.last ?? undefined,
@@ -138,7 +138,7 @@ const assertWritable = (m: any) => {
   }
 };
 
-const rowToMatch = (r: any) => ({
+export const rowToMatch = (r: any) => ({
   nudgedAt: r.nudged_at ? new Date(r.nudged_at).getTime() : null,
   id: r.id,
   date: new Date(r.date).getTime(),
