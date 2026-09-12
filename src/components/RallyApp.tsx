@@ -156,6 +156,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [declinedCandidate, setDeclinedCandidate] = useState(false);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
   const [myAuthId, setMyAuthId] = useState<string | null>(null);
+  // Friendlies need one migration that may not have been run yet. Saying so
+  // beats the generic "couldn't load" screen, which points nowhere.
+  const [friendlyUnavailable, setFriendlyUnavailable] = useState(false);
   // Where /players/[id] sends you back to. Both carry an account id, because
   // that is the only identity a page outside a league has to work with.
   const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge" | "profile"; authId: string } | null>(null);
@@ -337,8 +340,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             await insertPlayerRow(leagueId, mine);
             data = await fetchLeagueData(leagueId);
           } catch (e) {
+            // players.league_id is still `not null` until
+            // schema_friendly_players.sql has been run, so this is the
+            // expected failure rather than a broken app — and the generic
+            // error screen would send somebody hunting for the wrong thing.
             console.error("Couldn't create your friendly player row", e);
-            setLoadError(true); setLoading(false); return;
+            setFriendlyUnavailable(true); setLoading(false); return;
           }
           mine = data.players.find((p: any) => p.auth_id === authId) || mine;
         }
@@ -832,6 +839,26 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     else { const off = officialPoints; arr.sort((a, b) => ((off[b.id] ?? -1e9) - (off[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0))); }
     return arr;
   }, [players, elo, wdl, form, matches, rankingMode, officialPoints]);
+
+  if (friendlyUnavailable) return (
+    <div style={{ ...wrap, minHeight: "100vh", padding: "calc(24px + env(safe-area-inset-top)) 18px 24px" }}>
+      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
+      <div style={{ maxWidth: 520, margin: "0 auto" }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: CHALK }}>Friendlies aren&apos;t switched on yet</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: MUTED, marginTop: 10, lineHeight: 1.55 }}>
+          Matches outside a league need one database update that hasn&apos;t been
+          run — <span style={{ color: CHALK }}>supabase/schema_friendly_players.sql</span>.
+          Nothing is broken, and your leagues are unaffected.
+        </div>
+        <button
+          onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}
+          style={{ width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 16, padding: "13px 14px", marginTop: 18, cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 15 }}
+        >
+          Back to your leagues
+        </button>
+      </div>
+    </div>
+  );
 
   if (loadError) return (
     <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}>
