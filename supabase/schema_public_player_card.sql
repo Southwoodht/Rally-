@@ -43,6 +43,13 @@ update public.profiles pr
 
 -- 2. The card -------------------------------------------------------------
 
+-- Dropped, not replaced. The return type has changed since the first
+-- version — it gained age, level_history and the h2h columns — and
+-- `create or replace function` cannot change a return type; it fails with
+-- "cannot change return type of existing function". Same reason
+-- schema_global_edges_score.sql drops and recreates.
+drop function if exists public.public_player_card(uuid);
+
 create or replace function public.public_player_card(p_auth_id uuid)
 returns table (
   nick   text,
