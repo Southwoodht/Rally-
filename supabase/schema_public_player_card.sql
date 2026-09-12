@@ -60,7 +60,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 -- The names in `returns table` above are also variables in here, so a bare
 -- column with the same name — nick, level, home, wins, form, recent — is
 -- ambiguous and raises at call time. This says columns win, and every
