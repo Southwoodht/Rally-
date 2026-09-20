@@ -1088,6 +1088,35 @@ same six entries starting 2025 but a career from 2017 would look equally
 "filled in" and grade flat for eight years. Ask for coverage, never for
 presence.
 
+**The league table has a Strength mode since 2026-09-20, and it is the network
+rating.** Sam: "I want it to look at opponents — if Sam played Charlie's
+opponents and Charlie played Sam's." Every other mode on that screen answers
+with a summary statistic and a summary cannot hold a chain, which is the whole
+argument in `core/rating.ts`. So the mode hands `computeRatings` one league's
+matches instead of every league's. Nothing is tuned and no constant differs
+from the Global table's; margin is blended in the same way.
+
+On Seacourt 2026 it says what Sam already believed: Sam 7.94, Charlie 7.90,
+**0.04 apart on a scale where a whole category is 3** — against 51.9 and 29.1
+on Official. It also puts Adrian second on 9.37, which is where Sam has always
+said he belongs and where no summary metric has ever put him.
+
+**Values are x100, and that is load-bearing rather than cosmetic.**
+`StandingsList` ranks on `Math.round(p.rating)` on purpose — two players
+printing the same number should be treated as level and separated by
+head-to-head rather than by a difference nobody can see. But
+`computeRatings` works on a 0-12 scale, so at raw size most of the club
+rounded into the same two or three integers, every one of those groups was
+then ordered by head-to-head, and `ratingColumn` revealed a decimal that
+contradicted it: **6.6 printed directly above 6.8**, which is worse than the
+identical-numbers problem rankDisplay was written to solve. Scaled up,
+rounding discriminates again and the ties are real ties. Seen on screen, both
+before and after.
+
+**Any future mode on a tight scale hits this.** The rule is that the number
+the table prints has to have enough resolution for `Math.round` to mean
+something, because that rounding is what the ranking uses.
+
 **COMPUTED FROM THE REAL 2026 MATCHES, 2026-09-20.** Sam pasted every
 confirmed match of the year with both players' levels as at the date. Running
 computeOfficial over them:

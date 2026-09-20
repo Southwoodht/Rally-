@@ -12,6 +12,9 @@ import { START_ELO } from "@/core/constants";
 import { ratingForMatch } from "@/core/difficulty";
 import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
+import { computeRatings, type Edge } from "@/core/rating";
+import { shareForPlayer } from "@/core/sets";
+import { MARGIN_WEIGHT } from "@/core/constants";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { winPct } from "@/lib/format";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput } from "@/lib/theme";
@@ -43,19 +46,64 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const filtered = useMemo(() => tableYr === "all" ? seasonFiltered : seasonFiltered.filter((m) => new Date(m.date).getFullYear() === tableYr), [seasonFiltered, tableYr]);
   const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, filtered), [players, filtered]);
   const officialMap = useMemo(() => computeOfficial(players, filtered, wdl), [players, filtered, wdl]);
+
+  /**
+   * The network rating, over this league's own matches.
+   *
+   * Sam, 2026-09-20: "I want it to look at opponents — if Sam played Charlie's
+   * opponents and Charlie played Sam's." Every other mode here answers that
+   * with a summary statistic, and a summary cannot hold a chain. This one is
+   * built on who beat whom and settles by iteration, which is exactly the
+   * question he asked.
+   *
+   * It is not new and it is not tuned for this: computeRatings has run the
+   * Global table since 2026-09-04. This hands it one league's matches instead
+   * of every league's, and nothing else changes — same function, same
+   * constants, same spread.
+   *
+   * Margin is blended in the way globalTable does it, so a 6-0 and a 7-6
+   * separate two players by different amounts. A match with no score, or one
+   * whose score cannot be reconciled with its result, keeps the plain 1/0.5/0.
+   */
+  const networkMap = useMemo(() => {
+    const edges: Edge[] = [];
+    filtered.filter((m: any) => countsAsPlayed(m) && m.winner).forEach((m: any) => {
+      const base = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
+      const share = shareForPlayer(m, m.p1);
+      const r1 = share === null ? base : (1 - MARGIN_WEIGHT) * base + MARGIN_WEIGHT * share;
+      edges.push({ key: m.p1, opp: m.p2, result: r1 });
+      edges.push({ key: m.p2, opp: m.p1, result: 1 - r1 });
+    });
+    // x100, exactly as withNetworkRating does for the Global table. Not
+    // decoration: computeRatings works on a 0-12 scale where a whole category
+    // is 3, and StandingsList ranks on Math.round(rating) so that two players
+    // printing the same number are treated as level. On that scale almost the
+    // whole club rounds to the same handful of integers, every one of those
+    // groups is then separated by head-to-head, and ratingColumn reveals a
+    // decimal that contradicts the order it was given — 6.6 printed above 6.8,
+    // which was on screen before this line existed.
+    //
+    // Scaled up, rounding means something again and the ties are real ties.
+    // Same rating, same constants, same presentation as the Global table.
+    const raw = computeRatings(edges);
+    const out: Record<string, number> = {};
+    for (const k of Object.keys(raw)) out[k] = raw[k] * 100;
+    return out;
+  }, [filtered]);
   const ranked = useMemo(() => {
     const arr = players.filter((p) => !p.inactive);
     const avgOpp = {}; players.forEach((p) => { avgOpp[p.id] = { sum: 0, n: 0 }; });
     filtered.filter((m) => countsAsPlayed(m)).forEach((m) => { if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; } if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; } });
     const rec = (p) => { const r = wdl[p.id] || { gp: 0 }; if (!r.gp) return -1; const act = r.gp / (r.gp + 5); const ao = avgOpp[p.id].n ? avgOpp[p.id].sum / avgOpp[p.id].n : 0; const of = Math.max(0.5, Math.min(2, 1 + ao / 200)); return winPct(r) * act * of; };
     const formScoreOf = (p) => (form[p.id] || []).slice(-5).reduce((s, x) => s + (x === "W" ? 1 : x === "L" ? -1 : 0), 0);
-    if (mode === "elo") arr.sort((a, b) => (elo[b.id] ?? START_ELO) - (elo[a.id] ?? START_ELO));
+    if (mode === "network") arr.sort((a, b) => (networkMap[b.id] ?? -1e9) - (networkMap[a.id] ?? -1e9) || (wdl[b.id]?.gp ?? 0) - (wdl[a.id]?.gp ?? 0));
+    else if (mode === "elo") arr.sort((a, b) => (elo[b.id] ?? START_ELO) - (elo[a.id] ?? START_ELO));
     else if (mode === "record") arr.sort((a, b) => rec(b) - rec(a) || (wdl[b.id]?.w ?? 0) - (wdl[a.id]?.w ?? 0));
     else if (mode === "winpct") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return winPct(rb) - winPct(ra) || rb.gp - ra.gp; });
     else if (mode === "form") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return formScoreOf(b) - formScoreOf(a) || (rb.w ?? 0) - (ra.w ?? 0); });
     else arr.sort((a, b) => ((officialMap[b.id] ?? -1e9) - (officialMap[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0)));
     return arr;
-  }, [players, filtered, elo, wdl, form, mode, officialMap]);
+  }, [players, filtered, elo, wdl, form, mode, officialMap, networkMap]);
 
   // Active view only ever hides rows from this same ranked list — it never
   // changes anyone's actual rating or official position, just which of them
@@ -121,6 +169,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const METRICS = [
     { value: "official", label: "Official", note: "Your five best wins by opponent quality, times how regularly you play." },
     { value: "elo", label: "Elo", note: "Moves every match, by how surprising the result was." },
+    { value: "network", label: "Strength", note: "Built from who beat whom, so it counts who you played and not just how many you won." },
     { value: "record", label: "Record", note: "Win rate, weighted by opposition and how much you have played." },
     { value: "winpct", label: "Win %", note: "The plain share of games won. A draw counts as half." },
     { value: "form", label: "Form", note: "The last five results and nothing else." },
@@ -168,13 +217,14 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // while still sorting and drawing its bar on the numeric score behind it.
   const valueOf = (id: string): number => {
     const r = wdl[id] || { w: 0, d: 0, l: 0, gp: 0 };
+    if (mode === "network") return networkMap[id] ?? 0;
     if (mode === "elo") return elo[id] ?? START_ELO;
     if (mode === "winpct") return r.gp ? Math.round(winPct(r) * 100) : 0;
     if (mode === "form") return (form[id] || []).slice(-5).reduce((sum: number, x: string) => sum + (x === "W" ? 1 : x === "L" ? -1 : 0), 0);
     if (mode === "record") return r.gp ? winPct(r) * 100 : 0;
     return officialMap[id] ?? 0;
   };
-  const unit = mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
+  const unit = mode === "network" ? "strength" : mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
 
   const q = query.trim().toLowerCase();
   const searched = q
