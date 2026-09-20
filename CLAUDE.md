@@ -562,6 +562,17 @@ Run on 2026-09-05: `schema_global_edges_score.sql`, which added the match
 score to `global_edges()` so the Global table can see margin. It drops and
 recreates rather than replacing, because the return type changed.
 
+**One query per file when you want an answer back.** The Supabase SQL editor
+displays the result of the **last statement only**. A file ending in two
+selects shows the second and silently hides the first, and what comes back is
+a real answer to a question nobody asked. This cost two round trips on
+2026-09-20 — the function-grants check and the level-state check — with the
+same symptom both times: Sam pasted the duplicates table when the per-player
+table was the one that mattered.
+
+A migration can end with one verification select. A diagnostic should contain
+exactly one statement.
+
 **`global_edges()` returns zero rows in the Supabase SQL editor, and that is
 correct.** It filters through `is_league_member()`, which reads
 `auth.uid()` — and in the editor you are the service role, so nobody is
