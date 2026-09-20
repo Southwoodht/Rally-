@@ -212,6 +212,40 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
 }
 
 /**
+ * Which account a player row belongs to.
+ *
+ * /players/<id> accepts an account id or a player row id, and the second has
+ * to be resolved. Reading players directly cannot do it from outside the
+ * league: "read players in your leagues" hides the row, the read comes back
+ * empty with no error, and empty is indistinguishable from "this row has no
+ * account". That is how three people with accounts were told they had none.
+ *
+ * auth_id_for_player() is security definer and returns one uuid or null, so
+ * the answer is the same from any account. Null here is the real answer —
+ * a shell with nobody behind it.
+ *
+ * Returns undefined, distinct from null, when the function is not installed:
+ * unknown is not the same as nobody, and the screen says different things.
+ */
+export async function authIdForPlayer(playerId: string): Promise<string | null | undefined> {
+  if (!supabase) return undefined;
+  try {
+    const res: any = await withSupabaseTimeout(
+      supabase.rpc("auth_id_for_player", { p_player_id: playerId }),
+      FAILED as any,
+    );
+    if (res === (FAILED as any)) return undefined;
+    if (res.error) {
+      console.warn("auth_id_for_player: " + res.error.message);
+      return undefined;
+    }
+    return (res.data as string) ?? null;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * The league behind somebody's profile.
  *
  * This is what makes a stranger's profile identical to the one you see from

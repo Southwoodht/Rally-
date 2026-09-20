@@ -9,7 +9,7 @@ import { OpponentRecords } from "@/components/profile/OpponentRecords";
 import { RivalryCard } from "@/components/profile/RivalryCard";
 import type { FormBarItem } from "@/components/profile/FormBars";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { getPublicLeagueSnapshot, getPublicPlayerCard, type PublicPlayerCard, type SnapshotReason } from "@/lib/profiles";
+import { authIdForPlayer, getPublicLeagueSnapshot, getPublicPlayerCard, type PublicPlayerCard, type SnapshotReason } from "@/lib/profiles";
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { computeStats } from "@/core/elo";
 import { acceptFriendRequest, getFriendshipWith, sendFriendRequest } from "@/lib/friends";
@@ -53,7 +53,7 @@ export function PublicProfile({ id }: { id: string }) {
   const [meId, setMeId] = useState<string | null>(null);
   const [friendState, setFriendState] = useState<FriendState>("unknown");
   const [friendRowId, setFriendRowId] = useState<string | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "unclaimed" | "missing" | "signedOut">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "unclaimed" | "unresolved" | "missing" | "signedOut">("loading");
   const [busy, setBusy] = useState(false);
   /**
    * The whole league behind them, when we can get it.
@@ -79,15 +79,34 @@ export function PublicProfile({ id }: { id: string }) {
         if (!mine) { if (live) setState("signedOut"); return; }
         if (live) setMeId(mine);
 
+        /**
+         * A uuid is already an account id. Anything else is a player row id
+         * and has to be resolved — and the direct read below only works when
+         * you share a league with them, because "read players in your
+         * leagues" hides the row otherwise and hides it *silently*: no rows,
+         * no error, indistinguishable from a row with no account on it.
+         *
+         * So a miss there is not an answer, it is the absence of one, and it
+         * falls through to auth_id_for_player() which is security definer and
+         * gives the same answer from any account. Only that function saying
+         * null means nobody is behind the row.
+         */
         let resolved: string | null = /^[0-9a-f-]{36}$/i.test(id) ? id : null;
         if (!resolved && supabase) {
           const res: any = await withSupabaseTimeout(
             supabase.from("players").select("auth_id").eq("id", id).maybeSingle(),
             { data: null, error: { message: "timed out" } } as any,
           );
-          if (res?.error) { if (live) setState("missing"); return; }
           resolved = res?.data?.auth_id ?? null;
-          if (!resolved) { if (live) setState("unclaimed"); return; }
+          if (!resolved) {
+            const viaFn = await authIdForPlayer(id);
+            if (!live) return;
+            // undefined: the function is not installed, so nobody has
+            // actually answered. null: it answered, and the answer is nobody.
+            if (viaFn === undefined) { setState("unresolved"); return; }
+            if (viaFn === null) { setState("unclaimed"); return; }
+            resolved = viaFn;
+          }
         }
         if (!resolved) { if (live) setState("missing"); return; }
         if (live) setAuthId(resolved);
@@ -153,6 +172,10 @@ export function PublicProfile({ id }: { id: string }) {
   if (state === "loading") return shell(<div style={{ fontFamily: body, color: FEED_TEXT_MID, padding: 30, textAlign: "center" }}>Loading…</div>);
   if (state === "signedOut") return note("Sign in to see profiles", "Rally profiles are for people with an account.", true);
   if (state === "unclaimed") return note("Not on Rally yet", "This player has a record in a league but no account, so there is no profile to open. Their results still count wherever they have played.");
+  // Deliberately not "no account". We do not know that: the row is in a league
+  // this account cannot read, and the only thing that could tell us apart from
+  // a shell is auth_id_for_player(), which is not installed.
+  if (state === "unresolved") return note("Can't open this one", "They play in a league this account can't see, so Rally can't tell which profile to open. Nothing is wrong with their record.");
   if (state === "missing" || !card) return note("No such player", "That profile does not exist, or it is not shared with you.");
 
   /**
@@ -185,7 +208,19 @@ export function PublicProfile({ id }: { id: string }) {
           meId={null}
           group={{ name: them.home || "Rally" }}
           viewer="other"
-          onOpen={(pid: string) => { if (typeof window !== "undefined") window.location.href = "/players/" + encodeURIComponent(pid); }}
+          /**
+           * Link with the account id when we already hold it. The snapshot
+           * carries every player in that league, auth_id included, so an
+           * opponent with an account needs no lookup at all — which is the
+           * whole of this bug for the commonest path, and it needs no
+           * migration. A shell has no auth_id and still goes by row id, where
+           * "Not on Rally yet" is the correct answer.
+           */
+          onOpen={(pid: string) => {
+            if (typeof window === "undefined") return;
+            const them = snapshot.players.find((pl: any) => pl.id === pid);
+            window.location.href = "/players/" + encodeURIComponent(them?.auth_id || pid);
+          }}
         />
       );
     }
