@@ -562,6 +562,18 @@ Run on 2026-09-05: `schema_global_edges_score.sql`, which added the match
 score to `global_edges()` so the Global table can see margin. It drops and
 recreates rather than replacing, because the return type changed.
 
+**And no `auth.uid()` in a diagnostic, ever.** In the SQL editor you are the
+service role, so `auth.uid()` is null and anything resting on it matches
+nothing — reported as "Success. No rows returned", which reads exactly like an
+empty table rather than like a broken query. This is already written down for
+`global_edges()` below and for `set_player_level_estimate`, and a query
+filtering on "leagues I am in" was still written and sent on 2026-09-20. It
+cost a round trip and told Sam nothing.
+
+A diagnostic Sam runs is running as the service role against his own database.
+It should select everything and let him find his row, not try to scope itself
+to him.
+
 **One query per file when you want an answer back.** The Supabase SQL editor
 displays the result of the **last statement only**. A file ending in two
 selects shows the second and silently hides the first, and what comes back is
