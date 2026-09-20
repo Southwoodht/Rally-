@@ -329,6 +329,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       if (isFriendlyLeague(leagueId)) {
         const { data: userData } = await supabase!.auth.getUser();
         const authId = (userData as any)?.user?.id ?? null;
+        // The league path sets this further down, and this branch returns
+        // before it ever reaches it — so in Friendlies it stayed null, and
+        // everything downstream asking "which account is this" got the wrong
+        // answer: the Global table could not find your row to mark, and a
+        // profile could not tell yours from somebody else’s.
+        setMyAuthId(authId);
         let data = await fetchLeagueData(leagueId);
         let mine = authId ? data.players.find((p: any) => p.auth_id === authId) : null;
         if (authId && !mine) {
@@ -513,7 +519,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   };
 
   const setPlayers = (np) => saveData({ ...gdata, players: np });
-  const addPlayer = (p) => setPlayers([...players, p]);
+  // A league-less shell needs an owner, and this is the only place one is
+  // made. RLS lets you edit or delete a friendly player row only when it is
+  // yours (auth_id) or you made it (created_by), and nothing outside the boot
+  // path was stamping created_by — so a mate you added in Friendlies was a
+  // row you could never rename, level or remove. Silently, too: an UPDATE that
+  // RLS refuses matches no rows and reports success, so the change sat on
+  // screen and was gone on the next load. Untouched on a league row, where
+  // null still means "belongs to a league" and the league policies govern it.
+  const addPlayer = (p) =>
+    setPlayers([...players, isFriendlyLeague(gid) && myAuthId && !p.created_by ? { ...p, created_by: myAuthId } : p]);
   const setMatches = (nm) => saveData({ ...gdata, matches: nm });
   const setMe = (mid) => {
     if (!mid || mid !== gdata.me) {
@@ -1058,7 +1073,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a

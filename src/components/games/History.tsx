@@ -14,7 +14,7 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, body, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, input, LINE, listCard, miniInput, mono, MUTED, PANEL, PANEL2, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -222,11 +222,18 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               </div>
             );
           })()}
+          {/* No composer in Friendlies. posts.league_id is `not null` and stays
+              that way: a league-less post has no audience, and the only reading
+              of “visible to anyone signed in” would be one global feed shared by
+              every friendly player there is. The results and events above it are
+              yours and your opponents’, and they read normally. */}
+          {!friendly && (
           <div style={{ display: "flex", gap: 6, marginBottom: canEditMatches ? 8 : 14 }}>
             <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="What's on your mind?" style={{ ...miniInput, flex: 1, fontFamily: body, fontSize: 14, padding: "10px 11px", boxSizing: "border-box" as const }} />
             <BigBtn onClick={() => { const t = draft.trim(); if (t) { onPost(t, asAnnouncement); setDraft(""); setAsAnnouncement(false); } }} color={BALL} grow={false}>Post</BigBtn>
           </div>
-          {canEditMatches && (
+          )}
+          {!friendly && canEditMatches && (
             <button onClick={() => setAsAnnouncement(!asAnnouncement)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", padding: 0, marginBottom: 14, cursor: "pointer" }}>
               <span style={{ width: 14, height: 14, borderRadius: 3, border: "1px solid " + (asAnnouncement ? BALL : LINE), background: asAnnouncement ? BALL : "transparent" }} />
               <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: asAnnouncement ? BALL : MUTED }}>Post as announcement</span>
