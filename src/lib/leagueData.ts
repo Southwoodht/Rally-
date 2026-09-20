@@ -284,6 +284,47 @@ async function deleteRow(table: string, id: string) {
   }
 }
 
+/**
+ * Update one row, and make sure it actually went.
+ *
+ * Same trap as deleteRow, and it cost more. An UPDATE that RLS refuses is not
+ * an error in Postgres either: it matches no rows and reports success. So
+ * every write to a row the policies do not let you touch looked exactly like
+ * a write that worked — the new value sat on screen, saveData saw nothing
+ * wrong, and it was gone on the next load.
+ *
+ * That is not hypothetical. "edit unclaimed players, or your own claimed one"
+ * means a player row with an auth_id can only be edited by the person who
+ * claimed it, and the level-history repair screen lists the whole club. So
+ * filling in a history for anybody who has an account was refused every time,
+ * silently, with the badge count dropping as if it had worked.
+ *
+ * Ask for the updated rows back. None means refused, or the row is gone —
+ * either way the screen is showing something the database does not hold, and
+ * saveData has to re-read and say so.
+ */
+async function updateRow(table: string, id: string, row: any, what: string) {
+  const result: any = await withSupabaseTimeout(
+    supabase!.from(table).update(row).eq("id", id).select("id"),
+    WRITE_FAILED as any,
+  );
+  if (result === (WRITE_FAILED as any)) throw new Error(`Timed out ${what}.`);
+  if (result.error) throw result.error;
+  if (result.data && result.data.length) return;
+  const check: any = await withSupabaseTimeout(
+    supabase!.from(table).select("id").eq("id", id).maybeSingle(),
+    { data: null, error: null } as any,
+  );
+  if (!check?.data) return; // gone rather than refused; the re-read will show that
+  const e: any = new Error(
+    table === "players"
+      ? "That change was refused — a player with their own account can only be edited by them."
+      : `Updating ${table} was refused.`,
+  );
+  e.userFacing = true;
+  throw e;
+}
+
 // ---- diff-and-sync, used by RallyApp's saveData for every other mutation
 
 async function syncEntity(
@@ -308,7 +349,7 @@ async function syncEntity(
       const row = toRow(leagueId, item);
       delete (row as any).id;
       delete (row as any).league_id;
-      ops.push(run(supabase.from(table).update(row).eq("id", item.id), `updating ${table}`));
+      ops.push(updateRow(table, item.id, row, `updating ${table}`));
     }
   }
   for (const item of prev) {
