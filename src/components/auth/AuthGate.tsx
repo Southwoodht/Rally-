@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supabase";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { BALL, body, CHALK, COURT, display, fontImport, LINE, mono, MUTED, PANEL } from "@/lib/theme";
+import { BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display, fontImport } from "@/lib/theme";
 import Welcome from "@/components/auth/Welcome";
 import UpdatePassword from "@/components/auth/UpdatePassword";
 import Dashboard from "@/components/dashboard/Dashboard";
@@ -70,7 +70,7 @@ export default function AuthGate() {
 
 function SetupNeeded() {
   const code: React.CSSProperties = {
-    fontFamily: mono, fontSize: 12, color: BALL, background: "rgba(0,0,0,.25)",
+    fontFamily: body, fontSize: 12, color: BALL, background: "rgba(0,0,0,.25)",
     padding: "10px 12px", borderRadius: 12, display: "block", marginTop: 8, whiteSpace: "pre-wrap",
   };
   return (
@@ -78,7 +78,7 @@ function SetupNeeded() {
       <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 460, background: PANEL, border: "none", borderRadius: 16, padding: 22 }}>
         <div style={{ fontFamily: display, fontSize: 30, fontWeight: 800, color: BALL, textTransform: "uppercase" }}>Rally</div>
-        <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, margin: "10px 0 12px" }}>Setup needed</div>
+        <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, margin: "10px 0 12px" }}>Setup needed</div>
         <div style={{ fontFamily: body, fontSize: 14, color: CHALK, lineHeight: 1.6 }}>
           Rally can&apos;t find your Supabase keys. Create a file called <strong>.env.local</strong> in the
           project folder with these two lines, then restart the dev server:

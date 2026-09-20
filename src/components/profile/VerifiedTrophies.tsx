@@ -4,7 +4,7 @@ import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { RecordTrophyForm } from "@/components/profile/RecordTrophyForm";
 import { listMyAdminClubs } from "@/lib/clubs";
 import { listApprovedTrophiesForPlayer, listMyTrophies, deleteTrophy, Trophy, withdrawTrophyClaim } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body } from "@/lib/theme";
 
 // Verified Trophies are distinct from the Achievements grid above them: an
 // Achievement is computed by Rally itself from real match data — nobody
@@ -79,9 +79,9 @@ export function VerifiedTrophies({ player, meId }: any) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED }}>Verified trophies</div>
-        {isOwn && <button onClick={() => setClaiming(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 10.5, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>+ Claim a trophy</button>}
-        {!isOwn && canRecord && <button onClick={() => setRecording(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 10.5, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>+ Record a trophy</button>}
+        <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED }}>Verified trophies</div>
+        {isOwn && <button onClick={() => setClaiming(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Claim a trophy</button>}
+        {!isOwn && canRecord && <button onClick={() => setRecording(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Record a trophy</button>}
       </div>
       {approved.length === 0 && pending.length === 0 && (
         <div style={{ fontFamily: body, fontSize: 13, color: MUTED }}>
@@ -97,13 +97,13 @@ export function VerifiedTrophies({ player, meId }: any) {
               <span style={{ fontSize: 20 }}></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
-                <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · {t.claimed_by ? "Verified ✓" : "Recorded by the club ✓"}</div>
+                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · {t.claimed_by ? "Verified ✓" : "Recorded by the club ✓"}</div>
               </div>
               {((canRecord && !t.claimed_by) || (isOwn && !!t.claimed_by)) && (
                 <button
                   onClick={() => (confirmRemove === t.id ? remove(t.id) : setConfirmRemove(t.id))}
                   onBlur={() => setConfirmRemove((c) => (c === t.id ? null : c))}
-                  style={{ background: "transparent", border: "none", color: confirmRemove === t.id ? CLAY : MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: mono, fontSize: 10, cursor: "pointer", textTransform: "uppercase", flexShrink: 0 }}
+                  style={{ background: "transparent", border: "none", color: confirmRemove === t.id ? CLAY : MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer", flexShrink: 0 }}
                 >
                   {confirmRemove === t.id ? "Remove it?" : "Remove"}
                 </button>
@@ -124,9 +124,9 @@ export function VerifiedTrophies({ player, meId }: any) {
               <span style={{ fontSize: 20, opacity: 0.5 }}></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
-                <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · Pending review</div>
+                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · Pending review</div>
               </div>
-              <button onClick={() => withdraw(t.id)} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: mono, fontSize: 10, cursor: "pointer", textTransform: "uppercase", flexShrink: 0 }}>Withdraw</button>
+              <button onClick={() => withdraw(t.id)} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>Withdraw</button>
             </div>
           ))}
         </div>

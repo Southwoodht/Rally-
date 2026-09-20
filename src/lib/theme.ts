@@ -23,7 +23,17 @@ export const display = "'Barlow Condensed', 'Arial Narrow', sans-serif";
 export const body = "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif";
 
 // Numbers only — ratings, scores, dates, counters.
-export const mono = "'JetBrains Mono', 'Courier New', monospace";
+// The numbers font is gone. It was JetBrains Mono, kept for figures after
+// the "monospace for numbers" rule, and then the scoreboard system replaced
+// that rule with the body font plus tabular figures — which gives the column
+// alignment that was the only reason for a mono face, without reading as
+// code beside this palette. What was left was uppercase mono labels on the
+// screens the scoreboard roll never reached: Welcome, the trophies, the club
+// admin, Legacy, the small inputs. Sam's note was "no code looking stuff",
+// and a label nobody can tap is what that means in practice.
+//
+// Removed rather than deprecated, so it cannot come back one call site at a
+// time, and the font is no longer fetched at all.
 
 export const SOFT_SHADOW = "0 8px 24px rgba(0,0,0,0.22)";
 export const RADIUS = 16;
@@ -31,7 +41,7 @@ export const RADIUS_SM = 12;
 
 export const fxBtn: CSSProperties = { flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "10px 6px", borderRadius: RADIUS_SM, cursor: "pointer", border: "none", background: PANEL2, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
-export const fontImport = "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');";
+export const fontImport = "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');";
 
 export const wrap: CSSProperties = { background: COURT, minHeight: "100vh", width: "100%" };
 
@@ -39,7 +49,7 @@ export const card: CSSProperties = { background: PANEL, borderRadius: RADIUS, pa
 
 export const input: CSSProperties = { width: "100%", boxSizing: "border-box", background: PANEL2, color: CHALK, border: "none", borderRadius: RADIUS_SM, padding: "13px 14px", fontFamily: body, fontSize: 15, marginBottom: 0, outline: "none" };
 
-export const miniInput: CSSProperties = { boxSizing: "border-box", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "8px 10px", fontFamily: mono, fontSize: 12, outline: "none" };
+export const miniInput: CSSProperties = { boxSizing: "border-box", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "8px 10px", fontFamily: body, fontSize: 12, outline: "none" };
 
 export const menuRow: CSSProperties = { display: "flex", alignItems: "center", gap: 12, width: "100%", background: PANEL, border: "none", borderRadius: RADIUS_SM, padding: "16px 16px", marginBottom: 10, cursor: "pointer" };
 

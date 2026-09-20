@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { Trophy, Swords, Plus, Clock, User, Home as HomeIcon, CalendarDays, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
-import { BALL, COURT, LINE, MUTED, PANEL, display, mono } from "@/lib/theme";
+import { BALL, COURT, LINE, MUTED, PANEL, body, display } from "@/lib/theme";
 
 export function BottomNav({ tab, setTab }: any) {
   // Compare has no tab of its own any more — it's reached from a Table row
@@ -13,7 +13,7 @@ export function BottomNav({ tab, setTab }: any) {
     const on = active === key;
     return (
       <button onClick={() => setTab(key)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "transparent", border: "none", cursor: "pointer", padding: "8px 0", color: on ? BALL : MUTED }}>
-        <Icon size={21} strokeWidth={on ? 2.4 : 1.8} /><span style={{ fontFamily: mono, fontSize: 9, letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</span>
+        <Icon size={21} strokeWidth={on ? 2.4 : 1.8} /><span style={{ fontFamily: body, fontSize: 9, letterSpacing: 0.5, textTransform: "uppercase" }}>{label}</span>
       </button>
     );
   };

@@ -6,7 +6,7 @@ import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/
 import { FRIENDLY_LEAGUE_ID } from "@/lib/leagueData";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
-import { BALL, body, CHALK, CLAY, COURT, display, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, fontImport, LINE, mono, MUTED, PANEL, PANEL2 } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, display, fontImport } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
@@ -184,7 +184,7 @@ export default function Dashboard({ session }: { session: Session }) {
   if (view === "join") return shell(
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
       <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Join a league</div>
-      <input style={{ ...field, fontFamily: mono, letterSpacing: 3, textTransform: "uppercase" }} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC123" maxLength={8} />
+      <input style={{ ...field, fontFamily: body, letterSpacing: 3, textTransform: "uppercase" }} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC123" maxLength={8} />
       <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? "Joining…" : "Join league"}</button>
       <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Ask whoever set the league up for the code — it&apos;s shown at the top of their screen.</div>
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
@@ -205,7 +205,7 @@ export default function Dashboard({ session }: { session: Session }) {
           <div key={l.id} style={{ ...tile, width: "100%", marginBottom: 8, display: "block", boxSizing: "border-box" as const }}>
             <button onClick={() => { setActive(l); setView("app"); }} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
               <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{l.name}</div>
-              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{l.location ? l.location + " · " : ""}Code <span style={{ fontFamily: mono }}>{l.join_code}</span>{l.role === "owner" ? " · Owner" : ""}</div>
+              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{l.location ? l.location + " · " : ""}Code <span style={{ fontFamily: body }}>{l.join_code}</span>{l.role === "owner" ? " · Owner" : ""}</div>
               {n && (
                 <div style={{ fontFamily: body, fontSize: 12.5, fontWeight: 600, color: empty ? CLAY : MUTED, marginTop: 4 }}>
                   {empty ? "Empty — nothing in it" : n.players + " player" + (n.players === 1 ? "" : "s") + " · " + n.matches + " match" + (n.matches === 1 ? "" : "es")}
@@ -216,7 +216,7 @@ export default function Dashboard({ session }: { session: Session }) {
               confirmLeave === l.id ? (
                 <div style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
                   <div style={{ fontFamily: body, fontSize: 12.5, color: CHALK, lineHeight: 1.45, marginBottom: 8 }}>
-                    Leave <strong>{l.name}</strong>? It stays exactly as it is — this only takes it off your list, and code <span style={{ fontFamily: mono }}>{l.join_code}</span> gets you back in.
+                    Leave <strong>{l.name}</strong>? It stays exactly as it is — this only takes it off your list, and code <span style={{ fontFamily: body }}>{l.join_code}</span> gets you back in.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={async () => { try { await leaveLeague(l.id); setConfirmLeave(null); await load(); } catch (e: any) { setError(e.message || "Couldn't leave."); } }} style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "8px 14px", cursor: "pointer" }}>Leave</button>

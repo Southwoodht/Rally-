@@ -4,7 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { inviteUrl } from "@/lib/invite";
 import { acceptFriendRequest, FriendWithProfile, listFriends, listIncomingRequests, listOutgoingRequests, removeFriendship, sendFriendRequest } from "@/lib/friends";
 import { getMyProfile, Profile, searchProfiles } from "@/lib/profiles";
-import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, listCard, listRow, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, listCard, listRow, miniInput } from "@/lib/theme";
 
 const asPlayer = (p: Profile) => ({ id: p.id, name: p.display_name, avatarUrl: p.avatar_url, avatar: null });
 
@@ -99,7 +99,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
 
       {me && (
         <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 20 }}>
-          Your friend code: <span style={{ fontFamily: mono, color: CHALK, fontWeight: 700 }}>{me.friend_code}</span> — share it so people can add you directly.
+          Your friend code: <span style={{ fontFamily: body, color: CHALK, fontWeight: 700 }}>{me.friend_code}</span> — share it so people can add you directly.
         </div>
       )}
 

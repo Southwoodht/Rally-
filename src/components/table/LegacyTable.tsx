@@ -5,7 +5,7 @@ import { LevelBadge } from "@/components/ui/LevelBadge";
 import { Empty } from "@/components/ui/atoms";
 import { computeCareerTable } from "@/core/legacy";
 import { levelNow } from "@/core/levels";
-import { miniInput, BALL, CHALK, CLAY, MUTED, PANEL, body, listCard, listRow, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, MUTED, PANEL, body, listCard, listRow, miniInput } from "@/lib/theme";
 
 export function LegacyTable({ players, matches, onOpen }: any) {
   const [q, setQ] = useState("");
@@ -30,12 +30,12 @@ export function LegacyTable({ players, matches, onOpen }: any) {
             if (!p) return null;
             return (
               <button key={r.playerId} onClick={() => onOpen(r.playerId)} style={listRow}>
-                <div style={{ fontFamily: mono, fontSize: 13, width: 20, textAlign: "right", color: i === 0 ? BALL : MUTED, fontWeight: 700 }}>{i + 1}</div>
+                <div style={{ fontFamily: body, fontSize: 13, width: 20, textAlign: "right", color: i === 0 ? BALL : MUTED, fontWeight: 700 }}>{i + 1}</div>
                 <Avatar player={p} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, lineHeight: 1.2, display: "flex", alignItems: "center", gap: 8 }}>
                     {p.name}{p.last ? " " + p.last : ""}
-                    <span style={{ fontFamily: mono, fontSize: 13, color: CLAY, fontWeight: 700 }}>{Math.round(r.winPct! * 100)}%</span>
+                    <span style={{ fontFamily: body, fontSize: 13, color: CLAY, fontWeight: 700 }}>{Math.round(r.winPct! * 100)}%</span>
                     <LevelBadge level={levelNow(p)} small />
                   </div>
                   <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
@@ -44,7 +44,7 @@ export function LegacyTable({ players, matches, onOpen }: any) {
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 46 }}>
-                  <div style={{ fontFamily: mono, fontSize: 22, fontWeight: 700, color: i === 0 ? BALL : CHALK, fontVariantNumeric: "tabular-nums" }}>{r.matches}</div>
+                  <div style={{ fontFamily: body, fontSize: 22, fontWeight: 700, color: i === 0 ? BALL : CHALK, fontVariantNumeric: "tabular-nums" }}>{r.matches}</div>
                   <div style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: MUTED }}>Matches</div>
                 </div>
               </button>

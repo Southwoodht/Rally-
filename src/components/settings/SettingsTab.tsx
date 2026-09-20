@@ -8,7 +8,7 @@ import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
 import { fmtDate, uid } from "@/lib/format";
-import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput } from "@/lib/theme";
 
 export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId }: any) {
   const [name, setName] = useState("");
@@ -80,7 +80,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
             <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 8 }}>2 · Or add one specific match</div>
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
               <select value={fxP1} onChange={(e) => setFxP1(e.target.value)} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }}><option value="">Player…</option>{players.map((p) => <option key={p.id} value={p.id}>{p.name}{p.last ? " " + p.last : ""}</option>)}</select>
-              <span style={{ fontFamily: mono, color: MUTED, alignSelf: "center" }}>v</span>
+              <span style={{ fontFamily: body, color: MUTED, alignSelf: "center" }}>v</span>
               <select value={fxP2} onChange={(e) => setFxP2(e.target.value)} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }}><option value="">Player…</option>{players.map((p) => <option key={p.id} value={p.id}>{p.name}{p.last ? " " + p.last : ""}</option>)}</select>
             </div>
             <BigBtn onClick={() => { if (fxP1 && fxP2 && fxP1 !== fxP2) { onAddFixture(fxP1, fxP2); setFxP1(""); setFxP2(""); } else flash("Pick two different players"); }} color={PANEL2}>Add fixture</BigBtn>
@@ -90,7 +90,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
                 {fixtures.map((f) => { const n = (id) => { const p = players.find((x) => x.id === id); return p ? p.name + (p.last ? " " + p.last : "") : id; }; return (
                   <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "none" }}>
                     <span style={{ flex: 1, fontFamily: body, fontSize: 13, color: f.done ? MUTED : CHALK }}>{n(f.p1)} v {n(f.p2)}{f.done ? " ✓" : ""}</span>
-                    <button onClick={() => onRemoveFixture(f.id)} style={{ fontFamily: mono, fontSize: 10, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "3px 7px", cursor: "pointer" }}>✕</button>
+                    <button onClick={() => onRemoveFixture(f.id)} style={{ fontFamily: body, fontSize: 10, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "3px 7px", cursor: "pointer" }}>✕</button>
                   </div>
                 ); })}
                 <div style={{ marginTop: 10 }}><BigBtn onClick={onClearFixtures} color={CLAY}>Clear all fixtures</BigBtn></div>
@@ -127,7 +127,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
                 ) : (
                   <input value={p.name} onChange={(e) => setField(p.id, "name", e.target.value)} placeholder="First name" style={{ ...miniInput, flex: 1, fontFamily: body, fontSize: 15, padding: "7px 8px", boxSizing: "border-box" as const }} />
                 )}
-                <span style={{ color: MUTED, fontSize: 11, fontFamily: mono, marginRight: 2, whiteSpace: "nowrap" }}>{played} played</span>
+                <span style={{ color: MUTED, fontSize: 11, fontFamily: body, marginRight: 2, whiteSpace: "nowrap" }}>{played} played</span>
                 <button onClick={() => setField(p.id, "inactive", !p.inactive)} title={p.inactive ? "Bring back into the league" : "Mark as not currently playing"} style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, background: "transparent", border: "none", borderRadius: 8, padding: "4px 7px", cursor: "pointer", color: p.inactive ? MUTED : BALL, marginRight: 6 }}>{p.inactive ? "Inactive" : "Active"}</button>
                 {locked ? null : confirmRemove === p.id ? (
                   <span style={{ display: "flex", gap: 6 }}>

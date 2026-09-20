@@ -5,7 +5,7 @@ import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
 import { ChevronDown, Plus } from "lucide-react";
-import { BALL, CHALK, CLAY, COURT, MUTED, PANEL, PANEL2, body, input, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, MUTED, PANEL, PANEL2, body, input, miniInput } from "@/lib/theme";
 import { FEED_CARD, FEED_TEXT_HI, FEED_TEXT_MID } from "@/lib/theme";
 
 // Reusable "pick an existing player, or create a new one" control.

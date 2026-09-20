@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { AvatarArt, hasAvatarArt } from "@/components/ui/AvatarArt";
 import { colorFor } from "@/lib/format";
-import { COURT, PANEL2, display } from "@/lib/theme";
+import { COURT, PANEL2, body, display } from "@/lib/theme";
 
 // Pass enlargeable when this Avatar isn't already sitting inside its own
 // clickable row (e.g. a profile header) — tapping a real photo then opens

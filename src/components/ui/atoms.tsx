@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { BALL, CHALK, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS_SM, body, display, input, mono } from "@/lib/theme";
+import { BALL, CHALK, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS_SM, body, display, input } from "@/lib/theme";
 
 // `big` is the profile's headline W/D/L: deliberately the largest thing on
 // the screen, so the record outweighs the quality bars below it.
@@ -8,7 +8,7 @@ export function Stat({ n, label, c, onClick, active, big }: any) {
   const style: any = { flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: big ? "17px 8px" : "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none" };
   const content = (
     <>
-      <div style={{ fontFamily: mono, fontSize: big ? 34 : 24, fontWeight: 700, color: c, lineHeight: 1.05 }}>{n}</div>
+      <div style={{ fontFamily: body, fontSize: big ? 34 : 24, fontWeight: 700, color: c, lineHeight: 1.05 }}>{n}</div>
       <div style={{ fontFamily: body, fontWeight: 700, fontSize: big ? 12 : 11, letterSpacing: 0.2, color: MUTED, marginTop: 3 }}>{label}{onClick ? <span style={{ color: BALL }}> {active ? "▾" : "›"}</span> : null}</div>
     </>
   );
@@ -17,7 +17,7 @@ export function Stat({ n, label, c, onClick, active, big }: any) {
 }
 
 export function StreakTile({ n, label, c, active, onClick }: any) {
-  return <button onClick={onClick} style={{ flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none", cursor: "pointer" }}><div style={{ fontFamily: mono, fontSize: 24, fontWeight: 700, color: c }}>{n}</div><div style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: MUTED, marginTop: 2 }}>{label} <span style={{ color: BALL }}>{active ? "▾" : "›"}</span></div></button>;
+  return <button onClick={onClick} style={{ flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none", cursor: "pointer" }}><div style={{ fontFamily: body, fontSize: 24, fontWeight: 700, color: c }}>{n}</div><div style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: MUTED, marginTop: 2 }}>{label} <span style={{ color: BALL }}>{active ? "▾" : "›"}</span></div></button>;
 }
 
 // A segment inside an iOS-style recessed track (see theme.segmentTrack) — also
@@ -27,7 +27,7 @@ export function Toggle({ on, onClick, label, icon, emphasize, big }: any) {
 }
 
 export function Tally({ name, n, lead }: any) {
-  return <div style={{ textAlign: "center" }}><div style={{ fontFamily: mono, fontSize: 34, fontWeight: 700, color: lead ? BALL : CHALK }}>{n}</div><div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>{name}</div></div>;
+  return <div style={{ textAlign: "center" }}><div style={{ fontFamily: body, fontSize: 34, fontWeight: 700, color: lead ? BALL : CHALK }}>{n}</div><div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>{name}</div></div>;
 }
 
 export function Select({ value, onChange, players, exclude, placeholder = "Select…" }: any) {

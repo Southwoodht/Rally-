@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { shortTier } from "@/lib/format";
-import { CHALK, MUTED, body, mono } from "@/lib/theme";
+import { CHALK, MUTED, body, tabular } from "@/lib/theme";
 
 // `level` is the opponent's level right now — just background on who they
 // are today, deliberately small and quiet. It says nothing about how hard
@@ -15,9 +15,9 @@ export function H2HRow({ name, rec, yr, c, level, onClick }: any) {
         <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{name}</div>
         {level && <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 1 }}>currently {shortTier(level)}</div>}
       </div>
-      <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 700, color: c }}>{rec}</span>
-      <span style={{ fontFamily: mono, fontSize: 11, color: MUTED, width: 78, textAlign: "right" }}>{yr}</span>
-      <span style={{ fontFamily: mono, fontSize: 12, color: MUTED }}>›</span>
+      <span style={{ ...tabular, fontFamily: body, fontSize: 13, fontWeight: 700, color: c }}>{rec}</span>
+      <span style={{ fontFamily: body, fontSize: 11, color: MUTED, width: 78, textAlign: "right" }}>{yr}</span>
+      <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>›</span>
     </button>
   );
 }

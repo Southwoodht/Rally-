@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { BigBtn, Field } from "@/components/ui/atoms";
 import { Club, createClub, joinClubByCode, listMyClubs } from "@/lib/clubs";
 import { approveTrophy, listPendingClaims, rejectTrophy, Trophy } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, input, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, input } from "@/lib/theme";
 
 const FACT_LABEL: Record<string, string> = { started_playing: "Started playing" };
 
@@ -98,7 +98,7 @@ export function ClubAdminReview() {
 
       {adminClubs.length === 0 && (
         <div style={{ background: PANEL, borderRadius: 14, padding: "14px", marginBottom: 20 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 8 }}>Set up your club</div>
+          <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: BALL, marginBottom: 8 }}>Set up your club</div>
           <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
             You don't administer a club yet, so there's nobody to verify a trophy. Creating one makes you its
             administrator — you'll be able to approve claims and record honours for unclaimed players straight away.
@@ -111,7 +111,7 @@ export function ClubAdminReview() {
 
       {clubs.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>Your clubs</div>
+          <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Your clubs</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[...adminClubs, ...memberClubs].map((c) => (
               <div key={c.id} style={{ background: PANEL, borderRadius: 14, padding: "12px 14px" }}>
@@ -120,14 +120,14 @@ export function ClubAdminReview() {
                     <div style={{ fontFamily: body, fontSize: 14.5, color: CHALK, fontWeight: 700 }}>{c.name}</div>
                     {c.location && <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>{c.location}</div>}
                   </div>
-                  <div style={{ fontFamily: mono, fontSize: 9.5, textTransform: "uppercase", letterSpacing: 1, color: c.role === "admin" ? BALL : MUTED, flexShrink: 0 }}>
+                  <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: c.role === "admin" ? BALL : MUTED, flexShrink: 0 }}>
                     {c.role === "admin" ? "You administer this" : "Member"}
                   </div>
                 </div>
                 {c.role === "admin" && (
                   <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid " + LINE, display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Anyone joining this club types</span>
-                    <span style={{ fontFamily: mono, fontSize: 14, fontWeight: 700, color: CHALK, letterSpacing: 2 }}>{c.join_code}</span>
+                    <span style={{ fontFamily: body, fontSize: 14, fontWeight: 700, color: CHALK, letterSpacing: 2 }}>{c.join_code}</span>
                   </div>
                 )}
               </div>
@@ -137,9 +137,9 @@ export function ClubAdminReview() {
       )}
 
       <div style={{ background: PANEL, borderRadius: 14, padding: "14px", marginBottom: 20 }}>
-        <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>Join a club by code</div>
+        <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Join a club by code</div>
         <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-          <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="e.g. K7P2Q9" maxLength={12} style={{ ...input, boxSizing: "border-box" as const, flex: 1, fontFamily: mono, letterSpacing: 2 }} />
+          <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="e.g. K7P2Q9" maxLength={12} style={{ ...input, boxSizing: "border-box" as const, flex: 1, fontFamily: body, letterSpacing: 2 }} />
           <BigBtn onClick={join} disabled={busy} color={BALL} grow={false}>Join</BigBtn>
         </div>
         <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8, lineHeight: 1.45 }}>
@@ -152,30 +152,30 @@ export function ClubAdminReview() {
       {note && <div style={{ fontFamily: body, fontSize: 12.5, color: BALL, marginBottom: 12 }}>{note}</div>}
 
       {adminClubs.length > 0 && (
-        <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>Claims to review</div>
+        <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Claims to review</div>
       )}
       {adminClubs.map((c) => {
         const pending = claims[c.id] || [];
         return (
           <div key={c.id} style={{ marginBottom: 24 }}>
-            <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: MUTED, marginBottom: 8 }}>{c.name}</div>
+            <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>{c.name}</div>
             {pending.length === 0 ? (
               <div style={{ fontFamily: body, fontSize: 13, color: MUTED, background: PANEL, border: "none", borderRadius: 14, padding: "14px" }}>No pending claims.</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {pending.map((t) => (
                   <div key={t.id} style={{ background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px" }}>
-                    <div style={{ fontFamily: mono, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: BALL, marginBottom: 4 }}>{t.kind === "legacy_fact" ? "Legacy fact" : "Trophy claim"}</div>
+                    <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: BALL, marginBottom: 4 }}>{t.kind === "legacy_fact" ? "Legacy fact" : "Trophy claim"}</div>
                     <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>
                       {t.kind === "legacy_fact" ? `${FACT_LABEL[t.fact_type || ""] || t.fact_type}: ${t.fact_value}` : `${t.result ? t.result + " — " : ""}${t.competition}`}
                     </div>
-                    <div style={{ fontFamily: mono, fontSize: 10.5, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginTop: 2 }}>
+                    <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, marginTop: 2 }}>
                       {t.claimant_name || "Unnamed player"}{t.season ? " · " + t.season : ""}
                     </div>
                     {t.notes && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>{t.notes}</div>}
                     <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                      <button disabled={busyId === t.id} onClick={() => act(t.id, approveTrophy)} style={{ flex: 1, fontFamily: mono, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "none", background: BALL, color: "#15352a" }}>Approve</button>
-                      <button disabled={busyId === t.id} onClick={() => act(t.id, rejectTrophy)} style={{ flex: 1, fontFamily: mono, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "1px solid " + CLAY, background: "transparent", color: CLAY }}>Reject</button>
+                      <button disabled={busyId === t.id} onClick={() => act(t.id, approveTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "none", background: BALL, color: "#15352a" }}>Approve</button>
+                      <button disabled={busyId === t.id} onClick={() => act(t.id, rejectTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "1px solid " + CLAY, background: "transparent", color: CLAY }}>Reject</button>
                     </div>
                   </div>
                 ))}

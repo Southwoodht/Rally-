@@ -54,7 +54,7 @@ import { WhatsNew } from "@/components/home/WhatsNew";
 import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
 import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
-import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, mono, segmentOption, segmentTrack, wrap } from "@/lib/theme";
+import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
@@ -1083,16 +1083,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       };
     }
 
-    // The calendar month, not the last thirty days: "this month" is what the
-    // tile says, and people read it as the month they are in.
+    // Calendar spans, not rolling windows: "this month" is what the tile
+    // says, and people read it as the month they are in. The week starts
+    // Monday, which is what a club season runs on — a Sunday start would
+    // put last night's match in "this week" on a Sunday morning.
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const month = mine.filter((m) => countsAsPlayed(m) && m.date >= monthStart);
-    const w = month.filter((m) => m.winner === iAm(m)).length;
-    const l = month.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
-    const thisMonth = month.length ? { w, l, winRate: Math.round((w / month.length) * 100) } : null;
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(midnight);
+    weekStart.setDate(midnight.getDate() - ((midnight.getDay() + 6) % 7));
+    const spans: { label: string; from: number }[] = [
+      { label: "This week", from: weekStart.getTime() },
+      { label: "This month", from: new Date(now.getFullYear(), now.getMonth(), 1).getTime() },
+      { label: "This year", from: new Date(now.getFullYear(), 0, 1).getTime() },
+    ];
+    const played = mine.filter((m) => countsAsPlayed(m));
+    // Only the spans with something in them. Week sits inside month sits
+    // inside year, so dropping an empty one never hides a later one — and a
+    // loop that lands on "nothing yet" two turns in three reads as broken.
+    const periods = spans.map(({ label, from }) => {
+      const within = played.filter((m) => m.date >= from);
+      if (!within.length) return null;
+      const w = within.filter((m) => m.winner === iAm(m)).length;
+      const l = within.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
+      return { label, w, l, winRate: Math.round((w / within.length) * 100) };
+    }).filter(Boolean) as { label: string; w: number; l: number; winRate: number }[];
 
-    return { standing, pending, nextUp, thisMonth, awaitingResult };
+    return { standing, pending, nextUp, periods, awaitingResult };
   })();
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
@@ -1191,7 +1207,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             standing={homeData?.standing}
             pending={homeData?.pending}
             nextUp={homeData?.nextUp}
-            thisMonth={homeData?.thisMonth}
+            periods={homeData?.periods}
             onNudge={nudgeMatch}
             whatsNew={newsSeen !== undefined && newsSeen !== RELEASE ? <WhatsNew onDismiss={closeWhatsNew} /> : null}
             levelRecheck={newsSeen === RELEASE && levelAsked === false && meId ? (

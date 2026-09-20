@@ -7,7 +7,7 @@ import { computeLocalNotifications, Notification } from "@/core/notifications";
 import { listIncomingRequests } from "@/lib/friends";
 import { storage } from "@/lib/storage";
 import { listMyTrophies, listPendingClaims } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body } from "@/lib/theme";
 
 const RECENT_WINDOW_MS = 7 * 86400000;
 const SEEN_KEY = "notifs_seen";
@@ -104,7 +104,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
     <>
       <button onClick={() => setOpen(true)} aria-label="Notifications" style={{ position: "relative", background: PANEL2, border: "none", borderRadius: 14, padding: "9px 10px", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
         <Bell size={18} ring={badge > 0} />
-        {badge > 0 && <span style={{ position: "absolute", top: -4, right: -4, background: BALL, color: COURT, fontFamily: mono, fontSize: 9, fontWeight: 800, borderRadius: 999, minWidth: 16, height: 16, display: "grid", placeItems: "center", padding: "0 3px" }}>{badge}</span>}
+        {badge > 0 && <span style={{ position: "absolute", top: -4, right: -4, background: BALL, color: COURT, fontFamily: body, fontSize: 9, fontWeight: 800, borderRadius: 999, minWidth: 16, height: 16, display: "grid", placeItems: "center", padding: "0 3px" }}>{badge}</span>}
       </button>
       {open && (
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
@@ -129,7 +129,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
                 <Glyph name={n.icon} size={16} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: body, fontSize: 13.5, fontWeight: n.action !== "none" && !seen.has(n.id) ? 600 : 400, color: n.action !== "none" && !seen.has(n.id) ? BALL : CHALK }}>{n.text}</div>
-                  <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, marginTop: 2 }}>{new Date(n.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
+                  <div style={{ fontFamily: body, fontSize: 10, color: MUTED, marginTop: 2 }}>{new Date(n.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
                 </div>
               </button>
             ))}

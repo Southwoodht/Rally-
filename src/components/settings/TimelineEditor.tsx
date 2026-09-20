@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { BigBtn } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
-import { BALL, CHALK, CLAY, MUTED, body, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, MUTED, body, miniInput } from "@/lib/theme";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -23,8 +23,8 @@ export function TimelineEditor({ player, onAdd, onRemove }: any) {
     <div style={{ padding: "8px 0 4px" }}>
       {hist.length ? hist.map((h, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 0" }}>
-          <span style={{ fontFamily: body, fontSize: 12, color: CHALK }}>{h.cat} · {h.sub} <span style={{ color: MUTED, fontFamily: mono }}>{fmtBoundary(h.from) || "…"}–{fmtBoundary(h.to) || "now"}</span></span>
-          <button onClick={() => onRemove(i)} style={{ fontFamily: mono, fontSize: 12, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "2px 8px", cursor: "pointer" }}>×</button>
+          <span style={{ fontFamily: body, fontSize: 12, color: CHALK }}>{h.cat} · {h.sub} <span style={{ color: MUTED, fontFamily: body }}>{fmtBoundary(h.from) || "…"}–{fmtBoundary(h.to) || "now"}</span></span>
+          <button onClick={() => onRemove(i)} style={{ fontFamily: body, fontSize: 12, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "2px 8px", cursor: "pointer" }}>×</button>
         </div>
       )) : <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 6 }}>No timeline yet — add periods so old games judge this player at their level back then.</div>}
       <div style={{ display: "flex", gap: 6, marginTop: 8 }}>

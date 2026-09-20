@@ -7,7 +7,7 @@ import { computeLegacyProfile } from "@/core/legacy";
 import { yearOf } from "@/core/levels";
 import { fmtDate } from "@/lib/format";
 import { listMyTrophies, Trophy } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body } from "@/lib/theme";
 
 const SPLIT_LABEL: Record<string, string> = { higher: "Against higher-rated players", similar: "Against similar-level players", lower: "Against lower-rated players" };
 
@@ -51,7 +51,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
           <Avatar player={player} size={48} enlargeable />
           <div>
             <h2 style={{ fontFamily: body, fontSize: 24, fontWeight: 800, color: CHALK, margin: 0 }}>{player.name}{player.last ? " " + player.last : ""}</h2>
-            {legacy.firstYear != null && <div style={{ fontFamily: mono, fontSize: 12, color: MUTED, marginTop: 3 }}>{legacy.firstYear}–{legacy.lastYear}{legacy.activeThisYear ? <span style={{ color: BALL }}> · active</span> : null}</div>}
+            {legacy.firstYear != null && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{legacy.firstYear}–{legacy.lastYear}{legacy.activeThisYear ? <span style={{ color: BALL }}> · active</span> : null}</div>}
           </div>
         </div>
 
@@ -67,19 +67,19 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
             </div>
             <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6, marginTop: 4 }}>Career</div>
             <Row label="Span">{legacy.firstYear} – {legacy.lastYear}</Row>
-            <Row label="Matches recorded">{legacy.matches} <span style={{ color: MUTED, fontFamily: mono, fontSize: 10 }}>· Rally verified</span></Row>
+            <Row label="Matches recorded">{legacy.matches} <span style={{ color: MUTED, fontFamily: body, fontSize: 10 }}>· Rally verified</span></Row>
             <Row label="Pace">~{legacy.matchesPerYear} matches/year</Row>
             {reportedStart != null && reportedStart !== legacy.firstYear && (
               <Row label="Started playing">
                 {reportedStart}{" "}
                 {startClaim?.status === "approved" ? (
-                  <span style={{ color: BALL, fontFamily: mono, fontSize: 10 }}>· verified by {startClaim.clubs?.name || "club"} ✓</span>
+                  <span style={{ color: BALL, fontFamily: body, fontSize: 10 }}>· verified by {startClaim.clubs?.name || "club"} ✓</span>
                 ) : startClaim?.status === "pending" ? (
-                  <span style={{ color: MUTED, fontFamily: mono, fontSize: 10 }}>· pending club verification</span>
+                  <span style={{ color: MUTED, fontFamily: body, fontSize: 10 }}>· pending club verification</span>
                 ) : (
-                  <span style={{ color: MUTED, fontFamily: mono, fontSize: 10 }}>
+                  <span style={{ color: MUTED, fontFamily: body, fontSize: 10 }}>
                     · player reported
-                    {isOwn && player.auth_id && <button onClick={() => setClaiming(true)} style={{ marginLeft: 6, background: "transparent", border: "none", color: BALL, fontFamily: mono, fontSize: 10, cursor: "pointer", textTransform: "uppercase" }}>Verify</button>}
+                    {isOwn && player.auth_id && <button onClick={() => setClaiming(true)} style={{ marginLeft: 6, background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Verify</button>}
                   </span>
                 )}
               </Row>
@@ -90,7 +90,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
                 <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Career highlights</div>
                 {legacy.timeline.map((t, i) => (
                   <div key={i} style={{ display: "flex", gap: 10, padding: "5px 0" }}>
-                    <span style={{ fontFamily: mono, fontSize: 12, fontWeight: 700, color: BALL, width: 42, flexShrink: 0 }}>{t.year}</span>
+                    <span style={{ fontFamily: body, fontSize: 12, fontWeight: 700, color: BALL, width: 42, flexShrink: 0 }}>{t.year}</span>
                     <span style={{ fontFamily: body, fontSize: 13, color: CHALK }}>{t.label}</span>
                   </div>
                 ))}
@@ -103,9 +103,9 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
                 {legacy.bestWins.map((w, i) => (
                   <button key={i} onClick={() => onOpenMatch && onOpenMatch(w.match.id)} disabled={!onOpenMatch} style={{ display: "block", width: "100%", background: PANEL2, border: "none", borderRadius: 12, padding: "10px 12px", marginBottom: 6, cursor: onOpenMatch ? "pointer" : "default", textAlign: "left" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontFamily: mono, fontSize: 13, fontWeight: 800, color: BALL }}>{i + 1}.</span>
+                      <span style={{ fontFamily: body, fontSize: 13, fontWeight: 800, color: BALL }}>{i + 1}.</span>
                       <span style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{nm(w.oid)}</span>
-                      <span style={{ marginLeft: "auto", fontFamily: mono, fontSize: 11, color: MUTED }}>{new Date(w.match.date).getFullYear()}</span>
+                      <span style={{ marginLeft: "auto", fontFamily: body, fontSize: 11, color: MUTED }}>{new Date(w.match.date).getFullYear()}</span>
                     </div>
                     <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 3 }}>{w.reason}</div>
                   </button>
@@ -122,10 +122,10 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
                     <div key={s.label} style={{ marginBottom: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 4 }}>
                         <span>{SPLIT_LABEL[s.label]}</span>
-                        <span style={{ fontFamily: mono, fontWeight: 700, color: BALL }}>{pct}%</span>
+                        <span style={{ fontFamily: body, fontWeight: 700, color: BALL }}>{pct}%</span>
                       </div>
                       <div style={{ height: 5, borderRadius: 3, background: PANEL2, overflow: "hidden" }}><div style={{ width: pct + "%", height: "100%", background: BALL }} /></div>
-                      <div style={{ fontFamily: mono, fontSize: 10, color: MUTED, marginTop: 3 }}>{s.w}-{s.d}-{s.l} · {s.n} match{s.n === 1 ? "" : "es"}</div>
+                      <div style={{ fontFamily: body, fontSize: 10, color: MUTED, marginTop: 3 }}>{s.w}-{s.d}-{s.l} · {s.n} match{s.n === 1 ? "" : "es"}</div>
                     </div>
                   );
                 })}
@@ -138,7 +138,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
                 {legacy.topOpponents.map((o) => (
                   <div key={o.oid} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontFamily: body, fontSize: 13, color: CHALK }}>
                     <span>{nm(o.oid)}</span>
-                    <span style={{ fontFamily: mono, fontSize: 12, color: MUTED }}>{o.w}-{o.d}-{o.l} · {o.matches} match{o.matches === 1 ? "" : "es"}</span>
+                    <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>{o.w}-{o.d}-{o.l} · {o.matches} match{o.matches === 1 ? "" : "es"}</span>
                   </div>
                 ))}
               </div>
@@ -149,9 +149,9 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
                 <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>By year</div>
                 {legacy.yearlyRecord.map((y) => (
                   <div key={y.year} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
-                    <span style={{ fontFamily: mono, fontSize: 12, color: MUTED, width: 42, flexShrink: 0 }}>{y.year}</span>
+                    <span style={{ fontFamily: body, fontSize: 12, color: MUTED, width: 42, flexShrink: 0 }}>{y.year}</span>
                     <div style={{ flex: 1, height: 5, borderRadius: 3, background: PANEL2, overflow: "hidden" }}><div style={{ width: Math.round(y.winPct * 100) + "%", height: "100%", background: BALL }} /></div>
-                    <span style={{ fontFamily: mono, fontSize: 11, color: CHALK, width: 80, textAlign: "right", flexShrink: 0 }}>{y.w}-{y.d}-{y.l} · {Math.round(y.winPct * 100)}%</span>
+                    <span style={{ fontFamily: body, fontSize: 11, color: CHALK, width: 80, textAlign: "right", flexShrink: 0 }}>{y.w}-{y.d}-{y.l} · {Math.round(y.winPct * 100)}%</span>
                   </div>
                 ))}
               </div>

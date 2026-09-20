@@ -7,10 +7,7 @@ import { predictProb } from "@/core/predict";
 import { matchContext } from "@/core/rank";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
-import {
-  BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, miniInput, mono,
-  FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, tabular,
-} from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, MUTED, PANEL2, body, miniInput, tabular } from "@/lib/theme";
 
 const PHOTO_SIZE = 480;
 

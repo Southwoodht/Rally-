@@ -2,7 +2,7 @@
 import React from "react";
 import { AwaitingResult, ResultPrompt } from "@/components/home/ResultPrompt";
 import { HomeHeader, type HomeHeaderProps } from "@/components/home/HomeHeader";
-import { HomeTiles, type NextUp, type ThisMonth } from "@/components/home/HomeTiles";
+import { HomeTiles, type NextUp, type PeriodStat } from "@/components/home/HomeTiles";
 import { PendingStack, type PendingConfirmation } from "@/components/home/PendingConfirmationCard";
 import { StandingHero, type StandingHeroProps } from "@/components/home/StandingHero";
 
@@ -25,7 +25,7 @@ export interface HomeProps {
   standing?: StandingHeroProps | null;
   pending?: PendingConfirmation[];
   nextUp?: NextUp | null;
-  thisMonth?: ThisMonth | null;
+  periods?: PeriodStat[] | null;
   onNudge?: (matchId: string) => void;
   awaitingResult?: AwaitingResult[];
   onResolveFixture?: (fixtureId: string, winner: "p1" | "p2" | "draw", score: string) => Promise<boolean> | void;
@@ -40,7 +40,7 @@ export interface HomeProps {
 }
 
 export function Home({
-  header, standing, pending, nextUp, thisMonth, awaitingResult, levelRecheck, whatsNew,
+  header, standing, pending, nextUp, periods, awaitingResult, levelRecheck, whatsNew,
   onNudge, onEditMatch, onSeeAllPending, onBook, onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   const hasPending = !!pending && pending.length > 0;
@@ -70,7 +70,7 @@ export function Home({
       )}
 
       <div style={{ marginBottom: 18 }}>
-        <HomeTiles nextUp={nextUp} thisMonth={thisMonth} onBook={onBook} />
+        <HomeTiles nextUp={nextUp} periods={periods} onBook={onBook} />
       </div>
 
       {children}

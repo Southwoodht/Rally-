@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { COURT, PANEL, PANEL2, CHALK, BALL, CLAY, MUTED, LINE, display, body, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, display } from "@/lib/theme";
 
 type Mode = "welcome" | "signup" | "login" | "reset";
 
@@ -21,8 +21,8 @@ export default function Welcome() {
   };
   const primary: React.CSSProperties = {
     width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 14,
-    padding: "14px 16px", fontFamily: mono, fontSize: 13, fontWeight: 700, letterSpacing: 1,
-    textTransform: "uppercase", cursor: "pointer",
+    padding: "15px 16px", fontFamily: body, fontSize: 15, fontWeight: 500,
+    cursor: "pointer",
   };
   const secondary: React.CSSProperties = {
     ...primary, background: "transparent", color: CHALK, border: "none", marginTop: 10,
@@ -86,7 +86,7 @@ export default function Welcome() {
 
           {(mode === "signup" || mode === "login") && (
             <>
-              <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+              <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
                 {mode === "signup" ? "Create your account" : "Welcome back"}
               </div>
 
@@ -129,7 +129,7 @@ export default function Welcome() {
 
           {mode === "reset" && (
             <>
-              <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+              <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
                 Reset your password
               </div>
               <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 12, lineHeight: 1.5 }}>

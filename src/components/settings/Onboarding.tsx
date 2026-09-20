@@ -4,7 +4,7 @@ import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, Chevr
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS, START_ELO } from "@/core/constants";
-import { BALL, CHALK, COURT, LINE, MUTED, body, card, fontImport, input, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, COURT, LINE, MUTED, body, card, fontImport, input, miniInput } from "@/lib/theme";
 
 export function Onboarding({ me, onFinish }: any) {
   const yearNow = new Date().getFullYear();
@@ -64,7 +64,7 @@ export function Onboarding({ me, onFinish }: any) {
             </div>
             {blocks.map((b, i) => (
               <div key={i} style={{ padding: "10px 0", borderTop: "none" }}>
-                <div style={{ fontFamily: mono, fontSize: 12, color: BALL, marginBottom: 6 }}>{b.from}{b.to ? "–" + b.to : "–now"}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: BALL, marginBottom: 6 }}>{b.from}{b.to ? "–" + b.to : "–now"}</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <select value={levels[i]?.cat || "Beginner"} onChange={(e) => setBlock(i, e.target.value, undefined)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
                   <select value={levels[i]?.sub || "Medium"} onChange={(e) => setBlock(i, undefined, e.target.value)} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }}>{SUBS.map((s) => <option key={s} value={s}>{s}</option>)}</select>

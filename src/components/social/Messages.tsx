@@ -5,7 +5,7 @@ import {
   acceptThread, currentUserId, deleteThread, listMessages, listThreads, markThreadRead,
   sendMessage, startThread, type MessageRow, type Thread,
 } from "@/lib/messages";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input } from "@/lib/theme";
 import { ArrowUp, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { readImageForMessage } from "@/lib/photo";
 import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";

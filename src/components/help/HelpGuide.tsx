@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
-import { BALL, CHALK, MUTED, PANEL2, body, listCard, mono } from "@/lib/theme";
+import { BALL, CHALK, MUTED, PANEL2, body, listCard } from "@/lib/theme";
 
 interface Point { label: string; text: string; }
 interface Sect { id: string; icon: string; title: string; points: Point[]; }
@@ -101,7 +101,7 @@ function Section({ s, open, onToggle }: { s: Sect; open: boolean; onToggle: () =
       <button onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", padding: "14px 16px", cursor: "pointer", textAlign: "left" }}>
         <Glyph name={s.icon} size={17} />
         <span style={{ flex: 1, fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>{s.title}</span>
-        <span style={{ fontFamily: mono, fontSize: 12, color: BALL, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>▾</span>
+        <span style={{ fontFamily: body, fontSize: 12, color: BALL, transform: open ? "rotate(180deg)" : "none", transition: "transform .15s", flexShrink: 0 }}>▾</span>
       </button>
       {open && (
         <div style={{ padding: "0 16px 16px" }}>

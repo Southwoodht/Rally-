@@ -14,7 +14,7 @@ import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput } from "@/lib/theme";
 
 const ACTIVE_WINDOW_MS = 365 * 86400000;
 
@@ -224,7 +224,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
           {inSeason && season && (
             <div style={{ marginTop: 22 }}>
               {!season.end ? (
-                <div style={{ fontFamily: mono, fontSize: 11, color: MUTED }}>Season live · day {daysIn} · ongoing</div>
+                <div style={{ fontFamily: body, fontSize: 11, color: MUTED }}>Season live · day {daysIn} · ongoing</div>
               ) : (() => {
                 const total = Math.max(1, Math.round((season.end - season.start) / 86400000));
                 const left = Math.max(0, Math.round((season.end - Date.now()) / 86400000));
@@ -233,7 +233,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
                       <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{season.name}</span>
-                      <span style={{ fontFamily: mono, fontSize: 12, color: left <= 30 ? CLAY : BALL }}>{left > 0 ? left + " days left" : "Season over"}</span>
+                      <span style={{ fontFamily: body, fontSize: 12, color: left <= 30 ? CLAY : BALL }}>{left > 0 ? left + " days left" : "Season over"}</span>
                     </div>
                     <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden" }}><div style={{ width: pctDone + "%", height: "100%", background: BALL }} /></div>
                   </div>

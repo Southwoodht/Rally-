@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { COURT, PANEL, PANEL2, CHALK, BALL, CLAY, MUTED, LINE, display, body, mono } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, display } from "@/lib/theme";
 
 export default function UpdatePassword({ onDone }: { onDone: () => void }) {
   const [password, setPassword] = useState("");
@@ -16,8 +16,8 @@ export default function UpdatePassword({ onDone }: { onDone: () => void }) {
   };
   const primary: React.CSSProperties = {
     width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 14,
-    padding: "14px 16px", fontFamily: mono, fontSize: 13, fontWeight: 700, letterSpacing: 1,
-    textTransform: "uppercase", cursor: "pointer",
+    padding: "15px 16px", fontFamily: body, fontSize: 15, fontWeight: 500,
+    cursor: "pointer",
   };
 
   const submit = async () => {
@@ -38,7 +38,7 @@ export default function UpdatePassword({ onDone }: { onDone: () => void }) {
           <div style={{ fontFamily: display, fontSize: 54, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -1, lineHeight: 1 }}>Rally</div>
         </div>
         <div style={{ background: PANEL, border: "none", borderRadius: 16, padding: 20 }}>
-          <div style={{ fontFamily: mono, fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
             Set a new password
           </div>
           <input style={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="New password" type="password" autoComplete="new-password" />

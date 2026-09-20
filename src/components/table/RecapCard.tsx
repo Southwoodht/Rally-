@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { Glyph } from "@/components/ui/Glyph";
-import { BALL, CHALK, LINE, MUTED, PANEL, body, display, mono } from "@/lib/theme";
+import { BALL, CHALK, LINE, MUTED, PANEL, body, display } from "@/lib/theme";
 
 export function RecapCard({ recap, nameOf, leagueName }: any) {
   const Row = ({ icon, label, value }: any) => value ? (
@@ -13,7 +13,7 @@ export function RecapCard({ recap, nameOf, leagueName }: any) {
   ) : null;
   return (
     <div style={{ background: PANEL, border: "none", borderRadius: 12, padding: 16, marginBottom: 14 }}>
-      <div style={{ fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5, color: BALL, marginBottom: 6 }}>This week at {leagueName}</div>
+      <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: BALL, marginBottom: 6 }}>This week at {leagueName}</div>
       <Row icon="🏆" label="Top winner" value={recap.topGain && recap.topGv > 0 ? nameOf(recap.topGain) + " (+" + recap.topGv.toFixed(0) + " ELO)" : null} />
       <Row icon="🔥" label="On a streak" value={recap.strV >= 2 ? nameOf(recap.strP) + " (" + recap.strV + " wins)" : null} />
       <Row icon="⚡" label="Upset" value={recap.upset ? nameOf(recap.upset.wid) + " beat " + nameOf(recap.upset.m.p1 === recap.upset.wid ? recap.upset.m.p2 : recap.upset.m.p1) : null} />
