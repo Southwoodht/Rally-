@@ -1054,11 +1054,48 @@ which is its own commit precisely so it can be reverted alone. Home is a
 dashboard: standing, pending confirmations, tiles. The Table is the ranked
 list and nothing else.
 
-**Official points punishes playing the best player, and only because no one
-has a level recorded.** Sam, 2026-09-20: he and Charlie are 5-4 head to head
-this year and would each beat the other's opponents, yet Sam has roughly
-double the points. He was right that something was wrong, and it is not the
-head-to-head — it is that the term meant to reward a hard schedule is inert.
+**MEASURED 2026-09-20, and it corrects almost everything this file says about
+missing levels.** Sam ran the level-state query. Seacourt is largely repaired:
+
+| | |
+|---|---|
+| Players with a timeline | **21 of 26** |
+| Whose timeline covers **every** confirmed match they have played | **21 of 21** |
+| Players with matches and no timeline | **5**, holding 12 matches between them |
+
+Sam, Charlie Henry and Zaach each have full coverage — 45, 51 and 46 matches,
+all graded. **Their results are not affected by missing levels in any way.**
+The long-standing "fourteen of twenty-one have no history" line was measured on
+the August snapshot before any repair work and is no longer true; treat every
+claim in this file about levels being absent as dated unless it cites this
+table.
+
+What is still missing, and it is a short list: **George Henry (6 matches),
+Jamie Chevalier-Watts (3), Ivan Snell, Joe Dodgson and Phil HS (1 each)**, plus
+Abbie with none. George is the one worth doing — six matches graded flat is
+more than the rest put together.
+
+And **Jamie is the answer to the question that opened the day**: Sam beating
+him scored 12 because Jamie has zero timeline entries against three confirmed
+matches, so `levelAt()` returns null, the level multiplier drops out, and the
+win counts at face value. Diagnosed from the code before this data existed and
+confirmed by it.
+
+One thing the table shows that nothing else would: **`timeline_from` is the
+real coverage test, not the entry count.** Zaach has six entries starting
+2025-01 and all 46 of his matches fall inside that window; somebody with the
+same six entries starting 2025 but a career from 2017 would look equally
+"filled in" and grade flat for eight years. Ask for coverage, never for
+presence.
+
+**Official points can punish playing the best player — but NOT for Sam and
+Charlie, whose levels are recorded.** Sam, 2026-09-20: he and Charlie are 5-4
+head to head this year and would each beat the other's opponents, yet Sam has
+roughly double the points. He was right that something was wrong. The first
+explanation offered here was that the quality term was inert for want of
+levels; the data above says it is fully live for both of them, so that was
+wrong and the gap is still unexplained. The arithmetic below stands as a
+property of the formula — it is simply not what is happening to these two.
 
 `computeOfficial` is `qualPerWin x wrReg² x activity x 100`. Opponent quality
 is `1 + levelVal/6.2`, and `levelAt()` returns null for everyone in Seacourt,
