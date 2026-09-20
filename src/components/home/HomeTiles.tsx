@@ -27,8 +27,8 @@ export interface PeriodStat {
   label: string;
   w: number;
   l: number;
-  /** 0-100, already rounded. */
-  winRate: number;
+  /** 0-100, already rounded. Null when nothing was played: 0/0 is not 0%. */
+  winRate: number | null;
 }
 
 /** How long each one is up. Long enough to read twice without trying. */
@@ -40,12 +40,10 @@ const line = (color: string): React.CSSProperties => ({ fontFamily: body, fontWe
 
 export function HomeTiles({ nextUp, periods, onBook }: {
   nextUp?: NextUp | null;
-  /**
-   * The spans worth showing, widest last. The caller drops any with no
-   * matches in them: a loop that stops on "This week — nothing" twice out of
-   * three is a broken-looking tile rather than an informative one, and week
-   * sits inside month sits inside year, so an empty one earlier in the list
-   * never means the later ones are empty too.
+/**
+   * The spans to show, widest last — empty ones included. An empty week is a
+   * fact about the week, and a tile that leaves one out is a tile you cannot
+   * read as complete.
    */
   periods?: PeriodStat[] | null;
   onBook?: () => void;
@@ -117,7 +115,7 @@ export function HomeTiles({ nextUp, periods, onBook }: {
       <button
         onClick={n > 1 ? () => setI((x) => (x + 1) % n) : undefined}
         aria-live="polite"
-        aria-label={cur ? cur.label + ": " + cur.w + " won, " + cur.l + " lost, " + cur.winRate + "% win rate" : "No matches yet"}
+        aria-label={!cur ? "No matches yet" : cur.winRate === null ? cur.label + ": nothing played" : cur.label + ": " + cur.w + " won, " + cur.l + " lost, " + cur.winRate + "% win rate"}
         style={{ ...tile, textAlign: "left", border: "none", cursor: n > 1 ? "pointer" : "default", display: "block", width: "100%", font: "inherit" }}
       >
         <style>{"@keyframes rally-tile-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){.rally-tile-span{animation:none!important}}"}</style>
@@ -142,11 +140,11 @@ export function HomeTiles({ nextUp, periods, onBook }: {
         <div key={cur ? cur.label : "empty"} className="rally-tile-span" style={{ animation: "rally-tile-in .32s ease both" }}>
           <div style={{ marginTop: 4 }}>
             {cur
-              ? <StatNumeral size={22} tone="hi">{cur.w}–{cur.l}</StatNumeral>
+              ? <StatNumeral size={22} tone={cur.winRate === null ? "mid" : "hi"}>{cur.w}–{cur.l}</StatNumeral>
               : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>No matches yet</span>}
           </div>
           <div style={line(FEED_TEXT_MID)}>
-            {cur ? cur.winRate + "% win rate" : "Log one and this fills in"}
+            {!cur ? "Log one and this fills in" : cur.winRate === null ? "Nothing played" : cur.winRate + "% win rate"}
           </div>
         </div>
       </button>

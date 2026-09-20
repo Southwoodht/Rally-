@@ -260,16 +260,45 @@ const CACHE_MS = 60_000;
 
 export const globalKeyFor = (p: any): string => (p?.auth_id ? String(p.auth_id) : "p:" + p?.id);
 
-export interface GlobalPlace { rank: number; of: number }
+export interface GlobalPlace {
+  /** Null for a provisional player: the table gives them a dash, not a place. */
+  rank: number | null;
+  /** How many people carry a place — provisional rows are not among them. */
+  of: number;
+  provisional: boolean;
+  /** The network rating, as the table prints it. */
+  rating: number;
+  played: number;
+}
 
+/**
+ * Where one person sits on the global table — the same answer the table
+ * itself would give, which is the only reason to have this at all.
+ *
+ * It used to rank against every row including the provisional ones, and that
+ * quietly disagreed with the screen: GlobalTable takes provisional players out
+ * of the ranked list and gives them a dash, because a place number is a claim
+ * about where somebody stands and PROVISIONAL_GAMES is where this app is
+ * willing to make it. Two places for one person is the drift §8 warns about
+ * with league places in SQL, in a second form. So provisional comes back as
+ * rank null and the caller says "Provisional" — never a number the table
+ * would refuse to print.
+ */
 export async function globalRankFor(key: string, now = Date.now()): Promise<GlobalPlace | null> {
   if (!cache || now - cache.at > CACHE_MS) {
     try { cache = { at: now, rows: await loadGlobalStandings() }; } catch { return null; }
   }
-  // Ranked against everybody, matching what the table shows now that unrated
-  // players are placed on their record rather than dumped underneath it.
-  const i = cache.rows.findIndex((r) => r.key === key);
-  return i < 0 ? null : { rank: i + 1, of: cache.rows.length };
+  const row = cache.rows.find((r) => r.key === key);
+  if (!row) return null;
+  const ranked = cache.rows.filter((r) => !r.provisional);
+  const i = ranked.findIndex((r) => r.key === key);
+  return {
+    rank: row.provisional || i < 0 ? null : i + 1,
+    of: ranked.length,
+    provisional: row.provisional,
+    rating: Math.round(row.score),
+    played: row.gp,
+  };
 }
 
 // #6 means nothing without knowing whether that's six of eight or six of six
@@ -280,7 +309,7 @@ export async function globalRankFor(key: string, now = Date.now()): Promise<Glob
 // labelled "Global", which doesn't say it spans every league rather than
 // this one. So each carries a note that spells out both, in the same shape
 // the play-style chip uses.
-export function standingWord(place: GlobalPlace): { label: string; tier: "gold" | "blue" | "green" | "orange" | "muted"; note: string } {
+export function standingWord(place: { rank: number; of: number }): { label: string; tier: "gold" | "blue" | "green" | "orange" | "muted"; note: string } {
   const p = place.rank / Math.max(1, place.of);
   const of = `of the ${place.of} players ranked across every league Rally can see for you`;
   if (p <= 0.1) return { label: "Elite", tier: "gold", note: `Top 10% ${of}.` };

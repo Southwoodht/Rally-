@@ -23,6 +23,10 @@ import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
 import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
+import { globalKeyFor, globalRankFor } from "@/lib/globalTable";
+import { myLeaguePlaces } from "@/lib/myLeaguePlaces";
+import { listMyLeagues } from "@/lib/leagues";
+import type { Standing } from "@/components/home/StandingHero";
 import { setLevelEstimate } from "@/lib/levelAdmin";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { Globe } from "@/components/ui/Globe";
@@ -160,6 +164,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Friendlies need one migration that may not have been run yet. Saying so
   // beats the generic "couldn't load" screen, which points nowhere.
   const [friendlyUnavailable, setFriendlyUnavailable] = useState(false);
+  // Where you stand everywhere else: across Rally, and in your other leagues.
+  // Loaded after the first paint rather than during boot — one is an RPC and
+  // the rest are a full league load each, and the league you actually opened
+  // should not wait behind any of it.
+  const [otherStandings, setOtherStandings] = useState<Standing[]>([]);
   // Where /players/[id] sends you back to. Both carry an account id, because
   // that is the only identity a page outside a league has to work with.
   const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge" | "profile"; authId: string } | null>(null);
@@ -856,6 +865,59 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     return arr;
   }, [players, elo, wdl, form, matches, rankingMode, officialPoints]);
 
+  /**
+   * Your place across Rally, and in the leagues you are in but not looking at.
+   *
+   * Up here with the other hooks, above every early return, rather than down
+   * beside the value it wanted. That is the exact crash §8 records: this
+   * component returns early while it loads, so an effect below those returns
+   * runs on the second render and not the first, React counts more hooks than
+   * last time, and throws. It finds its player row in gdata instead of using
+   * the one derived further down — one find, and the hook stays where it has
+   * to be.
+   *
+   * Only while Home is on screen, since that is the only place it shows and
+   * the other-league half costs a full league load each. Both loaders cache —
+   * sixty seconds for the global table, two minutes for the places — so
+   * moving between tabs re-runs nothing.
+   *
+   * Failures are swallowed per source: a standing nobody could load is one
+   * fewer slide, and the league you are actually looking at is already on
+   * screen and never at risk from any of it.
+   */
+  useEffect(() => {
+    const mineRow = (gdata.players || []).find((p: any) => p.id === gdata.me);
+    if (tab !== "home" || !myAuthId || !mineRow || !gid || isFriendlyLeague(gid)) return;
+    let alive = true;
+    (async () => {
+      const found: Standing[] = [];
+      try {
+        const place = await globalRankFor(globalKeyFor(mineRow));
+        if (place) {
+          found.push({
+            scope: "Across Rally",
+            rank: place.rank,
+            // A provisional player has no place on the global table — it
+            // prints a dash and a count, and so does this, rather than a
+            // number that screen would refuse to show.
+            note: place.provisional ? place.played + " played" : null,
+            rating: place.rating,
+          });
+        }
+      } catch {}
+      try {
+        const others = (await listMyLeagues()).filter((l: any) => l.id !== gid);
+        if (others.length) {
+          const places = await myLeaguePlaces(others, myAuthId);
+          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating }));
+        }
+      } catch {}
+      if (alive) setOtherStandings(found);
+    })();
+    return () => { alive = false; };
+  }, [tab, myAuthId, gid, gdata]);
+
+
   if (friendlyUnavailable) return (
     <div style={{ ...wrap, minHeight: "100vh", padding: "calc(24px + env(safe-area-inset-top)) 18px 24px" }}>
       <style dangerouslySetInnerHTML={{ __html: fontImport }} />
@@ -1097,16 +1159,20 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       { label: "This year", from: new Date(now.getFullYear(), 0, 1).getTime() },
     ];
     const played = mine.filter((m) => countsAsPlayed(m));
-    // Only the spans with something in them. Week sits inside month sits
-    // inside year, so dropping an empty one never hides a later one — and a
-    // loop that lands on "nothing yet" two turns in three reads as broken.
+    // Every span, including the empty ones. They were filtered out at first,
+    // on the reasoning that a loop landing on "nothing yet" reads as broken —
+    // Sam's answer was that he knows he has not played this week and still
+    // wants to see it, which is the better argument: an empty week is a fact
+    // about his week, and a tile that quietly omits it is a tile you cannot
+    // trust to be showing you everything.
     const periods = spans.map(({ label, from }) => {
       const within = played.filter((m) => m.date >= from);
-      if (!within.length) return null;
       const w = within.filter((m) => m.winner === iAm(m)).length;
       const l = within.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
-      return { label, w, l, winRate: Math.round((w / within.length) * 100) };
-    }).filter(Boolean) as { label: string; w: number; l: number; winRate: number }[];
+      // No matches means no win rate — 0/0 is not 0%. The card says so in
+      // words instead.
+      return { label, w, l, winRate: within.length ? Math.round((w / within.length) * 100) : null };
+    });
 
     return { standing, pending, nextUp, periods, awaitingResult };
   })();
@@ -1204,7 +1270,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 </>
               ),
             }}
-            standing={homeData?.standing}
+            standing={homeData?.standing ? {
+              ...homeData.standing,
+              // This league first — it is the one you opened. The rest follow
+              // in whatever order they loaded, which is global then the others.
+              standings: [
+                { scope: group?.name || "Your standing", ...homeData.standing },
+                ...otherStandings,
+              ],
+            } : null}
             pending={homeData?.pending}
             nextUp={homeData?.nextUp}
             periods={homeData?.periods}

@@ -1,4 +1,5 @@
 import { computeStats } from "@/core/elo";
+import { computeOfficial } from "@/core/official";
 import { rankMaps } from "@/core/rank";
 import { fetchLeagueData } from "@/lib/leagueData";
 
@@ -7,6 +8,8 @@ export interface LeaguePlace {
   name: string;
   place: number;
   of: number;
+  /** Official points, rounded — the same number that league's table prints. */
+  rating: number;
 }
 
 // Where you sit in each of your own leagues, for the profile's details block:
@@ -38,7 +41,11 @@ export async function myLeaguePlaces(groups: any[], authId: string | null, now =
       const { elo, wdl } = computeStats(data.players, data.matches);
       const maps = rankMaps(data.players, data.matches, elo, wdl);
       const place = maps.off[me.id];
-      if (place) places.push({ leagueId: g.id, name: g.name, place, of: Object.keys(maps.off).length });
+      // The same computeOfficial the league table runs, for the same reason
+      // the place comes from rankMaps: one formula, so the number here and
+      // the number on that league's own table cannot disagree.
+      const points = computeOfficial(data.players, data.matches, wdl);
+      if (place) places.push({ leagueId: g.id, name: g.name, place, of: Object.keys(maps.off).length, rating: Math.round(points[me.id] ?? 0) });
     } catch {
       // A league that won't load is simply left off the list. A profile is
       // not worth failing over, and a half-loaded league would produce a
