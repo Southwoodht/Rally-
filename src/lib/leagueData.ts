@@ -95,6 +95,17 @@ export const rowToPlayer = (r: any) => ({
   home: r.home ?? undefined,
   level: r.level ?? null,
   levelHistory: r.level_history ?? undefined,
+  // What a league owner or editor reckons, for somebody who has never said.
+  // Read here, resolved in core/levels.ts, and deliberately NOT written by
+  // playerToRow: the only way these reach the database is
+  // set_player_level_estimate(), which writes them and nothing else. If an
+  // ordinary save could touch them, an admin estimate and a person’s own
+  // claim would be one field again and the whole separation would be
+  // decoration. See supabase/schema_level_estimate.sql.
+  levelEstimate: r.level_estimate ?? null,
+  levelEstimateHistory: r.level_estimate_history ?? undefined,
+  levelEstimateBy: r.level_estimate_by ?? null,
+  levelEstimateAt: r.level_estimate_at ? new Date(r.level_estimate_at).getTime() : undefined,
   avatar: r.avatar ?? null,
   avatarUrl: r.avatar_url ?? undefined,
   auth_id: r.auth_id ?? null,

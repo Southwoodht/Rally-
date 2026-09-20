@@ -5,7 +5,7 @@ import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
 import { computeAchievements } from "@/core/achievements";
-import { levelAt } from "@/core/levels";
+import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
@@ -146,7 +146,7 @@ export function ProfileContainer({
     }
     const oppRec = (id: string) => ({
       player: byId[id], w: h[id].w, d: h[id].d, l: h[id].l,
-      levelLabel: byId[id]?.level?.cat || undefined,
+      levelLabel: levelNow(byId[id])?.cat || undefined,
     });
     const lead = Object.keys(h).filter((o) => byId[o] && h[o].w > h[o].l).map(oppRec);
     const behind = Object.keys(h).filter((o) => byId[o] && h[o].l > h[o].w).map(oppRec);
@@ -302,7 +302,7 @@ export function ProfileContainer({
         leagueName: group?.name || "League",
         player,
         meta: data.meta || undefined,
-        levelLabel: player?.level?.cat ? player.level.cat + " · " + player.level.sub : "No level set",
+        levelLabel: (() => { const lv = levelNow(player); return lv ? lv.cat + " · " + lv.sub : "No level set"; })(),
         onPickLeague: groups && groups.length > 1 ? onPickLeague : undefined,
         onSettings,
       }}

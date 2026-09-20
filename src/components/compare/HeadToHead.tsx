@@ -301,7 +301,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             <StatRow label="Matches played" av={ra.gp} bv={rb.gp} na={ra.gp} nb={rb.gp} />
             <StatRow label="Elo" av={Math.round(eloS[a] ?? 0)} bv={Math.round(eloS[b] ?? 0)} na={eloS[a] ?? 0} nb={eloS[b] ?? 0} base={eloFloor} />
             {/* No bar: a level is a name. */}
-            <StatRow label="Level" av={pa?.level ? pa.level.cat : "–"} bv={pb?.level ? pb.level.cat : "–"} />
+            <StatRow label="Level" av={levelNow(pa)?.cat ?? "–"} bv={levelNow(pb)?.cat ?? "–"} />
             <StatRow label="Streak now" av={sa?.cur ?? 0} bv={sb?.cur ?? 0} na={sa?.cur ?? 0} nb={sb?.cur ?? 0} />
             <StatRow label="Best streak" av={sa?.best ?? 0} bv={sb?.best ?? 0} na={sa?.best ?? 0} nb={sb?.best ?? 0} />
             <StatRow label="Winning records" av={sa?.winning?.length ?? 0} bv={sb?.winning?.length ?? 0} na={sa?.winning?.length ?? 0} nb={sb?.winning?.length ?? 0} />

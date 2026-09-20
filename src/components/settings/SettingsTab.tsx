@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
-import { startIndex } from "@/core/levels";
+import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
 import { fmtDate, uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput, mono } from "@/lib/theme";
 
@@ -146,7 +146,7 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
               {locked ? (
                 <div style={{ fontFamily: body, fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
                   {[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}
-                  {p.level && <div>{p.level.cat} · {p.level.sub}</div>}
+                  {levelNow(p) && <div>{levelNow(p)!.cat} · {levelNow(p)!.sub}{levelIsEstimated(p) ? " — your estimate" : ""}</div>}
                 </div>
               ) : (
                 <>

@@ -1,5 +1,6 @@
 import { countsAsPlayed, isUnconfirmedResult } from "./matchStatus";
 import { LEVELS } from "./constants";
+import { levelNow } from "./levels";
 import { gapPhrase, gradeAgainstHistory, verdictFor, type GradedMatch, type Outcome, type Verdict } from "./matchGrade";
 
 /**
@@ -194,7 +195,7 @@ export function buildMatchQuality(
     add(levelRows[g.opponentCategory], r.outcome);
   });
 
-  const myCat = me?.level?.cat ?? null;
+  const myCat = levelNow(me)?.cat ?? null;
   const myCatIdx = myCat ? LEVELS.indexOf(myCat) : -1;
   const byLevel: QualityRow[] = LEVELS
     .map((cat: string, i: number) => ({ cat, i }))

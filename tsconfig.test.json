@@ -17,6 +17,7 @@
     "src/core/tiebreak.test.ts",
     "src/core/constants.ts",
     "src/core/levels.ts",
+    "src/core/levels.test.ts",
     "src/core/matchGrade.ts",
     "src/core/matchGrade.test.ts",
     "src/core/matchQuality.ts",

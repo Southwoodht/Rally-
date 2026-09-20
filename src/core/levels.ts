@@ -45,14 +45,49 @@ export const startIndex = (v: any): number => monthIndex(v, false);
  *
  * For "what are they now", which is a different question and has a real
  * answer for everybody, use levelNow.
+ *
+ * Since 2026-09-20 there is one other thing it will read: a level timeline a
+ * league owner or editor filled in for somebody who never did. That is still
+ * a recorded answer rather than a guessed one — somebody who knows the club
+ * wrote it down, it is stored in its own columns, it is labelled as theirs
+ * rather than the player’s, and the player’s own timeline overrides it the
+ * instant they set one. What has not changed is that null is still a real
+ * answer and still means nobody has said: with no timeline and no estimate,
+ * every caller drops the level term rather than substituting a number for it.
  */
 export function levelAt(player, ts) {
-  if (!player || !player.levelHistory || !player.levelHistory.length) return null;
+  const hist = timelineFor(player);
+  if (!hist || !hist.length) return null;
   const d = new Date(ts);
   const at = d.getFullYear() * 12 + d.getMonth();
-  const per = player.levelHistory.find((p) => at >= monthIndex(p.from, false) && at <= monthIndex(p.to, true));
+  const per = hist.find((p) => at >= monthIndex(p.from, false) && at <= monthIndex(p.to, true));
   return per ? { cat: per.cat, sub: per.sub } : null;
 }
+
+/**
+ * Whose timeline to read: theirs, or their league admin’s estimate of it.
+ *
+ * Theirs wins outright and is never merged with the estimate. Merging would
+ * build a timeline neither person ever described — their own 2019 entry
+ * against an admin’s guess at 2024, with a hole between the two that reads as
+ * "not recorded" — and afterwards nobody could say which half came from
+ * where. One source or the other.
+ *
+ * An empty array counts as nothing said, the same as a missing one: clearing
+ * your timeline should hand the question back to the estimate rather than pin
+ * you at "no level" for good.
+ */
+function timelineFor(player) {
+  if (!player) return null;
+  if (player.levelHistory && player.levelHistory.length) return player.levelHistory;
+  return player.levelEstimateHistory && player.levelEstimateHistory.length ? player.levelEstimateHistory : null;
+}
+
+/** Did this come from them or from their admin? For labelling, never for maths. */
+export const levelIsEstimated = (player) => !!player && !player.level && !!player.levelEstimate;
+
+export const timelineIsEstimated = (player) =>
+  !!player && !(player.levelHistory && player.levelHistory.length) && !!(player.levelEstimateHistory && player.levelEstimateHistory.length);
 
 /**
  * Their level today — the dropdown they picked, not the timeline.
@@ -62,8 +97,20 @@ export function levelAt(player, ts) {
  * one date the current claim is actually evidence for. These call sites read
  * as levelAt(player, Date.now()) and were never really date queries at all.
  */
-export const levelNow = (player) => (player ? (player.level || null) : null);
+export const levelNow = (player) => (player ? (player.level || player.levelEstimate || null) : null);
 
+/**
+ * Their own claim only, with no admin estimate behind it.
+ *
+ * For the two places where the difference is the whole point: the form where
+ * somebody picks their own level — pre-filling that with an admin’s guess
+ * would turn the guess into their claim the moment they saved anything else —
+ * and the prompt asking people to re-pick, which has to keep asking somebody
+ * whose level was filled in for them.
+ */
+export const levelClaimed = (player) => (player ? (player.level || null) : null);
+
+/** Have THEY set a timeline — an admin estimate deliberately does not count. */
 export const isSetUp = (p) => !!(p && p.levelHistory && p.levelHistory.length);
 
 // A month index back into a "YYYY-MM" boundary.

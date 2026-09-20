@@ -4,6 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { LevelBadge } from "@/components/ui/LevelBadge";
 import { Empty } from "@/components/ui/atoms";
 import { computeCareerTable } from "@/core/legacy";
+import { levelNow } from "@/core/levels";
 import { miniInput, BALL, CHALK, CLAY, MUTED, PANEL, body, listCard, listRow, mono } from "@/lib/theme";
 
 export function LegacyTable({ players, matches, onOpen }: any) {
@@ -35,7 +36,7 @@ export function LegacyTable({ players, matches, onOpen }: any) {
                   <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK, lineHeight: 1.2, display: "flex", alignItems: "center", gap: 8 }}>
                     {p.name}{p.last ? " " + p.last : ""}
                     <span style={{ fontFamily: mono, fontSize: 13, color: CLAY, fontWeight: 700 }}>{Math.round(r.winPct! * 100)}%</span>
-                    <LevelBadge level={p.level} small />
+                    <LevelBadge level={levelNow(p)} small />
                   </div>
                   <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
                     <span>{r.w}–{r.d}–{r.l}</span>

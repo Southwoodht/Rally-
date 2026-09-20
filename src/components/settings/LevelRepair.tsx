@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS, SUBS } from "@/core/constants";
-import { sealTimeline, startIndex } from "@/core/levels";
+import { levelNow, sealTimeline, startIndex } from "@/core/levels";
 import { fullNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
@@ -40,10 +40,21 @@ const field: React.CSSProperties = {
   boxSizing: "border-box" as const,
 };
 
-function PlayerCard({ player, onSave }: { player: any; onSave: (periods: any[]) => void }) {
-  const hist = player.levelHistory || [];
-  const [cat, setCat] = useState(player.level?.cat || "Beginner");
-  const [sub, setSub] = useState(player.level?.sub || "Medium");
+/**
+ * Which timeline this card is editing, and whether it may.
+ *
+ *   own       their row is yours to write — an unclaimed shell, or you
+ *   estimate  they have an account and have never set a timeline, so a league
+ *             owner or editor may record what they reckon, in its own columns
+ *   locked    they have an account and have set their own. Nothing to do here:
+ *             an estimate would be inert, and offering the control anyway
+ *             would be a button that silently changes nothing.
+ */
+function PlayerCard({ player, mode, onSave }: { player: any; mode: "own" | "estimate" | "locked"; onSave: (periods: any[]) => void }) {
+  const hist = (mode === "estimate" ? player.levelEstimateHistory : player.levelHistory) || [];
+  const shown = levelNow(player);
+  const [cat, setCat] = useState(shown?.cat || "Beginner");
+  const [sub, setSub] = useState(shown?.sub || "Medium");
   const [from, setFrom] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +77,7 @@ function PlayerCard({ player, onSave }: { player: any; onSave: (periods: any[]) 
           {fullNameOf(player)}
         </span>
         <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, flexShrink: 0 }}>
-          {player.level ? "now " + player.level.cat + " · " + player.level.sub : "no level set"}
+          {shown ? "now " + shown.cat + " · " + shown.sub : "no level set"}
         </span>
       </div>
 
@@ -80,6 +91,11 @@ function PlayerCard({ player, onSave }: { player: any; onSave: (periods: any[]) 
               <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>
                 {fmtBoundary(h.from)} – {fmtBoundary(h.to)}
               </span>
+              {/* Not on a locked card. The timeline there is theirs, and a
+                  delete would go out as an ordinary row save, be refused by
+                  RLS, and — since updateRow started checking — come back as an
+                  error. An offer that can only fail is worse than no offer. */}
+              {mode !== "locked" && (
               <button
                 onClick={() => remove(i)}
                 aria-label={"Remove " + h.cat + " " + h.sub}
@@ -87,11 +103,19 @@ function PlayerCard({ player, onSave }: { player: any; onSave: (periods: any[]) 
               >
                 <X size={14} color={FEED_TEXT_LOW} strokeWidth={2} />
               </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
+      {mode === "locked" ? (
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          They have an account and have set this themselves, so it stands as
+          written. Nothing for you to fill in.
+        </div>
+      ) : (
+      <>
       <div style={{ display: "flex", gap: 6 }}>
         <select value={cat} onChange={(e) => setCat(e.target.value)} style={{ ...field, flex: 2, minWidth: 0 }}>
           {LEVELS.map((l: string) => <option key={l} value={l}>{l}</option>)}
@@ -116,13 +140,23 @@ function PlayerCard({ player, onSave }: { player: any; onSave: (periods: any[]) 
         </button>
       </div>
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: error ? "#F09595" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
-        {error || "Effective from — it runs until the next entry starts."}
+        {error || (mode === "estimate"
+          ? "Your estimate, because they have an account and have set no level. It counts in this league only, never on the global table, and it stops counting the moment they set their own."
+          : "Effective from — it runs until the next entry starts.")}
       </div>
+      </>
+      )}
     </SurfaceCard>
   );
 }
 
-export function LevelRepair({ players, setPlayers }: { players: any[]; setPlayers: (np: any[]) => void }) {
+export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }: {
+  players: any[];
+  setPlayers: (np: any[]) => void;
+  meId?: string | null;
+  canManage?: boolean;
+  onEstimate?: (id: string, level: any, history: any[]) => Promise<void>;
+}) {
   const [showDone, setShowDone] = useState(false);
   // Anyone edited in this sitting stays in the working list even though they
   // now have a history. A progression is several entries, and a card that
@@ -130,22 +164,53 @@ export function LevelRepair({ players, setPlayers }: { players: any[]; setPlayer
   // the second one with it.
   const [touched, setTouched] = useState<string[]>([]);
 
+  const [error, setError] = useState<string | null>(null);
+
+  // Their own timeline if they have one, otherwise an admin estimate — the
+  // same precedence the ratings read, so a name leaves this list exactly when
+  // its matches start being graded. Counting only own timelines here would
+  // show a club as unrepaired after it had been repaired.
+  const timelineOf = (p: any) =>
+    (p.levelHistory && p.levelHistory.length ? p.levelHistory : p.levelEstimateHistory) || [];
+
+  const modeOf = (p: any): "own" | "estimate" | "locked" => {
+    if (!p.auth_id || p.id === meId) return "own";
+    if (p.levelHistory && p.levelHistory.length) return "locked";
+    return canManage ? "estimate" : "locked";
+  };
+
   const { missing, recorded } = useMemo(() => {
     const active = (players || []).filter((p: any) => !p.inactive);
-    const done = (p: any) => p.levelHistory && p.levelHistory.length && !touched.includes(p.id);
+    const done = (p: any) => timelineOf(p).length && !touched.includes(p.id);
     return {
       missing: active.filter((p: any) => !done(p)),
       recorded: active.filter(done),
     };
-  }, [players, touched]);
+  }, [players, touched, meId, canManage]);
 
-  const save = (id: string, periods: any[]) => {
+  const save = async (id: string, periods: any[]) => {
+    const player = players.find((p: any) => p.id === id);
     setTouched((t) => (t.includes(id) ? t : [...t, id]));
+    setError(null);
+    if (player && modeOf(player) === "estimate") {
+      // Not through setPlayers. That write is refused by RLS on any row with
+      // an auth_id, correctly — an estimate goes to its own columns through
+      // its own function. The latest period rides along as the estimated
+      // level so one action fills in both, the same way finishing onboarding
+      // sets a level from the last entry of your own timeline.
+      const last = periods.length ? periods[periods.length - 1] : null;
+      try {
+        await onEstimate?.(id, last ? { cat: last.cat, sub: last.sub } : null, periods);
+      } catch (e: any) {
+        setError(e?.message || "Couldn’t save that estimate.");
+      }
+      return;
+    }
     setPlayers(players.map((p: any) => (p.id === id ? { ...p, levelHistory: periods } : p)));
   };
 
   const total = missing.length + recorded.length;
-  const stillMissing = missing.filter((p: any) => !(p.levelHistory && p.levelHistory.length)).length;
+  const stillMissing = missing.filter((p: any) => !timelineOf(p).length).length;
 
   return (
     <div>
@@ -174,7 +239,7 @@ export function LevelRepair({ players, setPlayers }: { players: any[]; setPlayer
           <div style={{ ...label, marginBottom: 8 }}>Not recorded</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
             {missing.map((p: any) => (
-              <PlayerCard key={p.id} player={p} onSave={(periods) => save(p.id, periods)} />
+              <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
             ))}
           </div>
         </>
@@ -191,16 +256,22 @@ export function LevelRepair({ players, setPlayers }: { players: any[]; setPlayer
           {showDone && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
               {recorded.map((p: any) => (
-                <PlayerCard key={p.id} player={p} onSave={(periods) => save(p.id, periods)} />
+                <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
               ))}
             </div>
           )}
         </>
       )}
 
+      {error && (
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: "#F09595", lineHeight: 1.5, marginTop: 8 }}>
+          {error}
+        </div>
+      )}
+
       <div style={{ height: 20 }} />
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, background: FEED_CARD, borderRadius: 12, padding: 12 }}>
-        Only active players are listed.
+        Only active players are listed.{canManage ? " Anyone with an account who has never set a level, you can estimate for — they can overwrite it any time, and it never leaves this league." : ""}
       </div>
     </div>
   );

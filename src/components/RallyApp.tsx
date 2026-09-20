@@ -23,6 +23,7 @@ import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
 import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
+import { setLevelEstimate } from "@/lib/levelAdmin";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { Globe } from "@/components/ui/Globe";
 import { MessageRobins } from "@/components/ui/MessageRobins";
@@ -936,6 +937,25 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // gave every member the same bulk-delete/direct-edit powers as the
   // league's real owner. Only owner/editor gets these.
   const canManageMatches = !!meId && (leagueRole === "owner" || leagueRole === "editor");
+
+  /**
+   * A level an owner or editor filled in for somebody who never has.
+   *
+   * Deliberately not routed through saveData. Every other player write goes
+   * out as a whole row and is refused on any row with an auth_id — which is
+   * the protection, not an obstacle. This writes four separate columns through
+   * set_player_level_estimate(), so the local state is patched directly here
+   * rather than through setPlayers, which would try to save the row again and
+   * be refused.
+   */
+  const saveLevelEstimate = async (id: string, level: any, history: any[]) => {
+    await setLevelEstimate(id, level, history);
+    setGdata((g: any) => ({
+      ...g,
+      players: (g.players || []).map((p: any) =>
+        p.id === id ? { ...p, levelEstimate: level, levelEstimateHistory: history } : p),
+    }));
+  };
   const me = players.find((p) => p.id === meId);
   const finishOnboarding = (hist) => {
     if (hist && meId) {
@@ -959,7 +979,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   };
   // How many active players nobody has recorded a level history for. Their
   // matches count flat, so this is a number worth carrying into the menu.
-  const missingLevelHistory = players.filter((p) => !p.inactive && !(p.levelHistory && p.levelHistory.length)).length;
+  // An admin estimate counts: the badge is about whether the ratings can
+  // grade those matches, and they grade an estimate exactly as they grade a
+  // claim. A badge that stayed lit after the repair was done would send
+  // somebody back to a screen with nothing left to do on it.
+  const missingLevelHistory = players.filter((p) =>
+    !p.inactive
+    && !(p.levelHistory && p.levelHistory.length)
+    && !(p.levelEstimateHistory && p.levelEstimateHistory.length)).length;
   const pendingForMe = matches.filter((m) => isUnconfirmedResult(m) && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).length;
   const homeData = (() => {
     if (!meId) return null;
@@ -1223,7 +1250,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           />
         )}
         {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab(levelsFrom)} />}
-        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} />}
+        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} meId={meId} canManage={canManageMatches} onEstimate={saveLevelEstimate} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}

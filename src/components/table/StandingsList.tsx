@@ -4,6 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
 import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
+import { levelNow } from "@/core/levels";
 import { shortNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD, FEED_RADIUS,
@@ -61,7 +62,8 @@ const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 const statLineOf = (p: StandingsPlayer) => {
   if (!gamesOf(p)) return "no games yet";
   const pct = winPctOf(p);
-  return [recordOf(p), pct === null ? null : pct + "%", p.player?.level?.cat ? String(p.player.level.cat).toLowerCase() : null]
+  const lv = levelNow(p.player);
+  return [recordOf(p), pct === null ? null : pct + "%", lv?.cat ? String(lv.cat).toLowerCase() : null]
     .filter(Boolean).join(" · ");
 };
 

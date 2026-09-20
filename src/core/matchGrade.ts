@@ -1,5 +1,5 @@
 import { LEVELS } from "./constants";
-import { levelAt } from "./levels";
+import { levelAt, levelNow } from "./levels";
 
 /**
  * How good a result was, given who it was against.
@@ -130,8 +130,8 @@ export function gradeAgainstHistory(
   // Today's claim, which is what "and now" means. Not levelAt(now): a
   // player with no history has no level on any date, but the dropdown they
   // picked is a real statement about the present.
-  const myNow = viewer?.level || null;
-  const theirNow = opponent?.level || null;
+  const myNow = levelNow(viewer);
+  const theirNow = levelNow(opponent);
   const nowGrade = gradeMatch(outcome, myNow, theirNow);
 
   return {
