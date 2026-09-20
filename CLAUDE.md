@@ -1043,6 +1043,44 @@ which is its own commit precisely so it can be reverted alone. Home is a
 dashboard: standing, pending confirmations, tiles. The Table is the ranked
 list and nothing else.
 
+**Official points punishes playing the best player, and only because no one
+has a level recorded.** Sam, 2026-09-20: he and Charlie are 5-4 head to head
+this year and would each beat the other's opponents, yet Sam has roughly
+double the points. He was right that something was wrong, and it is not the
+head-to-head — it is that the term meant to reward a hard schedule is inert.
+
+`computeOfficial` is `qualPerWin x wrReg² x activity x 100`. Opponent quality
+is `1 + levelVal/6.2`, and `levelAt()` returns null for everyone in Seacourt,
+so **q is 1 for every win in the league** — beating Zaach scores exactly what
+beating a beginner scores. With quality flat, the only live term is a win rate
+that is then **squared**, so anyone taking on the strongest players just looks
+like somebody losing more.
+
+Measured, same player, same 10-4 against the mid-table, the only difference
+being whether he also splits ten matches with the No.1:
+
+| | no levels recorded | levels recorded |
+|---|---|---|
+| never plays the No.1 | **27.6** | 54.3 |
+| plus 5-5 vs the No.1 | **26.7** | **78.5** |
+
+So today the app pays you to duck him, by about a point. With levels recorded
+the same ten matches are worth +24 instead of -1. The quality term does
+everything it was designed to do the moment it has anything to read.
+
+This is the same missing data as §11's "almost nothing grades yet" and the 12
+points for beating Jamie, arriving at the Official table instead of at ELO.
+**The fix is the level histories, not the formula** — and note it needs
+histories rather than the dropdown, because `computeOfficial` asks
+`levelAt(opponent, matchDate)`. That is what the repair screen collects and
+what `set_player_level_estimate` now lets an admin fill in for somebody else.
+
+Structural wrinkles that remain even with levels on, unruled: quality is capped
+at your **five best wins**, so a sixth win over the No.1 adds nothing while its
+matching loss still counts; and every loss weighs the same whoever it is
+against, where `globalScore` learned on 2026-09-05 to weigh a bad loss by the
+gap. Do not change either without numbers and a ruling.
+
 The Table's rating bars are scaled **from played players only**. Everyone's
 bar was full width because `computeOfficial` returns −1,000,000 for a player
 with no games and that sentinel was the scale's minimum. Ten players sit on
