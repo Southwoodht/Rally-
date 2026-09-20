@@ -33,6 +33,10 @@ export interface ProfileViewProps {
    *  you actually have about the person you are looking at. */
   gap?: GapInsightProps | null;
   playingStyle?: PlayingStyleProps | null;
+  /** The career line. A node rather than props, because it is one self-
+   *  contained card and threading its four maps through here would put the
+   *  whole ratings engine in a presentational component's signature. */
+  ratingLine?: React.ReactNode;
   /** Message and Add friend. Only meaningful on somebody else's profile. */
   actions?: ProfileActionsProps | null;
   rivalries?: RivalryCardProps[];
@@ -118,6 +122,10 @@ export function ProfileView(p: ProfileViewProps) {
       )}
 
       {p.gap && <div style={{ marginTop: 12 }}><GapInsight {...p.gap} /></div>}
+
+      {/* Directly under the record, because it is the same fact over time and
+          the number above it is where the line ends. */}
+      {p.ratingLine && <div style={{ marginTop: 12 }}>{p.ratingLine}</div>}
 
       {p.playingStyle && (
         <Section title="Playing style"><PlayingStyle {...p.playingStyle} /></Section>

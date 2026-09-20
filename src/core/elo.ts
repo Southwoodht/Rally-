@@ -1,8 +1,7 @@
 import { countsAsPlayed } from "./matchStatus";
-import { K, LV_FACTOR, LV_MAX, LV_MIN, MARGIN_WEIGHT, START_ELO } from "@/core/constants";
-import { levelAt, levelVal } from "@/core/levels";
-import { shareForPlayer } from "@/core/sets";
-import { D } from "@/lib/format";
+import { K, LV_FACTOR, LV_MAX, LV_MIN, MARGIN_WEIGHT, START_ELO } from "./constants";
+import { levelAt, levelVal } from "./levels";
+import { shareForPlayer } from "./sets";
 
 export function computeStats(players, matches) {
   const elo = {}, wdl = {}, form = {}, deltas = {}, byId = {}, ratingBefore = {};

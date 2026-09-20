@@ -3,6 +3,7 @@ import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { ProfileView } from "@/components/profile/ProfileView";
+import { RatingLine } from "@/components/profile/RatingLine";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
 import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
@@ -308,6 +309,17 @@ export function ProfileContainer({
       }}
       record={data.record}
       gap={data.gap}
+      ratingLine={
+        <RatingLine
+          playerId={pid}
+          matches={matches}
+          ratingBefore={ratingBefore || {}}
+          deltas={deltas || {}}
+          startRating={typeof player?.initialElo === "number" ? player.initialElo : undefined}
+          nameOf={(oid: string) => fullNameOf(players.find((x: any) => x.id === oid)) || "someone"}
+          onOpenMatch={onOpenMatch}
+        />
+      }
       actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage }}
       playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails || (onOpenMatches ? () => onOpenMatches(pid, "quality") : undefined) } : null}
       rivalries={data.rivalries}
