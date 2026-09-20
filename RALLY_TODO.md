@@ -79,15 +79,14 @@ The whole of the 10 Sep brief, the profiles work, and a run of fixes:
 
 ## SQL
 
-**Nothing outstanding.** Both were run on 12 Sep 2026.
+**One outstanding, added 20 Sep 2026: `schema_friendly_fixtures.sql`.**
+`fixtures.league_id` is still `not null` while matches and players are both
+nullable, so "Book a match" inside Friendlies fails at the database. Everything
+run before 12 Sep is still run.
 
-### One thing to check, not run
+### The profiles question, answered
 
-```sql
-select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)
-  from pg_policy where polrelid = 'public.profiles'::regclass;
-```
-
-If anything there grants `select` to `anon`, every name and photo in Rally is
-readable without an account. The app no longer depends on the answer — both
-new pages require a session — but nobody has checked.
+Checked on 20 Sep 2026, and the answer is good: `public.profiles` is **not**
+readable by `anon`. Two policies, `any signed in user can search profiles`
+(select, `auth.uid() IS NOT NULL`) and `edit your own profile` (update,
+`id = auth.uid()`). No session, no `auth.uid()`, no rows. Closed.

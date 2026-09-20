@@ -644,15 +644,17 @@ error. Do not rewrite these files while they are pending; he has the text.
 3. **`schema_match_delete_shell_and_pending.sql`** — the long-standing one
    below.
 
-**Still unanswered, and worth knowing:** is `public.profiles` readable by
-`anon`? If it is, every name and photo in Rally is readable without an
-account. The app no longer depends on the answer — `/players/[id]` and
-`/search` both require a session — but nobody has checked:
+**Answered on 2026-09-20: `public.profiles` is not readable by `anon`.**
+Sam ran the policy query and it returns two policies — `any signed in user
+can search profiles` on select, qualified `auth.uid() IS NOT NULL`, and
+`edit your own profile` on update, qualified `id = auth.uid()`. An
+unauthenticated request has no `auth.uid()`, so it matches nothing. Names
+and photos need an account to see. The question is closed; don’t re-open it
+without a reason.
 
-```sql
-select polname, polcmd, polroles::regrole[], pg_get_expr(polqual, polrelid)
-  from pg_policy where polrelid = 'public.profiles'::regclass;
-```
+**Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
+is still `not null` while matches and players are both nullable, so "Book a
+match" inside Friendlies fails at the database.
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
