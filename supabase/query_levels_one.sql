@@ -33,6 +33,13 @@ select
        else (p.level ->> 'cat') || ' / ' || (p.level ->> 'sub') end as level_today,
   case when jsonb_typeof(p.level_history) = 'array'
        then jsonb_array_length(p.level_history) else 0 end as timeline_entries,
+  -- An admin estimate lives in its OWN columns and the line above cannot see
+  -- it. The first version of this query read only level_history, so a level
+  -- filled in for somebody with an account came back as 0 entries and looked
+  -- like it had never saved. It had.
+  case when jsonb_typeof(p.level_estimate_history) = 'array'
+       then jsonb_array_length(p.level_estimate_history) else 0 end as est_entries,
+  (p.level_estimate ->> 'cat')                             as est_level,
   (p.level_history -> 0 ->> 'from')                        as timeline_from,
   (select count(*) from public.matches m
     where (m.p1 = p.id or m.p2 = p.id)

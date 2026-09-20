@@ -179,12 +179,31 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
     return canManage ? "estimate" : "locked";
   };
 
-  const { missing, recorded } = useMemo(() => {
+  /**
+   * Three groups, not two — and the third is the fix for a real complaint.
+   *
+   * Sam filled in a level for George, came back later, and could neither see
+   * that it had worked nor do it again. It had worked: George has an account
+   * and no timeline of his own, so what was saved was an admin estimate. But
+   * an estimate counts as a timeline for grading, so on the next visit George
+   * had silently moved into "already recorded" — a collapsed section behind a
+   * "show the N" button, which is not a place you find somebody you are
+   * looking for.
+   *
+   * So anything YOU filled in for somebody else gets its own group, always
+   * open, sitting between the two. Visible, editable, and obviously yours.
+   */
+  const { missing, estimated, recorded } = useMemo(() => {
     const active = (players || []).filter((p: any) => !p.inactive);
-    const done = (p: any) => timelineOf(p).length && !touched.includes(p.id);
+    const theirOwn = (p: any) => !!(p.levelHistory && p.levelHistory.length);
+    const myEstimate = (p: any) => !theirOwn(p) && !!(p.levelEstimateHistory && p.levelEstimateHistory.length);
     return {
-      missing: active.filter((p: any) => !done(p)),
-      recorded: active.filter(done),
+      // Touched this sitting stays in the working list even once it has a
+      // timeline: a progression is several entries, and a card that jumps out
+      // of the list on the first one takes the second one with it.
+      missing: active.filter((p: any) => (!timelineOf(p).length) || touched.includes(p.id)),
+      estimated: active.filter((p: any) => myEstimate(p) && !touched.includes(p.id)),
+      recorded: active.filter((p: any) => theirOwn(p) && !touched.includes(p.id)),
     };
   }, [players, touched, meId, canManage]);
 
@@ -239,6 +258,22 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
           <div style={{ ...label, marginBottom: 8 }}>Not recorded</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
             {missing.map((p: any) => (
+              <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {estimated.length > 0 && (
+        <>
+          <div style={{ ...label, marginBottom: 8 }}>Your estimates</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginBottom: 10 }}>
+            Levels you filled in for people who have an account but have not set
+            one. They count in this league, and stop counting the moment that
+            person sets their own.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
+            {estimated.map((p: any) => (
               <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
             ))}
           </div>
