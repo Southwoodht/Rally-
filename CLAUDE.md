@@ -604,9 +604,22 @@ opponent names). Do not treat the old "never another league's matches,
 opponents, members or name" line as still true of profiles — it holds for
 `global_standings()` and no longer for `public_player_card()`.
 
-Both new functions are granted to `authenticated` only, never `anon`, and
 `search_player_accounts()` returns account ids rather than rows, so what can
 be *found* widened without what can be *read* widening.
+
+**That paragraph used to say both functions were granted to `authenticated`
+only, never `anon`. That was true of the file and false of the database.**
+Checked on 2026-09-20: `has_function_privilege('anon', …, 'execute')` came
+back **true** for `public_player_card`. Postgres grants EXECUTE on a new
+function to PUBLIC by default and the file's `revoke` sits thirty lines after
+the `create`, so a paste that stops early — or any run from before the revoke
+was added — leaves it open, with no error and nothing visible on screen.
+`supabase/fix_profile_function_grants.sql` closes it and re-reports.
+
+The lesson generalises past this one function: **a grant written in a file is
+not a grant in the database.** The same day's check on `public.profiles`
+asked that question about a table and got a clean answer, which is probably
+why nobody thought to ask it about the functions. Ask about both.
 
 ### Run on 2026-09-12, both
 
