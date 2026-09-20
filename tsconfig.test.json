@@ -22,6 +22,8 @@
     "src/core/sets.ts",
     "src/core/ratingTimeline.ts",
     "src/core/ratingTimeline.test.ts",
+    "src/core/official.ts",
+    "src/core/official.test.ts",
     "src/core/matchGrade.ts",
     "src/core/matchGrade.test.ts",
     "src/core/matchQuality.ts",

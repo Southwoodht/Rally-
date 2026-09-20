@@ -1117,6 +1117,38 @@ before and after.
 the table prints has to have enough resolution for `Math.round` to mean
 something, because that rounding is what the ranking uses.
 
+**APPLIED 2026-09-20: Official weighs a loss by the gap.** Sam ruled after
+seeing the numbers. `LOSS_GAP_FORGIVE` 0.10 with symmetric clamps 0.40/1.60,
+in `core/constants.ts` next to `LV_FACTOR` and `MARGIN_WEIGHT`. One category
+above you costs 0.7 of a loss, one below costs 1.3, and the clamp bites at two
+whole categories. **Only the denominator of the win rate changes** — wins,
+draws, the five-best-wins quality term and activity are all untouched.
+
+Measured on Seacourt 2026 before applying:
+
+| player | W-D-L | before | after | change |
+|---|---|---|---|---|
+| Zaach | 18-0-7 | 86.7 | 85.4 | -1.3 |
+| Sam | 14-3-6 | 49.9 | 51.2 | +1.2 |
+| **Charlie** | 11-3-15 | **29.1** | **40.4** | **+11.3** |
+| Adrian | 4-0-5 | 20.8 | 20.1 | -0.7 |
+
+**Nobody changes position.** Sam/Charlie goes from 1.72x to 1.26x, which is
+what Sam meant by "three times higher doesn't make sense". Zaach and Adrian
+drift down slightly and that is the same rule running the other way: their
+losses were to players rated below them at the time, and those now cost more
+than one loss.
+
+**The clamps are symmetric about 1 and that took a test to get right.** They
+were 0.45/1.45 first, which forgives 0.50 at a gap of five and punishes only
+0.45 — the same gap meaning different things by direction, which is exactly
+the shape §9 calls genuinely broken in `elo.ts` (LV_MIN 0.05 against LV_MAX
+4.0). The symmetry check in `official.test.ts` caught it before it shipped.
+
+`overallScore` was deleted in the same commit: exported, called by nothing,
+and the last thing importing `@/lib/format` into this file — which is what
+let `official.ts` join the test build at all.
+
 **COMPUTED FROM THE REAL 2026 MATCHES, 2026-09-20.** Sam pasted every
 confirmed match of the year with both players' levels as at the date. Running
 computeOfficial over them:
