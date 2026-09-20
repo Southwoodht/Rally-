@@ -9,7 +9,7 @@ import { OpponentRecords } from "@/components/profile/OpponentRecords";
 import { RivalryCard } from "@/components/profile/RivalryCard";
 import type { FormBarItem } from "@/components/profile/FormBars";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { getPublicLeagueSnapshot, getPublicPlayerCard, type PublicPlayerCard } from "@/lib/profiles";
+import { getPublicLeagueSnapshot, getPublicPlayerCard, type PublicPlayerCard, type SnapshotReason } from "@/lib/profiles";
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { computeStats } from "@/core/elo";
 import { acceptFriendRequest, getFriendshipWith, sendFriendRequest } from "@/lib/friends";
@@ -17,7 +17,7 @@ import { currentUserId } from "@/lib/messages";
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 import { formatMatchDate } from "@/lib/format";
 import {
-  FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI,
+  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI,
   FEED_TEXT_LOW, FEED_TEXT_MID, body, fontImport,
 } from "@/lib/theme";
 
@@ -64,6 +64,11 @@ export function PublicProfile({ id }: { id: string }) {
    * the difference Sam kept seeing, and it was never about missing data.
    */
   const [snapshot, setSnapshot] = useState<{ players: any[]; matches: any[] } | null>(null);
+  // Why the full profile is not showing, when it is not. "They have only ever
+  // played friendlies" needs no explanation; "the app cannot load their
+  // league" does, or the page just looks arbitrarily thinner than the same
+  // page seen from another account.
+  const [snapReason, setSnapReason] = useState<SnapshotReason>("ok");
 
   useEffect(() => {
     let live = true;
@@ -96,7 +101,7 @@ export function PublicProfile({ id }: { id: string }) {
         // Best-effort and never blocking: the summary is already on screen
         // by the time this lands, and the page upgrades itself if it works.
         getPublicLeagueSnapshot(resolved)
-          .then((snap) => { if (live) setSnapshot(snap); })
+          .then((r) => { if (live) { setSnapshot(r.snapshot); setSnapReason(r.reason); } })
           .catch(() => {});
 
         if (mine !== resolved) {
@@ -185,6 +190,22 @@ export function PublicProfile({ id }: { id: string }) {
       );
     }
   }
+
+  /**
+   * Why you are looking at the summary rather than the full profile.
+   *
+   * Only when the app could not load their league — never when they simply
+   * have no league matches, which is a fact about them and needs no notice.
+   * Without this the page is just quietly thinner from one account than
+   * another, with nothing on it saying so: exactly what "very restricted"
+   * meant when it was reported, and exactly the shape of failure §6 records
+   * about a screen that shows you nothing.
+   */
+  const summaryNote = snapReason === "not-installed" || card.cardStale
+    ? "Rally can't load their league on this account yet, so this is a summary rather than their full profile — and older results may be missing their opponent links."
+    : snapReason === "failed"
+      ? "Their league didn't load, so this is a summary. Pull down to try again."
+      : null;
 
   const isMe = !!meId && meId === authId;
   const s = card.stats;
@@ -315,6 +336,12 @@ export function PublicProfile({ id }: { id: string }) {
         levelLabel={s?.level ? s.level.cat + " · " + s.level.sub : undefined}
         viewer="other"
       />
+
+      {summaryNote && (
+        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "11px 13px", marginBottom: 14, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          {summaryNote}
+        </div>
+      )}
 
       {!isMe && (
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>

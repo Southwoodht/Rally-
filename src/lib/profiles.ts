@@ -137,6 +137,13 @@ export interface PublicPlayerCard {
    * separate guesses were spent on that. The screen can now say which.
    */
   statsProblem: string | null;
+  /**
+   * True when the installed public_player_card() predates opponent_id and
+   * opponent_avatar. The rows parse fine and are simply missing both, so
+   * opponents are not tappable and their avatars do not appear — with no
+   * error to notice. Same failure as statsProblem, one level quieter.
+   */
+  cardStale: boolean;
 }
 
 export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerCard | null> {
@@ -189,7 +196,19 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
     console.error("public_player_card unavailable", e);
   }
 
-  return { id: base.id, display_name: base.display_name, avatar_url: base.avatar_url, friend_code: base.friend_code, stats, statsProblem };
+  /**
+   * An older public_player_card() still installed.
+   *
+   * The function gained opponent_id and opponent_avatar, and a version
+   * without them returns rows that parse perfectly and are missing both — so
+   * opponents stop being tappable and their avatars stop appearing, with no
+   * error anywhere. op.id is players.id and is never null, so every row
+   * lacking it means the column is not being returned rather than the data
+   * being absent.
+   */
+  const cardStale = !!stats && stats.recent.length > 0 && stats.recent.every((m) => m.opponentId == null);
+
+  return { id: base.id, display_name: base.display_name, avatar_url: base.avatar_url, friend_code: base.friend_code, stats, statsProblem, cardStale };
 }
 
 /**
@@ -201,22 +220,46 @@ export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerC
  * whole league, running computeStats over its players and matches. Give a
  * viewer that same input and the same component produces the same screen.
  *
- * Null when the function is not installed, or when the person has never
- * played a league match. Both mean the same thing to the caller: fall back
- * to the summary card.
+ * Two very different things used to come back as the same null: the person
+ * has never played a league match, and the function is not installed. The
+ * first is a fact about them and the summary is the right answer. The second
+ * is the app quietly showing less than it can, which is how a profile looked
+ * "very restricted" from one account and complete from another with nobody
+ * able to say why — the difference being that the in-league path never calls
+ * this at all.
+ *
+ * So the reason comes back with the result and the screen can say which.
  */
-export async function getPublicLeagueSnapshot(authId: string): Promise<{ players: any[]; matches: any[] } | null> {
-  if (!supabase) return null;
+export type SnapshotReason = "ok" | "no-league-matches" | "not-installed" | "failed";
+
+export interface LeagueSnapshot {
+  snapshot: { players: any[]; matches: any[] } | null;
+  reason: SnapshotReason;
+}
+
+export async function getPublicLeagueSnapshot(authId: string): Promise<LeagueSnapshot> {
+  if (!supabase) return { snapshot: null, reason: "failed" };
   try {
     const res: any = await withSupabaseTimeout(supabase.rpc("public_league_snapshot", { p_auth_id: authId }), FAILED as any);
-    if (res === (FAILED as any) || res.error || !res.data) return null;
+    if (res === (FAILED as any)) return { snapshot: null, reason: "failed" };
+    if (res.error) {
+      // PostgREST says "Could not find the function" / "schema cache" when
+      // the migration has never been run. Anything else is a real failure.
+      const msg = String(res.error.message || "");
+      const missing = /could not find the function|schema cache|does not exist/i.test(msg);
+      console.warn("public_league_snapshot: " + msg);
+      return { snapshot: null, reason: missing ? "not-installed" : "failed" };
+    }
+    if (!res.data) return { snapshot: null, reason: "failed" };
     const row = Array.isArray(res.data) ? res.data[0] : res.data;
     const players = (row?.players || []).map(rowToPlayer);
     const matches = (row?.matches || []).map(rowToMatch);
-    if (!players.length) return null;
-    return { players, matches };
-  } catch (e) {
+    // The function returns two empty arrays for somebody with no league
+    // matches at all, which is a real answer rather than a failure.
+    if (!players.length) return { snapshot: null, reason: "no-league-matches" };
+    return { snapshot: { players, matches }, reason: "ok" };
+  } catch (e: any) {
     console.warn("public_league_snapshot unavailable — showing the summary profile", e);
-    return null;
+    return { snapshot: null, reason: "failed" };
   }
 }
