@@ -621,6 +621,37 @@ not a grant in the database.** The same day's check on `public.profiles`
 asked that question about a table and got a clean answer, which is probably
 why nobody thought to ask it about the functions. Ask about both.
 
+**Settled on 2026-09-20, after three rounds.** Every security-definer function
+is now closed to `anon` except two, and those two are closed to nobody on
+purpose:
+
+| function | anon | why |
+|---|---|---|
+| `public_player_card`, `search_player_accounts` | no | the real exposure — records and opponents' names, readable signed out |
+| `global_standings`, `global_edges`, `level_val`, `nudge_match` | no | never leaked; they filter on `auth.uid()` and returned nothing |
+| `start_thread`, `unread_message_count` | no | never leaked; `start_thread` raises "Not signed in." on its first line |
+| **`is_league_member`, `is_club_admin`** | **YES, leave it** | see below |
+
+**Do not revoke `anon` from `is_league_member` or `is_club_admin`.** They are
+not entry points, they are the predicates inside the row policies —
+`is_league_member` alone appears in **fourteen** `using` / `with check`
+clauses across players, matches, fixtures and posts. A policy's function call
+is made by the *querying* role, so revoking execute does not make those
+policies evaluate false for a signed-out request; it makes them **raise a
+permission error**, and every signed-out query against those tables starts
+failing instead of returning no rows. There is also nothing to close: both are
+security definer, both resolve `auth.uid()`, and both answer a question about
+the caller — "am I in this league" — which signed out is false and reveals
+nothing. This is the exception to "revoke anon from everything", and it is the
+kind of exception that takes the app down when applied by pattern.
+
+**Why six were open at all**, worth knowing before writing the next function:
+Postgres grants EXECUTE on a new function to PUBLIC by default, and `anon`
+inherits from PUBLIC — so `revoke ... from anon` alone does nothing while the
+PUBLIC grant stands. Revoke from `public`. Four separate files already carried
+the correct revoke at the bottom and none of it had taken effect, which is
+what first suggested the pastes were stopping before the end of the file.
+
 ### Run on 2026-09-12, both
 
 `schema_public_player_card.sql` (re-run, dropped and recreated because the
