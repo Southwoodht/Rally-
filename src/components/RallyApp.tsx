@@ -1365,7 +1365,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           />
         )}
         {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab(levelsFrom)} />}
-        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} meId={meId} canManage={canManageMatches} onEstimate={saveLevelEstimate} />}
+        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} meId={meId} onEstimate={saveLevelEstimate} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}

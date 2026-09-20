@@ -50,7 +50,7 @@ const field: React.CSSProperties = {
  *             an estimate would be inert, and offering the control anyway
  *             would be a button that silently changes nothing.
  */
-function PlayerCard({ player, mode, onSave }: { player: any; mode: "own" | "estimate" | "locked"; onSave: (periods: any[]) => void }) {
+function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own" | "estimate" | "locked"; onSave: (periods: any[]) => void; failure?: string | null }) {
   const hist = (mode === "estimate" ? player.levelEstimateHistory : player.levelHistory) || [];
   const shown = levelNow(player);
   const [cat, setCat] = useState(shown?.cat || "Beginner");
@@ -111,8 +111,8 @@ function PlayerCard({ player, mode, onSave }: { player: any; mode: "own" | "esti
 
       {mode === "locked" ? (
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
-          They have an account and have set this themselves, so it stands as
-          written. Nothing for you to fill in.
+          They have set this themselves, so it stands as written. Nothing for
+          you to fill in.
         </div>
       ) : (
       <>
@@ -140,7 +140,7 @@ function PlayerCard({ player, mode, onSave }: { player: any; mode: "own" | "esti
         </button>
       </div>
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: error ? "#F09595" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
-        {error || (mode === "estimate"
+        {failure || error || (mode === "estimate"
           ? "Your estimate, because they have an account and have set no level. It counts in this league only, never on the global table, and it stops counting the moment they set their own."
           : "Effective from — it runs until the next entry starts.")}
       </div>
@@ -150,11 +150,10 @@ function PlayerCard({ player, mode, onSave }: { player: any; mode: "own" | "esti
   );
 }
 
-export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }: {
+export function LevelRepair({ players, setPlayers, meId, onEstimate }: {
   players: any[];
   setPlayers: (np: any[]) => void;
   meId?: string | null;
-  canManage?: boolean;
   onEstimate?: (id: string, level: any, history: any[]) => Promise<void>;
 }) {
   const [showDone, setShowDone] = useState(false);
@@ -164,7 +163,16 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
   // the second one with it.
   const [touched, setTouched] = useState<string[]>([]);
 
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * Whose save failed, and why — keyed by player.
+   *
+   * It was one message at the foot of the screen, which is the mistake §4
+   * records in as many words: "the filter was correct and its result appeared
+   * eight hundred pixels below the tap". Tapping Add on the second card of
+   * twenty and having the reason print past the twentieth is that bug with
+   * different coordinates. The message belongs on the card that produced it.
+   */
+  const [failed, setFailed] = useState<{ id: string; message: string } | null>(null);
 
   // Their own timeline if they have one, otherwise an admin estimate — the
   // same precedence the ratings read, so a name leaves this list exactly when
@@ -173,10 +181,29 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
   const timelineOf = (p: any) =>
     (p.levelHistory && p.levelHistory.length ? p.levelHistory : p.levelEstimateHistory) || [];
 
+  /**
+   * Which card to draw. Note what it does NOT consult: whether this viewer is
+   * a league owner or editor.
+   *
+   * It used to, via canManage, and Sam opened the screen as the owner of
+   * Seacourt to find George, Abbie and Jamie all showing "they have set this
+   * themselves" — which was false for all three, none of whom has a timeline,
+   * and which left him unable to do the one thing he had come to do. The
+   * client's idea of his role was wrong; the database's was not.
+   *
+   * So the client stops guessing. set_player_level_estimate checks owner or
+   * editor itself, server side, and raises a sentence meant for a person if
+   * the answer is no — which the save path already puts on screen. That is
+   * the same rule as the nudge in §5: the limit belongs in the database, and
+   * a control disabled by the client is only ever a suggestion about it.
+   *
+   * "locked" is now reserved for the one case where it is true: they have a
+   * timeline of their own, so there is genuinely nothing to fill in.
+   */
   const modeOf = (p: any): "own" | "estimate" | "locked" => {
     if (!p.auth_id || p.id === meId) return "own";
     if (p.levelHistory && p.levelHistory.length) return "locked";
-    return canManage ? "estimate" : "locked";
+    return "estimate";
   };
 
   /**
@@ -205,12 +232,12 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
       estimated: active.filter((p: any) => myEstimate(p) && !touched.includes(p.id)),
       recorded: active.filter((p: any) => theirOwn(p) && !touched.includes(p.id)),
     };
-  }, [players, touched, meId, canManage]);
+  }, [players, touched, meId]);
 
   const save = async (id: string, periods: any[]) => {
     const player = players.find((p: any) => p.id === id);
     setTouched((t) => (t.includes(id) ? t : [...t, id]));
-    setError(null);
+    setFailed((f) => (f && f.id === id ? null : f));
     if (player && modeOf(player) === "estimate") {
       // Not through setPlayers. That write is refused by RLS on any row with
       // an auth_id, correctly — an estimate goes to its own columns through
@@ -221,7 +248,7 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
       try {
         await onEstimate?.(id, last ? { cat: last.cat, sub: last.sub } : null, periods);
       } catch (e: any) {
-        setError(e?.message || "Couldn’t save that estimate.");
+        setFailed({ id, message: e?.message || "Couldn’t save that estimate." });
       }
       return;
     }
@@ -258,7 +285,7 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
           <div style={{ ...label, marginBottom: 8 }}>Not recorded</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
             {missing.map((p: any) => (
-              <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
+              <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} failure={failed && failed.id === p.id ? failed.message : null} />
             ))}
           </div>
         </>
@@ -274,7 +301,7 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
             {estimated.map((p: any) => (
-              <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
+              <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} failure={failed && failed.id === p.id ? failed.message : null} />
             ))}
           </div>
         </>
@@ -291,22 +318,19 @@ export function LevelRepair({ players, setPlayers, meId, canManage, onEstimate }
           {showDone && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
               {recorded.map((p: any) => (
-                <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} />
+                <PlayerCard key={p.id} player={p} mode={modeOf(p)} onSave={(periods) => save(p.id, periods)} failure={failed && failed.id === p.id ? failed.message : null} />
               ))}
             </div>
           )}
         </>
       )}
 
-      {error && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: "#F09595", lineHeight: 1.5, marginTop: 8 }}>
-          {error}
-        </div>
-      )}
-
       <div style={{ height: 20 }} />
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, background: FEED_CARD, borderRadius: 12, padding: 12 }}>
-        Only active players are listed.{canManage ? " Anyone with an account who has never set a level, you can estimate for — they can overwrite it any time, and it never leaves this league." : ""}
+        Only active players are listed. Anyone with an account who has never
+        set a level, a league owner or editor can estimate for — they can
+        overwrite it any time, it counts in this league only, and it never
+        reaches the global table.
       </div>
     </div>
   );
