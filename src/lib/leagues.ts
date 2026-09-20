@@ -158,3 +158,69 @@ export async function joinLeague(code: string): Promise<League> {
 
   return { ...league, role: "member" };
 }
+
+export interface LeagueMember {
+  userId: string;
+  name: string;
+  role: string;
+  joinedAt: string | null;
+  isMe: boolean;
+}
+
+/**
+ * Everyone in a league, with their role.
+ *
+ * Readable by any member — "read members of your leagues" already allows it,
+ * so this needs no function. The names come from `profiles`, which is the
+ * account row rather than the player row: a role belongs to an account, and
+ * the same person may have a player row with a different name on it.
+ */
+export async function listLeagueMembers(leagueId: string): Promise<LeagueMember[]> {
+  if (!supabase) return [];
+  const me = (await withSupabaseTimeout(supabase.auth.getUser(), { data: { user: null } } as any) as any)?.data?.user?.id ?? null;
+  const { data, error } = await withSupabaseTimeout(
+    supabase.from("league_members").select("user_id, role, joined_at, profiles (display_name)").eq("league_id", leagueId),
+    { data: [], error: null } as any,
+  );
+  if (error) throw error;
+  const rank: Record<string, number> = { owner: 0, editor: 1, member: 2 };
+  return (data || [])
+    .map((r: any) => ({
+      userId: r.user_id,
+      name: r.profiles?.display_name || "Someone",
+      role: r.role || "member",
+      joinedAt: r.joined_at ?? null,
+      isMe: r.user_id === me,
+    }))
+    .sort((a, b) => (rank[a.role] ?? 9) - (rank[b.role] ?? 9) || a.name.localeCompare(b.name));
+}
+
+/**
+ * Promote, demote, or hand the league on.
+ *
+ * Through set_league_role, which is security definer: league_members has no
+ * UPDATE policy at all, deliberately. The function checks the caller is an
+ * owner and refuses to leave the league without one — a condition RLS cannot
+ * express, because it is about the table after the write rather than about a
+ * row.
+ *
+ * Its refusals are written for a person, so they are passed through rather
+ * than replaced with a generic failure.
+ */
+export async function setLeagueRole(leagueId: string, userId: string, role: "owner" | "editor" | "member"): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("set_league_role", { p_league_id: leagueId, p_user_id: userId, p_role: role }),
+    { error: { message: "timed out" } } as any,
+  );
+  if (res?.error) {
+    const msg = String(res.error.message || "");
+    const e: any = new Error(
+      /could not find the function|schema cache/i.test(msg)
+        ? "Roles aren't switched on yet — supabase/schema_league_roles.sql hasn't been run."
+        : msg || "Couldn't change that role.",
+    );
+    e.userFacing = true;
+    throw e;
+  }
+}

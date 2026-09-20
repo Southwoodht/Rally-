@@ -1,5 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState } from "react";
+import { LeagueMembers } from "@/components/settings/LeagueMembers";
+import { isFriendlyLeague } from "@/lib/leagueData";
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { TimelineEditor } from "@/components/settings/TimelineEditor";
 import { Avatar } from "@/components/ui/Avatar";
@@ -10,7 +12,7 @@ import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
 import { fmtDate, uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput } from "@/lib/theme";
 
-export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId }: any) {
+export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId, leagueId }: any) {
   const [name, setName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
@@ -31,6 +33,12 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
   const removePeriod = (id, i) => setPlayers(players.map((p) => p.id === id ? { ...p, levelHistory: (p.levelHistory || []).filter((_, idx) => idx !== i) } : p));
   return (
     <div style={card}>
+      {/* Above the league's own settings, because who is allowed to change
+          them is the more important fact about a league — and because a
+          league whose roles are wrong has every other control on this screen
+          quietly shut. */}
+      {leagueId && !isFriendlyLeague(leagueId) && <LeagueMembers leagueId={leagueId} leagueName={group?.name} />}
+
       <Field label="League name"><input value={group?.name || ""} onChange={(e) => updateGroup(group.id, { name: e.target.value })} style={{ ...input, boxSizing: "border-box" as const }} /></Field>
       <Field label="Fair play">
         <div style={{ display: "flex", gap: 8 }}>
