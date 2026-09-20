@@ -657,7 +657,12 @@ leaves `anon` exactly where it was. The three fix files worked only because
 they said `from public, anon`.
 
 **So the rule for every new function is `revoke ... from public, anon`,
-explicitly.** A file that revokes only from `public` ships the function open,
+explicitly — and `supabase/fix_function_grants.sql` is the one file that does
+it for all of them.** Run it after ANY migration, every time. It is idempotent
+and it skips functions that do not exist yet, so it costs nothing when nothing
+is wrong. This matters more than it sounds: `create or replace` and
+drop-and-recreate both count as newly created, so **re-running
+schema_public_player_card.sql re-opens two functions every single time**. A file that revokes only from `public` ships the function open,
 with no error and nothing on screen to notice. This was proved on 2026-09-20
 by creating `public_league_snapshot` from a file carrying the public-only
 revoke and watching the verification select in the same paste report
