@@ -645,12 +645,29 @@ the caller — "am I in this league" — which signed out is false and reveals
 nothing. This is the exception to "revoke anon from everything", and it is the
 kind of exception that takes the app down when applied by pattern.
 
-**Why six were open at all**, worth knowing before writing the next function:
-Postgres grants EXECUTE on a new function to PUBLIC by default, and `anon`
-inherits from PUBLIC — so `revoke ... from anon` alone does nothing while the
-PUBLIC grant stands. Revoke from `public`. Four separate files already carried
-the correct revoke at the bottom and none of it had taken effect, which is
-what first suggested the pastes were stopping before the end of the file.
+**Why six were open at all, and it is not what it looked like.** Every one of
+those files ends with `revoke all on function ... from public`. Those lines
+ran. They did nothing.
+
+Supabase ships `alter default privileges in schema public grant all on
+functions to anon, authenticated, service_role`. A new function is therefore
+granted to `anon` **directly**, not through PUBLIC — so revoking PUBLIC
+removes a grant that was never the one carrying the access, succeeds, and
+leaves `anon` exactly where it was. The three fix files worked only because
+they said `from public, anon`.
+
+**So the rule for every new function is `revoke ... from public, anon`,
+explicitly.** A file that revokes only from `public` ships the function open,
+with no error and nothing on screen to notice. This was proved on 2026-09-20
+by creating `public_league_snapshot` from a file carrying the public-only
+revoke and watching the verification select in the same paste report
+`anon_may_call = true`.
+
+An earlier version of this note blamed truncated pastes — four files carrying
+a revoke that had not taken effect looked like scripts dying before the end.
+**Withdrawn.** The revokes ran; they were the wrong revokes. The one thing
+that genuinely had never been created was `public_league_snapshot`, and that
+was a separate matter.
 
 ### Run on 2026-09-12, both
 
