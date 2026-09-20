@@ -8,7 +8,14 @@ import {
   FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular,
 } from "@/lib/theme";
 
-// Your rating, as the line it has always been.
+// Your Elo, as the line it has always been.
+//
+// Labelled "Elo" and not "rating", which it said for about an hour. The
+// Table's default column is Official points and its unit reads "rating", so
+// two different numbers were both called that — and Sam immediately did the
+// natural thing, added his per-match Elo up, compared it to the table, and
+// found it did not reconcile. It never could: Elo is a running total and
+// Official points is not a total of anything.
 //
 // The app has computed this the whole time and thrown it away: computeStats
 // walks every match in date order and records what both players were rated
@@ -89,7 +96,7 @@ export function RatingLine({
     <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 2 }}>
         <div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Rating, all time</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Elo, all time</div>
           <StatNumeral size={26} tone="hi">{Math.round(now)}</StatNumeral>
         </div>
         {t.peak && (
