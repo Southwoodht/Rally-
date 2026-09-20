@@ -23,7 +23,7 @@ import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { Onboarding } from "@/components/settings/Onboarding";
 import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
-import { globalKeyFor, globalRankFor } from "@/lib/globalTable";
+import { PROVISIONAL_GAMES, globalKeyFor, globalRankFor } from "@/lib/globalTable";
 import { myLeaguePlaces } from "@/lib/myLeaguePlaces";
 import { listMyLeagues } from "@/lib/leagues";
 import type { Standing } from "@/components/home/StandingHero";
@@ -902,6 +902,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             // number that screen would refuse to show.
             note: place.provisional ? place.played + " played" : null,
             rating: place.rating,
+            footer: place.provisional
+              ? "Ranked at " + PROVISIONAL_GAMES + " matches"
+              : "of " + place.of + " ranked across every league",
           });
         }
       } catch {}
@@ -909,7 +912,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const others = (await listMyLeagues()).filter((l: any) => l.id !== gid);
         if (others.length) {
           const places = await myLeaguePlaces(others, myAuthId);
-          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating }));
+          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, footer: "of " + pl.of + " players" }));
         }
       } catch {}
       if (alive) setOtherStandings(found);
@@ -1169,9 +1172,18 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       const within = played.filter((m) => m.date >= from);
       const w = within.filter((m) => m.winner === iAm(m)).length;
       const l = within.filter((m) => m.winner !== "draw" && m.winner !== iAm(m)).length;
-      // No matches means no win rate — 0/0 is not 0%. The card says so in
-      // words instead.
-      return { label, w, l, winRate: within.length ? Math.round((w / within.length) * 100) : null };
+      // Different people, not matches played. Six games against one person is
+      // a rivalry and six against six is a season, and the Opponents tile is
+      // there to tell those apart.
+      const faced = new Set(within.map((m) => (m.p1 === meId ? m.p2 : m.p1)));
+      return {
+        label, w, l,
+        // No matches means no win rate — 0/0 is not 0%. The tile says so in
+        // words instead.
+        winRate: within.length ? Math.round((w / within.length) * 100) : null,
+        opponents: faced.size,
+        played: within.length,
+      };
     });
 
     return { standing, pending, nextUp, periods, awaitingResult };

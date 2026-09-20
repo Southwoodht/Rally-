@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Cycler } from "@/components/ui/Cycler";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
 import { FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD, FEED_RADIUS, body, tabular } from "@/lib/theme";
 
@@ -11,10 +12,6 @@ import { FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD,
 //
 // Presentational. Rank, rating, movement and form arrive finished; nothing
 // here counts anything.
-
-/** How long each standing is up. Matched to the tile below it, so the two
- *  do not turn at slightly different rhythms in the corner of your eye. */
-const DWELL_MS = 4200;
 
 export interface Standing {
   /**
@@ -34,6 +31,17 @@ export interface Standing {
   rating: number;
   movement?: number | null;
   form?: FormResult[];
+  /**
+   * A line for the footer row on a slide that has no movement and no form.
+   *
+   * That row is reserved on every slide so the card keeps its height, and a
+   * reserved row with nothing in it is just a gap under a rule. Only your own
+   * league has weekly movement and recent form — the rank snapshots are
+   * per-league — so without this the global slide and every other-league
+   * slide would show an empty one. "of 48 ranked" is the thing a place number
+   * is missing anyway: #6 means nothing until you know six of what.
+   */
+  footer?: string | null;
 }
 
 export interface StandingHeroProps {
@@ -94,92 +102,75 @@ export function StandingHero({ rank, rating, movement, form, standings }: Standi
   const list: Standing[] = standings && standings.length
     ? standings
     : [{ scope: "Your standing", rank, rating, movement, form }];
-  const n = list.length;
-  const [i, setI] = useState(0);
-
-  const [still, setStill] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setStill(mq.matches);
-    sync();
-    mq.addEventListener?.("change", sync);
-    return () => mq.removeEventListener?.("change", sync);
-  }, []);
-
-  useEffect(() => {
-    if (n < 2 || still) return;
-    const id = setInterval(() => setI((x) => (x + 1) % n), DWELL_MS);
-    return () => clearInterval(id);
-  }, [n, still]);
-
-  const cur = list[i % n];
-  const hasMovement = cur.movement !== null && cur.movement !== undefined;
-  const hasForm = !!cur.form && cur.form.length > 0;
 
   // The card must not change height as it turns. Slides carry different
   // things — your own league has movement and form, a global standing has
   // neither, and "3 played" is a shorter numeral than a 52px rank — so
-  // without this the whole page below the card jumps every four seconds.
-  // The footer row is reserved whenever ANY slide will use it, and the
-  // numeral row keeps the tall line's height whatever is in it.
-  const anyFooter = list.some((s2) => (s2.movement !== null && s2.movement !== undefined) || (!!s2.form && s2.form.length > 0));
+  // without this the whole page below jumps every four seconds. The footer
+  // row is reserved whenever ANY slide will use it, and Cycler holds the
+  // body's height for the rest.
+  const anyFooter = list.some((s2) => (s2.movement !== null && s2.movement !== undefined) || (!!s2.form && s2.form.length > 0) || !!s2.footer);
+
+  const slide = (i: number) => {
+    const cur = list[i];
+    const hasMovement = cur.movement !== null && cur.movement !== undefined;
+    const hasForm = !!cur.form && cur.form.length > 0;
+    return (
+      <>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", minHeight: 58 }}>
+              {cur.rank === null ? (
+                <StatNumeral size={30} tone="ink" style={{ letterSpacing: "-0.03em" }}>{cur.note || "Unplaced"}</StatNumeral>
+              ) : (
+                <>
+                  <StatNumeral size={52} tone="ink" style={{ letterSpacing: "-0.045em" }}>{cur.rank}</StatNumeral>
+                  <StatNumeral size={24} tone="ink" style={{ letterSpacing: "-0.045em", marginLeft: 1 }}>{ordinalSuffix(cur.rank)}</StatNumeral>
+                </>
+              )}
+            </div>
+          </div>
+          {/* Baseline-aligned with the rank rather than centred, so two numerals
+              of very different sizes sit on one line instead of floating. */}
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            <StatNumeral size={26} tone="ink">{cur.rating}</StatNumeral>
+            <div style={{ ...labelStyle, marginTop: 2 }}>rating</div>
+          </div>
+        </div>
+
+        {anyFooter && (
+          <>
+            <div style={{ height: 1, background: FEED_LIME_DIVIDER, margin: "14px 0 12px" }} />
+            {/* A fixed height, not a minimum. The three things that can sit
+                here are different heights — a movement arrow, a row of form
+                dots, and a line of 12.5px text — and a minimum let the text
+                one run 7px taller, which moved everything below the card by
+                7px every four seconds. Measured, then pinned. */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, height: 18 }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                {hasMovement ? (
+                  <MovementIndicator delta={cur.movement} tone="onAccent" size={13} label={movementLabel(cur.movement as number)} />
+                ) : cur.footer ? (
+                  <span style={{ ...labelStyle, fontSize: 12.5, lineHeight: 1, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur.footer}</span>
+                ) : null}
+              </span>
+              {hasForm && <FormDots form={cur.form!} tone="ink" ink={FEED_LIME_INK} />}
+            </div>
+          </>
+        )}
+      </>
+    );
+  };
 
   return (
-    <div
-      onClick={n > 1 ? () => setI((x) => (x + 1) % n) : undefined}
-      role={n > 1 ? "button" : undefined}
-      tabIndex={n > 1 ? 0 : undefined}
-      onKeyDown={n > 1 ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setI((x) => (x + 1) % n); } } : undefined}
-      style={{ background: FEED_LIME, borderRadius: FEED_RADIUS, padding: FEED_PAD, cursor: n > 1 ? "pointer" : "default" }}
-    >
-      <style>{"@keyframes rally-standing-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){.rally-standing{animation:none!important}}"}</style>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-        <span style={{ ...labelStyle, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur.scope}</span>
-        {n > 1 && (
-          <span style={{ display: "flex", gap: 3, flexShrink: 0 }} aria-hidden="true">
-            {list.map((s2, x) => (
-              <span key={s2.scope} style={{ width: 5, height: 5, borderRadius: 3, background: FEED_LIME_INK, opacity: x === i % n ? 1 : 0.28, transition: "opacity .3s ease" }} />
-            ))}
-          </span>
-        )}
-      </div>
-      <div key={cur.scope} className="rally-standing" style={{ animation: "rally-standing-in .32s ease both" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", minHeight: 58 }}>
-            {cur.rank === null ? (
-              <StatNumeral size={30} tone="ink" style={{ letterSpacing: "-0.03em" }}>{cur.note || "Unplaced"}</StatNumeral>
-            ) : (
-              <>
-                <StatNumeral size={52} tone="ink" style={{ letterSpacing: "-0.045em" }}>{cur.rank}</StatNumeral>
-                <StatNumeral size={24} tone="ink" style={{ letterSpacing: "-0.045em", marginLeft: 1 }}>{ordinalSuffix(cur.rank)}</StatNumeral>
-              </>
-            )}
-          </div>
-        </div>
-        {/* Baseline-aligned with the rank rather than centred, so two numerals
-            of very different sizes sit on one line instead of floating. */}
-        <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <StatNumeral size={26} tone="ink">{cur.rating}</StatNumeral>
-          <div style={{ ...labelStyle, marginTop: 2 }}>rating</div>
-        </div>
-      </div>
-
-      {anyFooter && (
-        <>
-          <div style={{ height: 1, background: FEED_LIME_DIVIDER, margin: "14px 0 12px" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 12, minHeight: 17 }}>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              {hasMovement && (
-                <MovementIndicator delta={cur.movement} tone="onAccent" size={13} label={movementLabel(cur.movement as number)} />
-              )}
-            </span>
-            {hasForm && <FormDots form={cur.form!} tone="ink" ink={FEED_LIME_INK} />}
-          </div>
-        </>
-      )}
-      </div>
+    <div style={{ background: FEED_LIME, borderRadius: FEED_RADIUS, padding: FEED_PAD }}>
+      <Cycler
+        labels={list.map((s2) => s2.scope)}
+        render={slide}
+        labelColor={FEED_LIME_INK_2}
+        dotColor={FEED_LIME_INK}
+        ariaLabel="Where you stand, by league"
+      />
     </div>
   );
 }

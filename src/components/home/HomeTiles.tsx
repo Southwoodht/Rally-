@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { CalendarPlus } from "lucide-react";
+import { Cycler } from "@/components/ui/Cycler";
 import { StatNumeral } from "@/components/ui/Surfaces";
 import { formatMatchDateTime } from "@/lib/format";
 import { FEED_CARD, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
@@ -8,6 +9,19 @@ import { FEED_CARD, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body,
 // Two tiles, side by side, never three. At phone width a third column turns
 // readable numbers into cramped ones — and there is no arrangement of three
 // that doesn't force the middle one to be the shortest.
+//
+// The pair turns together under one heading rather than carrying a heading
+// each. Two tiles that each said "This week" would say it twice, and the
+// first attempt — where the right-hand one just read "Opponents" while its
+// dots moved — left the number with nothing saying which span it was for.
+// One span, stated once, over both numbers: that is what they have in common
+// and it is the thing that is changing.
+//
+// It sits directly under the standing card, which turns on the same beat, so
+// the two read as one thing the screen does rather than two things twitching
+// near each other. Next Up moved below them and went full width, which it
+// wanted anyway — its line about your chances had been truncating in half a
+// tile.
 
 export interface NextUp {
   /** Their full name. A first name alone is ambiguous in a club with two
@@ -23,16 +37,16 @@ export interface NextUp {
 }
 
 export interface PeriodStat {
-  /** "This week", "This month", "This year" — the words on the tile. */
+  /** "This week", "This month", "This year" — the heading over the pair. */
   label: string;
   w: number;
   l: number;
   /** 0-100, already rounded. Null when nothing was played: 0/0 is not 0%. */
   winRate: number | null;
+  /** How many different people, and how many matches, over the same span. */
+  opponents: number;
+  played: number;
 }
-
-/** How long each one is up. Long enough to read twice without trying. */
-const DWELL_MS = 4200;
 
 const tile: React.CSSProperties = { background: FEED_CARD, borderRadius: 16, padding: 14, minWidth: 0 };
 const label: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
@@ -40,42 +54,64 @@ const line = (color: string): React.CSSProperties => ({ fontFamily: body, fontWe
 
 export function HomeTiles({ nextUp, periods, onBook }: {
   nextUp?: NextUp | null;
-/**
+  /**
    * The spans to show, widest last — empty ones included. An empty week is a
-   * fact about the week, and a tile that leaves one out is a tile you cannot
+   * fact about the week, and a panel that leaves one out is one you cannot
    * read as complete.
    */
   periods?: PeriodStat[] | null;
   onBook?: () => void;
 }) {
   const list = periods && periods.length ? periods : null;
-  const n = list ? list.length : 0;
-  const [i, setI] = useState(0);
+  const labels = list ? list.map((p) => p.label) : ["This month"];
 
-  // Somebody who has asked their phone to stop moving things has asked for
-  // this too — a tile that rewrites itself every four seconds is exactly the
-  // motion that setting is about. It still cycles on a tap, so nothing is
-  // unreachable; it just never moves on its own.
-  const [still, setStill] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setStill(mq.matches);
-    sync();
-    mq.addEventListener?.("change", sync);
-    return () => mq.removeEventListener?.("change", sync);
-  }, []);
-
-  useEffect(() => {
-    if (n < 2 || still) return;
-    const id = setInterval(() => setI((x) => (x + 1) % n), DWELL_MS);
-    return () => clearInterval(id);
-  }, [n, still]);
-
-  const cur = list ? list[i % n] : null;
+  const pair = (i: number) => {
+    const p = list?.[i];
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 6 }}>
+        <div style={tile}>
+          <div style={label}>Won / lost</div>
+          <div style={{ marginTop: 4 }}>
+            {p
+              ? <StatNumeral size={22} tone={p.winRate === null ? "mid" : "hi"}>{p.w}–{p.l}</StatNumeral>
+              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>None yet</span>}
+          </div>
+          <div style={line(FEED_TEXT_MID)}>
+            {!p ? "Log one and this fills in" : p.winRate === null ? "Nothing played" : p.winRate + "% win rate"}
+          </div>
+        </div>
+        {/* Different people, not matches played. Six games against the same
+            person is a rivalry; six against six people is a season, and the
+            two are worth telling apart — which is the whole reason this sits
+            beside the record instead of repeating it. */}
+        <div style={tile}>
+          <div style={label}>Opponents</div>
+          <div style={{ marginTop: 4 }}>
+            {p
+              ? <StatNumeral size={22} tone={p.opponents ? "hi" : "mid"}>{p.opponents}</StatNumeral>
+              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>Nobody yet</span>}
+          </div>
+          <div style={line(FEED_TEXT_MID)}>
+            {!p ? "Log one and this fills in" : !p.played ? "Nothing played" : p.played + (p.played === 1 ? " match" : " matches")}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+    <>
+      <div style={{ marginBottom: 10 }}>
+        <Cycler
+          labels={labels}
+          render={pair}
+          labelColor={FEED_TEXT_LOW}
+          dotColor={FEED_LIME}
+          labelStyle={{ paddingLeft: 2 }}
+          ariaLabel="Your record and opponents, by period"
+        />
+      </div>
+
       {/* Nothing booked isn't an empty tile — an empty tile is a dead end.
           It becomes the way to fix the thing it's reporting. */}
       {nextUp ? (
@@ -107,47 +143,6 @@ export function HomeTiles({ nextUp, periods, onBook }: {
           <div style={line(FEED_TEXT_MID)}>Nothing in the diary</div>
         </button>
       )}
-
-      {/* One tile, three spans, on a loop — because week, month and year are
-          the same two numbers over different windows, and three tiles of that
-          would be two tiles too many at phone width. Tap moves it on, so it
-          is never a matter of waiting for the one you wanted. */}
-      <button
-        onClick={n > 1 ? () => setI((x) => (x + 1) % n) : undefined}
-        aria-live="polite"
-        aria-label={!cur ? "No matches yet" : cur.winRate === null ? cur.label + ": nothing played" : cur.label + ": " + cur.w + " won, " + cur.l + " lost, " + cur.winRate + "% win rate"}
-        style={{ ...tile, textAlign: "left", border: "none", cursor: n > 1 ? "pointer" : "default", display: "block", width: "100%", font: "inherit" }}
-      >
-        <style>{"@keyframes rally-tile-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){.rally-tile-span{animation:none!important}}"}</style>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ ...label, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {cur ? cur.label : "This month"}
-          </span>
-          {/* Which of the three you are on. Three dots read as a position in
-              a set; a "1/3" reads as a number you are meant to do something
-              with. */}
-          {n > 1 && (
-            <span style={{ display: "flex", gap: 3, flexShrink: 0 }} aria-hidden="true">
-              {list!.map((p2, x) => (
-                <span key={p2.label} style={{ width: 4, height: 4, borderRadius: 2, background: x === i % n ? FEED_LIME : FEED_TEXT_LOW, opacity: x === i % n ? 1 : 0.45, transition: "opacity .3s ease, background .3s ease" }} />
-              ))}
-            </span>
-          )}
-        </div>
-        {/* Keyed on the label so React remounts it and the fade actually
-            plays. Without the key it is the same node with new text, which
-            changes silently and reads as a glitch rather than a turn. */}
-        <div key={cur ? cur.label : "empty"} className="rally-tile-span" style={{ animation: "rally-tile-in .32s ease both" }}>
-          <div style={{ marginTop: 4 }}>
-            {cur
-              ? <StatNumeral size={22} tone={cur.winRate === null ? "mid" : "hi"}>{cur.w}–{cur.l}</StatNumeral>
-              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>No matches yet</span>}
-          </div>
-          <div style={line(FEED_TEXT_MID)}>
-            {!cur ? "Log one and this fills in" : cur.winRate === null ? "Nothing played" : cur.winRate + "% win rate"}
-          </div>
-        </div>
-      </button>
-    </div>
+    </>
   );
 }
