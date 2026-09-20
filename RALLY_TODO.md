@@ -79,10 +79,32 @@ The whole of the 10 Sep brief, the profiles work, and a run of fixes:
 
 ## SQL
 
-**One outstanding, added 20 Sep 2026: `schema_friendly_fixtures.sql`.**
-`fixtures.league_id` is still `not null` while matches and players are both
-nullable, so "Book a match" inside Friendlies fails at the database. Everything
-run before 12 Sep is still run.
+**Nothing outstanding, as of 20 Sep 2026.** Everything is run, including
+`schema_public_league_snapshot.sql` (which had never been created — it was the
+whole of the "restricted profile"), `schema_public_player_card.sql` re-run,
+`schema_friendly_fixtures.sql` and `schema_level_estimate.sql`.
+
+### Run `fix_function_grants.sql` after every migration
+
+Not once — every time. Supabase grants EXECUTE on a new function to `anon` by
+default, and `create or replace` and drop-and-recreate both count as new. So
+**re-running `schema_public_player_card.sql` re-opens two functions to the
+signed-out role every single time**, silently.
+
+The revoke at the bottom of most schema files says `from public`, which
+removes a grant that was never carrying the access — it succeeds and changes
+nothing. That is how six functions sat open from 4 to 20 September with a
+correct-looking line in every file. `revoke ... from public, anon` is what
+closes it, and `fix_function_grants.sql` does all of them at once. It is
+idempotent and skips functions that do not exist, so it is free to run.
+
+`is_league_member` and `is_club_admin` stay open to `anon` **on purpose** and
+are deliberately not in that file. They are the predicates inside the row
+policies — `is_league_member` appears in fourteen `using` / `with check`
+clauses — and a policy's function call is made by the querying role, so
+revoking them turns a signed-out "no rows" into a permission error across
+players, matches, fixtures and posts. They also answer only "am I in this
+league", which signed out is false and reveals nothing.
 
 ### The profiles question, answered
 
