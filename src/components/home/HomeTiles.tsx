@@ -45,6 +45,16 @@ export interface PeriodStat {
   winRate: number | null;
   /** How many different people, and how many matches, over the same span. */
   opponents: number;
+  /**
+   * Different people you beat, and different people who beat you.
+   *
+   * They overlap on purpose: split two matches with somebody and they count
+   * in both, because you did beat them and you did lose to them. So these two
+   * need not sum to the number faced, and making them would mean choosing
+   * which of those true things to drop.
+   */
+  beaten: number;
+  lostTo: number;
   played: number;
 }
 
@@ -91,8 +101,11 @@ export function HomeTiles({ nextUp, periods, onBook }: {
               ? <StatNumeral size={22} tone={p.opponents ? "hi" : "mid"}>{p.opponents}</StatNumeral>
               : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>Nobody yet</span>}
           </div>
+          {/* Who you beat against who beat you, in people rather than
+              matches. The count above is everybody you faced; this is how
+              that splits. */}
           <div style={line(FEED_TEXT_MID)}>
-            {!p ? "Log one and this fills in" : !p.played ? "Nothing played" : p.played + (p.played === 1 ? " match" : " matches")}
+            {!p ? "Log one and this fills in" : !p.played ? "Nothing played" : p.beaten + " beat · " + p.lostTo + " lost to"}
           </div>
         </div>
       </div>

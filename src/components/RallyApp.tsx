@@ -1175,13 +1175,29 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       // Different people, not matches played. Six games against one person is
       // a rivalry and six against six is a season, and the Opponents tile is
       // there to tell those apart.
-      const faced = new Set(within.map((m) => (m.p1 === meId ? m.p2 : m.p1)));
+      //
+      // Beaten and lost-to are counted the same way and deliberately overlap:
+      // split a pair of matches with somebody and they are in both, because
+      // you did beat them and you did lose to them. The two therefore do not
+      // have to add up to the number faced, and forcing them to would mean
+      // picking which of those two true things to throw away.
+      const faced = new Set<string>();
+      const beaten = new Set<string>();
+      const lostTo = new Set<string>();
+      within.forEach((m) => {
+        const them = m.p1 === meId ? m.p2 : m.p1;
+        faced.add(them);
+        if (m.winner === "draw") return;
+        if (m.winner === iAm(m)) beaten.add(them); else lostTo.add(them);
+      });
       return {
         label, w, l,
         // No matches means no win rate — 0/0 is not 0%. The tile says so in
         // words instead.
         winRate: within.length ? Math.round((w / within.length) * 100) : null,
         opponents: faced.size,
+        beaten: beaten.size,
+        lostTo: lostTo.size,
         played: within.length,
       };
     });
@@ -1194,7 +1210,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
@@ -1291,10 +1307,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 ...otherStandings,
               ],
             } : null}
-            pending={homeData?.pending}
             nextUp={homeData?.nextUp}
             periods={homeData?.periods}
-            onNudge={nudgeMatch}
             whatsNew={newsSeen !== undefined && newsSeen !== RELEASE ? <WhatsNew onDismiss={closeWhatsNew} /> : null}
             levelRecheck={newsSeen === RELEASE && levelAsked === false && meId ? (
               <LevelRecheck
@@ -1315,7 +1329,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               return fx ? resolveFixture(fx, winner, score) : Promise.resolve(false);
             }}
             onCancelFixture={removeFixture}
-            onEditMatch={setMatchDetailId}
             onBook={() => setTab("fixtures")}
           >
             {feed}

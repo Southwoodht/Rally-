@@ -6,7 +6,7 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
-import { autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, winnerLabel } from "@/lib/format";
+import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, winnerLabel } from "@/lib/format";
 import { PlayerLink } from "@/components/ui/PlayerLink";
 import { MatchCard } from "@/components/games/MatchCard";
 import { WeeklyRoundup } from "@/components/games/WeeklyRoundup";
@@ -14,7 +14,7 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -89,7 +89,13 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             const note = autoConfirmNote(m.loggedAt);
             return (
               <div key={m.id} style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
-                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><Who id={m.reportedBy} size={18} /> logged: <strong>{winnerLabel(m, nameOf)}</strong></div>
+                {/* "Sam Henry logged: Sam Henry beat George Henry" said his
+                    name twice, which is most of why this block read as
+                    clutter. When you logged it, the logger is already implied
+                    and the result is the whole sentence. */}
+                <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>
+                  {iReported ? <strong>{winnerLabel(m, nameOf)}</strong> : <><Who id={m.reportedBy} size={18} /> logged: <strong>{winnerLabel(m, nameOf)}</strong></>}
+                </div>
                 <div style={{ fontFamily: body, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
                 {canRespond ? (
                   <>
@@ -97,7 +103,28 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                     {note && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
                   </>
                 ) : iReported ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onDispute(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onDispute(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
+                    {/* The nudge lives here now that Home's copy of this row
+                        is gone. Same rule as before: the button says what
+                        happened rather than going grey, because "Nudged 2h
+                        ago" answers the question greyness would raise — and
+                        the real once-a-day limit is in RLS either way, since
+                        a disabled button is only ever a suggestion. */}
+                    {onNudge && (() => {
+                      const since = m.nudgedAt ? Date.now() - m.nudgedAt : null;
+                      const recent = since != null && since < 24 * 3600 * 1000;
+                      return (
+                        <button
+                          onClick={() => !recent && onNudge(m.id)}
+                          disabled={recent}
+                          style={{ marginTop: 8, width: "100%", fontFamily: body, fontWeight: 500, fontSize: 13, padding: "9px 10px", borderRadius: 10, border: "none", cursor: recent ? "default" : "pointer", background: recent ? PANEL2 : BALL, color: recent ? MUTED : COURT }}
+                        >
+                          {recent ? "Nudged " + agoLabel(since!) : "Nudge " + other}
+                        </button>
+                      );
+                    })()}
+                  </>
                 ) : (
                   <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting on the players to agree{note ? ` — ${note}` : "."}</span>
                 )}

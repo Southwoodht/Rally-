@@ -9,7 +9,7 @@ import { body } from "@/lib/theme";
  * record over three spans, and who you played over the same three — and they
  * are next to each other on purpose. Which means they cannot each keep their
  * own timer: three panels started at three different moments, all turning
- * every four seconds, is a corner of the screen that never settles.
+ * on their own schedules, is a corner of the screen that never settles.
  *
  * So there is one clock for the whole screen. Every panel advances on the
  * same beat whatever it is showing and however many slides it has, and a tap
@@ -19,9 +19,15 @@ import { body } from "@/lib/theme";
  * heartbeat without having to agree about anything else.
  */
 
-const DWELL_MS = 4200;
-/** The dissolve. Long enough to read as a turn rather than a flicker. */
-const FADE_MS = 240;
+const DWELL_MS = 5400;
+/**
+ * The dissolve, each way. 240ms first time round and Sam wanted it slower
+ * still, so 420 — which is most of a second of movement per turn, and the
+ * dwell went up with it. Otherwise the panels would spend a fifth of their
+ * life mid-fade, and a number you catch half-faded is a number you read
+ * twice.
+ */
+const FADE_MS = 420;
 
 // ---- the shared clock ---------------------------------------------------
 //
@@ -105,8 +111,9 @@ export function Cycler({ labels, render, labelColor, dotColor, minBodyHeight, la
   const [lit, setLit] = useState(true);
 
   // Dissolve out, swap underneath, dissolve back. Both halves are the same
-  // 240ms, so a turn takes about half a second of a four-second dwell — a
-  // fade rather than a cut, which is the whole of what was asked for.
+  // FADE_MS, so the content is never in two states at once and no slide has
+  // to be rendered twice — a fade rather than a cut, which is what was asked
+  // for, twice.
   useEffect(() => {
     if (target === shown) return;
     if (still) { setShown(target); return; }

@@ -3,7 +3,6 @@ import React from "react";
 import { AwaitingResult, ResultPrompt } from "@/components/home/ResultPrompt";
 import { HomeHeader, type HomeHeaderProps } from "@/components/home/HomeHeader";
 import { HomeTiles, type NextUp, type PeriodStat } from "@/components/home/HomeTiles";
-import { PendingStack, type PendingConfirmation } from "@/components/home/PendingConfirmationCard";
 import { StandingHero, type StandingHeroProps } from "@/components/home/StandingHero";
 
 // The home screen: a dashboard with the newsfeed running on underneath it.
@@ -23,27 +22,22 @@ export interface HomeProps {
    *  The hero is the screen's answer to "where am I", so with no answer it
    *  is left out rather than shown holding zeros. */
   standing?: StandingHeroProps | null;
-  pending?: PendingConfirmation[];
   nextUp?: NextUp | null;
   periods?: PeriodStat[] | null;
-  onNudge?: (matchId: string) => void;
   awaitingResult?: AwaitingResult[];
   onResolveFixture?: (fixtureId: string, winner: "p1" | "p2" | "draw", score: string) => Promise<boolean> | void;
   onCancelFixture?: (fixtureId: string) => void;
   levelRecheck?: React.ReactNode;
   whatsNew?: React.ReactNode;
-  onEditMatch?: (matchId: string) => void;
-  onSeeAllPending?: () => void;
   onBook?: () => void;
   /** The newsfeed. */
   children?: React.ReactNode;
 }
 
 export function Home({
-  header, standing, pending, nextUp, periods, awaitingResult, levelRecheck, whatsNew,
-  onNudge, onEditMatch, onSeeAllPending, onBook, onResolveFixture, onCancelFixture, children,
+  header, standing, nextUp, periods, awaitingResult, levelRecheck, whatsNew,
+  onBook, onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
-  const hasPending = !!pending && pending.length > 0;
   return (
     <div>
       <HomeHeader {...header} />
@@ -63,11 +57,11 @@ export function Home({
         <ResultPrompt items={awaitingResult} onResolve={onResolveFixture} onCancel={onCancelFixture} />
       )}
 
-      {hasPending && (
-        <div style={{ marginBottom: 12 }}>
-          <PendingStack items={pending!} onNudge={onNudge} onEdit={onEditMatch} onSeeAll={onSeeAllPending} />
-        </div>
-      )}
+      {/* A result waiting to be agreed used to have a card up here as well as
+          a row in "Awaiting confirmation" in the feed below, which is the same
+          result twice on one screen — and the top copy is the one Sam called
+          messy. It is one place now, in the feed, and the nudge went down
+          there with it rather than being lost with the card that carried it. */}
 
       <div style={{ marginBottom: 18 }}>
         <HomeTiles nextUp={nextUp} periods={periods} onBook={onBook} />

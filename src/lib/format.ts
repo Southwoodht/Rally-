@@ -92,3 +92,19 @@ export function formatMatchDate(value: any): string {
     timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric",
   }).format(d).replace(/,/g, "").replace(/\bSept\b/, "Sep");
 }
+
+/**
+ * "20m ago", "2h ago", "yesterday" — short enough to sit on a button.
+ *
+ * Lived in PendingConfirmationCard, which was the only thing that needed it
+ * until Home's copy of the pending row was removed and the nudge moved into
+ * the feed. Here now, where the other date wording is, rather than imported
+ * across from a component.
+ */
+export function agoLabel(ms: number): string {
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return Math.max(1, mins) + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return "yesterday";
+}
