@@ -1088,6 +1088,44 @@ same six entries starting 2025 but a career from 2017 would look equally
 "filled in" and grade flat for eight years. Ask for coverage, never for
 presence.
 
+**COMPUTED FROM THE REAL 2026 MATCHES, 2026-09-20.** Sam pasted every
+confirmed match of the year with both players' levels as at the date. Running
+computeOfficial over them:
+
+| player | W-D-L | win % | qual/win | points |
+|---|---|---|---|---|
+| Zaach Rodriguez | 18-0-7 | 72% | 2.45 | **86.7** |
+| Samuel Henry | 14-3-6 | 67% | 1.71 | **51.9** |
+| Charlie Henry | 11-3-15 | 43% | 2.06 | **29.1** |
+| Adrian Bowels | 4-0-5 | 44% | 2.13 | 20.8 |
+
+**The quality term is working.** Charlie's average best win is 2.06 against
+Sam's 1.71 — the app correctly knows he played the harder people. It is the
+win rate that separates them, 43% against 67%, and squaring it turns a 1.55x
+gap into 2.4x.
+
+**And the cost of playing the best player is now a measured number.** Charlie
+played Zaach 13 times and went 3-10:
+
+| | W-D-L | win % | qual/win | points |
+|---|---|---|---|---|
+| as it happened | 11-3-15 | 43% | 2.06 | 29.1 |
+| had he never played Zaach | 8-3-5 | 59% | 1.90 | **39.9** |
+
+**Avoiding the club's best player would have been worth +10.7 points** — and
+that is with his three wins over Zaach included in the quality term. Sam played
+Zaach twice and lost both; Charlie is one of only two people to beat him all
+year. Unsquaring the win rate closes the Sam/Charlie gap from 1.78x to 1.17x
+(78.6 against 66.9).
+
+So the earlier hypothetical was the right shape and the wrong cause: it is not
+that quality is inert, it is that **wrReg² outweighs everything quality can
+say**. Sam has not ruled on it. Three candidate fixes, none applied: drop the
+square, uncap the five best wins, or weigh a loss by the gap the way
+`globalScore` has since 2026-09-05 — the league table counts a loss to Zaach
+exactly as a loss to a beginner, and the global one stopped doing that a
+fortnight ago.
+
 **Official points can punish playing the best player — but NOT for Sam and
 Charlie, whose levels are recorded.** Sam, 2026-09-20: he and Charlie are 5-4
 head to head this year and would each beat the other's opponents, yet Sam has
