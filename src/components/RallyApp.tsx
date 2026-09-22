@@ -45,7 +45,7 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
 import { SEED_GROUP_DATA } from "@/data/seed";
 import { FRIENDLY_LEAGUE_ID, isFriendlyLeague } from "@/lib/leagueData";
@@ -1259,35 +1259,69 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       : null;
 
     /**
-     * The person immediately above you, and by how much.
+     * Two people worth playing next.
      *
-     * PINNED TO OFFICIAL, and captioned as Official — the alternative Sam
-     * offered rather than the one he led with. Coupling it to whichever slide
-     * the hero carousel is showing would change both the gap AND the rival
-     * under the reader every few seconds, because a different metric is a
-     * different ordering. Two cards that quietly disagree at least hold still
-     * long enough to be questioned; one that rewrites itself on a timer does
-     * not. Same reasoning as part 1, applied one card down.
+     * Sam widened this from "the person immediately above you" — "maybe we
+     * have suggested and it has Zaach or Charlie for example as suggested to
+     * book against". One name reads as a verdict about the table; two read as
+     * an invitation, which is what it is.
      *
-     * Top of the table takes the person below instead, with the wording
-     * flipped — there is nobody above to chase and "0 ahead of you" is not an
-     * answer to anything.
+     * Ranked on nearness in the table, with a nudge towards people you have
+     * not played lately. Both halves matter: the closest player is the best
+     * game, and the one you have not seen for six months is the one a
+     * suggestion is actually FOR — a card recommending the person you played
+     * on Tuesday is telling you something you already knew.
+     *
+     * Deliberately carries no metric. The old version printed an Official
+     * gap, which meant pinning this card to one ranking while the card above
+     * it cycled through others; a reason in words cannot disagree with its
+     * neighbour, and says more to somebody deciding who to call.
      */
-    const rival = (() => {
-      if (!meId || !officialRanks[meId]) return null;
-      const placed = players
-        .filter((p) => !p.inactive && officialRanks[p.id] && (wdl[p.id]?.gp || 0) > 0)
-        .sort((a, b) => officialRanks[a.id] - officialRanks[b.id]);
-      const i = placed.findIndex((p) => p.id === meId);
-      if (i < 0 || placed.length < 2) return null;
-      const ahead = i > 0;
-      const other = ahead ? placed[i - 1] : placed[1];
-      if (!other) return null;
-      const gap = Math.abs((officialPoints[other.id] ?? 0) - (officialPoints[meId] ?? 0));
-      // One decimal under ten, where the difference between 3 and 3.4 is a
-      // real part of a small gap; whole numbers above it, where it is noise.
-      const gapText = gap < 10 ? String(Math.round(gap * 10) / 10) : String(Math.round(gap));
-      return { player: other, gap: gapText, ahead };
+    const suggestions = (() => {
+      if (!meId || !officialRanks[meId]) return [];
+      const myRank = officialRanks[meId];
+      const lastPlayedWith: Record<string, number> = {};
+      played.forEach((m) => {
+        const them = m.p1 === meId ? m.p2 : m.p1;
+        if (!lastPlayedWith[them] || m.date > lastPlayedWith[them]) lastPlayedWith[them] = m.date;
+      });
+      const DAY = 86400000;
+      const scored = players
+        .filter((p) => !p.inactive && p.id !== meId && officialRanks[p.id])
+        .map((p) => {
+          const places = Math.abs(officialRanks[p.id] - myRank);
+          const since = lastPlayedWith[p.id] ? (Date.now() - lastPlayedWith[p.id]) / DAY : null;
+          // Nearness dominates; staleness breaks the ties it leaves. Capped
+          // at 180 days so somebody you have never played does not outrank
+          // the whole table on novelty alone.
+          const stale = since === null ? 120 : Math.min(180, since);
+          return { p, places, since, score: places * 10 - stale / 12 };
+        })
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 2);
+
+      // ONE fact, not two. The first version joined the placement and the
+      // staleness — "One place above you · not since 13 Feb 2026" — which is
+      // about 38 characters into roughly 155 pixels, so it arrived on screen
+      // as "One place above you · not sinc…". Two facts truncated into one and
+      // a half is worse than either on its own.
+      //
+      // So: how long it has been, when that is the notable thing, and where
+      // they sit otherwise. Somebody you played last week does not need
+      // telling when; somebody you have not seen since February does.
+      const monthYear = (ts: number) => {
+        try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", month: "long", year: "numeric" }).format(new Date(ts)); }
+        catch { return formatMatchDate(ts); }
+      };
+      return scored.map(({ p, places, since }) => {
+        const where = officialRanks[p.id] < myRank
+          ? places === 1 ? "One place above you" : places + " places above you"
+          : places === 1 ? "One place below you" : places + " places below you";
+        const reason = since === null ? "You have never played"
+          : since >= 60 ? "Last played " + monthYear(lastPlayedWith[p.id])
+          : where;
+        return { player: p, reason };
+      });
     })();
 
     // Head to head on the booked match, from your side.
@@ -1318,12 +1352,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         opponents: week.opponents,
         results: weekMatches.map((m) => (m.winner === "draw" ? "D" : m.winner === iAm(m) ? "W" : "L") as "W" | "D" | "L"),
       },
-      summary: {
+      // One per span, so the line turns the way the tiles used to. Only the
+      // record differs between them — see SummaryLine.
+      summary: periods.map((p) => ({
+        label: p.label,
+        record: p.played ? p.w + "–" + p.l : null,
         rank: officialRanks[meId] ?? null,
         of: Object.keys(officialRanks).length,
         winRate: winRateAllTime,
-      },
-      rival,
+      })),
+      suggestions,
       nextUp: bookedNext ? {
         opponent: nextUp.opponent,
         when: bookedNext.booked,

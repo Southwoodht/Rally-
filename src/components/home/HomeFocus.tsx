@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Cycler } from "@/components/ui/Cycler";
 import { StatNumeral } from "@/components/ui/Surfaces";
 import { formatMatchDateTime } from "@/lib/format";
 import {
@@ -41,12 +42,10 @@ export interface WeekRecord {
   results: Array<"W" | "D" | "L">;
 }
 
-export interface Rival {
+export interface Suggestion {
   player: any;
-  /** Official points between you, already rounded for printing. */
-  gap: string;
-  /** True when they are above you in the table. */
-  ahead: boolean;
+  /** Why this person — "2 places above you", "Not played since May". */
+  reason: string;
 }
 
 export interface NextUp {
@@ -58,6 +57,17 @@ export interface NextUp {
   h2h?: string | null;
 }
 
+export interface SummaryPeriod {
+  /** "This week", "This month", "This year". */
+  label: string;
+  /** The record for that span, or null when nothing was played in it. */
+  record: string | null;
+  /** Constant across the periods: where you stand, and your career rate. */
+  rank: number | null;
+  of: number;
+  winRate: number | null;
+}
+
 export interface HomeFocusProps {
   /** Whole days since the last match. Null when they have never played. */
   daysSince?: number | null;
@@ -66,8 +76,10 @@ export interface HomeFocusProps {
   lastMatch?: LastMatch | null;
   /** Null, or a week with nothing in it, gives the empty state. */
   week?: WeekRecord | null;
-  summary?: { rank: number | null; of: number; winRate: number | null } | null;
-  rival?: Rival | null;
+  /** One per period, widest last. The line cycles through them. */
+  summary?: SummaryPeriod[] | null;
+  /** Who to play next. Two at most — a list is a menu, not a suggestion. */
+  suggestions?: Suggestion[] | null;
   nextUp?: NextUp | null;
   onBook?: () => void;
   /** Opens a player's profile from the rival card. */
@@ -189,42 +201,78 @@ function WeekCard({ week }: { week: WeekRecord }) {
 }
 
 // ----------------------------------------------------------- summary line
-function SummaryLine({ text }: { text: string }) {
-  return (
-    <div style={{ background: FEED_CARD, borderRadius: FEED_TILE_RADIUS, padding: "0 14px", height: 52, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-      <div style={quiet}>This week</div>
+/**
+ * Week, then month, then year, on the shared clock.
+ *
+ * The cycle was a casualty of the redesign and should not have been: Sam
+ * asked for it, liked it, and then noticed it had gone — "wasn't that meant
+ * to fade to your month and your year?" It was. Replacing the three dead
+ * tiles was the brief; the turning was the part of them that worked.
+ *
+ * It rides the same module clock as the standing card above it, so the two
+ * turn on the same beat and read as one thing the screen does rather than two
+ * things twitching near each other.
+ *
+ * Only the record changes across the three. The place and the career rate are
+ * the same whatever span you are looking at, and they stay put rather than
+ * being recomputed per period — a number that holds still while its
+ * neighbour turns is doing the job of context.
+ */
+function SummaryLine({ periods }: { periods: SummaryPeriod[] }) {
+  const line = (i: number) => {
+    const p = periods[i];
+    const bits: string[] = [p.record ?? "Nothing played"];
+    if (p.rank != null && p.of) bits.push(p.rank + " of " + p.of);
+    if (p.winRate != null) bits.push(p.winRate + "% all time");
+    return (
       <div style={{ ...quiet, ...tabular, fontSize: 14, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {text}
+        {bits.join(" · ")}
       </div>
+    );
+  };
+  return (
+    <div style={{ background: FEED_CARD, borderRadius: FEED_TILE_RADIUS, padding: "6px 14px", minHeight: 52, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <Cycler
+        labels={periods.map((p) => p.label)}
+        render={line}
+        labelColor={FEED_TEXT_LOW}
+        dotColor={FEED_LIME}
+        ariaLabel="Your record, by period"
+      />
     </div>
   );
 }
 
-// ------------------------------------------------------------ rival card
+// ------------------------------------------------------- suggested to play
 /**
- * The person immediately above you, and how far.
+ * Who to get on court with next.
  *
- * **Pinned to Official points and labelled as such**, which is the option Sam
- * offered rather than the one he led with. Following whichever slide the hero
- * carousel happens to be on would mean the gap — and the rival, since a
- * different metric is a different ordering — silently changing under the
- * reader every few seconds while they look at it. That is a worse version of
- * the bug part 1 fixed, not a smaller one: at least two cards disagreeing hold
- * still long enough to be questioned.
+ * Started as "the person immediately above you in the table" and Sam widened
+ * it: "maybe we have suggested and it has Zaach or Charlie for example as
+ * suggested to book against." Which is the better idea — one name reads as a
+ * verdict about the table, and two read as what they are, an invitation.
+ *
+ * Two, and never more. A list of everybody is the Fixtures screen; the point
+ * of a suggestion is that somebody has already done the choosing.
+ *
+ * NO METRIC ON IT ANY MORE, and that is the part worth keeping. The old
+ * version printed an Official-points gap, which meant this card had to state
+ * which maths it was using and stay pinned to it while the hero card above
+ * cycled through others. A reason in words — how close they are, how long it
+ * has been — says more to somebody deciding who to call, and cannot disagree
+ * with the card above it.
  */
-function RivalCard({ rival, onOpenPlayer, onBook }: { rival: Rival; onOpenPlayer?: (id: string) => void; onBook?: () => void }) {
+function SuggestionRow({ s, onOpenPlayer, onBook }: { s: Suggestion; onOpenPlayer?: (id: string) => void; onBook?: () => void }) {
   return (
     <div
-      onClick={onOpenPlayer ? () => onOpenPlayer(rival.player.id) : undefined}
-      style={{ ...card, height: 82, padding: "0 18px", display: "flex", alignItems: "center", gap: 12, cursor: onOpenPlayer ? "pointer" : "default" }}
+      onClick={onOpenPlayer ? () => onOpenPlayer(s.player.id) : undefined}
+      style={{ height: 62, display: "flex", alignItems: "center", gap: 12, cursor: onOpenPlayer ? "pointer" : "default" }}
     >
-      <Avatar player={rival.player} size={40} />
+      <Avatar player={s.player} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ ...quiet, ...tabular }}>
-          {rival.gap} official {rival.ahead ? "ahead of you" : "behind you"}
-        </div>
+        <div style={{ ...quiet, ...tabular, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.reason}</div>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, letterSpacing: "-0.02em", color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {rival.player.name}{rival.player.last ? " " + rival.player.last : ""}
+          {s.player.name}{s.player.last ? " " + s.player.last : ""}
         </div>
       </div>
       {/* stopPropagation, or booking also opens their profile — the whole
@@ -239,6 +287,19 @@ function RivalCard({ rival, onOpenPlayer, onBook }: { rival: Rival; onOpenPlayer
       >
         Book
       </button>
+    </div>
+  );
+}
+
+function SuggestionCard({ suggestions, onOpenPlayer, onBook }: {
+  suggestions: Suggestion[]; onOpenPlayer?: (id: string) => void; onBook?: () => void;
+}) {
+  return (
+    <div style={{ ...card, paddingTop: 14, paddingBottom: 14 }}>
+      <div style={{ ...quiet, marginBottom: 2 }}>Suggested</div>
+      {suggestions.map((s) => (
+        <SuggestionRow key={s.player.id} s={s} onOpenPlayer={onOpenPlayer} onBook={onBook} />
+      ))}
     </div>
   );
 }
@@ -268,20 +329,9 @@ function NextUpCard({ nextUp }: { nextUp: NextUp }) {
 
 // --------------------------------------------------------------- the block
 export function HomeFocus({
-  daysSince, waiting, lastMatch, week, summary, rival, nextUp, onBook, onOpenPlayer,
+  daysSince, waiting, lastMatch, week, summary, suggestions, nextUp, onBook, onOpenPlayer,
 }: HomeFocusProps) {
   const active = !!week && week.results.length > 0;
-
-  // The summary line says what the hero card does not. In the empty state the
-  // hero is a countdown and this carries the record; in the active state the
-  // hero IS the record, so this carries the standing instead of repeating it.
-  const summaryText = (() => {
-    const bits: string[] = [];
-    bits.push(active ? week!.w + "–" + week!.l + " this week" : "Nothing played");
-    if (summary?.rank != null && summary.of) bits.push(summary.rank + " of " + summary.of);
-    if (summary?.winRate != null) bits.push(summary.winRate + "% all time");
-    return bits.join(" · ");
-  })();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -289,7 +339,7 @@ export function HomeFocus({
         ? <WeekCard week={week!} />
         : <GapCard daysSince={daysSince} waiting={waiting} lastMatch={lastMatch} onBook={onBook} />}
 
-      <SummaryLine text={summaryText} />
+      {!!summary?.length && <SummaryLine periods={summary} />}
 
       {/* Never both. A booked match is the more useful of the two — it is
           something already arranged rather than something to arrange — and two
@@ -297,14 +347,14 @@ export function HomeFocus({
           rebuilt to remove. */}
       {nextUp
         ? <NextUpCard nextUp={nextUp} />
-        : rival
-          ? <RivalCard rival={rival} onOpenPlayer={onOpenPlayer} onBook={onBook} />
+        : suggestions && suggestions.length
+          ? <SuggestionCard suggestions={suggestions} onOpenPlayer={onOpenPlayer} onBook={onBook} />
           : null}
 
       {/* With nothing booked and nobody to chase, the way to fix that is still
           worth offering — but only in the active state, where the hero card
           has no CTA of its own. */}
-      {active && !nextUp && !rival && <BookPill onBook={onBook} />}
+      {active && !nextUp && !suggestions?.length && <BookPill onBook={onBook} />}
     </div>
   );
 }
