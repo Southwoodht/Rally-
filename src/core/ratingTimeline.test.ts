@@ -9,7 +9,7 @@
 // that does not count, and the order.
 
 import { computeStats } from "./elo";
-import { ratingTimeline, timelinePath } from "./ratingTimeline";
+import { progressTimeline, ratingTimeline, timelinePath } from "./ratingTimeline";
 
 let failures = 0;
 let checks = 0;
@@ -156,6 +156,80 @@ const M = (id: string, p1: string, p2: string, winner: string | null, d: number,
   // Rising career: y falls, because SVG y grows downward.
   ok(xy[2].y < xy[0].y, "a rising rating draws upward");
   ok(xy.every((p) => p.y >= 6 - 1e-9 && p.y <= 114 + 1e-9), "every point is inside the padded box");
+}
+
+
+// ------------------------------------------------------------- progress
+// The band rule, which is the whole of what Sam asked for: results move you
+// inside a level, a promotion moves you above everything you did below it.
+
+{
+  const players = [P("a"), P("b")];
+  // A long losing run, then a promotion.
+  const matches = [
+    M("l1", "a", "b", "p2", 1), M("l2", "a", "b", "p2", 2), M("l3", "a", "b", "p2", 3),
+    M("l4", "a", "b", "p2", 4), M("l5", "a", "b", "p2", 5), M("w1", "a", "b", "p1", 6),
+  ];
+  const s: any = computeStats(players, matches);
+  const t = ratingTimeline("a", matches, s.ratingBefore, s.deltas);
+
+  // Intermediate/Low (6) until match 5, Advanced/Low (9) from match 6.
+  const lvAt = (d: number) => (d >= day(6) ? 9 : 6);
+  const pr = progressTimeline(t, lvAt);
+
+  eq(pr.points.length, 6, "a point per match once a level is recorded");
+  ok(pr.points.slice(0, 5).every((p) => p.progress >= 6 && p.progress < 7),
+    "five straight defeats never drop you out of your own band");
+  ok(pr.points[5].progress >= 9, "a promotion lands you on the floor of the new band");
+  ok(pr.points[5].progress > Math.max(...pr.points.slice(0, 5).map((p) => p.progress)),
+    "and therefore above everything you did at the old level — the whole ask");
+}
+
+{
+  // Within a band, results still move you. Sam: "losses it still goes down
+  // and wins goes higher."
+  const players = [P("a"), P("b")];
+  const matches = [M("w1", "a", "b", "p1", 1), M("w2", "a", "b", "p1", 2), M("l1", "a", "b", "p2", 3)];
+  const s: any = computeStats(players, matches);
+  const pr = progressTimeline(ratingTimeline("a", matches, s.ratingBefore, s.deltas), () => 6);
+  ok(pr.points[1].progress > pr.points[0].progress, "a second win goes higher");
+  ok(pr.points[2].progress < pr.points[1].progress, "a loss goes down");
+  ok(pr.points.every((p) => p.progress > 6 && p.progress < 7), "and all of it inside the band");
+}
+
+{
+  // A recorded drop lowers the line. Deliberate: hiding decline would be
+  // flattering rather than reporting.
+  const players = [P("a"), P("b")];
+  const matches = [M("w1", "a", "b", "p1", 1), M("w2", "a", "b", "p1", 2)];
+  const s: any = computeStats(players, matches);
+  const pr = progressTimeline(ratingTimeline("a", matches, s.ratingBefore, s.deltas),
+    (d) => (d >= day(2) ? 3 : 9));
+  ok(pr.points[1].progress < pr.points[0].progress, "a recorded demotion moves the line down");
+}
+
+{
+  // No level recorded yet means no band, so the line has not started.
+  const players = [P("a"), P("b")];
+  const matches = [M("m1", "a", "b", "p1", 1), M("m2", "a", "b", "p1", 2), M("m3", "a", "b", "p1", 3)];
+  const s: any = computeStats(players, matches);
+  const t = ratingTimeline("a", matches, s.ratingBefore, s.deltas);
+  const pr = progressTimeline(t, (d) => (d >= day(2) ? 6 : null));
+  eq(pr.points.map((p) => p.matchId), ["m2", "m3"], "nothing is drawn before the first recorded level");
+  eq(progressTimeline(t, () => null).points.length, 0, "no level ever means no line at all");
+}
+
+{
+  // A gap in the middle carries the band forward rather than breaking the
+  // line — sealTimeline makes periods contiguous, so this only happens to
+  // data entered by hand, and a hole is not evidence of a demotion.
+  const players = [P("a"), P("b")];
+  const matches = [M("m1", "a", "b", "p1", 1), M("m2", "a", "b", "p1", 2), M("m3", "a", "b", "p1", 3)];
+  const s: any = computeStats(players, matches);
+  const t = ratingTimeline("a", matches, s.ratingBefore, s.deltas);
+  const pr = progressTimeline(t, (d) => (d === day(2) ? null : 6));
+  eq(pr.points.length, 3, "a hole mid-career keeps the band it was already in");
+  ok(pr.points.every((p) => p.levelVal === 6), "and does not invent a different one");
 }
 
 // -------------------------------------------------------------------------

@@ -1,11 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SurfaceCard, StatNumeral } from "@/components/ui/Surfaces";
-import { ratingTimeline, timelinePath, type RatingTimeline } from "@/core/ratingTimeline";
+import { progressTimeline, ratingTimeline, timelinePath, type RatingTimeline } from "@/core/ratingTimeline";
+import { levelAt, levelVal } from "@/core/levels";
+import { LEVELS, SUBS } from "@/core/constants";
 import { formatMatchDate } from "@/lib/format";
 import {
   DOT_DRAW, DOT_LOSS, DOT_WIN, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_TEXT_HI,
-  FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular,
+  FEED_LIME_INK, FEED_RAISED, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular,
 } from "@/lib/theme";
 
 // Your Elo, as the line it has always been.
@@ -31,8 +33,10 @@ const HEIGHT = 132;
 const MIN_POINTS = 3;
 
 export function RatingLine({
-  playerId, matches, ratingBefore, deltas, startRating, nameOf, onOpenMatch,
+  player, playerId, matches, ratingBefore, deltas, startRating, nameOf, onOpenMatch,
 }: {
+  /** For the level timeline. Progress needs to know what band you were in. */
+  player?: any;
   playerId: string;
   matches: any[];
   ratingBefore: Record<string, Record<string, number>>;
@@ -47,6 +51,16 @@ export function RatingLine({
   const box = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
+  /**
+   * Two ways of telling the same career.
+   *
+   * Elo is how good you were that year. Progress is how far you have come —
+   * one band per level, results moving you inside it. Sam's Elo peaked at 297
+   * in 2019 and sits at 89, and he is a better player now; both readings are
+   * honest and they are answers to different questions, so the card offers
+   * both rather than picking.
+   */
+  const [mode, setMode] = useState<"elo" | "progress">("elo");
 
   useEffect(() => {
     const el = box.current;
@@ -62,21 +76,45 @@ export function RatingLine({
     [playerId, matches, ratingBefore, deltas, startRating],
   );
 
+  const prog = useMemo(
+    () => progressTimeline(t, (date: number) => levelVal(levelAt(player, date))),
+    [t, player],
+  );
+
+  // Progress is its own series with its own scale, so it is fed through the
+  // same path builder as a timeline shaped like one. Its "start" is the floor
+  // of the first band, which is where the line properly begins.
+  const shown: RatingTimeline = mode === "progress"
+    ? {
+        points: prog.points.map((p) => ({ ...p, rating: p.progress })),
+        start: prog.points.length ? Math.floor(prog.points[0].progress) : 0,
+        low: Math.min(prog.low, prog.points.length ? Math.floor(prog.points[0].progress) : 0),
+        high: prog.high,
+        peak: null,
+      }
+    : t;
+
   const geom = useMemo(
-    () => (width > 0 ? timelinePath(t, width, HEIGHT) : { d: "", area: "", xy: [] }),
-    [t, width],
+    () => (width > 0 ? timelinePath(shown, width, HEIGHT) : { d: "", area: "", xy: [] }),
+    [shown, width],
   );
 
   // Hooks are all above this. A return before them is the crash §8 records,
   // and scripts/check-hook-order.js is what now catches it.
   if (t.points.length < MIN_POINTS) return null;
 
-  const now = t.points[t.points.length - 1].rating;
+  const canProgress = prog.points.length >= MIN_POINTS;
+  const now = shown.points.length ? shown.points[shown.points.length - 1].rating : 0;
+  /** "Intermediate · Low" for a band value, for the headline in progress mode. */
+  const bandName = (v: number) => {
+    const i = Math.max(0, Math.min(LEVELS.length * 3 - 1, Math.floor(v)));
+    return LEVELS[Math.floor(i / 3)] + " · " + SUBS[i % 3];
+  };
   // xy[0] is the starting rating, so a point's index in xy is its index in
   // points plus one. Getting this wrong puts every readout one match early.
-  const sel = picked === null ? null : t.points[picked];
+  const sel = picked === null ? null : (shown.points[picked] as any);
   const selXY = picked === null ? null : geom.xy[picked + 1];
-  const peakIdx = t.peak ? t.points.findIndex((p) => p.matchId === t.peak!.matchId) : -1;
+  const peakIdx = shown.peak ? shown.points.findIndex((p) => p.matchId === shown.peak!.matchId) : -1;
   const peakXY = peakIdx >= 0 ? geom.xy[peakIdx + 1] : null;
 
   const dotColour = (o: "W" | "D" | "L") => (o === "W" ? DOT_WIN : o === "D" ? DOT_DRAW : DOT_LOSS);
@@ -95,11 +133,15 @@ export function RatingLine({
   return (
     <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 2 }}>
-        <div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Elo, all time</div>
-          <StatNumeral size={26} tone="hi">{Math.round(now)}</StatNumeral>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
+            {mode === "progress" ? "Progress, all time" : "Elo, all time"}
+          </div>
+          {mode === "progress"
+            ? <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{bandName(now)}</div>
+            : <StatNumeral size={26} tone="hi">{Math.round(now)}</StatNumeral>}
         </div>
-        {t.peak && (
+        {mode === "elo" && t.peak && (
           <div style={{ textAlign: "right" }}>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Best ever</div>
             <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID }}>
@@ -107,7 +149,39 @@ export function RatingLine({
             </div>
           </div>
         )}
+        {mode === "progress" && (
+          // Two level names on one phone-width row, so the right-hand one
+          // never wraps: it shrinks to nothing before the headline does.
+          <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Started</div>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>
+              {bandName(prog.points[0].progress)}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Two readings of one career, offered rather than chosen between.
+          Hidden entirely when there is no level timeline to build the bands
+          from — a toggle to an empty chart is worse than no toggle. */}
+      {canProgress && (
+        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+          {([["elo", "Elo"], ["progress", "Progress"]] as const).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => { setMode(v); setPicked(null); }}
+              style={{
+                fontFamily: body, fontWeight: 500, fontSize: 12.5, padding: "5px 12px",
+                borderRadius: 999, border: "none", cursor: "pointer",
+                background: mode === v ? FEED_LIME : FEED_RAISED,
+                color: mode === v ? FEED_LIME_INK : FEED_TEXT_MID,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div
         ref={box}
@@ -138,7 +212,7 @@ export function RatingLine({
             {/* A dot per match, coloured by what it was. Small enough that
                 forty of them read as texture on the line rather than as beads
                 on a string. */}
-            {t.points.map((p, i) => (
+            {shown.points.map((p, i) => (
               <circle key={p.matchId} cx={geom.xy[i + 1].x} cy={geom.xy[i + 1].y} r={2} fill={dotColour(p.outcome)} opacity={0.9} />
             ))}
 
@@ -175,13 +249,29 @@ export function RatingLine({
             <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0 }}>
               {formatMatchDate(sel.date)}
             </span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: sel.delta >= 0 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, width: 52, textAlign: "right" }}>
-              {sel.delta >= 0 ? "+" : "−"}{Math.abs(sel.delta).toFixed(1)}
-            </span>
+            {/* In progress mode the band is already the headline, so naming
+                it again on every row says the same thing twice and squeezes
+                the opponent to an ellipsis — the same rule matchGrade follows
+                when `now` equals `then`. It appears only where the match was
+                played at a DIFFERENT level from today, which is exactly when
+                it is worth saying. */}
+            {mode === "progress" ? (
+              bandName(sel.progress) !== bandName(now) && (
+                <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0, whiteSpace: "nowrap" }}>
+                  {bandName(sel.progress)}
+                </span>
+              )
+            ) : (
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: sel.delta >= 0 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, width: 52, textAlign: "right" }}>
+                {(sel.delta >= 0 ? "+" : "−") + Math.abs(sel.delta).toFixed(1)}
+              </span>
+            )}
           </button>
         ) : (
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
-            {t.points.length} matches. Tap the line to see any one of them.
+            {mode === "progress"
+              ? prog.points.length + " matches since your level was first recorded. A promotion lifts you above everything below it."
+              : t.points.length + " matches. Tap the line to see any one of them."}
           </div>
         )}
       </div>

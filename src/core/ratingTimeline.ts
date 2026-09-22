@@ -122,3 +122,77 @@ export function timelinePath(
   const area = d + ` L${xy[n - 1].x.toFixed(2)} ${height} L${xy[0].x.toFixed(2)} ${height} Z`;
   return { d, area, xy };
 }
+
+/**
+ * The same career, told as progress rather than as rating.
+ *
+ * Sam, 2026-09-22: "rather than how good u were that year, how u progressed —
+ * but losses it still goes down and wins goes higher."
+ *
+ * His Elo peaked at 297 in 2019 and sits at 89 now, and he is plainly a
+ * better player now than he was then. Both facts are true: Elo is relative,
+ * so a pool getting stronger around you pushes your number down while you
+ * improve. Honest as "how good were you that year", backwards as "how far
+ * have you come".
+ *
+ * So: one band per level, and your results move you inside it.
+ *
+ *     progress = levelVal  +  s(rating moved since you entered this level)
+ *
+ * where s squashes any amount of rating movement into (0, 1). That is the
+ * whole trick — **results can never carry you out of your band**. Moving up a
+ * level steps you onto the floor of the next one, which is the ceiling of the
+ * one you just left, so a promotion always puts you above everything you ever
+ * did at the old level. Which is what he asked for.
+ *
+ * A recorded level DROP lowers the line, deliberately. Making progress ratchet
+ * up would hide genuine decline, and this engine reports what is recorded
+ * rather than what flatters.
+ *
+ * Points before their first recorded level are left out entirely: no level, no
+ * band, and nothing here guesses one.
+ */
+
+/** How much rating movement fills most of a band. Sam's matches move him about
+ *  12 a time, so 50 is a few good weeks rather than one lucky night. */
+const BAND_SPREAD = 50;
+
+const squash = (x: number): number => 1 / (1 + Math.exp(-x / BAND_SPREAD));
+
+export interface ProgressPoint extends RatingPoint {
+  /** 0–18ish. Level band plus where results have moved you inside it. */
+  progress: number;
+  /** The band itself, for a label. */
+  levelVal: number;
+}
+
+export function progressTimeline(
+  t: RatingTimeline,
+  levelValAt: (date: number) => number | null,
+): { points: ProgressPoint[]; low: number; high: number } {
+  const points: ProgressPoint[] = [];
+  let band: number | null = null;
+  let ratingAtBandStart = t.start;
+
+  for (const p of t.points) {
+    const lv = levelValAt(p.date);
+    // Before the first recorded level there is no band to sit in, so the line
+    // simply has not started yet.
+    if (lv == null) { if (band == null) continue; }
+    else if (lv !== band) {
+      // A new band — and the rating you carried into it becomes the new zero,
+      // so the move within a band is always measured from when you entered it.
+      band = lv;
+      ratingAtBandStart = p.rating - p.delta;
+    }
+    if (band == null) continue;
+    points.push({ ...p, levelVal: band, progress: band + squash(p.rating - ratingAtBandStart) });
+  }
+
+  const values = points.map((p) => p.progress);
+  return {
+    points,
+    low: values.length ? Math.min(...values) : 0,
+    high: values.length ? Math.max(...values) : 1,
+  };
+}

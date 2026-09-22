@@ -311,6 +311,7 @@ export function ProfileContainer({
       gap={data.gap}
       ratingLine={
         <RatingLine
+          player={player}
           playerId={pid}
           matches={matches}
           ratingBefore={ratingBefore || {}}
