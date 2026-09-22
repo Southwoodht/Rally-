@@ -26,6 +26,26 @@ import {
  */
 
 /**
+ * RETIRED 2026-09-22, and kept here rather than deleted because the ids are
+ * still on real player rows.
+ *
+ * Sam: "Zaach renders as a purple dot ... nothing else in Rally is orange or
+ * purple. If these are user-set avatar colours, drop that feature." They are,
+ * and this is the feature — a disc carries no identity except its colour, so
+ * unlike the drawn icons below it cannot be brought into the palette without
+ * becoming the same mark for all nine. Those players now fall through to the
+ * initial treatment, which is the one the Messages rows have always used.
+ *
+ * The map stays so nobody re-adds 🟣 as a new idea, and so the reason is
+ * written down next to the thing it happened to.
+ *
+ * NOT retired: the drawn icon set below. Those are recognisable objects
+ * rather than colour-coded blobs, and their accent is what keeps a flame and
+ * a trophy apart at 20px — but several of those accents are off-palette too,
+ * and Sam has not ruled on them. Flagged, not changed.
+ *
+ * The original note follows.
+ *
  * The coloured circles.
  *
  * Not in AVATARS and easy to miss, which I did: the historical import gave
@@ -84,14 +104,12 @@ function Circleball({ size = 24, color = "currentColor", strokeWidth = 2 }: any)
 }
 
 export function hasAvatarArt(key?: string | null): boolean {
-  return !!key && (!!ART[key] || !!DOTS[key]);
+  return !!key && !!ART[key];
 }
 
 /** The drawn mark for a stored avatar id, or null if it isn't one of ours. */
 export function AvatarArt({ id, size = 20 }: { id?: string | null; size?: number }) {
   if (!id) return null;
-  const dot = DOTS[id];
-  if (dot) return <Dot size={size} color={dot} />;
   const entry = ART[id];
   if (!entry) return null;
   const [Icon, color] = entry;

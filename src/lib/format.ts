@@ -22,7 +22,18 @@ export const greetingFor = (name: string, at: Date = new Date()): string => {
 // The full name, for the few places with room for it and a reason to be
 // precise — a best win is a thing you tell people about, and "Charlie" is
 // two different players in this league.
-export const fullNameOf = (p: any): string => (p ? p.name + (p.last ? " " + p.last : "") : "Someone");
+//
+// Built from trimmed parts rather than concatenated raw. "Samuel  Henry"
+// appeared in a message with two spaces in it, and the cause is not the
+// template — it is a first name stored with a trailing space, which
+// concatenation faithfully preserves and which no amount of fixing at the
+// call site would reach. One join, used everywhere, so the whole app is
+// fixed at once and a badly typed name cannot produce a badly spaced one.
+export const fullNameOf = (p: any): string => {
+  if (!p) return "Someone";
+  const parts = [p.name, p.last].map((x: any) => String(x ?? "").trim()).filter(Boolean);
+  return parts.length ? parts.join(" ") : "Someone";
+};
 
 export const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 

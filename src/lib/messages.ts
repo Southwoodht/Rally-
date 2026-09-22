@@ -180,3 +180,39 @@ export async function nudgeAboutMatch(matchId: string, otherAuthId: string, text
   const threadId = await startThread(otherAuthId);
   await sendMessage(threadId, text);
 }
+
+// ------------------------------------------------------------------ system
+//
+// Messages Rally writes, as opposed to messages a person typed.
+//
+// They travel down the ordinary message pipe — a nudge is delivered as a
+// message on purpose, because a second delivery mechanism is a second thing
+// that can be out of sync — and until now nothing downstream could tell them
+// apart from something the sender had written. So a nudge rendered in the
+// sender's own thread as a lime right-aligned bubble: styled as words Sam
+// chose, when he had chosen a button.
+//
+// **The honest fix is a column on `messages`, and this is not it.** A `kind`
+// text column, defaulted to 'chat', would make this a fact about the row
+// rather than a guess about its contents. That is a migration, Sam runs
+// those, and it is worth doing — until then the templates live here, next to
+// the matcher that recognises them, so the two cannot drift apart the way
+// they would if the strings stayed inline at the call sites.
+export const systemMessage = {
+  nudge: (name: string): string =>
+    `${name} logged your match and it's waiting on you — confirm or dispute it in Rally.`,
+  cancelled: (name: string, when: string | null): string =>
+    when ? `${name} cancelled your match on ${when}.` : `${name} cancelled your match.`,
+};
+
+const SYSTEM_SHAPES: RegExp[] = [
+  / logged your match and it's waiting on you — confirm or dispute it in Rally\.$/,
+  / cancelled your match(?: on .+)?\.$/,
+];
+
+/** True for a message Rally wrote. Anchored at the end, so somebody quoting
+ *  one back at you in a sentence of their own is still their message. */
+export function isSystemMessage(bodyText: string | null | undefined): boolean {
+  const s = String(bodyText ?? "").trim();
+  return !!s && SYSTEM_SHAPES.some((re) => re.test(s));
+}

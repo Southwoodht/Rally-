@@ -2,8 +2,9 @@
 import React from "react";
 import { AwaitingResult, ResultPrompt } from "@/components/home/ResultPrompt";
 import { HomeHeader, type HomeHeaderProps } from "@/components/home/HomeHeader";
-import { HomeTiles, type NextUp, type PeriodStat } from "@/components/home/HomeTiles";
+import { HomeFocus, type HomeFocusProps } from "@/components/home/HomeFocus";
 import { StandingHero, type StandingHeroProps } from "@/components/home/StandingHero";
+import { Reveal } from "@/components/ui/Reveal";
 
 // The home screen: a dashboard with the newsfeed running on underneath it.
 //
@@ -15,6 +16,10 @@ import { StandingHero, type StandingHeroProps } from "@/components/home/Standing
 //
 // Presentational throughout. Every number arrives finished; nothing in this
 // tree counts, ranks or fetches anything.
+//
+// The cards are staggered in on mount — see Reveal. The index is their reading
+// order, not their source order, so the hero is always first however late the
+// rest of the data arrives.
 
 export interface HomeProps {
   header: HomeHeaderProps;
@@ -22,39 +27,42 @@ export interface HomeProps {
    *  The hero is the screen's answer to "where am I", so with no answer it
    *  is left out rather than shown holding zeros. */
   standing?: StandingHeroProps | null;
-  nextUp?: NextUp | null;
-  periods?: PeriodStat[] | null;
+  /** The middle block: days-since or this week's record, the summary line,
+   *  and either your next match or the person just above you. */
+  focus?: HomeFocusProps | null;
   awaitingResult?: AwaitingResult[];
   onResolveFixture?: (fixtureId: string, winner: "p1" | "p2" | "draw", score: string) => Promise<boolean> | void;
   onCancelFixture?: (fixtureId: string) => void;
   levelRecheck?: React.ReactNode;
   whatsNew?: React.ReactNode;
-  onBook?: () => void;
   /** The newsfeed. */
   children?: React.ReactNode;
 }
 
 export function Home({
-  header, standing, nextUp, periods, awaitingResult, levelRecheck, whatsNew,
-  onBook, onResolveFixture, onCancelFixture, children,
+  header, standing, focus, awaitingResult, levelRecheck, whatsNew,
+  onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
+  let step = 0;
   return (
     <div>
       <HomeHeader {...header} />
 
       {standing && (
-        <div style={{ marginBottom: 12 }}>
+        <Reveal index={step++} style={{ marginBottom: 12 }}>
           <StandingHero {...standing} />
-        </div>
+        </Reveal>
       )}
 
-      {whatsNew}
-      {levelRecheck}
+      {whatsNew && <Reveal index={step++}>{whatsNew}</Reveal>}
+      {levelRecheck && <Reveal index={step++}>{levelRecheck}</Reveal>}
 
       {/* Above pending confirmations: a result nobody has entered is a
           bigger gap than one waiting to be agreed. */}
       {!!awaitingResult?.length && onResolveFixture && (
-        <ResultPrompt items={awaitingResult} onResolve={onResolveFixture} onCancel={onCancelFixture} />
+        <Reveal index={step++}>
+          <ResultPrompt items={awaitingResult} onResolve={onResolveFixture} onCancel={onCancelFixture} />
+        </Reveal>
       )}
 
       {/* A result waiting to be agreed used to have a card up here as well as
@@ -63,9 +71,11 @@ export function Home({
           messy. It is one place now, in the feed, and the nudge went down
           there with it rather than being lost with the card that carried it. */}
 
-      <div style={{ marginBottom: 18 }}>
-        <HomeTiles nextUp={nextUp} periods={periods} onBook={onBook} />
-      </div>
+      {focus && (
+        <Reveal index={step++} style={{ marginBottom: 18 }}>
+          <HomeFocus {...focus} />
+        </Reveal>
+      )}
 
       {children}
     </div>

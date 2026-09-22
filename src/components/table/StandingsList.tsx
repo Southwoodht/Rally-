@@ -5,7 +5,7 @@ import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/com
 import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
 import { levelNow } from "@/core/levels";
-import { shortNameOf } from "@/lib/format";
+import { fullNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD, FEED_RADIUS,
   FEED_BAR, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight,
@@ -99,8 +99,14 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
         <Avatar player={p.player} size={52} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2, textTransform: "uppercase", letterSpacing: 0.6 }}>Leader</div>
+          {/* Full names. Sam, 2026-09-22: the Table is not a versus card and
+              not a rivalry card, which are the only two places a first name
+              is the right length. It truncates with an ellipsis when a row
+              runs out of width rather than falling back to the first name —
+              a shortened "Charlie Hen…" still says which Charlie, where
+              "Charlie" alone does not. */}
           <div style={{ ...tight(20), fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {shortNameOf(p.player)}
+            {fullNameOf(p.player)}
           </div>
           <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statLineOf(p)}
@@ -157,7 +163,7 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
             <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {shortNameOf(p.player)}
+              {fullNameOf(p.player)}
             </span>
             {isMe && (
               <span style={{ fontFamily: body, fontWeight: 500, fontSize: 10, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
@@ -187,7 +193,9 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
   const rows = useMemo(() => {
     const candidates: RankCandidate[] = players.map((p) => ({
       id: p.player.id,
-      name: shortNameOf(p.player),
+      // The same name the row prints, so the alphabetical tiebreak orders by
+      // what is on screen rather than by a string nothing shows.
+      name: fullNameOf(p.player),
       // Ranked on what the table prints, so two players showing the same
       // number are treated as level rather than separated by a difference
       // nobody can see.

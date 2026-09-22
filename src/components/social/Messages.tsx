@@ -2,13 +2,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BigBtn, Empty } from "@/components/ui/atoms";
 import {
-  acceptThread, currentUserId, deleteThread, listMessages, listThreads, markThreadRead,
-  sendMessage, startThread, type MessageRow, type Thread,
+  acceptThread, currentUserId, deleteThread, isSystemMessage, listMessages, listThreads,
+  markThreadRead, sendMessage, startThread, type MessageRow, type Thread,
 } from "@/lib/messages";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input } from "@/lib/theme";
 import { ArrowUp, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { readImageForMessage } from "@/lib/photo";
-import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
+import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
 import { fullNameOf } from "@/lib/format";
 
 // There's no realtime subscription here on purpose — one poll while the
@@ -166,6 +166,17 @@ const dayLabel = (iso: string) => {
 };
 
 /** Consecutive messages from one person inside this window are one turn. */
+/**
+ * How far above the bottom of the screen the composer sticks.
+ *
+ * `bottom: 0` sticks it to the bottom of the SCROLLPORT, which is the
+ * viewport — and the bottom nav is fixed over that at z-index 55, so the
+ * composer sat underneath it. The nav is 58px of content plus whatever the
+ * device's home indicator claims, and it is the same number the page already
+ * reserves as padding at the foot of the scroll container.
+ */
+const NAV_CLEARANCE = "calc(58px + env(safe-area-inset-bottom))";
+
 const GROUP_WINDOW_MS = 2 * 60 * 1000;
 
 /** The clock only interrupts the conversation once this much has passed. */
@@ -322,6 +333,38 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
           // sender's side only. The outer edge keeps its full radius, so a
           // run reads as one shape rather than a stack of separate ones.
           const tight = 4, round = 18;
+
+          // A message Rally wrote is not a message anybody typed, and it had
+          // been rendering as one — lime, right-aligned, with the sender's
+          // face beside it. Centred and quiet instead: a note about the
+          // conversation rather than a turn in it, which is also why it keeps
+          // no tail, no grouping and no "Seen".
+          const system = isSystemMessage(m.body);
+          if (system) {
+            return (
+              <React.Fragment key={m.id}>
+                {divider && (
+                  <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "20px 0 12px" }}>
+                    <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
+                      {dividerLabel(m.created_at)}
+                    </span>
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                  <div
+                    style={{
+                      width: "calc(100% - 32px)", background: FEED_RAISED, color: FEED_TEXT_MID,
+                      borderRadius: 14, padding: "9px 14px", textAlign: "center",
+                      fontFamily: body, fontWeight: 400, fontSize: 13, lineHeight: 1.45,
+                    }}
+                  >
+                    {m.body}
+                  </div>
+                </div>
+              </React.Fragment>
+            );
+          }
+
           return (
             <React.Fragment key={m.id}>
               {divider && (
@@ -382,8 +425,13 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
 
       {err && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginTop: 8 }}>{err}</div>}
 
+      {/* The composer is opaque, and it was not. A sticky bar with no
+          background is a window: the thread scrolled behind it and so did the
+          fixed nav underneath, which is why HOME / TABLE / FIXTURES were
+          legible through it. The page colour, because that is what it sits
+          on top of. */}
       {canWrite ? (
-        <div style={{ marginTop: 16, position: "sticky", bottom: 0, paddingBottom: 4 }}>
+        <div style={{ marginTop: 16, position: "sticky", bottom: NAV_CLEARANCE, paddingTop: 8, paddingBottom: 4, background: FEED_PAGE, zIndex: 1 }}>
         {/* What you are about to send, with a way out of it. */}
         {pending && (
           <div style={{ position: "relative", display: "inline-block", marginBottom: 8 }}>

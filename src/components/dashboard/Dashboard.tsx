@@ -137,7 +137,19 @@ export default function Dashboard({ session }: { session: Session }) {
 
   if (view === "app" && active) {
     return (
-      <div>
+      // The safe area lives HERE, on the shell, and nowhere below it.
+      //
+      // It used to be on RallyApp's inner container instead, which is below
+      // this bar — so the bar itself slid under the iOS status bar on every
+      // screen while the content underneath was pushed down by an inset it
+      // did not need. Wrong in both directions at once, from one line in the
+      // wrong place. Everything inside now inherits it; nothing inside
+      // applies it again.
+      //
+      // PANEL rather than the page colour, because the inset strip is an
+      // extension of the bar that sits in it — a COURT band above a PANEL bar
+      // reads as a gap somebody forgot to fill.
+      <div style={{ background: PANEL, paddingTop: "env(safe-area-inset-top)" }}>
         <div style={{ background: PANEL, borderBottom: "none", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             {/* Quiet: you know which league you're in, and the join code is
@@ -152,7 +164,7 @@ export default function Dashboard({ session }: { session: Session }) {
   }
 
   const shell = (children: React.ReactNode) => (
-    <div style={{ minHeight: "100vh", background: COURT, padding: "22px 18px 40px" }}>
+    <div style={{ minHeight: "100vh", background: COURT, padding: "22px 18px 40px", paddingTop: "calc(22px + env(safe-area-inset-top))" }}>
       <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>

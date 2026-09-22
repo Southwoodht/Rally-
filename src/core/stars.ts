@@ -1,28 +1,28 @@
-import { LEVELS, SUBS } from "@/core/constants";
+import { LEVELS } from "@/core/constants";
 
 // A level as a star rating.
 //
-// One star per tier, filled in thirds by sub-level. Sam's model, and it is
-// the one that works: six tiers times three sub-levels is eighteen grades,
-// six stars times three thirds is eighteen positions, so every grade in the
-// system gets its own mark and nothing collides.
+// CATEGORY ONLY, on five stars. Sam ruled on 2026-09-22, having seen 2.5
+// stars printed beside the label "Intermediate · Low".
 //
-//   Beginner/Low        one third of the first star
-//   Beginner/High       one full star — the tier is complete
-//   Intermediate/Low    two full stars and a third
-//   Pro/High            six full stars
+// This reverses the six-star, thirds-by-sub-level model that used to be
+// here, and the argument for the reversal is the one matchGrade.ts has
+// carried all along: **a sub-level is a dropdown and half of them are
+// wrong.** Ranking Intermediate/High above Intermediate/Medium is arithmetic
+// performed on a guess. The 18-point scale stays where it belongs — in the
+// ratings, where the error averages out over a hundred matches — and is
+// wrong for a badge on one profile.
 //
-// Six rather than five, which is the one place this departs from the brief.
-// Five stars is the more familiar idiom and it was the right call for the
-// earlier model, but five stars in thirds is fifteen slots for eighteen
-// grades and the collisions come straight back. The tiers decide how many
-// stars there are; the alternative is inventing a sixth tier or deleting a
-// real one.
+// The old comment's objection was that five stars in thirds is fifteen slots
+// for eighteen grades, so the grades collide. They do. They are MEANT to
+// now: Intermediate/Low and Intermediate/High are one claim as far as this
+// badge is concerned, and the sub-level is still there in the text label
+// beside it for anyone who wants it.
 //
-// The formula reads better than it looks: levelVal is 0-17, and adding one
-// before dividing is what makes Beginner/Low a third of a star rather than
-// nothing at all. Somebody who has picked the lowest level has still picked
-// one, and an empty row of stars is what "no level set" means.
+// Six categories onto five stars is not a clean division, so Semi-pro takes
+// the half. That is Sam's table, and it is the right half to give away:
+// Semi-pro is the one category most people reach by aspiration rather than
+// by result.
 
 /**
  * How many stars, in thirds. A third up to six, or null when no level is set.
@@ -32,20 +32,29 @@ import { LEVELS, SUBS } from "@/core/constants";
  * says exactly that; a zero would be a claim they never made.
  */
 export function starsForLevel(level: { cat?: string; sub?: string } | null | undefined): number | null {
-  const v = levelValOf(level);
-  return v === null ? null : (v + 1) / 3;
+  if (!level || !level.cat) return null;
+  const s = STARS_BY_CATEGORY[level.cat];
+  return s === undefined ? null : s;
 }
 
-/** One star per tier. */
-export const STAR_COUNT = LEVELS.length;
+/**
+ * Sam's table. Deliberately keyed by name rather than by index, so it cannot
+ * silently re-map if LEVELS ever gains a category — an unknown name returns
+ * null and draws an empty row, which is the same thing "no level set" does
+ * and is a gap somebody will report. An index-based version would just shift
+ * everybody up a star with no error anywhere.
+ */
+const STARS_BY_CATEGORY: Record<string, number> = {
+  Beginner: 1,
+  Amateur: 2,
+  Intermediate: 3,
+  Advanced: 4,
+  "Semi-pro": 4.5,
+  Pro: 5,
+};
 
-function levelValOf(level: { cat?: string; sub?: string } | null | undefined): number | null {
-  if (!level || !level.cat || !level.sub) return null;
-  const ci = LEVELS.indexOf(level.cat);
-  const si = SUBS.indexOf(level.sub);
-  if (ci < 0 || si < 0) return null;
-  return ci * 3 + si;
-}
+/** Five, the familiar idiom. Not LEVELS.length — see the note above. */
+export const STAR_COUNT = 5;
 
 /** Bars in the profile's form strip, tallest first. */
 export const TIER_HEIGHTS: Record<string, number> = {

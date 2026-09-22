@@ -34,7 +34,7 @@ import { MessageRobins } from "@/components/ui/MessageRobins";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
-import { nudgeAboutMatch, sendMessage, startThread, unreadMessageCount } from "@/lib/messages";
+import { nudgeAboutMatch, sendMessage, startThread, systemMessage, unreadMessageCount } from "@/lib/messages";
 import { LeagueHome } from "@/components/table/LeagueHome";
 import PlayerClaim from "@/components/auth/PlayerClaim";
 import { Avatar } from "@/components/ui/Avatar";
@@ -85,6 +85,28 @@ const emptyLeagueData: LeagueData = { players: [], matches: [], fixtures: [], po
  * Null when there is nothing to predict from — a first meeting is its own
  * kind of interesting and should not be dressed up as a coin flip.
  */
+/**
+ * "22–28 Sep", or "28 Sep – 4 Oct" when the week straddles a month.
+ *
+ * Europe/London like every other date in the app — a club plays where the
+ * club is, and a week should not shift because somebody opened Rally from a
+ * hotel in Spain. See format.ts.
+ */
+function rangeText(from: number, to: number): string {
+  const fmt = (ts: number, withMonth: boolean) => {
+    try {
+      return new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/London", day: "numeric", ...(withMonth ? { month: "short" as const } : {}),
+      }).format(new Date(ts));
+    } catch { return ""; }
+  };
+  const monthOf = (ts: number) => { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", month: "short" }).format(new Date(ts)); } catch { return ""; } };
+  const sameMonth = monthOf(from) === monthOf(to);
+  return sameMonth
+    ? fmt(from, false) + "–" + fmt(to, true)
+    : fmt(from, true) + " – " + fmt(to, true);
+}
+
 function nextUpLine(pct: number | null): string {
   if (pct == null) return "First meeting. No history, no excuses.";
   if (pct >= 65) return "You're the favourite for a reason. Play like it.";
@@ -634,9 +656,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const when = fx.booked ? formatMatchDateTime(fx.booked) : null;
     try {
       const threadId = await startThread(other.auth_id);
-      await sendMessage(threadId, when
-        ? `${mine} cancelled your match on ${when}.`
-        : `${mine} cancelled your match.`);
+      await sendMessage(threadId, systemMessage.cancelled(mine, when));
     } catch (e) {
       console.error("Cancelled the match but couldn't tell them", e);
       flash("Match cancelled — couldn't message " + fullNameOf(other));
@@ -660,8 +680,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const me = gdata.players.find((p) => p.id === meId);
     const mine = me ? fullNameOf(me) : "Someone";
     try {
-      await nudgeAboutMatch(matchId, other.auth_id,
-        `${mine} logged your match and it's waiting on you — confirm or dispute it in Rally.`);
+      await nudgeAboutMatch(matchId, other.auth_id, systemMessage.nudge(mine));
       setGdata({ ...gdata, matches: gdata.matches.map((x) => x.id === matchId ? { ...x, nudgedAt: Date.now() } : x) });
       flash("Nudged " + fullNameOf(other));
     } catch (e: any) {
@@ -925,7 +944,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
 
   if (friendlyUnavailable) return (
-    <div style={{ ...wrap, minHeight: "100vh", padding: "calc(24px + env(safe-area-inset-top)) 18px 24px" }}>
+    <div style={{ ...wrap, minHeight: "100vh", padding: "24px 18px 24px" }}>
       <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: CHALK }}>Friendlies aren&apos;t switched on yet</div>
@@ -1206,7 +1225,114 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       };
     });
 
-    return { standing, pending, nextUp, periods, awaitingResult };
+    // ---------------------------------------------------------------- focus
+    //
+    // The middle of Home. Sam, 2026-09-22: three cards were spending their
+    // whole area saying nothing had happened. What replaces them depends on
+    // whether anything has.
+
+    const week = periods[0];               // spans[0] is "This week"
+    const weekMatches = played
+      .filter((m) => m.date >= spans[0].from)
+      .sort((a, b) => a.date - b.date);
+
+    // Days since the last match, counted in whole days from midnight to
+    // midnight — not from the kick-off time, which would call a match played
+    // this morning "0" and one played last night "1".
+    const dayStart = (ts: number) => { const d = new Date(ts); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+    const lastPlayed = played.length ? played.reduce((a, b) => (a.date > b.date ? a : b)) : null;
+    const daysSince = lastPlayed ? Math.max(0, Math.round((midnight.getTime() - dayStart(lastPlayed.date)) / 86400000)) : null;
+    const lastMatch = lastPlayed ? (() => {
+      const them = lastPlayed.p1 === meId ? lastPlayed.p2 : lastPlayed.p1;
+      const opp = players.find((p) => p.id === them);
+      return {
+        opponent: opp ? fullNameOf(opp) : first(them),
+        outcome: (lastPlayed.winner === "draw" ? "D" : lastPlayed.winner === iAm(lastPlayed) ? "W" : "L") as "W" | "D" | "L",
+        date: lastPlayed.date,
+      };
+    })() : null;
+
+    // Draws count as half, the same way every other win rate in the app does.
+    const allTime = wdl[meId];
+    const winRateAllTime = allTime && allTime.gp
+      ? Math.round(((allTime.w + allTime.d * 0.5) / allTime.gp) * 100)
+      : null;
+
+    /**
+     * The person immediately above you, and by how much.
+     *
+     * PINNED TO OFFICIAL, and captioned as Official — the alternative Sam
+     * offered rather than the one he led with. Coupling it to whichever slide
+     * the hero carousel is showing would change both the gap AND the rival
+     * under the reader every few seconds, because a different metric is a
+     * different ordering. Two cards that quietly disagree at least hold still
+     * long enough to be questioned; one that rewrites itself on a timer does
+     * not. Same reasoning as part 1, applied one card down.
+     *
+     * Top of the table takes the person below instead, with the wording
+     * flipped — there is nobody above to chase and "0 ahead of you" is not an
+     * answer to anything.
+     */
+    const rival = (() => {
+      if (!meId || !officialRanks[meId]) return null;
+      const placed = players
+        .filter((p) => !p.inactive && officialRanks[p.id] && (wdl[p.id]?.gp || 0) > 0)
+        .sort((a, b) => officialRanks[a.id] - officialRanks[b.id]);
+      const i = placed.findIndex((p) => p.id === meId);
+      if (i < 0 || placed.length < 2) return null;
+      const ahead = i > 0;
+      const other = ahead ? placed[i - 1] : placed[1];
+      if (!other) return null;
+      const gap = Math.abs((officialPoints[other.id] ?? 0) - (officialPoints[meId] ?? 0));
+      // One decimal under ten, where the difference between 3 and 3.4 is a
+      // real part of a small gap; whole numbers above it, where it is noise.
+      const gapText = gap < 10 ? String(Math.round(gap * 10) / 10) : String(Math.round(gap));
+      return { player: other, gap: gapText, ahead };
+    })();
+
+    // Head to head on the booked match, from your side.
+    const h2hLine = (oppId: string): string | null => {
+      const between = played.filter((m) => (m.p1 === oppId || m.p2 === oppId));
+      if (!between.length) return null;
+      let w = 0, d = 0, l = 0;
+      between.forEach((m) => { if (m.winner === "draw") d++; else if (m.winner === iAm(m)) w++; else l++; });
+      const them = players.find((p) => p.id === oppId);
+      const head = w > l ? "You lead " : l > w ? (them?.name || "They") + " leads " : "Level at ";
+      const last = between.reduce((a, b) => (a.date > b.date ? a : b));
+      const lastBit = last.winner === "draw" ? null
+        : last.winner === iAm(last) ? " · you won the last one"
+        : " · they won the last one";
+      return head + w + "–" + d + "–" + l + (lastBit || "");
+    };
+
+    const focus = {
+      daysSince,
+      waiting: Math.max(0, players.filter((p) => !p.inactive && p.id !== meId).length),
+      lastMatch,
+      week: {
+        range: weekMatches.length
+          ? rangeText(spans[0].from, spans[0].from + 6 * 86400000)
+          : "",
+        w: week.w,
+        l: week.l,
+        opponents: week.opponents,
+        results: weekMatches.map((m) => (m.winner === "draw" ? "D" : m.winner === iAm(m) ? "W" : "L") as "W" | "D" | "L"),
+      },
+      summary: {
+        rank: officialRanks[meId] ?? null,
+        of: Object.keys(officialRanks).length,
+        winRate: winRateAllTime,
+      },
+      rival,
+      nextUp: bookedNext ? {
+        opponent: nextUp.opponent,
+        when: bookedNext.booked,
+        venue: (bookedNext as any).venue ?? null,
+        h2h: h2hLine(bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1),
+      } : null,
+    };
+
+    return { standing, pending, nextUp, periods, awaitingResult, focus };
   })();
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
@@ -1236,7 +1362,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   return (
     <div style={wrap}>
       <style dangerouslySetInnerHTML={{ __html: fontImport }} />
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px", paddingTop: "calc(22px + env(safe-area-inset-top))" }}>
+      <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
             <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "none", borderRadius: 999, padding: "6px 13px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13 }}>
@@ -1311,8 +1437,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 ...otherStandings,
               ],
             } : null}
-            nextUp={homeData?.nextUp}
-            periods={homeData?.periods}
+            focus={homeData?.focus ? { ...homeData.focus, onBook: () => setTab("fixtures"), onOpenPlayer: openProfile } : null}
             whatsNew={newsSeen !== undefined && newsSeen !== RELEASE ? <WhatsNew onDismiss={closeWhatsNew} /> : null}
             levelRecheck={newsSeen === RELEASE && levelAsked === false && meId ? (
               <LevelRecheck
@@ -1333,7 +1458,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               return fx ? resolveFixture(fx, winner, score) : Promise.resolve(false);
             }}
             onCancelFixture={removeFixture}
-            onBook={() => setTab("fixtures")}
           >
             {feed}
           </Home>
