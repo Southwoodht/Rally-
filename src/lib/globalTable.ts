@@ -256,6 +256,18 @@ export function rankGlobal(rows: GlobalRow[]): GlobalRow[] {
 // per profile. A minute is short enough that a result logged elsewhere shows
 // up quickly and long enough that flicking between profiles costs nothing.
 let cache: { at: number; rows: GlobalRow[] } | null = null;
+
+/**
+ * Which maths produced the score in `cache`.
+ *
+ * The global table prints the network rating when global_edges() exists and
+ * falls back to globalScore() when it does not — deliberately, so a missing
+ * migration or a slow network degrades instead of failing. But those are two
+ * different numbers on two different scales, and until now nothing downstream
+ * could tell which one it had been handed. Home puts it on a card beside a
+ * league Official figure, so the card has to be able to name it.
+ */
+let lastSource: "strength" | "global score" = "global score";
 const CACHE_MS = 60_000;
 
 export const globalKeyFor = (p: any): string => (p?.auth_id ? String(p.auth_id) : "p:" + p?.id);
@@ -268,6 +280,13 @@ export interface GlobalPlace {
   provisional: boolean;
   /** The network rating, as the table prints it. */
   rating: number;
+  /**
+   * What that number is, for a caption. "strength" where global_edges() is
+   * answering, "global score" where the table has fallen back to the old
+   * maths — two different scales, and a card showing both a league and a
+   * global standing cannot call them the same word.
+   */
+  unit: string;
   played: number;
 }
 
@@ -297,6 +316,7 @@ export async function globalRankFor(key: string, now = Date.now()): Promise<Glob
     of: ranked.length,
     provisional: row.provisional,
     rating: Math.round(row.score),
+    unit: lastSource,
     played: row.gp,
   };
 }
@@ -377,6 +397,11 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
  * reorder the table.
  */
 async function withNetworkRating(rows: GlobalRow[]): Promise<GlobalRow[]> {
+  // Reset first. Every path out of this function below returns the old maths,
+  // and a flag that only ever gets set forward would keep saying "strength"
+  // after the RPC started failing — a caption lying about which scale it is on
+  // is worse than no caption.
+  lastSource = "global score";
   if (!supabase || !rows.length) return rows;
   const result = await withSupabaseTimeout(
     supabase.rpc("global_edges"),
@@ -410,5 +435,6 @@ async function withNetworkRating(rows: GlobalRow[]): Promise<GlobalRow[]> {
   const anchor = declared.length ? declared.reduce((a, b) => a + b, 0) / declared.length : 6;
 
   const rating = computeRatings(edges, { anchor });
+  lastSource = "strength";
   return rows.map((r) => (r.key in rating ? { ...r, score: rating[r.key] * 100 } : r));
 }

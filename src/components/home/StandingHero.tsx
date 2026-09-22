@@ -13,6 +13,17 @@ import { FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD,
 // Presentational. Rank, rating, movement and form arrive finished; nothing
 // here counts anything.
 
+/**
+ * What the league slides call their number.
+ *
+ * "all time" is in the caption because it is TRUE and currently unavoidable:
+ * Home computes Official over every match a league has ever had, while the
+ * Table computes it over the season-and-year filter showing on that screen.
+ * Both are Official points and they are entitled to differ — but only if the
+ * card says which one it is. Aligning them is a separate job; see the report.
+ */
+export const OFFICIAL_UNIT = "official · all time";
+
 export interface Standing {
   /**
    * Where this place is — the league's name, or "Across Rally". It replaces
@@ -27,8 +38,17 @@ export interface Standing {
   rank: number | null;
   /** What to say instead of a place. */
   note?: string | null;
-  /** The number under "rating". */
+  /** The number under the caption. */
   rating: number;
+  /**
+   * What that number IS, printed under it.
+   *
+   * It used to say "rating" on every slide, and the slides do not all carry
+   * the same metric: your league is Official points and Across Rally is the
+   * network rating x100. One word over two scales is how 78 and 778 come to
+   * look like the same measurement disagreeing with itself.
+   */
+  unit?: string;
   movement?: number | null;
   form?: FormResult[];
   /**
@@ -47,8 +67,10 @@ export interface Standing {
 export interface StandingHeroProps {
   /** Place in the league. */
   rank: number;
-  /** The number under "rating". */
+  /** The number under the caption. */
   rating: number;
+  /** What that number is. See Standing.unit. */
+  unit?: string;
   /**
    * Places gained this week: positive climbed, negative dropped, zero held.
    *
@@ -87,6 +109,19 @@ const labelStyle: React.CSSProperties = {
 };
 
 /**
+ * The word under the number, in the Table leader card's exact treatment.
+ *
+ * Deliberately identical to StandingsList: the two cards are the same shape in
+ * the same lime and the caption is doing the same job on both, so a caption
+ * that looked different here would read as a different kind of thing.
+ */
+const unitStyle: React.CSSProperties = {
+  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2,
+  textTransform: "uppercase", letterSpacing: 0.6, marginTop: 2,
+  whiteSpace: "nowrap",
+};
+
+/**
  * One card, one standing at a time, on a loop.
  *
  * Your league, then across Rally, then any other league you are in — the same
@@ -98,10 +133,10 @@ const labelStyle: React.CSSProperties = {
  * four. That is deliberate: the league you are looking at is the one you came
  * for, and it should not wait behind a network call for the others.
  */
-export function StandingHero({ rank, rating, movement, form, standings }: StandingHeroProps) {
+export function StandingHero({ rank, rating, unit, movement, form, standings }: StandingHeroProps) {
   const list: Standing[] = standings && standings.length
     ? standings
-    : [{ scope: "Your standing", rank, rating, movement, form }];
+    : [{ scope: "Your standing", rank, rating, unit, movement, form }];
 
   // The card must not change height as it turns. Slides carry different
   // things — your own league has movement and form, a global standing has
@@ -134,7 +169,7 @@ export function StandingHero({ rank, rating, movement, form, standings }: Standi
               of very different sizes sit on one line instead of floating. */}
           <div style={{ textAlign: "right", flexShrink: 0 }}>
             <StatNumeral size={26} tone="ink">{cur.rating}</StatNumeral>
-            <div style={{ ...labelStyle, marginTop: 2 }}>rating</div>
+            <div style={unitStyle}>{cur.unit || "rating"}</div>
           </div>
         </div>
 

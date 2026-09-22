@@ -224,6 +224,22 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {crowned && <LeaderCard p={crowned.p} display={crowned.display} onOpen={onOpen} unit={unit} />}
+
+      {/* Every row below the leader printed a bare numeral, and the leader
+          card was the only thing on the screen naming it. Switch to Strength
+          and all of them silently change scale — 52 becomes 778 — with
+          nothing to read that off. Named once here, over the column it
+          belongs to, rather than repeated on thirteen rows: the word is the
+          same on every one of them, and thirteen copies of it is a pattern,
+          not a label. */}
+      {rest.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "2px 14px 0" }}>
+          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_LOW, textTransform: "uppercase", letterSpacing: 0.6 }}>
+            {unit}
+          </span>
+        </div>
+      )}
+
       {rest.map((r) => (
         <PlayerRow
           key={r.id}

@@ -26,7 +26,7 @@ import { LevelRepair } from "@/components/settings/LevelRepair";
 import { PROVISIONAL_GAMES, globalKeyFor, globalRankFor } from "@/lib/globalTable";
 import { myLeaguePlaces } from "@/lib/myLeaguePlaces";
 import { listMyLeagues } from "@/lib/leagues";
-import type { Standing } from "@/components/home/StandingHero";
+import { OFFICIAL_UNIT, type Standing } from "@/components/home/StandingHero";
 import { setLevelEstimate } from "@/lib/levelAdmin";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { Globe } from "@/components/ui/Globe";
@@ -901,6 +901,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             // prints a dash and a count, and so does this, rather than a
             // number that screen would refuse to show.
             note: place.provisional ? place.played + " played" : null,
+            // Named, because this slide and the league slide are two different
+            // metrics on two different scales. See Standing.unit.
+            unit: place.unit,
             rating: place.rating,
             footer: place.provisional
               ? "Ranked at " + PROVISIONAL_GAMES + " matches"
@@ -912,7 +915,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const others = (await listMyLeagues()).filter((l: any) => l.id !== gid);
         if (others.length) {
           const places = await myLeaguePlaces(others, myAuthId);
-          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, footer: "of " + pl.of + " players" }));
+          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: OFFICIAL_UNIT, footer: "of " + pl.of + " players" }));
         }
       } catch {}
       if (alive) setOtherStandings(found);
@@ -1066,6 +1069,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const standing = rec && rec.gp > 0 && officialRanks[meId] ? {
       rank: officialRanks[meId],
       rating: Math.round(officialPoints[meId] ?? 0),
+      unit: OFFICIAL_UNIT,
       movement: movement[meId] ?? null,
       form: (form[meId] || []).slice(-5),
     } : null;
