@@ -1,7 +1,6 @@
 "use client";
 import React from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Cycler } from "@/components/ui/Cycler";
 import { StatNumeral } from "@/components/ui/Surfaces";
 import { formatMatchDateTime } from "@/lib/format";
 import {
@@ -57,17 +56,6 @@ export interface NextUp {
   h2h?: string | null;
 }
 
-export interface SummaryPeriod {
-  /** "This week", "This month", "This year". */
-  label: string;
-  /** The record for that span, or null when nothing was played in it. */
-  record: string | null;
-  /** Constant across the periods: where you stand, and your career rate. */
-  rank: number | null;
-  of: number;
-  winRate: number | null;
-}
-
 export interface HomeFocusProps {
   /** Whole days since the last match. Null when they have never played. */
   daysSince?: number | null;
@@ -76,8 +64,6 @@ export interface HomeFocusProps {
   lastMatch?: LastMatch | null;
   /** Null, or a week with nothing in it, gives the empty state. */
   week?: WeekRecord | null;
-  /** One per period, widest last. The line cycles through them. */
-  summary?: SummaryPeriod[] | null;
   /** Who to play next. Two at most — a list is a menu, not a suggestion. */
   suggestions?: Suggestion[] | null;
   nextUp?: NextUp | null;
@@ -200,49 +186,6 @@ function WeekCard({ week }: { week: WeekRecord }) {
   );
 }
 
-// ----------------------------------------------------------- summary line
-/**
- * Week, then month, then year, on the shared clock.
- *
- * The cycle was a casualty of the redesign and should not have been: Sam
- * asked for it, liked it, and then noticed it had gone — "wasn't that meant
- * to fade to your month and your year?" It was. Replacing the three dead
- * tiles was the brief; the turning was the part of them that worked.
- *
- * It rides the same module clock as the standing card above it, so the two
- * turn on the same beat and read as one thing the screen does rather than two
- * things twitching near each other.
- *
- * Only the record changes across the three. The place and the career rate are
- * the same whatever span you are looking at, and they stay put rather than
- * being recomputed per period — a number that holds still while its
- * neighbour turns is doing the job of context.
- */
-function SummaryLine({ periods }: { periods: SummaryPeriod[] }) {
-  const line = (i: number) => {
-    const p = periods[i];
-    const bits: string[] = [p.record ?? "Nothing played"];
-    if (p.rank != null && p.of) bits.push(p.rank + " of " + p.of);
-    if (p.winRate != null) bits.push(p.winRate + "% all time");
-    return (
-      <div style={{ ...quiet, ...tabular, fontSize: 14, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {bits.join(" · ")}
-      </div>
-    );
-  };
-  return (
-    <div style={{ background: FEED_CARD, borderRadius: FEED_TILE_RADIUS, padding: "6px 14px", minHeight: 52, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-      <Cycler
-        labels={periods.map((p) => p.label)}
-        render={line}
-        labelColor={FEED_TEXT_LOW}
-        dotColor={FEED_LIME}
-        ariaLabel="Your record, by period"
-      />
-    </div>
-  );
-}
-
 // ------------------------------------------------------- suggested to play
 /**
  * Who to get on court with next.
@@ -329,7 +272,7 @@ function NextUpCard({ nextUp }: { nextUp: NextUp }) {
 
 // --------------------------------------------------------------- the block
 export function HomeFocus({
-  daysSince, waiting, lastMatch, week, summary, suggestions, nextUp, onBook, onOpenPlayer,
+  daysSince, waiting, lastMatch, week, suggestions, nextUp, onBook, onOpenPlayer,
 }: HomeFocusProps) {
   const active = !!week && week.results.length > 0;
 
@@ -338,8 +281,6 @@ export function HomeFocus({
       {active
         ? <WeekCard week={week!} />
         : <GapCard daysSince={daysSince} waiting={waiting} lastMatch={lastMatch} onBook={onBook} />}
-
-      {!!summary?.length && <SummaryLine periods={summary} />}
 
       {/* Never both. A booked match is the more useful of the two — it is
           something already arranged rather than something to arrange — and two

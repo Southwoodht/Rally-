@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Award, Flame, TrendingUp } from "lucide-react";
+import { Cycler } from "@/components/ui/Cycler";
 import { MovementIndicator, StatNumeral, SurfaceCard, SurfaceTile } from "@/components/ui/Surfaces";
 import { FEED_HAIRLINE, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight } from "@/lib/theme";
 
@@ -36,8 +37,12 @@ export interface RoundupSwing {
   placesGained: number;
 }
 
-export interface WeeklyRoundupCardProps {
-  /** Already formatted — "31 Aug – 6 Sep". */
+export interface RoundupPeriod {
+  /** The heading inside the card — "Your week", "Your month", "Your year". */
+  title: string;
+  /** Already formatted, and the Cycler's own label — "31 Aug – 6 Sep",
+   *  "September so far", "2026 so far". Must be distinct across the set: it
+   *  is the key on the position dots. */
   rangeLabel: string;
   record: { w: number; l: number };
   rank: number;
@@ -50,7 +55,15 @@ export interface WeeklyRoundupCardProps {
    *  to keep. */
   swings?: RoundupSwing[];
   results: RoundupResult[];
+  /** Results there was no room to print. The card says so rather than
+   *  quietly showing five of nineteen. */
+  more?: number;
   highlight?: { kind: "climb" | "streak" | "firstWin"; sentence: string } | null;
+}
+
+export interface WeeklyRoundupCardProps {
+  /** Narrowest first. One slide each, on the shared clock. */
+  periods: RoundupPeriod[];
 }
 
 const ordinal = (n: number): string => {
@@ -63,15 +76,72 @@ const HIGHLIGHT_ICON = { climb: TrendingUp, streak: Flame, firstWin: Award };
 
 const labelStyle: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
 
-export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, results, highlight }: WeeklyRoundupCardProps) {
+export function WeeklyRoundupCard({ periods }: WeeklyRoundupCardProps) {
+  const slide = (i: number) => {
+    const p = periods[i];
+    return <Period p={p} />;
+  };
+
+  return (
+    <SurfaceCard>
+      {/* The range is the Cycler's own label, which is where the 12px line
+          and the position dots already live — so the card keeps exactly the
+          shape it had and gains the turning. */}
+      <Cycler
+        labels={periods.map((p) => p.rangeLabel)}
+        render={slide}
+        labelColor={FEED_TEXT_LOW}
+        dotColor={FEED_LIME}
+        labelStyle={tabular}
+        // Only when it can actually turn. One slide cannot jump, and
+        // reserving the tallest height for it would just be dead space.
+        minBodyHeight={periods.length > 1 ? bodyHeightFor(periods) : undefined}
+        ariaLabel="Your record, by period"
+      />
+    </SurfaceCard>
+  );
+}
+
+/**
+ * Reserved so a turn never changes the page height.
+ *
+ * A fixed number will not do here. The slides differ by whole result rows — a
+ * week with two against a year with five — which is about 160px, where the
+ * standing card's version of this bug was 7px and was still worth pinning.
+ * Every five seconds the composer and the whole feed below would step up and
+ * down.
+ *
+ * So it is computed from the set actually being shown: the tallest slide
+ * decides, and a card whose periods all hold two results reserves room for
+ * two rather than for five. Nothing is measured from the DOM — these are the
+ * component's own paddings, listed where they are used so a layout change
+ * that breaks the arithmetic is at least next to it.
+ */
+const ROW_H = 40;          // 15px line + 9px padding either side, plus a hairline
+const HEAD_H = 196;        // title, the two tiles, and the "Results" label
+const MORE_H = 22;         // "and 54 more"
+const HIGHLIGHT_H = 62;    // the tile, plus its margin
+
+function bodyHeightFor(periods: RoundupPeriod[]): number {
+  return periods.reduce((tallest, p) => {
+    const h = HEAD_H
+      + p.results.length * ROW_H
+      + (p.more ? MORE_H : 0)
+      + (p.highlight ? HIGHLIGHT_H : 0)
+      + ((p.swings || []).length ? 30 : 0);
+    return Math.max(tallest, h);
+  }, 0);
+}
+
+function Period({ p }: { p: RoundupPeriod }) {
+  const { record, rank, movement, swings, results, more, highlight, title } = p;
   const HighlightIcon = highlight ? HIGHLIGHT_ICON[highlight.kind] : null;
   const shown = (swings || []).slice(0, 2);
 
   return (
-    <SurfaceCard>
-      <div style={{ ...labelStyle, ...tabular }}>{rangeLabel}</div>
+    <>
       <div style={{ ...tight(26), fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_TEXT_HI, marginTop: 2, marginBottom: 14 }}>
-        Your week
+        {title}
       </div>
 
       {/* Two, never three. At phone width a third tile turns readable
@@ -128,12 +198,19 @@ export function WeeklyRoundupCard({ rangeLabel, record, rank, movement, swings, 
         ))}
       </div>
 
+      {/* Said out loud rather than left as a short list pretending to be the
+          whole one. A year has more results than a card, and "and 14 more" is
+          the difference between a summary and a wrong number. */}
+      {!!more && more > 0 && (
+        <div style={{ ...labelStyle, marginTop: 8 }}>and {more} more</div>
+      )}
+
       {highlight && HighlightIcon && (
         <SurfaceTile style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
           <HighlightIcon size={18} color={FEED_LIME} strokeWidth={2} />
           <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}>{highlight.sentence}</span>
         </SurfaceTile>
       )}
-    </SurfaceCard>
+    </>
   );
 }

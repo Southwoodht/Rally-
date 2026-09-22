@@ -1352,15 +1352,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         opponents: week.opponents,
         results: weekMatches.map((m) => (m.winner === "draw" ? "D" : m.winner === iAm(m) ? "W" : "L") as "W" | "D" | "L"),
       },
-      // One per span, so the line turns the way the tiles used to. Only the
-      // record differs between them — see SummaryLine.
-      summary: periods.map((p) => ({
-        label: p.label,
-        record: p.played ? p.w + "–" + p.l : null,
-        rank: officialRanks[meId] ?? null,
-        of: Object.keys(officialRanks).length,
-        winRate: winRateAllTime,
-      })),
       suggestions,
       nextUp: bookedNext ? {
         opponent: nextUp.opponent,
