@@ -60,7 +60,7 @@ export function RatingLine({
    * honest and they are answers to different questions, so the card offers
    * both rather than picking.
    */
-  const [mode, setMode] = useState<"elo" | "progress">("elo");
+  const [mode, setMode] = useState<"elo" | "progress">("progress");
 
   useEffect(() => {
     const el = box.current;
@@ -81,10 +81,26 @@ export function RatingLine({
     [t, player],
   );
 
+  /**
+   * Progress leads, and Elo is the second opinion. Sam, 2026-09-22: "swap the
+   * Elo and Progress around, I think Progress is more important."
+   *
+   * He is right, and the reason is the one that made the mode exist: his Elo
+   * peaked in 2025 and sits lower now while he has plainly got better, so the
+   * card's FIRST answer should not be the one that reads as a decline. Elo is
+   * one tap away and still honest about what it measures.
+   */
+  const canProgress = prog.points.length >= MIN_POINTS;
+  // Falling back rather than trusting the default: somebody with no level
+  // timeline has no bands, and defaulting to Progress would open their card
+  // on an empty chart with the toggle hidden — the one arrangement where
+  // nothing on screen would explain itself.
+  const active: "elo" | "progress" = canProgress ? mode : "elo";
+
   // Progress is its own series with its own scale, so it is fed through the
   // same path builder as a timeline shaped like one. Its "start" is the floor
   // of the first band, which is where the line properly begins.
-  const shown: RatingTimeline = mode === "progress"
+  const shown: RatingTimeline = active === "progress"
     ? {
         points: prog.points.map((p) => ({ ...p, rating: p.progress })),
         start: prog.points.length ? Math.floor(prog.points[0].progress) : 0,
@@ -103,7 +119,6 @@ export function RatingLine({
   // and scripts/check-hook-order.js is what now catches it.
   if (t.points.length < MIN_POINTS) return null;
 
-  const canProgress = prog.points.length >= MIN_POINTS;
   const now = shown.points.length ? shown.points[shown.points.length - 1].rating : 0;
   /** "Intermediate · Low" for a band value, for the headline in progress mode. */
   const bandName = (v: number) => {
@@ -135,13 +150,13 @@ export function RatingLine({
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 2 }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
-            {mode === "progress" ? "Progress, all time" : "Elo, all time"}
+            {active === "progress" ? "Progress, all time" : "Elo, all time"}
           </div>
-          {mode === "progress"
+          {active === "progress"
             ? <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{bandName(now)}</div>
             : <StatNumeral size={26} tone="hi">{Math.round(now)}</StatNumeral>}
         </div>
-        {mode === "elo" && t.peak && (
+        {active === "elo" && t.peak && (
           <div style={{ textAlign: "right" }}>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Best ever</div>
             <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID }}>
@@ -149,7 +164,7 @@ export function RatingLine({
             </div>
           </div>
         )}
-        {mode === "progress" && (
+        {active === "progress" && (
           // Two level names on one phone-width row, so the right-hand one
           // never wraps: it shrinks to nothing before the headline does.
           <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
@@ -166,15 +181,15 @@ export function RatingLine({
           from — a toggle to an empty chart is worse than no toggle. */}
       {canProgress && (
         <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-          {([["elo", "Elo"], ["progress", "Progress"]] as const).map(([v, label]) => (
+          {([["progress", "Progress"], ["elo", "Elo"]] as const).map(([v, label]) => (
             <button
               key={v}
               onClick={() => { setMode(v); setPicked(null); }}
               style={{
                 fontFamily: body, fontWeight: 500, fontSize: 12.5, padding: "5px 12px",
                 borderRadius: 999, border: "none", cursor: "pointer",
-                background: mode === v ? FEED_LIME : FEED_RAISED,
-                color: mode === v ? FEED_LIME_INK : FEED_TEXT_MID,
+                background: active === v ? FEED_LIME : FEED_RAISED,
+                color: active === v ? FEED_LIME_INK : FEED_TEXT_MID,
               }}
             >
               {label}
@@ -255,7 +270,7 @@ export function RatingLine({
                 when `now` equals `then`. It appears only where the match was
                 played at a DIFFERENT level from today, which is exactly when
                 it is worth saying. */}
-            {mode === "progress" ? (
+            {active === "progress" ? (
               bandName(sel.progress) !== bandName(now) && (
                 <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0, whiteSpace: "nowrap" }}>
                   {bandName(sel.progress)}
@@ -269,7 +284,7 @@ export function RatingLine({
           </button>
         ) : (
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
-            {mode === "progress"
+            {active === "progress"
               ? prog.points.length + " matches since your level was first recorded. A promotion lifts you above everything below it."
               : t.points.length + " matches. Tap the line to see any one of them."}
           </div>
