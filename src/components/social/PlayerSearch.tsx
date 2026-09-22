@@ -4,7 +4,7 @@ import { ChevronLeft, Search as SearchIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { listFriends } from "@/lib/friends";
 import { currentUserId } from "@/lib/messages";
-import { searchProfiles, type Profile } from "@/lib/profiles";
+import { searchLeaguePlayers, searchProfiles, type LeaguePlayerHit, type Profile } from "@/lib/profiles";
 import {
   FEED_CARD, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW,
   FEED_TEXT_MID, body, fontImport, tight,
@@ -48,6 +48,7 @@ function readRecents(): Recent[] {
 export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] }) {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<Profile[] | null>(null);
+  const [mates, setMates] = useState<LeaguePlayerHit[] | null>(null);
   const [friendIds, setFriendIds] = useState<Set<string>>(new Set());
   const [meId, setMeId] = useState<string | null>(null);
   const [recents, setRecents] = useState<Recent[]>([]);
@@ -75,19 +76,22 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
   // Debounced, because a query per keystroke is a query per keystroke.
   useEffect(() => {
     const term = q.trim();
-    if (!term) { setRows(null); setSearching(false); return; }
+    if (!term) { setRows(null); setMates(null); setSearching(false); return; }
     setSearching(true);
     let live = true;
     const t = setTimeout(async () => {
-      try {
-        const found = await searchProfiles(term, meId || undefined);
-        if (live) setRows(found);
-      } catch (e) {
-        console.error("Search failed", e);
-        if (live) setRows([]);
-      } finally {
-        if (live) setSearching(false);
-      }
+      // Settled, not all: accounts and league-mates are two independent
+      // answers to the question and one failing is no reason to show neither.
+      const [acc, lg] = await Promise.allSettled([
+        searchProfiles(term, meId || undefined),
+        searchLeaguePlayers(term),
+      ]);
+      if (!live) return;
+      if (acc.status === "fulfilled") setRows(acc.value);
+      else { console.error("Account search failed", acc.reason); setRows([]); }
+      if (lg.status === "fulfilled") setMates(lg.value);
+      else { console.error("League search failed", lg.reason); setMates([]); }
+      setSearching(false);
     }, 200);
     return () => { live = false; clearTimeout(t); };
   }, [q, meId]);
@@ -98,6 +102,23 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
     const rank = (p: Profile) => (friendIds.has(p.id) ? 0 : league.has(p.id) ? 1 : 2);
     return [...rows].sort((a, b) => rank(a) - rank(b) || (a.display_name || "").localeCompare(b.display_name || ""));
   }, [rows, friendIds, leagueAuthIds]);
+
+  /**
+   * League-mates who are not already in the account results.
+   *
+   * Somebody with an account appears in both lists, and twice is worse than
+   * either — the account row is the better one, since it is the thing that
+   * can be messaged and friended. So the league row is dropped whenever its
+   * auth_id is already on screen, and what is left is mostly people who have
+   * never signed up. Which is the point: those are the ones you play.
+   */
+  const alsoInYourLeagues = useMemo(() => {
+    if (!mates) return null;
+    const already = new Set((rows || []).map((r) => r.id));
+    return mates
+      .filter((m) => !(m.authId && already.has(m.authId)) && m.authId !== meId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [mates, rows, meId]);
 
   /**
    * Open somebody from a search result.
@@ -182,7 +203,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
           </>
         )}
 
-        {!!q.trim() && ordered && !ordered.length && !searching && (
+        {!!q.trim() && ordered && !ordered.length && alsoInYourLeagues && !alsoInYourLeagues.length && !searching && (
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, padding: "18px 2px", lineHeight: 1.5 }}>
             No one called &ldquo;{q.trim()}&rdquo;.
           </div>
@@ -196,6 +217,31 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
             p.avatar_url,
             () => open(p),
           )
+        )}
+
+        {/* The people you actually play. Under the accounts rather than mixed
+            in, because the two answer different questions — an account is
+            somebody you can message, a league row is somebody you have a
+            record against — and a heading is cheaper than explaining why one
+            row has fewer things you can do with it. */}
+        {!!alsoInYourLeagues?.length && (
+          <>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, margin: "18px 0 8px" }}>
+              In your leagues
+            </div>
+            {alsoInYourLeagues.map((m) =>
+              row(
+                m.id,
+                m.name,
+                // The league, not "not on Rally yet". Which of your clubs
+                // they are in is the useful fact; whether they have signed up
+                // is Rally's business and reads as a complaint about them.
+                m.leagueName,
+                m.avatarUrl,
+                () => open({ id: m.id, name: m.name, avatar_url: m.avatarUrl }),
+              )
+            )}
+          </>
         )}
 
         {searching && !ordered?.length && (

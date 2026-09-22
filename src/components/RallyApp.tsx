@@ -107,6 +107,10 @@ function rangeText(from: number, to: number): string {
     : fmt(from, true) + " – " + fmt(to, true);
 }
 
+/** players.id is the app's own short id; an account is a uuid. §6 records
+ *  the same distinction biting trophies.player_id. */
+const IS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function nextUpLine(pct: number | null): string {
   if (pct == null) return "First meeting. No history, no excuses.";
   if (pct >= 65) return "You're the favourite for a reason. Play like it.";
@@ -218,6 +222,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       // is loaded, which is here. Somebody in no league of mine has no such
       // profile to show, so they get the public page instead.
       if (target) { setProfileId(target.id); setProfileYear("all"); }
+      // The public page is keyed on an ACCOUNT, so only send an account to
+      // it. Search can now hand over a league player row — a short app id,
+      // never a uuid — for somebody with no account at all, and forwarding
+      // one of those to /players/ would open a page that can only say it
+      // found nobody. Since search only ever returns people from leagues we
+      // are in, landing here means they are in a DIFFERENT one of ours.
+      else if (!IS_UUID.test(pendingIntent.authId)) {
+        flash("They're in another of your leagues — switch to it to see their profile.");
+      }
       else if (typeof window !== "undefined") { window.location.replace("/players/" + encodeURIComponent(pendingIntent.authId)); return; }
     } else if (pendingIntent.kind === "message") {
       setMsgWith(pendingIntent.authId);

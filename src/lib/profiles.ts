@@ -63,6 +63,99 @@ export async function searchProfiles(query: string, excludeId?: string): Promise
   return excludeId ? rows.filter((r) => r.id !== excludeId) : rows;
 }
 
+export interface LeaguePlayerHit {
+  /** The player ROW id — the app's own short id, not a uuid, and not an
+   *  account. ?profile= takes either. */
+  id: string;
+  name: string;
+  /** Which of your leagues they are in, for the row's second line. */
+  leagueName: string | null;
+  leagueId: string | null;
+  avatarUrl: string | null;
+  /** Their account, when they have one — used to drop duplicates against the
+   *  account results rather than listing somebody twice. */
+  authId: string | null;
+}
+
+/**
+ * People in YOUR leagues, whether or not they are on Rally.
+ *
+ * Sam searched "zaach" and got nothing. His row reads name "Zaach " (with a
+ * trailing space), last "Rodriguez", nick null, auth_id NULL — he has never
+ * made an account. searchProfiles searches accounts, so there was nothing to
+ * find, and no change to search_player_accounts() could have found him: it is
+ * auth_id-only by design, and correctly so.
+ *
+ * And he is not the exception. Most of a club has never signed up; they are
+ * shell rows somebody added to log a result against. Being unable to search
+ * for the people you actually play is close to the opposite of what a player
+ * search is for.
+ *
+ * **This needs no SQL and widens nothing.** RLS on players already limits
+ * reads to leagues you are a member of, so this returns exactly the people
+ * already on your own table — the same names, reachable by typing instead of
+ * scrolling. Somebody else's club stays as invisible as it is now.
+ *
+ * Three queries rather than one .or(), for the reason searchProfiles gives:
+ * PostgREST parses .or() as structured syntax, so a raw query string with a
+ * comma in it becomes query syntax rather than a value.
+ */
+export async function searchLeaguePlayers(query: string): Promise<LeaguePlayerHit[]> {
+  if (!supabase) return [];
+  const q = query.trim();
+  if (q.length < 2) return [];
+  const like = "%" + q + "%";
+  const cols = "id,name,last,nick,avatar_url,auth_id,league_id";
+
+  // League rows only, and the "not null" is load-bearing rather than tidy.
+  //
+  // The SELECT policy on players reads: a league row needs is_league_member,
+  // and a LEAGUE-LESS row (a Friendly shell) is readable by any signed-in
+  // account at all. Leaving those in would widen what can be FOUND without
+  // widening what can be read — which is the exact distinction §6 draws when
+  // it explains why search_player_accounts returns ids and not rows, and the
+  // wrong side of it. Somebody else's Friendly shell is not on your table and
+  // you have no record against them.
+  //
+  // When Friendlies actually ship, the right addition is rows created_by me,
+  // not every league-less row in the database.
+  const db = supabase;
+  const q3 = (col: string) =>
+    run(
+      db.from("players").select(cols).not("league_id", "is", null).ilike(col, like).limit(20),
+      "searching players",
+    );
+  const [byName, byLast, byNick] = await Promise.all([q3("name"), q3("last"), q3("nick")]);
+
+  const seen = new Map<string, any>();
+  for (const r of [...(byName || []), ...(byLast || []), ...(byNick || [])]) seen.set(r.id, r);
+  const rows = Array.from(seen.values());
+  if (!rows.length) return [];
+
+  // League names in one go, and a failure here costs a subtitle rather than
+  // the result — knowing WHICH of your leagues somebody is in is useful and
+  // is not what you searched for.
+  const leagueIds = Array.from(new Set(rows.map((r) => r.league_id).filter(Boolean)));
+  const names = new Map<string, string>();
+  if (leagueIds.length) {
+    try {
+      const ls = await run(supabase.from("leagues").select("id,name").in("id", leagueIds), "naming leagues");
+      for (const l of ls || []) names.set(l.id, l.name);
+    } catch { /* subtitle only */ }
+  }
+
+  return rows.map((r) => ({
+    id: r.id,
+    // Trimmed, because the stored names are not. Zaach's is "Zaach " and that
+    // trailing space is what put two spaces in "Samuel  Henry".
+    name: [r.name, r.last].map((x: any) => String(x ?? "").trim()).filter(Boolean).join(" ") || "Player",
+    leagueName: r.league_id ? names.get(r.league_id) || null : null,
+    leagueId: r.league_id || null,
+    avatarUrl: r.avatar_url || null,
+    authId: r.auth_id || null,
+  }));
+}
+
 /**
  * Keep the account's public copy of a name and photo in step.
  *
