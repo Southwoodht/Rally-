@@ -339,7 +339,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
           // face beside it. Centred and quiet instead: a note about the
           // conversation rather than a turn in it, which is also why it keeps
           // no tail, no grouping and no "Seen".
-          const system = isSystemMessage(m.body);
+          const system = isSystemMessage(m);
           if (system) {
             return (
               <React.Fragment key={m.id}>

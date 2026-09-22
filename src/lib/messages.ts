@@ -23,6 +23,10 @@ export interface MessageRow {
   sender_id: string;
   body: string;
   image_url?: string | null;
+  /** "chat" or "system". Absent on every row until schema_message_kind.sql
+   *  has been run, and absent-or-chat is why isSystemMessage still reads the
+   *  text as well — see there. */
+  kind?: string | null;
   created_at: string;
   read_at: string | null;
 }
@@ -111,7 +115,12 @@ export async function listMessages(threadId: string): Promise<MessageRow[]> {
   )) || [];
 }
 
-export async function sendMessage(threadId: string, body: string, imageUrl?: string | null): Promise<void> {
+export async function sendMessage(
+  threadId: string,
+  body: string,
+  imageUrl?: string | null,
+  kind: "chat" | "system" = "chat",
+): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   const myId = await currentUserId();
   if (!myId) throw new Error("You need to be signed in.");
@@ -119,7 +128,19 @@ export async function sendMessage(threadId: string, body: string, imageUrl?: str
   // A picture on its own is a message. Only the pair being empty is nothing
   // to send.
   if (!text && !imageUrl) return;
-  await run(supabase.from("messages").insert({ thread_id: threadId, sender_id: myId, body: text.slice(0, 4000), image_url: imageUrl || null }), "sending");
+  const row = { thread_id: threadId, sender_id: myId, body: text.slice(0, 4000), image_url: imageUrl || null };
+
+  // The column may not exist yet — schema_message_kind.sql is Sam's to run,
+  // and a nudge must not fail because a migration is pending. So ask for it,
+  // and fall back to the row without it only when the database says there is
+  // no such column. Anything else is a real failure and is raised as one.
+  if (kind === "system") {
+    const first: any = await supabase.from("messages").insert({ ...row, kind });
+    if (!first?.error) return;
+    const msg = String(first.error.message || "");
+    if (!/kind|schema cache/i.test(msg)) throw new Error("Couldn't send: " + msg);
+  }
+  await run(supabase.from("messages").insert(row), "sending");
 }
 
 export async function acceptThread(threadId: string): Promise<void> {
@@ -178,7 +199,7 @@ export async function nudgeAboutMatch(matchId: string, otherAuthId: string, text
   if (!supabase) throw new Error("Not connected.");
   await run(supabase.rpc("nudge_match", { p_match_id: matchId }), "sending the nudge");
   const threadId = await startThread(otherAuthId);
-  await sendMessage(threadId, text);
+  await sendMessage(threadId, text, null, "system");
 }
 
 // ------------------------------------------------------------------ system
@@ -210,9 +231,20 @@ const SYSTEM_SHAPES: RegExp[] = [
   / cancelled your match(?: on .+)?\.$/,
 ];
 
-/** True for a message Rally wrote. Anchored at the end, so somebody quoting
- *  one back at you in a sentence of their own is still their message. */
-export function isSystemMessage(bodyText: string | null | undefined): boolean {
-  const s = String(bodyText ?? "").trim();
+/**
+ * True for a message Rally wrote.
+ *
+ * The column OR the text, deliberately — not the column alone. Rows sent
+ * before schema_message_kind.sql runs carry its "chat" default, so the column
+ * is present and wrong for exactly those rows, and that migration does no
+ * backfill on purpose. The text is the only thing that knows about them, and
+ * it stays the answer for them forever.
+ *
+ * The text shapes are anchored at the end, so somebody quoting one back at
+ * you inside a sentence of their own is still their message.
+ */
+export function isSystemMessage(m: MessageRow | string | null | undefined): boolean {
+  if (m && typeof m === "object" && m.kind === "system") return true;
+  const s = String((typeof m === "string" ? m : m?.body) ?? "").trim();
   return !!s && SYSTEM_SHAPES.some((re) => re.test(s));
 }

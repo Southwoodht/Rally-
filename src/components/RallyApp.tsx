@@ -656,7 +656,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const when = fx.booked ? formatMatchDateTime(fx.booked) : null;
     try {
       const threadId = await startThread(other.auth_id);
-      await sendMessage(threadId, systemMessage.cancelled(mine, when));
+      await sendMessage(threadId, systemMessage.cancelled(mine, when), null, "system");
     } catch (e) {
       console.error("Cancelled the match but couldn't tell them", e);
       flash("Match cancelled — couldn't message " + fullNameOf(other));
