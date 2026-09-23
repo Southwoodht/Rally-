@@ -34,6 +34,15 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: "#15352a",
+  // WITHOUT THIS, env(safe-area-inset-*) IS ZERO ON iOS.
+  //
+  // The shell has carried padding-top: env(safe-area-inset-top) since the
+  // Home rebuild and the league bar still sat under the status bar, which
+  // looked like the padding being overridden by something. It was not: the
+  // inset only reports a real value when the page has opted into drawing
+  // under the notch, and that opt-in is here rather than in any stylesheet.
+  // Every safe-area rule in the app was evaluating to 0px.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

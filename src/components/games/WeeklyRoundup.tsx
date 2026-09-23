@@ -3,6 +3,7 @@ import { countsAsPlayed } from "@/core/matchStatus";
 import React, { useEffect, useMemo, useState } from "react";
 import { WeeklyRoundupCard, type RoundupPeriod, type RoundupResult, type RoundupSwing } from "@/components/games/WeeklyRoundupCard";
 import { feedContexts } from "@/core/feedContext";
+import { formatSets, orientToWinner, parseSets } from "@/core/sets";
 import { currentStreakOf, rankMaps } from "@/core/rank";
 import { movementFor, topSwings, weekEndingFor, weekStartFor, type RankSnapshot } from "@/core/snapshots";
 import { loadSnapshots } from "@/lib/rankSnapshots";
@@ -87,6 +88,36 @@ export function WeeklyRoundup({ players, matches, elo, wdl, meId, leagueId }: an
       return { w, l };
     };
 
+    /**
+     * A score is shown only when it agrees with the result, and is printed
+     * winner-first.
+     *
+     * This used to hand over m.score raw, and two things came out of that.
+     *
+     * Sam saw "Zaach beat Charlie — 6–6" and reasonably assumed the app was
+     * summing sets to fit the row. It was not: 6-6 is exactly what is stored,
+     * and a level score beside a declared winner cannot both be true. The
+     * scoreline card in the feed has always refused that case — orientToWinner
+     * returns null when the totals tie on a decided match, and the card simply
+     * shows no numerals — so the same match was printing a score here and
+     * hiding it there. One of them had to be wrong and it was this one.
+     *
+     * The second thing is quieter and was never reported: the stored strings
+     * have no winner-first convention, so a raw score could be written from
+     * the loser's side and read as "Zaach beat Charlie 3-6". Orienting fixes
+     * that for every row, not just the broken ones.
+     *
+     * A score that cannot be reconciled is dropped rather than corrected. It
+     * is a data-entry problem — that Zaach-Charlie match wants editing — and
+     * guessing which number was mistyped would put a wrong one in a record.
+     */
+    const scoreOf = (m: any): string | null => {
+      const parsed = parseSets(m.score);
+      if (!parsed) return m.score || null;   // free text we cannot read: as written
+      const oriented = orientToWinner(parsed, m.winner);
+      return oriented ? formatSets(oriented) : null;
+    };
+
     const resultsIn = (list: any[]): RoundupResult[] => [...list]
       .sort((a: any, b: any) => b.date - a.date)
       .slice(0, RESULTS_MAX)
@@ -94,7 +125,7 @@ export function WeeklyRoundup({ players, matches, elo, wdl, meId, leagueId }: an
         const drawn = m.winner === "draw";
         const winId = drawn ? m.p1 : m.winner === "p1" ? m.p1 : m.p2;
         const loseId = drawn ? m.p2 : m.winner === "p1" ? m.p2 : m.p1;
-        return { winnerName: nameOf(winId), loserName: nameOf(loseId), score: m.score || null, drawn };
+        return { winnerName: nameOf(winId), loserName: nameOf(loseId), score: scoreOf(m), drawn };
       });
 
     const now = new Date();

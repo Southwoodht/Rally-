@@ -74,8 +74,20 @@ function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
           <div style={{ ...tabular, display: "flex", justifyContent: "space-between", gap: 8, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 6 }}>
             <span>{at} at or above</span>
             <span>{below} below</span>
-            {unknown > 0 && <span>{unknown} unknown level</span>}
+            {unknown > 0 && <span>{unknown} not graded</span>}
           </div>
+
+          {/* The headline says "26 of 44" and this bar sums to 45, and both
+              are correct: 44 is the GRADED matches, 45 is every match played.
+              Sam counted the segments, got a number the sentence above did not
+              use, and read it as a bug — which it is, as a piece of writing.
+              Saying the two totals out loud costs one line and is cheaper than
+              picking one of them and being wrong on a different screen. */}
+          {unknown > 0 && (
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_LIME_INK_2, opacity: 0.85, marginTop: 4 }}>
+              {q.graded} graded of {total} played — the percentage above is out of {q.graded}.
+            </div>
+          )}
         </>
       )}
     </div>
@@ -166,7 +178,21 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
                   {fullNameOf(o.player)}
                 </span>
                 <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
-                  {o.cat ? o.cat + " · " + o.phrase : "No level recorded"}
+                  {/* Past tense, because both halves of this are historical:
+                      the category AND the gap come from the most recent
+                      meeting, not from today. Beside a current Intermediate
+                      badge, "Amateur · your level" in the present tense reads
+                      as a contradiction — which is what Sam reported. "then"
+                      is the word HistoryMode already uses for this ("Beginner
+                      then, intermediate now"), borrowed rather than a second
+                      convention invented.
+
+                      THE SAME LINE IS RENDERED TWICE in this file — here in
+                      the at-or-above/below drill-down, and again in Every
+                      opponent below. Change both or they disagree; the first
+                      pass at this changed only one and the screen Sam had
+                      actually screenshotted was the other. */}
+                  {o.cat ? o.cat + " then · " + o.phrase + " then" : "No level recorded"}
                 </span>
               </span>
               <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, flexShrink: 0 }}>
@@ -275,7 +301,8 @@ function Opponents({ q, onOpen }: { q: MatchQuality; onOpen?: (id: string) => vo
               {fullNameOf(o.player)}
             </span>
             <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
-              {o.cat ? o.cat + " · " + o.phrase : "No level recorded"}
+              {/* Past tense — see the note on the same line further up. */}
+              {o.cat ? o.cat + " then · " + o.phrase + " then" : "No level recorded"}
             </span>
           </span>
           <span style={{ textAlign: "right", flexShrink: 0 }}>

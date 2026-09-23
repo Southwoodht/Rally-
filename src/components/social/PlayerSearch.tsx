@@ -181,6 +181,11 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
           </div>
         )}
 
+        {/* iOS offers Contacts over any text field it thinks might hold a
+            name, and a contact card is never the answer here — the only
+            useful completions are Rally accounts, which the list below
+            already gives. All four attributes, because autoComplete alone
+            still leaves iOS capitalising and "correcting" surnames. */}
         {!signedOut && <div style={{ display: "flex", alignItems: "center", gap: 9, background: FEED_RAISED, borderRadius: 14, padding: "0 13px", marginBottom: 16 }}>
           <SearchIcon size={17} color={FEED_TEXT_MID} strokeWidth={2} />
           <input
@@ -189,6 +194,10 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
             onChange={(e) => setQ(e.target.value)}
             placeholder="Name or friend code"
             autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             style={{
               flex: 1, minWidth: 0, height: 46, background: "transparent", border: "none",
               color: FEED_TEXT_HI, fontFamily: body, fontWeight: 400, fontSize: 15.5, outline: "none",

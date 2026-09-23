@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, Info } from "lucide-react";
+import { AvatarArt, hasAvatarArt } from "@/components/ui/AvatarArt";
 import { Empty } from "@/components/ui/atoms";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS } from "@/core/constants";
@@ -71,12 +72,27 @@ const nameStyle: React.CSSProperties = {
   whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "-0.01em",
 };
 
+// The Global table draws its own face rather than using ui/Avatar, because a
+// global row is not a player row — it is an aggregate keyed by account.
+//
+// Which is why the avatar cleanup missed it. Avatar.tsx stopped rendering a
+// stored id AS an emoji weeks ago; this component still did, so Zaach's 🟣
+// went on showing as an operating-system purple circle on Global and Sam
+// reported it as unfixed. It was: on the other screen.
+//
+// Same treatment as ui/Avatar and the Messages rows now — drawn art where we
+// have it, an initial otherwise, one background for every face. If the two
+// ever need to differ, they need to differ ON PURPOSE, and a comment.
 function Face({ row, size = 38, dim }: { row: GlobalRow; size?: number; dim?: boolean }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0, opacity: dim ? 0.55 : 1 } as const;
   if (row.avatarUrl) return <img src={row.avatarUrl} alt="" style={{ ...common, objectFit: "cover" }} />;
   return (
-    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontSize: size * 0.46 }}>
-      {row.avatar || (row.name || "?").charAt(0).toUpperCase()}
+    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, overflow: "hidden" }}>
+      {hasAvatarArt(row.avatar)
+        ? <AvatarArt id={row.avatar} size={size * 0.56} />
+        : <span style={{ fontFamily: body, fontWeight: 500, fontSize: size * 0.38, color: FEED_TEXT_LOW }}>
+            {(row.name || "?").charAt(0).toUpperCase()}
+          </span>}
     </span>
   );
 }

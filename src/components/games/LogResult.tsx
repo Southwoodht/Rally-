@@ -25,7 +25,23 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 
 export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onCreatePlayer, onDeleteBetween }: any) {
   const [mode, setMode] = useState("single");
-  const [p1, setP1] = useState(""); const [p2, setP2] = useState("");
+  /**
+   * Player 1 starts as you.
+   *
+   * You are in the match nearly every time — this is the screen somebody
+   * uses standing on court having just finished one — and it was starting
+   * empty for no reason anybody could point at. Still editable, because
+   * league staff do log results for two other people.
+   *
+   * It also fixes a thing that read as a separate bug: the score grid labels
+   * its rows with the chosen names and falls back to "Player 1 / Player 2"
+   * only while a slot is empty. With one slot filled from the start, half
+   * the grid is named before you touch anything.
+   *
+   * meId is empty for somebody with no player row in this league, and the
+   * initialiser handles that by leaving it blank rather than seeding "".
+   */
+  const [p1, setP1] = useState(() => meId || ""); const [p2, setP2] = useState("");
   const [dateStr, setDateStr] = useState(todayStr());
   // Set-by-set rather than one free-text box. Stored back into the same
   // `score` string as "6-2, 6-3, 6-2" (see core/sets.ts), so nothing else
@@ -116,15 +132,19 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             {sets.length < 5 && (
               <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ ...addLink, padding: "10px 0 0" }}>Add a set</button>
             )}
+            {/* One line, not three. This was the largest block of text on the
+                screen and it is optional guidance on an optional field — on a
+                phone it pushed "Who won?", the only thing you MUST answer,
+                below the fold. */}
             <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>
-              Leave it blank if you&apos;d rather. Filling it in tells both tables how close the match was — a narrow loss to a strong player is worth more than a heavy one.
+              Optional — but it tells both tables how close it was.
             </div>
           </Field>
           {showMore ? (
             <>
-              <Field label="Note (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Came back from 4–1 down" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
-              <Field label="Venue (optional)"><input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Seacourt, Court 2" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
-              <Field label="Category (optional)"><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Men's Singles, Friendly" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+              <Field label="Note (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Came back from 4–1 down" autoComplete="off" autoCorrect="off" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+              <Field label="Venue (optional)"><input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="e.g. Seacourt, Court 2" autoComplete="off" autoCorrect="off" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+              <Field label="Category (optional)"><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Men's Singles, Friendly" autoComplete="off" autoCorrect="off" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
             </>
           ) : (
             <button onClick={() => setShowMore(true)} style={{ ...addLink, padding: 0, marginBottom: 16 }}>Add a note or venue</button>

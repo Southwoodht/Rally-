@@ -176,7 +176,11 @@ function Period({ p }: { p: RoundupPeriod }) {
         </div>
       )}
 
-      <div style={{ ...labelStyle, marginBottom: 6 }}>Results</div>
+      {/* "League results", not "Results". The two tiles above are the
+          viewer's own record and rank; this list is every match in the league
+          over the same span, including ones they were not in. One card, two
+          scopes — so the one that changes has to say so. */}
+      <div style={{ ...labelStyle, marginBottom: 6 }}>League results</div>
       <div>
         {results.map((r, i) => (
           <div
