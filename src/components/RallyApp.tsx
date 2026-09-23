@@ -1514,7 +1514,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
-        {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} leagueId={gid} />}
+        {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} leagueId={gid} displayName={displayName} />}
         {tab === "matches" && (
           <SubHeader
             title={!matchesFor || matchesFor === meId ? "Your matches" : shortNameOf(players.find((p) => p.id === matchesFor)) + "'s matches"}

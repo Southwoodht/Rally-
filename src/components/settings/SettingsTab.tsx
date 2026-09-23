@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { AccountCard } from "@/components/settings/AccountCard";
 import { LeagueMembers } from "@/components/settings/LeagueMembers";
 import { isFriendlyLeague } from "@/lib/leagueData";
 import { LevelGuide } from "@/components/profile/LevelGuide";
@@ -12,7 +13,7 @@ import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
 import { fmtDate, uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, MUTED, NICKS, PANEL2, body, card, input, miniInput } from "@/lib/theme";
 
-export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId, leagueId }: any) {
+export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGenerate, onClearFixtures, onAddFixture, onRemoveFixture, onLoadDemo, onClearResults, onImportHistoricalMatches, players, setPlayers, matches, flash, meId, leagueId, displayName }: any) {
   const [name, setName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState(null);
   const [confirmWipe, setConfirmWipe] = useState(false);
@@ -210,6 +211,12 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
           )}
         </div>
       </div>
+
+      {/* Last on the screen, under the league's own controls, because it is
+          about you rather than about the league — and because the foot of
+          Settings is where everybody has looked for it since phones had
+          settings. */}
+      <AccountCard displayName={displayName} />
     </div>
   );
 }
