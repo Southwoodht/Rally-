@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, Info } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
+import { initialsOf } from "@/lib/format";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS } from "@/core/constants";
 import { ratingColumn } from "@/core/rankDisplay";
@@ -85,10 +86,20 @@ const nameStyle: React.CSSProperties = {
 function Face({ row, size = 38, dim }: { row: GlobalRow; size?: number; dim?: boolean }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0, opacity: dim ? 0.55 : 1 } as const;
   if (row.avatarUrl) return <img src={row.avatarUrl} alt="" style={{ ...common, objectFit: "cover" }} />;
-  // Photos only, and the space kept — the same rule as ui/Avatar, stated
-  // twice because this table draws its own face from an aggregate row rather
-  // than a player. If one of them changes, the other has to.
-  return <span aria-hidden="true" style={{ width: size, height: size, flexShrink: 0, display: "inline-block" }} />;
+  // Initials otherwise — the same rule as ui/Avatar, stated twice because
+  // this table draws its own face from an aggregate row rather than a player
+  // row. If one of them changes, the other has to.
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        ...common, display: "inline-grid", placeItems: "center", background: FEED_RAISED,
+        fontFamily: body, fontWeight: 500, fontSize: size * 0.34, letterSpacing: 0.3, color: FEED_TEXT_LOW,
+      }}
+    >
+      {initialsOf(row.name)}
+    </span>
+  );
 }
 
 // A global row is keyed by auth id, or by "p:<player id>" for somebody who

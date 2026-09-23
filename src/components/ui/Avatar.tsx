@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+import { initialsOf } from "@/lib/format";
+import { FEED_TEXT_LOW, PANEL2, body as bodyFont } from "@/lib/theme";
 
 // A face, and only when there is one.
 //
@@ -31,10 +33,23 @@ export function Avatar({ player, size = 34, enlargeable = false }: any) {
   if (!player) return null;
   const photo = player.avatarUrl;
 
-  // No photo: the space, and nothing in it. Deliberately not a background
-  // either — a filled circle with nothing inside reads as a failed image.
+  // No photo: their initials. Two letters, because one is the problem this
+  // app already has a rule about — Charlie Henry and Charlie Easey are both
+  // "C" and are emphatically not the same person.
   if (!photo) {
-    return <span aria-hidden="true" style={{ width: size, height: size, flexShrink: 0, display: "inline-block" }} />;
+    return (
+      <span
+        aria-hidden="true"
+        style={{
+          width: size, height: size, borderRadius: size / 2, flexShrink: 0,
+          display: "inline-grid", placeItems: "center", background: PANEL2,
+          fontFamily: bodyFont, fontWeight: 500, fontSize: size * 0.34,
+          letterSpacing: 0.3, color: FEED_TEXT_LOW,
+        }}
+      >
+        {initialsOf(player)}
+      </span>
+    );
   }
 
   const body = (

@@ -9,7 +9,7 @@ import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM
 import { ArrowUp, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { readImageForMessage } from "@/lib/photo";
 import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
-import { fullNameOf } from "@/lib/format";
+import { fullNameOf, initialsOf } from "@/lib/format";
 
 // There's no realtime subscription here on purpose — one poll while the
 // screen is open is a few hundred bytes and needs no extra Supabase setup.
@@ -83,10 +83,20 @@ function Face({ t, name, player, size = 44 }: { t: Thread; name: string; player?
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0 } as const;
   const photo = player?.avatarUrl || t.profile?.avatar_url;
   if (photo) return <img src={photo} alt="" style={{ ...common, objectFit: "cover", background: FEED_RAISED }} />;
-  // Photos only, and the space kept — the same rule as ui/Avatar. A thread
-  // list is the one place an initial came closest to earning its keep, and it
-  // still did not: the name is on the very next line, in full.
-  return <span aria-hidden="true" style={{ ...common, display: "inline-block" }} />;
+  // Initials otherwise — the same rule as ui/Avatar, drawn here because a
+  // thread is not a player row. player first, so a league-mate's surname is
+  // used where we have it; the thread's display name is the fallback.
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        ...common, display: "inline-grid", placeItems: "center", background: FEED_RAISED,
+        fontFamily: body, fontWeight: 500, fontSize: size * 0.34, letterSpacing: 0.3, color: FEED_TEXT_LOW,
+      }}
+    >
+      {initialsOf(player || name)}
+    </span>
+  );
 }
 
 // The press state has to be CSS — :active cannot be expressed inline. No

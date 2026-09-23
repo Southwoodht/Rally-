@@ -35,6 +35,35 @@ export const fullNameOf = (p: any): string => {
   return parts.length ? parts.join(" ") : "Someone";
 };
 
+/**
+ * "ZR" for Zaach Rodriguez. Two letters, not one.
+ *
+ * Sam, 2026-09-23: "maybe have their initials? Like zaach would be ZR." The
+ * version this replaces was a single letter, and that is the difference
+ * between a decoration and an identifier — Seacourt has a Charlie Henry and a
+ * Charlie Easey, and "C" twice is the problem the app already has a rule
+ * about. "CH" and "CE" are two different people at a glance.
+ *
+ * Takes either a player row or a name already assembled, because the three
+ * places that draw a face have different things to hand: a player row, a
+ * global aggregate keyed by account, and a thread with a display name.
+ *
+ * First and LAST word, not the first two — "Jamie Chevalier Watts" is JW, not
+ * JC. Trimmed on the way in, because the stored names are not: Zaach's is
+ * "Zaach " and a trailing space would otherwise take the second initial from
+ * an empty string.
+ */
+export const initialsOf = (who: any): string => {
+  const parts = typeof who === "string"
+    ? who.split(/\s+/)
+    : [who?.name, who?.last];
+  const words = parts.map((x: any) => String(x ?? "").trim()).filter(Boolean);
+  if (!words.length) return "?";
+  const first = words[0][0];
+  const last = words.length > 1 ? words[words.length - 1][0] : "";
+  return (first + last).toUpperCase();
+};
+
 export const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 
 export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);
