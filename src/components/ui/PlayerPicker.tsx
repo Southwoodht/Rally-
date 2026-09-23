@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
 import { ChevronDown, Plus } from "lucide-react";
@@ -19,7 +18,6 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
   const [q, setQ] = useState("");
   const [newName, setNewName] = useState("");
   const [newLast, setNewLast] = useState("");
-  const [newAvatar, setNewAvatar] = useState<string | null>(null);
   const [newIsAccount, setNewIsAccount] = useState(false);
   const [collision, setCollision] = useState<any>(null);
   const [err, setErr] = useState("");
@@ -29,7 +27,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
   const term = q.trim().toLowerCase();
   const shown = term ? list.filter((p) => ((p.name || "") + " " + (p.last || "") + " " + (p.nick || "")).toLowerCase().includes(term)) : list;
 
-  const reset = () => { setMode("pick"); setQ(""); setNewName(""); setNewLast(""); setNewAvatar(null); setNewIsAccount(false); setCollision(null); setErr(""); };
+  const reset = () => { setMode("pick"); setQ(""); setNewName(""); setNewLast(""); setNewIsAccount(false); setCollision(null); setErr(""); };
   const close = () => { setOpen(false); reset(); };
   const pick = (id: string) => { onChange(id); close(); };
 
@@ -62,7 +60,9 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
     if (!nm) { setErr("Enter a name."); return; }
     const existing = findLikeness(nm, newLast.trim());
     if (existing && !collision) { setCollision(existing); return; }
-    const created = { id: uid(), name: nm, last: newLast.trim() || undefined, avatar: newAvatar, auth_id: null };
+    // No avatar: only an uploaded photo renders now, and a new player has
+    // none. The column stays reserved for one, which is the whole design.
+    const created = { id: uid(), name: nm, last: newLast.trim() || undefined, avatar: null, auth_id: null };
     onCreatePlayer(created);
     pick(created.id);
   };
@@ -132,10 +132,6 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
                 <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                   <input value={newName} onChange={(e) => { setNewName(e.target.value); setCollision(null); }} placeholder="First name" style={{ ...input, flex: 1, boxSizing: "border-box" as const }} />
                   <input value={newLast} onChange={(e) => { setNewLast(e.target.value); setCollision(null); }} placeholder="Surname (optional)" style={{ ...input, flex: 1, boxSizing: "border-box" as const }} />
-                </div>
-                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "10px 0 6px" }}>Avatar</div>
-                <div style={{ marginBottom: 12 }}>
-                  <AvatarPicker value={newAvatar} onChange={setNewAvatar} />
                 </div>
                 <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "10px 0 6px" }}>Player type</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>

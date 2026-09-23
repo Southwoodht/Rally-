@@ -6,7 +6,6 @@ import { isFriendlyLeague } from "@/lib/leagueData";
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { TimelineEditor } from "@/components/settings/TimelineEditor";
 import { Avatar } from "@/components/ui/Avatar";
-import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
@@ -19,7 +18,6 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
   const [confirmWipe, setConfirmWipe] = useState(false);
   const [fxP1, setFxP1] = useState("");
   const [fxP2, setFxP2] = useState("");
-  const [avOpen, setAvOpen] = useState(null);
   const [tlOpen, setTlOpen] = useState(null);
   const [guideOpen, setGuideOpen] = useState(false);
   const [seasonName, setSeasonName] = useState("");
@@ -130,7 +128,10 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
           return (
             <div key={p.id} style={{ padding: "10px 0", borderTop: "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <button onClick={() => !locked && setAvOpen(avOpen === p.id ? null : p.id)} style={{ background: "transparent", border: "none", padding: 0, cursor: locked ? "default" : "pointer" }}><Avatar player={p} size={36} /></button>
+                {/* Not a button any more: it opened the icon picker, and the
+                    picker is gone with the icons. A tap target that opens
+                    nothing is worse than no tap target. */}
+                <Avatar player={p} size={36} />
                 {p.auth_id ? (
                   <span style={{ flex: 1, fontFamily: body, color: CHALK, fontSize: 15 }}>{p.name}{p.last ? " " + p.last : ""}<span style={{ color: MUTED, fontSize: 11, marginLeft: 8, fontFamily: body, fontWeight: 600 }}> account</span></span>
                 ) : (
@@ -147,11 +148,6 @@ export function SettingsTab({ group, updateGroup, onRemovePlayer, fixtures, onGe
                   <button onClick={() => setConfirmRemove(p.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: CLAY, background: "transparent", border: "none", borderRadius: 8, padding: "5px 9px", cursor: "pointer" }}>Remove</button>
                 )}
               </div>
-              {avOpen === p.id && !locked && (
-                <div style={{ padding: "4px 0 10px" }}>
-                  <AvatarPicker value={p.avatar} onChange={(av) => setAvatar(p.id, av)} />
-                </div>
-              )}
               {locked ? (
                 <div style={{ fontFamily: body, fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
                   {[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}

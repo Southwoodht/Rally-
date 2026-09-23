@@ -83,20 +83,10 @@ function Face({ t, name, player, size = 44 }: { t: Thread; name: string; player?
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0 } as const;
   const photo = player?.avatarUrl || t.profile?.avatar_url;
   if (photo) return <img src={photo} alt="" style={{ ...common, objectFit: "cover", background: FEED_RAISED }} />;
-  if (player?.avatar) {
-    return (
-      <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontSize: size * 0.52 }}>
-        {player.avatar}
-      </span>
-    );
-  }
-  return (
-    // Only when there is genuinely no face to show. The initial recedes
-    // rather than competing with the name beside it.
-    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, fontFamily: body, fontWeight: 500, fontSize: size * 0.38, color: FEED_TEXT_LOW }}>
-      {(name || "?").charAt(0).toUpperCase()}
-    </span>
-  );
+  // Photos only, and the space kept — the same rule as ui/Avatar. A thread
+  // list is the one place an initial came closest to earning its keep, and it
+  // still did not: the name is on the very next line, in full.
+  return <span aria-hidden="true" style={{ ...common, display: "inline-block" }} />;
 }
 
 // The press state has to be CSS — :active cannot be expressed inline. No

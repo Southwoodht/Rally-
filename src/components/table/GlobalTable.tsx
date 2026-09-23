@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, Info } from "lucide-react";
-import { AvatarArt, hasAvatarArt } from "@/components/ui/AvatarArt";
 import { Empty } from "@/components/ui/atoms";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS } from "@/core/constants";
@@ -86,15 +85,10 @@ const nameStyle: React.CSSProperties = {
 function Face({ row, size = 38, dim }: { row: GlobalRow; size?: number; dim?: boolean }) {
   const common = { width: size, height: size, borderRadius: "50%", flexShrink: 0, opacity: dim ? 0.55 : 1 } as const;
   if (row.avatarUrl) return <img src={row.avatarUrl} alt="" style={{ ...common, objectFit: "cover" }} />;
-  return (
-    <span style={{ ...common, display: "grid", placeItems: "center", background: FEED_RAISED, overflow: "hidden" }}>
-      {hasAvatarArt(row.avatar)
-        ? <AvatarArt id={row.avatar} size={size * 0.56} />
-        : <span style={{ fontFamily: body, fontWeight: 500, fontSize: size * 0.38, color: FEED_TEXT_LOW }}>
-            {(row.name || "?").charAt(0).toUpperCase()}
-          </span>}
-    </span>
-  );
+  // Photos only, and the space kept — the same rule as ui/Avatar, stated
+  // twice because this table draws its own face from an aggregate row rather
+  // than a player. If one of them changes, the other has to.
+  return <span aria-hidden="true" style={{ width: size, height: size, flexShrink: 0, display: "inline-block" }} />;
 }
 
 // A global row is keyed by auth id, or by "p:<player id>" for somebody who

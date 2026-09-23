@@ -1,7 +1,6 @@
 "use client";
 import React, { useRef } from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { AvatarPicker } from "@/components/ui/AvatarPicker";
 import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { readPhotoAsDataUrl } from "@/lib/photo";
@@ -82,8 +81,6 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
         <select value={me.level?.cat || ""} onChange={(e) => setLevel(e.target.value, me.level?.sub)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}><option value="">No level</option>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
         <select value={me.level?.sub || "Medium"} disabled={!me.level} onChange={(e) => setLevel(me.level?.cat, e.target.value)} style={{ ...miniInput, flex: 1, opacity: me.level ? 1 : 0.4, boxSizing: "border-box" as const }}>{SUBS.map((x) => <option key={x} value={x}>{x}</option>)}</select>
       </div>
-      <L>Avatar</L>
-      <AvatarPicker value={me.avatar} onChange={(av) => setField("avatar", av)} />
       <L>Rating</L>
       <div style={{ display: "flex", gap: 6 }}>
         <input value={me.initialElo ?? ""} onChange={(e) => setField("initialElo", e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="ELO" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
