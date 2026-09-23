@@ -1,21 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Rally">
   <!--
     Rally app icon, maskable variant — for Android adaptive icons.
-    Identical to icon.svg except the mark is scaled to 0.8 about the centre.
+    Identical to icon.svg except the mark is scaled to 0.8 about its own
+    optical centre (492, 512), not the tile's, so the 2% leftward shift
+    survives the scaling instead of being undone by it.
 
     Android crops this to a shape that varies by device — circle, squircle,
-    rounded square, teardrop — and only the centre 80% is guaranteed to
-    survive. At 0.8 the mark measures 358 x 502 and its half-diagonal is 308,
-    so it sits inside a 616px circle where the guaranteed safe circle is 819.
-    Comfortably clear of every mask, which is the point: the failure here is
-    not subtle, it is a letter with its leg cut off on somebody's phone.
+    rounded square, teardrop — and only the centre 80% is guaranteed. At 0.8
+    the mark measures 346 x 482 and its half-diagonal is 297, so it sits
+    inside a 594px circle where the guaranteed safe circle is 819. Comfortably
+    clear of every mask, which is the point: the failure here is not subtle,
+    it is a letter with its leg cut off on somebody's phone.
 
     The field is full-bleed and unscaled, because that is the part the crop is
     SUPPOSED to eat.
 
-    Declared separately in manifest.json with "purpose": "maskable". It must
-    not be offered as "any" as well — a launcher using this where no mask is
-    applied would show a small letter adrift in a large tile.
+    Declared separately in manifest.json with "purpose": "maskable", and it
+    must not also be offered as "any" — a launcher applying no mask would show
+    a small letter adrift in a large tile.
   -->
   <defs>
     <linearGradient id="rally-field-maskable" x1="0" y1="0" x2="0" y2="1">
@@ -26,9 +28,10 @@
 
   <rect width="1024" height="1024" fill="url(#rally-field-maskable)"/>
 
-  <g transform="translate(512 512) scale(0.8) translate(-512 -512)"
-     fill="none" stroke="#D9E84B" stroke-width="128" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M332 262V762"/>
-    <path d="M332 262a235 130 0 0 1 0 260L652 762"/>
+  <g transform="translate(492 512) scale(0.8) translate(-492 -512)"
+     fill="none" stroke="#D9E84B" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M322 257V767"/>
+    <path d="M322 257H529A133 133 0 0 1 529 523H322"/>
+    <path d="M412 523L646 767"/>
   </g>
 </svg>

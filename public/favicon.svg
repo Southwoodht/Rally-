@@ -1,26 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Rally">
   <!--
     Rally favicon — the same mark, optically sized for 16 and 32 pixels.
-    NOT a copy of icon.svg, and it should not be made into one.
 
-    The app icon rendered at 16px is a lime blob. Tested, not assumed: its
-    counter is 107 units of 1024, which is 1.7 physical pixels at that size,
-    so it closes completely and the leg merges with the bowl. The letter stops
-    being an R and becomes a shape.
+    Nothing is redrawn: it is icon.svg's letter scaled 1.30 about its own
+    optical centre, so the mark fills 76% of the tile instead of 59%. A
+    favicon has no room to spend on margin — the generous margin that makes
+    the app icon look professional at 180px is thrown-away pixels at 16.
 
-    Three changes, all of them the usual optical-sizing trade:
+    This is a much smaller correction than it used to be. The first version of
+    the icon had an elliptical bowl and a 128 stroke, and at 16px its counter
+    was 1.7 physical pixels and closed completely — the letter became a lime
+    blob, and the favicon needed its own geometry to survive. The stadium bowl
+    and the 92 stroke fixed that at the source: the app icon now holds its
+    counter at 16px on its own. This file is the last few percent, not a
+    rescue.
 
-      the mark fills 80% of the tile instead of 61%  — a favicon has no room
-        to spend on margin, and the generous margin that makes the app icon
-        look professional at 180px is simply thrown-away pixels at 16
-      the stroke drops 128 -> 118                    — lighter relative to a
-        bigger letter, which is what opens the counter
-      the counter goes 107x132 -> 132x242            — just over 2 physical
-        pixels wide at 16px, which is the least that survives
-
-    Sam's brief offered the other way out: "at 16px drop to the stem and bowl
-    only if the leg turns to mush". Not taken, because stem-and-bowl is a P.
-    A blurry R is still an R; a crisp P is the wrong letter.
+    Tested magnified at 16 / 32 / 48, which is the only way to see it.
   -->
   <defs>
     <linearGradient id="rally-field-favicon" x1="0" y1="0" x2="0" y2="1">
@@ -31,8 +26,10 @@
 
   <rect width="1024" height="1024" fill="url(#rally-field-favicon)"/>
 
-  <g fill="none" stroke="#D9E84B" stroke-width="118" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M347 161V863"/>
-    <path d="M347 161a250 180 0 0 1 0 360L667 863"/>
+  <g transform="translate(492 512) scale(1.3) translate(-492 -512)"
+     fill="none" stroke="#D9E84B" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M322 257V767"/>
+    <path d="M322 257H529A133 133 0 0 1 529 523H322"/>
+    <path d="M412 523L646 767"/>
   </g>
 </svg>

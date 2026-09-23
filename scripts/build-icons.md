@@ -8,7 +8,13 @@ re-export.
 |---|---|---|
 | `icon.svg` | every `icon-*.png`, `apple-touch-icon.png` | the mark |
 | `icon-maskable.svg` | `icon-maskable-*.png` | mark scaled to 0.8 for Android's crop |
-| `favicon.svg` | `favicon-16/32.png`, `favicon.ico` | optically sized for 16px — see its comment |
+| `favicon.svg` | `favicon-16/32.png`, `favicon.ico` | the same letter scaled up for 16px — see its comment |
+
+The letter itself lives in exactly one place: the three `<path>` elements are
+byte-identical across all three masters, and the two variants differ only by a
+`transform` on the group. **Edit the paths in `icon.svg` and paste them into
+the other two** — or the three will drift and nobody will notice until the
+favicon stops matching the home-screen icon.
 
 ## Why there is no one-command build
 
@@ -84,11 +90,19 @@ about SVG. The procedure below is what produced the current set.
 
 5. Delete `src/pages/api/_icons.ts`.
 
-6. **Look at the result at 16px, magnified.** This is not optional and it is
-   what `favicon.svg` exists because of: the app icon rendered at 16 is a lime
-   blob with its counter closed, and that is invisible in any view except a
-   magnified one. Draw a contact sheet onto a canvas with
-   `imageSmoothingEnabled = false`, scaled 10-14x, and save it the same way.
+6. **Look at the result at 16px, magnified.** Not optional, and the reason
+   the letterform is what it is. The first draft had an elliptical bowl and a
+   128 stroke; at 16px its counter was 1.7 physical pixels, closed completely,
+   and the R became a lime blob — invisible in every view except a magnified
+   one, and invisible in the 512px render that looked fine. Draw a contact
+   sheet onto a canvas with `imageSmoothingEnabled = false`, scaled 10-14x,
+   and save it the same way.
+
+   Compare against a reference the same way if there is one. Sam's mockup
+   sat beside the render at matched size, which is what made the difference
+   obvious: an ellipse where a stadium was wanted, and a leg growing out of
+   the stem instead of out of the bowl. Neither was visible while looking at
+   the icon on its own.
 
 ## Rules that are easy to break
 

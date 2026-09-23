@@ -1,40 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Rally">
   <!--
     Rally app icon — the master. Every PNG in public/ is rendered from this
-    file by scripts/build-icons.md's procedure, so the mark can be re-exported
-    without being redrawn.
+    file by the procedure in scripts/build-icons.md, so the mark can be
+    re-exported without being redrawn.
 
-    THE R IS STROKED, NOT SET. It is three strokes at one weight — stem, bowl,
-    leg — with round caps and joins, deliberately wider and rounder than the
-    RALLY wordmark's condensed cut, because a narrow letter leaves dead air in
-    a square tile.
+    THE R IS STROKED, NOT SET. Three strokes at one weight — stem, bowl, leg —
+    round caps and joins, wider and rounder than the RALLY wordmark's
+    condensed cut, because a narrow letter leaves dead air in a square tile.
 
-    Geometry, all on the 1024 master and all on the stroke CENTRE lines:
+    THE BOWL IS A STADIUM, NOT AN ELLIPSE, and that is the whole difference
+    between this and the first attempt. Flat top, semicircular right end, flat
+    bottom. An elliptical bowl closes on the stem at a shallow angle and
+    leaves a lens-shaped counter that fills in the moment the icon is shrunk;
+    a stadium leaves an open rounded rectangle. Drawn from Sam's reference,
+    which had it right.
 
-      stroke      128        12.5% of the tile
-      stem        x 332, y 262 -> 762
-      bowl        half-ellipse rx 235 ry 130, closing back on the stem at 522
-      leg         from that junction out to x 652 at the baseline
-      counter     107 wide x 132 tall, so it survives being shrunk
+    THE LEG SPRINGS FROM UNDER THE BOWL, not from the stem. Starting it at the
+    stem piles three strokes onto one point and reads as a blob at the
+    junction. Starting it 90 units along the bowl's bottom run gives the
+    counter a clean flat floor and the leg somewhere to come from.
 
-    Adding the 64px cap radius at every extreme, the drawn mark measures
-    448 x 628 — 44% of the tile wide and 61% tall.
+    Geometry, all on the 1024 master, all on stroke CENTRE lines:
 
-    **That is 44% wide where the brief said 55%, and it is not a slip.** An R
-    is taller than it is wide, so the two numbers cannot both be had: forcing
-    the bounding box to 55% of the tile at a sane height gives a bowl 2.5
-    times wider than it is tall — a squashed loop — and keeping the bowl round
-    while hitting 55% wide needs a letter 780px tall, which is 76% of the tile
-    and eats the margin the brief asks for in the very next line. So the mark
-    is ~55-60% of the tile in its LARGEST dimension and the width falls where
-    the letterform wants it. Margins: 198 top and bottom, 268 left, 308 right.
+      stroke   92                     9% of the tile
+      stem     x 322, y 257 -> 767
+      bowl     top run to x 529, semicircle r 133, bottom run back to 322
+      leg      (412, 523) -> (646, 767), about 46 degrees
+      counter  248 x 174 — nearly 4 physical pixels wide at 16px
 
-    Optically centred, not measured. The leg throws weight to the right, so
-    the bounding box sits at x 492 — 2% left of true centre — which is what
-    makes it read as centred.
+    With the 46-unit cap radius at each extreme the mark measures 432 x 602:
+    42% of the tile wide, 59% tall, margins 276 left / 316 right / 211 top and
+    bottom.
 
-    The field gradient is deliberately almost invisible. It is there to stop
-    the tile reading as a flat swatch, not to be seen as a gradient.
+    **42% wide where the brief said 55%.** An R is taller than it is wide, so
+    both numbers cannot be had: forcing the box to 55% at a sane height gives
+    a bowl two and a half times wider than tall, and keeping the bowl round
+    while hitting 55% needs a letter 780 tall — 76% of the tile, which eats
+    the margin the brief asks for in its next line. The mark is ~59% of the
+    tile in its LARGEST dimension and the width falls where the letter wants
+    it. Sam's own reference sits at the same proportion, which settled it.
+
+    Optically centred, not measured: the bounding box sits at x 492, 2% left
+    of true centre, because the leg throws weight right.
+
+    Stroke is 92 rather than the 128 first specified. 128 on a letter this
+    size is 15% of the mark and closes the counter; the reference is nearer
+    9%, and the lighter stroke is what lets one master serve every size.
+
+    The field gradient is deliberately almost invisible — there to stop the
+    tile reading as a flat swatch, not to be seen as a gradient.
 
     NO ROUNDED CORNERS, ON PURPOSE. iOS and Android apply their own mask; a
     pre-rounded icon gets rounded twice and shows a pale seam at each corner.
@@ -48,8 +62,9 @@
 
   <rect width="1024" height="1024" fill="url(#rally-field)"/>
 
-  <g fill="none" stroke="#D9E84B" stroke-width="128" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M332 262V762"/>
-    <path d="M332 262a235 130 0 0 1 0 260L652 762"/>
+  <g fill="none" stroke="#D9E84B" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M322 257V767"/>
+    <path d="M322 257H529A133 133 0 0 1 529 523H322"/>
+    <path d="M412 523L646 767"/>
   </g>
 </svg>
