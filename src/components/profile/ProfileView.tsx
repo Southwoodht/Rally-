@@ -39,6 +39,10 @@ export interface ProfileViewProps {
   ratingLine?: React.ReactNode;
   /** Message and Add friend. Only meaningful on somebody else's profile. */
   actions?: ProfileActionsProps | null;
+  /** The Friends card, self-contained: it does its own fetch and renders
+   *  nothing at all until schema_public_friends.sql is run. A node rather
+   *  than props for the same reason ratingLine is one. */
+  friends?: React.ReactNode;
   rivalries?: RivalryCardProps[];
   bestWins?: BestWin[];
   opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[] } | null;
@@ -130,6 +134,10 @@ export function ProfileView(p: ProfileViewProps) {
       {p.playingStyle && (
         <Section title="Playing style"><PlayingStyle {...p.playingStyle} /></Section>
       )}
+
+      {/* Above Rivalries: who somebody knows places them, and a rivalry only
+          means something once you know who they are. */}
+      {p.friends}
 
       {p.rivalries && p.rivalries.length > 0 && (
         <Section title="Rivalries"><Rivalries items={p.rivalries} /></Section>

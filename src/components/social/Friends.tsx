@@ -133,10 +133,10 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 8 }}>Friend requests</div>
           <div style={listCard}>
             {incoming.map((row) => (
-              <div key={row.id} style={listRow}>
+              <div key={row.id} style={{ ...listRow, flexWrap: "wrap" }}>
                 <Avatar player={asPlayer(row.profile)} size={36} />
-                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
-                <div style={{ display: "flex", gap: 6 }}>
+                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {actionBtn("Accept", () => accept(row))}
                   {actionBtn("Decline", () => remove(row), "transparent", MUTED)}
                 </div>
@@ -157,10 +157,15 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
         ) : (
           <div style={listCard}>
             {friends.map((row) => (
-              <div key={row.id} style={listRow}>
+              /* The name had minWidth 0 beside three nowrap buttons, so on a
+                  phone the buttons took the whole row and the name collapsed
+                  to a single letter — "A /" where Adrian should be. It needs a
+                  floor it cannot go below AND somewhere for the buttons to go
+                  when they do not fit, which is the wrap. */
+              <div key={row.id} style={{ ...listRow, flexWrap: "wrap" }}>
                 <Avatar player={asPlayer(row.profile)} size={36} />
-                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
-                <div style={{ display: "flex", gap: 6 }}>
+                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {onMessage && actionBtn("Message", () => onMessage(row.profile.id), PANEL2, CHALK)}
                   {leagueJoinCode && actionBtn("Invite to league", () => inviteToLeague(row), PANEL2, CHALK)}
                   {actionBtn("Remove", () => remove(row), "transparent", CLAY)}

@@ -10,6 +10,7 @@ import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
+import { FriendsCard } from "@/components/profile/FriendsCard";
 import { TIER_HEIGHTS } from "@/core/stars";
 import { listApprovedTrophiesForPlayer } from "@/lib/trophies";
 import { fullNameOf } from "@/lib/format";
@@ -285,6 +286,14 @@ export function ProfileContainer({
 
   if (!player || !data) return null;
 
+  // The Friends card is keyed on the ACCOUNT, not the player row:
+  // friendships are between accounts and a shell player has none, so the card
+  // renders nothing for one — correct rather than empty.
+  //
+  // Tapping a friend hands an account id to ?profile=, which RallyApp already
+  // resolves either way round (auth_id first, then player id). A friend in
+  // this league opens their real profile; one who is not falls through to the
+  // public page, with no extra plumbing.
   return (
     <>
     <ProfileView
@@ -322,6 +331,11 @@ export function ProfileContainer({
         />
       }
       actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage }}
+      friends={<FriendsCard
+        authId={player?.auth_id ?? null}
+        isMe={isSelf}
+        onOpenProfile={(aid) => { if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(aid); }}
+      />}
       playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails || (onOpenMatches ? () => onOpenMatches(pid, "quality") : undefined) } : null}
       rivalries={data.rivalries}
       bestWins={data.bestWins}

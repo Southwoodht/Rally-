@@ -102,3 +102,41 @@ export async function removeFriendship(id: string): Promise<void> {
   if (!supabase) return;
   await run(supabase.from("friends").delete().eq("id", id), "removing a friend");
 }
+
+/**
+ * Who somebody is friends with, and which of them you both know.
+ *
+ * Needs schema_public_friends.sql. Until that is run this returns an empty
+ * list rather than throwing, and the Friends section on a profile simply does
+ * not appear — the same degrade-quietly shape as the level estimate and the
+ * nudge. A missing migration should cost a feature, never a screen.
+ *
+ * The friends table's only select policy is "you are in this friendship", so
+ * there is no client-side version of this question. It is the function or
+ * nothing.
+ *
+ * Mutuals come back first and flagged, because "you both know Charlie" is the
+ * part worth reading and sorting it client-side would mean fetching your own
+ * list too, on every profile open.
+ */
+export interface PublicFriend {
+  authId: string;
+  name: string;
+  avatarUrl: string | null;
+  isMutual: boolean;
+}
+
+export async function friendsOf(authId: string): Promise<PublicFriend[]> {
+  if (!supabase || !authId) return [];
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("public_friends_of", { p_auth_id: authId }),
+    { data: null, error: { message: "Timed out" } } as any,
+  );
+  if (!res || res.error || !Array.isArray(res.data)) return [];
+  return res.data.map((r: any) => ({
+    authId: r.auth_id,
+    name: String(r.display_name || "").trim() || "Player",
+    avatarUrl: r.avatar_url || null,
+    isMutual: !!r.is_mutual,
+  }));
+}
