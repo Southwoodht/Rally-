@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Rally">
+  <!--
+    Rally favicon — the same mark, optically sized for 16 and 32 pixels.
+    NOT a copy of icon.svg, and it should not be made into one.
+
+    The app icon rendered at 16px is a lime blob. Tested, not assumed: its
+    counter is 107 units of 1024, which is 1.7 physical pixels at that size,
+    so it closes completely and the leg merges with the bowl. The letter stops
+    being an R and becomes a shape.
+
+    Three changes, all of them the usual optical-sizing trade:
+
+      the mark fills 80% of the tile instead of 61%  — a favicon has no room
+        to spend on margin, and the generous margin that makes the app icon
+        look professional at 180px is simply thrown-away pixels at 16
+      the stroke drops 128 -> 118                    — lighter relative to a
+        bigger letter, which is what opens the counter
+      the counter goes 107x132 -> 132x242            — just over 2 physical
+        pixels wide at 16px, which is the least that survives
+
+    Sam's brief offered the other way out: "at 16px drop to the stem and bowl
+    only if the leg turns to mush". Not taken, because stem-and-bowl is a P.
+    A blurry R is still an R; a crisp P is the wrong letter.
+  -->
+  <defs>
+    <linearGradient id="rally-field-favicon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#255140"/>
+      <stop offset="1" stop-color="#0E241D"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#rally-field-favicon)"/>
+
+  <g fill="none" stroke="#D9E84B" stroke-width="118" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M347 161V863"/>
+    <path d="M347 161a250 180 0 0 1 0 360L667 863"/>
+  </g>
+</svg>
