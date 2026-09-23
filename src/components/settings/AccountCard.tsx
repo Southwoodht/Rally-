@@ -21,11 +21,13 @@ import {
 // Profile, which is the player rather than the account, and not in the header,
 // where it would sit one mis-tap from everything else.
 //
-// TWO TAPS, which is more than logging out strictly deserves — it destroys
-// nothing and you can sign straight back in. But this is a phone, the button
-// lives under a list of league admin controls people scroll through, and the
-// cost of a mis-tap is being thrown out of the app and made to find a
-// password. The second tap is cheaper than that.
+// ONE TAP. It shipped with a confirm step, on the reasoning that a mis-tap
+// costs you a password hunt — and Sam's answer was "must be a simple log out
+// button", which is the right call and the one the app already makes
+// elsewhere. §3's two-step rule is for things that cannot be undone; logging
+// out destroys nothing and the undo is signing back in. A confirm on it is
+// ceremony, and ceremony on a safe action teaches people to tap through
+// confirms on the unsafe ones.
 //
 // No navigation afterwards, deliberately. AuthGate subscribes to
 // onAuthStateChange, so signing out unmounts the whole app and shows the sign
@@ -33,7 +35,6 @@ import {
 // a second opinion about where to go, arriving at the same time.
 
 export function AccountCard({ displayName }: { displayName?: string | null }) {
-  const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
 
@@ -48,7 +49,6 @@ export function AccountCard({ displayName }: { displayName?: string | null }) {
     } catch (e: any) {
       setFailed(e?.message || "Couldn't log out just now.");
       setBusy(false);
-      setArmed(false);
     }
   };
 
@@ -64,48 +64,18 @@ export function AccountCard({ displayName }: { displayName?: string | null }) {
         </div>
       )}
 
-      {armed ? (
-        <>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>
-            Log out of Rally? Your leagues, matches and history stay exactly as
-            they are — you will just need to sign in again.
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={out}
-              disabled={busy}
-              style={{
-                flex: 1, fontFamily: body, fontWeight: 500, fontSize: 14, padding: "11px 14px",
-                borderRadius: 12, border: "none", cursor: busy ? "default" : "pointer",
-                background: FEED_THEY_LEAD, color: "#2A1414", opacity: busy ? 0.6 : 1,
-              }}
-            >
-              {busy ? "Logging out…" : "Log out"}
-            </button>
-            <button
-              onClick={() => setArmed(false)}
-              disabled={busy}
-              style={{
-                flex: 1, fontFamily: body, fontWeight: 500, fontSize: 14, padding: "11px 14px",
-                borderRadius: 12, border: "none", cursor: "pointer",
-                background: FEED_RAISED, color: FEED_TEXT_MID,
-              }}
-            >
-              Stay signed in
-            </button>
-          </div>
-        </>
-      ) : (
-        <button
-          onClick={() => setArmed(true)}
-          style={{
-            background: "transparent", border: "none", padding: 0, cursor: "pointer",
-            fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_THEY_LEAD,
-          }}
-        >
-          Log out…
-        </button>
-      )}
+      <button
+        onClick={out}
+        disabled={busy}
+        style={{
+          display: "block", width: "100%", fontFamily: body, fontWeight: 500, fontSize: 15,
+          padding: "12px 14px", borderRadius: 12, border: "none",
+          cursor: busy ? "default" : "pointer",
+          background: FEED_RAISED, color: FEED_THEY_LEAD, opacity: busy ? 0.6 : 1,
+        }}
+      >
+        {busy ? "Logging out…" : "Log out"}
+      </button>
 
       {failed && (
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_THEY_LEAD, lineHeight: 1.45, marginTop: 10 }}>
