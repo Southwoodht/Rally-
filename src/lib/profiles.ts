@@ -390,3 +390,53 @@ export async function getPublicLeagueSnapshot(authId: string): Promise<LeagueSna
     return { snapshot: null, reason: "failed" };
   }
 }
+
+/**
+ * The signed-in account's theme.
+ *
+ * localStorage is the fast path and the only path when signed out; this is
+ * the copy that follows you to another device. On login Supabase wins — see
+ * syncThemeFromProfile.
+ *
+ * Needs schema_profile_theme.sql. Until it runs, the column does not exist,
+ * the write fails, and the theme still works from localStorage — the same
+ * degrade-quietly shape as the rest of the profile functions. A pending
+ * migration should cost the cross-device half of a preference, not the
+ * preference.
+ */
+// Swallows everything on purpose, and matches themeFromProfile below.
+// Until schema_profile_theme.sql is run there is no `theme` column, so this
+// write fails on every call — and it must stay a preference that did not
+// persist rather than an error in front of somebody who just picked a colour.
+// The theme is already applied and stored locally before this is reached.
+export async function saveMyTheme(theme: string): Promise<void> {
+  if (!supabase) return;
+  try {
+    const me = (await supabase.auth.getUser()).data?.user?.id;
+    if (!me) return;
+    await supabase.from("profiles").update({ theme }).eq("id", me);
+  } catch { /* a preference, not a requirement */ }
+}
+
+/**
+ * On login, Supabase wins.
+ *
+ * Returns the stored theme, or null when there is nothing to say — signed
+ * out, column not yet added, or the value already matches. Null means "leave
+ * what is on screen alone", which matters because the boot script has already
+ * painted with localStorage and re-applying the same value would be a wasted
+ * transition.
+ */
+export async function themeFromProfile(): Promise<string | null> {
+  if (!supabase) return null;
+  try {
+    const me = (await supabase.auth.getUser()).data?.user?.id;
+    if (!me) return null;
+    const res: any = await withSupabaseTimeout(
+      supabase.from("profiles").select("theme").eq("id", me).maybeSingle(),
+      { data: null, error: { message: "Timed out" } } as any,
+    );
+    if (!res || res.error) return null;
+    return res.data?.theme || null;
+  } catch { return null; }
+}
