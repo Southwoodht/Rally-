@@ -6,7 +6,7 @@ import { shortNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_DEEP, FEED_DOWN, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD,
   FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_TILE_RADIUS,
-  FEED_UP, DOT_DRAW, DOT_LOSS, DOT_WIN, body, tabular, tight,
+  FEED_UP, DOT_DRAW, DOT_LOSS, DOT_WIN, LINE, body, tabular, tight,
 } from "@/lib/theme";
 
 // The scoreboard primitives, shared by the newsfeed cards and by the Table
@@ -45,6 +45,12 @@ export function SurfaceCard({
       onClick={onClick}
       style={{
         background: TONE_BG[tone], borderRadius: radius, padding: pad,
+        // A 1px --line border in EVERY theme. On rally it is very nearly
+        // invisible, which is why the card never had one; on the three light
+        // themes a white card on a light page has no edge at all without it,
+        // and the whole screen reads as one undifferentiated sheet.
+        border: "1px solid " + LINE,
+        boxSizing: "border-box",
         overflow: clip ? "hidden" : undefined,
         cursor: onClick ? "pointer" : undefined,
         ...style,
