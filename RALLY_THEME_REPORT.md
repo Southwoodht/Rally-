@@ -81,17 +81,46 @@ nothing that should have stayed put moved. Reverted.
 
 **On screen at 375px.** Home and Profile checked against Appendix B and C.
 
+## The §5 shape pass
+
+Done through the shared primitives wherever possible, so one edit reaches
+every screen rather than ninety edits reaching ninety:
+
+- **Inputs** — `--bg-raised`, a 1px `--line` border, radius 14. The border is
+  new; a bare fill reads as a panel rather than a field at these tones.
+- **Focus** — `--accent` border on focus, typed against `input/textarea/select`
+  in `globals.css`. It cannot live in `theme.ts`: a pseudo-class is not
+  expressible in a React style object, and the alternative is an `onFocus`
+  handler on every field in the app. `:focus-visible` gives keyboard users a
+  ring without giving pointer users one.
+- **Toggles** — on is an `--accent` track, off is `--muted-fill` (was
+  `transparent`, which made "off" read as absent rather than as off).
+- **Sheets and modals** — 13 of them, all now `--bg-card` at radius 26. Several
+  sat on `COURT`, the *page* colour, which makes a sheet read as the page
+  sliding up rather than as a layer above it.
+- **Page titles** — 32/800 uppercase display; back buttons 44×44 on
+  `--bg-raised`.
+- **Toasts** — `--bg-raised` with `--text-hi`. It was a gold pill, which reads
+  as a primary action rather than as the app telling you something.
+- **Standings rows** — names 17/600, numbers in the display face at 700, and
+  the viewer's own row on `--bg-raised` with position and points in
+  `--accent`. The old treatment was a 1.5px ring, which shifts the row's
+  contents by a pixel and a half and reads as a wobble when you scroll past
+  your own name.
+
+Verified on screen: Home, Profile and Table at 375px.
+
 ## What is NOT done
 
-- **Phase 3 is partial.** The colour system reaches every screen automatically,
-  and the lime/cream split and the colour sweep are complete. What has *not*
-  happened is a screen-by-screen pass against §5's shape rules — input radius
-  14 with a `--line` border and `--accent` on focus, W/L/D result badges,
-  toggle tracks, 44×44 icon buttons everywhere, toast styling. Those screens
-  are on-palette but not yet to spec.
-- **No side-by-side screenshots** of Table, Fixtures, match entry or a modal.
+- **No side-by-side screenshots** of Fixtures, match entry or a modal. Home,
+  Profile and Table were checked; the rest are on-palette and follow the
+  shared primitives, but have not been looked at one by one.
 - **Contrast not measured.** `--text-mid` on `--bg-card` and the two ink
   pairings are eyeballed, not computed.
+- **W/L/D result badges** (§5) are not implemented as a distinct component —
+  the app shows outcomes as coloured dots and rails rather than lettered
+  badges, so there was nothing to restyle. If badges are wanted, that is new
+  work rather than a restyle.
 
 ## Risks
 

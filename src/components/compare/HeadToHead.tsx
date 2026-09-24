@@ -211,7 +211,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
 
       {sheet && (
         <div onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "70vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "18px 16px 32px" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "70vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 32px" }}>
             <div style={{ ...sectionLabel, marginBottom: 12 }}>{sheet === "year" ? "Period" : "Venue"}</div>
             {(sheet === "year"
               ? [{ v: "all", l: "All time" }, ...years.map((y: number) => ({ v: String(y), l: String(y) }))]

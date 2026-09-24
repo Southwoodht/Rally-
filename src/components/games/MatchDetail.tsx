@@ -176,7 +176,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>Match detail</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: FEED_TEXT_MID, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 400, fontSize: 13, cursor: "pointer" }}>Close</button>

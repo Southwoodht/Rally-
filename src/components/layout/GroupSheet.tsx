@@ -2,13 +2,13 @@
 import React, { useState } from "react";
 import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
 import { BigBtn } from "@/components/ui/atoms";
-import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, input, listCard, listRow } from "@/lib/theme";
+import { FEED_OVERLAY, PANEL, BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, input, listCard, listRow } from "@/lib/theme";
 
 export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClose, personal, onPersonal, friendly, onFriendly = "/?league=friendly" }: any) {
   const [name, setName] = useState("");
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, borderTopLeftRadius: 24, borderTopRightRadius: 24, border: "none", padding: "20px 18px 40px", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
         {/* Not being in a league is a legitimate way to use Rally: some people
             just play the same handful of opponents and don't want a table with
             a name and a season. Ticking this unticks every league. */}

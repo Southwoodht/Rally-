@@ -54,7 +54,7 @@ function Sheet({ title, children, onClose }: any) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: FEED_CARD, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "18px 16px 32px" }}
+        style={{ background: FEED_CARD, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 32px" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{title}</span>

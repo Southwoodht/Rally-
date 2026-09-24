@@ -108,7 +108,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
       </button>
       {open && (
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "18px 16px 32px" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "18px 16px 32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <span style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK }}>Notifications</span>
               <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", color: BALL, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>Close</button>

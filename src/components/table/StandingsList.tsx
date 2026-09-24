@@ -6,7 +6,7 @@ import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
 import { levelNow } from "@/core/levels";
 import { fullNameOf } from "@/lib/format";
-import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight } from "@/lib/theme";
+import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, display as displayFont } from "@/lib/theme";
 
 // The standings, in the same language as the newsfeed.
 //
@@ -139,9 +139,13 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
     <div
       onClick={onOpen ? () => onOpen(p.player.id) : undefined}
       style={{
-        position: "relative", overflow: "hidden", background: FEED_CARD, borderRadius: 14,
+        // §5: the viewer's own row takes --bg-raised rather than a ring. A
+        // 1.5px border on a row this size shifts the text inside it by a
+        // pixel and a half, which is visible as a wobble when you scroll past
+        // your own name; a background change is not.
+        position: "relative", overflow: "hidden", background: isMe ? FEED_RAISED : FEED_CARD, borderRadius: 14,
         padding: "12px 14px", cursor: onOpen ? "pointer" : "default",
-        border: isMe ? "1.5px solid " + FEED_LIME : "1.5px solid transparent",
+        border: "none",
       }}
     >
       {/* The bar sits behind everything, full height, and is never a border
@@ -153,13 +157,13 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
         />
       )}
       <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 16, color: FEED_TEXT_LOW, width: 26, flexShrink: 0, textAlign: "right" }}>
+        <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 16, color: isMe ? FEED_LIME : FEED_TEXT_MID, width: 26, flexShrink: 0, textAlign: "right" }}>
           {rank}{tied ? "=" : ""}
         </span>
         <Avatar player={p.player} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {fullNameOf(p.player)}
             </span>
             {isMe && (
@@ -176,7 +180,7 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
           )}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <StatNumeral size={24} tone={played ? "hi" : "mid"} style={{ letterSpacing: "-0.03em" }}>{played ? display : "–"}</StatNumeral>
+          <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 24, letterSpacing: "-0.03em", color: !played ? FEED_TEXT_MID : isMe ? FEED_LIME : FEED_TEXT_HI }}>{played ? display : "–"}</span>
           {p.movement !== null && p.movement !== undefined && (
             <div style={{ marginTop: 2 }}><MovementIndicator delta={p.movement} size={11} /></div>
           )}

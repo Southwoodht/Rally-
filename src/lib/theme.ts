@@ -81,17 +81,24 @@ export const fontImport = "";
 
 export const wrap: CSSProperties = { background: COURT, minHeight: "100vh", width: "100%" };
 
-export const card: CSSProperties = { background: PANEL, borderRadius: RADIUS, padding: 20, boxShadow: SOFT_SHADOW };
+export const card: CSSProperties = { background: PANEL, borderRadius: 26, padding: 20, boxShadow: SOFT_SHADOW };
 
-export const input: CSSProperties = { width: "100%", boxSizing: "border-box", background: PANEL2, color: CHALK, border: "none", borderRadius: RADIUS_SM, padding: "13px 14px", fontFamily: body, fontSize: 15, marginBottom: 0, outline: "none" };
+// §5: --bg-raised, a 1px --line border, radius 14. The border is new — the
+// old inputs were a bare fill, which reads as a panel rather than a field on
+// a surface this close in tone, and is the kind of thing that only becomes
+// obvious on the light themes in Appendix A.
+//
+// The focus ring is a class rather than an inline style, because :focus
+// cannot be expressed in a style object. See globals.css.
+export const input: CSSProperties = { width: "100%", boxSizing: "border-box", background: PANEL2, color: CHALK, border: "1px solid " + LINE, borderRadius: 14, padding: "13px 14px", fontFamily: body, fontSize: 15, marginBottom: 0, outline: "none" };
 
-export const miniInput: CSSProperties = { boxSizing: "border-box", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "8px 10px", fontFamily: body, fontSize: 12, outline: "none" };
+export const miniInput: CSSProperties = { boxSizing: "border-box", background: PANEL2, color: CHALK, border: "1px solid " + LINE, borderRadius: 14, padding: "8px 10px", fontFamily: body, fontSize: 12, outline: "none" };
 
 export const menuRow: CSSProperties = { display: "flex", alignItems: "center", gap: 12, width: "100%", background: PANEL, border: "none", borderRadius: RADIUS_SM, padding: "16px 16px", marginBottom: 10, cursor: "pointer" };
 
 // One soft, shadowed card wrapping a whole list — rows separate by padding,
 // not by hairline borders.
-export const listCard: CSSProperties = { background: PANEL, borderRadius: RADIUS, boxShadow: SOFT_SHADOW, overflow: "hidden" };
+export const listCard: CSSProperties = { background: PANEL, borderRadius: 26, boxShadow: SOFT_SHADOW, overflow: "hidden" };
 
 export const listRow: CSSProperties = { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "transparent", border: "none", width: "100%", textAlign: "left", cursor: "pointer" };
 
