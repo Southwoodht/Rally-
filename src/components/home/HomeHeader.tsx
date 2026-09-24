@@ -30,28 +30,36 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
     </span>
   );
 
+  // TWO FULL-WIDTH ROWS, which is the shape every other tab already had.
+  //
+  // Home used to be one row with a flex:1 left column holding the league and
+  // the picker, and the icons as a sibling beside it. That column ends where
+  // the icons begin, so "right-aligned" put the picker in the MIDDLE of the
+  // screen on Home and hard right everywhere else — the header visibly jumped
+  // as you moved between tabs. Sam spotted it across four screenshots.
+  //
+  // Row 1 is the league and the picker; row 2 is the page's own heading and
+  // the icons. Same two rows, same order, same edges as Table, Fixtures and
+  // Profile, so nothing moves when you switch tab.
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* The club selector and the theme picker share this row, per the
-            brief: the picker sits right-aligned against whatever the club
-            control is on that screen. */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-          {onPickLeague ? (
-            <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", minWidth: 0 }}>
-              {league}
-            </button>
-          ) : league}
-          <ThemePicker />
-        </div>
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        {onPickLeague ? (
+          <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", minWidth: 0 }}>
+            {league}
+          </button>
+        ) : league}
+        <ThemePicker />
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginTop: 6 }}>
         {/* The greeting: display font, 30/700, letter-spacing -0.6px. Exactly
             the mockup, and the first place in the app where Bricolage does the
             job the old condensed face was reserved for. */}
-        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, letterSpacing: "-0.6px", color: FEED_TEXT_HI, marginTop: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, letterSpacing: "-0.6px", color: FEED_TEXT_HI, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {greeting}
         </div>
+        {bell && <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>{bell}</div>}
       </div>
-      {bell && <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>{bell}</div>}
     </div>
   );
 }
