@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+/* The theme variables. Everything else in the app resolves through these. */
+@import "../styles/themes.css";
 
 @tailwind base;
 @tailwind components;
@@ -8,10 +9,42 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #15352a;
+  background: var(--bg-page);
+  color: var(--text-hi);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * §5: inputs take an --accent border on focus, and focus rings are --accent.
+ *
+ * These are here rather than in lib/theme.ts because a pseudo-class cannot be
+ * expressed in a React style object, and the alternative — an onFocus handler
+ * swapping an inline colour on every field in the app — is a lot of state to
+ * carry for a border.
+ *
+ * Typed against the elements rather than a class so every input in the app is
+ * covered, including the ones that build their own style object and never
+ * touch theme.input.
+ */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Keyboard users still get a visible ring; pointer users do not. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::placeholder {
+  color: var(--text-mid);
+  opacity: 1; /* Firefox dims placeholders by default; the token already is. */
 }

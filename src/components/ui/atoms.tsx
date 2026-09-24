@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { BALL, CHALK, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS_SM, body, display, input } from "@/lib/theme";
+import { BALL, CHALK, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS_SM, body, display, input , FEED_MUTED_FILL, FEED_LIME_INK , FEED_HERO, FEED_ON_HERO } from "@/lib/theme";
 
 // `big` is the profile's headline W/D/L: deliberately the largest thing on
 // the screen, so the record outweighs the quality bars below it.
@@ -23,7 +23,7 @@ export function StreakTile({ n, label, c, active, onClick }: any) {
 // A segment inside an iOS-style recessed track (see theme.segmentTrack) — also
 // used standalone as a soft filled/outline toggle where there's no shared track.
 export function Toggle({ on, onClick, label, icon, emphasize, big }: any) {
-  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: body, fontSize: big ? 13.5 : 13, padding: big ? "10px 8px" : "9px 8px", borderRadius: RADIUS_SM - 2, cursor: "pointer", border: "none", background: on ? BALL : "transparent", color: on ? COURT : emphasize ? BALL : MUTED, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "background 0.15s ease, color 0.15s ease" }}>{icon ? icon + " " : ""}{label}</button>;
+  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: body, fontSize: big ? 13.5 : 13, padding: big ? "10px 8px" : "9px 8px", borderRadius: RADIUS_SM - 2, cursor: "pointer", border: "none", background: on ? FEED_HERO : FEED_MUTED_FILL, color: on ? FEED_ON_HERO : emphasize ? BALL : MUTED, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "background 0.15s ease, color 0.15s ease" }}>{icon ? icon + " " : ""}{label}</button>;
 }
 
 export function Tally({ name, n, lead }: any) {
@@ -36,6 +36,6 @@ export function Select({ value, onChange, players, exclude, placeholder = "Selec
 
 export const Field = ({ label, children }: any) => <div style={{ marginBottom: 16 }}><div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, marginBottom: 7 }}>{label}</div>{children}</div>;
 
-export const BigBtn = ({ children, onClick, disabled, color, grow = true }: any) => <button onClick={onClick} disabled={disabled} style={{ flex: grow ? 1 : "none", fontFamily: body, fontWeight: 600, fontSize: 15, padding: "13px 16px", borderRadius: RADIUS_SM, cursor: disabled ? "not-allowed" : "pointer", border: "none", background: disabled ? "#2a5545" : color, color: COURT, opacity: disabled ? 0.5 : 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{children}</button>;
+export const BigBtn = ({ children, onClick, disabled, color, grow = true }: any) => <button onClick={onClick} disabled={disabled} style={{ flex: grow ? 1 : "none", fontFamily: body, fontWeight: 600, fontSize: 15, padding: "13px 16px", borderRadius: RADIUS_SM, cursor: disabled ? "not-allowed" : "pointer", border: "none", background: disabled ? "var(--line)" : color, color: COURT, opacity: disabled ? 0.5 : 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{children}</button>;
 
 export const Empty = ({ msg }: any) => <div style={{ fontFamily: body, color: MUTED, fontSize: 14, textAlign: "center", padding: "36px 12px" }}>{msg}</div>;

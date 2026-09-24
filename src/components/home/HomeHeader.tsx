@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { ChevronDown } from "lucide-react";
-import { FEED_TEXT_HI, FEED_TEXT_MID, body, tight } from "@/lib/theme";
+import { FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
 // League name, greeting, bell. The greeting arrives finished so the clock
 // lives in one place (greetingFor in lib/format.ts) rather than in a
@@ -21,7 +21,9 @@ export interface HomeHeaderProps {
 
 export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHeaderProps) {
   const league = (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+    // 14px per the mockup, up from 12. The club selector is the one control
+    // above the greeting and it was reading as a caption.
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
       {leagueName}
       {onPickLeague && <ChevronDown size={13} color={FEED_TEXT_MID} strokeWidth={2} />}
     </span>
@@ -35,7 +37,10 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
             {league}
           </button>
         ) : league}
-        <div style={{ ...tight(28), fontFamily: body, fontWeight: 500, fontSize: 28, letterSpacing: "-0.035em", color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {/* The greeting: display font, 30/700, letter-spacing -0.6px. Exactly
+            the mockup, and the first place in the app where Bricolage does the
+            job the old condensed face was reserved for. */}
+        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, letterSpacing: "-0.6px", color: FEED_TEXT_HI, marginTop: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {greeting}
         </div>
       </div>

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supabase";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display, fontImport } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display } from "@/lib/theme";
 import Welcome from "@/components/auth/Welcome";
 import UpdatePassword from "@/components/auth/UpdatePassword";
 import Dashboard from "@/components/dashboard/Dashboard";
@@ -57,7 +57,6 @@ export default function AuthGate() {
   if (loading) {
     return (
       <>
-        <style dangerouslySetInnerHTML={{ __html: fontImport }} />
         <LoadingScreen label="Signing you in" />
       </>
     );
@@ -70,12 +69,11 @@ export default function AuthGate() {
 
 function SetupNeeded() {
   const code: React.CSSProperties = {
-    fontFamily: body, fontSize: 12, color: BALL, background: "rgba(0,0,0,.25)",
+    fontFamily: body, fontSize: 12, color: BALL, background: FEED_OVERLAY,
     padding: "10px 12px", borderRadius: 12, display: "block", marginTop: 8, whiteSpace: "pre-wrap",
   };
   return (
     <div style={{ minHeight: "100vh", background: COURT, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 460, background: PANEL, border: "none", borderRadius: 16, padding: 22 }}>
         <div style={{ fontFamily: display, fontSize: 30, fontWeight: 800, color: BALL, textTransform: "uppercase" }}>Rally</div>
         <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, margin: "10px 0 12px" }}>Setup needed</div>

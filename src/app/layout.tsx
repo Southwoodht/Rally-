@@ -1,6 +1,37 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
 import "./globals.css";
+
+// The two faces, loaded once, here.
+//
+// They used to be a Google Fonts @import string injected into a <style> tag
+// by six different components — so six screens fetched a stylesheet from
+// inside the render tree, and the fonts arrived late enough to shift the
+// layout. next/font self-hosts them, inlines the face declarations and
+// eliminates the round trip.
+//
+// Both are variable fonts, so no weight list: every weight in range is
+// available and the brief's 600/700/800 and 400/500/600 all resolve. The opsz
+// axis is requested explicitly because Bricolage's optical sizing is most of
+// what makes it work at 64px AND at 15px, and next/font drops axes it is not
+// told about.
+//
+// The CSS variables are named after the FACE, not the role. themes.css maps
+// role to face (--font-display: var(--font-bricolage)), which is what lets a
+// future theme swap in Fraunces by editing one block.
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  axes: ["opsz"],
+  display: "swap",
+  variable: "--font-bricolage",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-dmsans",
+});
 
 export const metadata: Metadata = {
   title: "Rally",
@@ -33,7 +64,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#15352a",
+  // Matches --bg-page. Not a variable: the browser reads this before any
+  // stylesheet, to colour the status bar and the splash.
+  themeColor: "#16271F",
   // WITHOUT THIS, env(safe-area-inset-*) IS ZERO ON iOS.
   //
   // The shell has carried padding-top: env(safe-area-inset-top) since the
@@ -47,7 +80,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // data-theme is what themes.css keys on. "rally" is also the :root
+    // default, so the app is correct even if this attribute never arrives —
+    // and later the theme picker changes this one value and nothing else.
+    <html lang="en" data-theme="rally" className={`${bricolage.variable} ${dmSans.variable}`}>
       <body>{children}</body>
     </html>
   );

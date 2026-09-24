@@ -2,10 +2,7 @@
 import React, { useState } from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS, SUBS } from "@/core/constants";
-import {
-  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
-  FEED_TEXT_HI, FEED_TEXT_MID, body, tight,
-} from "@/lib/theme";
+import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tight } from "@/lib/theme";
 
 /**
  * "Rally has six levels now."
@@ -32,8 +29,8 @@ export function LevelRecheck({ current, onPick, onDismiss }: {
   const [sub, setSub] = useState(current?.sub || SUBS[1]);
 
   const pill = (active: boolean): React.CSSProperties => ({
-    background: active ? FEED_LIME : FEED_RAISED,
-    color: active ? FEED_LIME_INK : FEED_TEXT_MID,
+    background: active ? FEED_HERO : FEED_RAISED,
+    color: active ? FEED_ON_HERO : FEED_TEXT_MID,
     border: "none", borderRadius: 999, padding: "9px 13px", cursor: "pointer",
     fontFamily: body, fontWeight: 500, fontSize: 13.5, whiteSpace: "nowrap",
   });
@@ -69,7 +66,7 @@ export function LevelRecheck({ current, onPick, onDismiss }: {
           disabled={!cat}
           onClick={() => cat && onPick(cat, sub)}
           style={{
-            flex: 1, background: cat ? FEED_LIME : FEED_RAISED, color: cat ? FEED_LIME_INK : FEED_TEXT_MID,
+            flex: 1, background: cat ? FEED_HERO : FEED_RAISED, color: cat ? FEED_ON_HERO : FEED_TEXT_MID,
             border: "none", borderRadius: 16, padding: "13px 14px", cursor: cat ? "pointer" : "default",
             fontFamily: body, fontWeight: 500, fontSize: 15,
           }}

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { MoreHorizontal, Check, Search, X } from "lucide-react";
-import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
+import { FEED_OVERLAY, FEED_CARD, FEED_HERO, FEED_LIME, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
 
 // One scrolling row of chips in place of the stack of controls that used to
 // sit between the heading and rank 1.
@@ -36,7 +36,10 @@ function Chip({ label, active, onClick, children }: any) {
   return (
     <button
       onClick={onClick}
-      style={{ ...chipBase, background: active ? FEED_LIME : FEED_RAISED, color: active ? FEED_LIME_INK : FEED_TEXT_MID }}
+      // §5: selected is --hero with --on-hero; unselected is --bg-card with
+      // --text-mid. The selected state of a pill is a filled surface, which
+      // is the cream side of the split.
+      style={{ ...chipBase, background: active ? FEED_HERO : FEED_CARD, color: active ? FEED_ON_HERO : FEED_TEXT_MID }}
     >
       {children ?? label}
     </button>
@@ -47,11 +50,11 @@ function Sheet({ title, children, onClose }: any) {
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}
+      style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: FEED_CARD, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "18px 16px 32px" }}
+        style={{ background: FEED_CARD, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 32px" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{title}</span>

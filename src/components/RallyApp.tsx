@@ -58,8 +58,8 @@ import { WhatsNew } from "@/components/home/WhatsNew";
 import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
 import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
-import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
-import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, COURT, MUTED, PANEL, body, display, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
+import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, FEED_TEXT_HI, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
 import { fetchLeagueData, insertPlayerRow, syncFixtures, syncMatches, syncPlayers, syncPosts, updatePlayerRow } from "@/lib/leagueData";
@@ -958,7 +958,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   if (friendlyUnavailable) return (
     <div style={{ ...wrap, minHeight: "100vh", padding: "24px 18px 24px" }}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: CHALK }}>Friendlies aren&apos;t switched on yet</div>
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: MUTED, marginTop: 10, lineHeight: 1.55 }}>
@@ -991,7 +990,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const showSuggestion = claimUI.candidate && !declinedCandidate;
     return (
       <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 100, overflowY: "auto" }}>
-        <style dangerouslySetInnerHTML={{ __html: fontImport }} />
         {showSuggestion ? (
           <PlayerClaim player={claimUI.candidate} onClaim={() => resolveClaim(claimUI.candidate)} onNotMe={() => setDeclinedCandidate(true)} />
         ) : (
@@ -1403,15 +1401,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
-            <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: PANEL, border: "none", borderRadius: 999, padding: "6px 13px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 13 }}>
+            <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15 }}>
               {personal ? "Everyone I've played" : (group?.name || "League")} <ChevronDown size={13} />
             </button>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
-              <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "8px 0 0", fontSize: 38, lineHeight: 0.95, textTransform: "uppercase", letterSpacing: -0.5 }}>
+              <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "10px 0 0", fontSize: 32, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: "-0.5px", minWidth: 0 }}>
                 {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
@@ -1546,8 +1543,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       </div>
 
       {menuOpen && (
-        <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 96 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: "18px 16px 36px", boxShadow: "0 -8px 30px rgba(0,0,0,0.35)" }}>
+        <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 96 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 36px", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>Menu</span>
               <button onClick={() => setMenuOpen(false)} style={{ background: PANEL, border: "none", color: MUTED, borderRadius: 14, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
@@ -1571,7 +1568,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       {groupSheet && <GroupSheet friendly={isFriendlyLeague(gid)} groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
       <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />
-      {toast && <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", background: BALL, color: COURT, fontFamily: body, fontWeight: 700, padding: "10px 18px", borderRadius: 999, fontSize: 13, boxShadow: "0 8px 24px rgba(0,0,0,.4)", zIndex: 80 }}>{toast}</div>}
+      {toast && <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", background: FEED_RAISED, color: FEED_TEXT_HI, fontFamily: body, fontWeight: 600, padding: "12px 18px", borderRadius: 999, fontSize: 13.5, boxShadow: "0 8px 24px var(--shadow-strong)", zIndex: 80 }}>{toast}</div>}
     </div>
   );
 }

@@ -4,8 +4,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { StatNumeral } from "@/components/ui/Surfaces";
 import { formatMatchDateTime } from "@/lib/format";
 import {
-  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI,
-  FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, FEED_TILE_RADIUS, body, tabular,
+  FEED_CARD, FEED_CTA, FEED_LIME, FEED_MUTED_FILL, FEED_ON_CTA, FEED_PAD, FEED_PAD_Y,
+  FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD,
+  FEED_TILE_RADIUS, LINE, body, display, tabular,
 } from "@/lib/theme";
 
 // The middle of Home, which used to spend three cards saying nothing happened.
@@ -72,8 +73,9 @@ export interface HomeFocusProps {
   onOpenPlayer?: (id: string) => void;
 }
 
+// §4: radius 26, 22px vertical / 18px horizontal.
 const card: React.CSSProperties = {
-  background: FEED_CARD, borderRadius: FEED_RADIUS, padding: 18, minWidth: 0,
+  background: FEED_CARD, borderRadius: FEED_RADIUS, padding: FEED_PAD_Y + "px " + FEED_PAD + "px", minWidth: 0,
 };
 const quiet: React.CSSProperties = {
   fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW,
@@ -88,9 +90,10 @@ const quiet: React.CSSProperties = {
  * the hero number is 72px against a 22px line against 13px, which is a far
  * wider spread than any weight could have carried anyway.
  */
+// The mockup: 22px, weight 600, letter-spacing -0.3px, body font.
 const heroLine: React.CSSProperties = {
-  fontFamily: body, fontWeight: 500, fontSize: 22, lineHeight: 1.15,
-  letterSpacing: "-0.02em", color: FEED_TEXT_HI, marginTop: 8,
+  fontFamily: body, fontWeight: 600, fontSize: 22, lineHeight: 1.2,
+  letterSpacing: "-0.3px", color: FEED_TEXT_HI, marginTop: 6,
 };
 
 function BookPill({ onBook, label = "Book a match" }: { onBook?: () => void; label?: string }) {
@@ -99,8 +102,8 @@ function BookPill({ onBook, label = "Book a match" }: { onBook?: () => void; lab
       onClick={onBook}
       style={{
         display: "block", width: "100%", height: 42, borderRadius: 21, border: "none",
-        background: FEED_LIME, color: FEED_LIME_INK, cursor: onBook ? "pointer" : "default",
-        fontFamily: body, fontWeight: 500, fontSize: 15, marginTop: 16,
+        background: FEED_CTA, color: FEED_ON_CTA, cursor: onBook ? "pointer" : "default",
+        fontFamily: body, fontWeight: 700, fontSize: 17, marginTop: 14,
       }}
     >
       {label}
@@ -136,7 +139,9 @@ function GapCard({ daysSince, waiting, lastMatch, onBook }: {
 
   return (
     <div style={card}>
-      <StatNumeral size={72} tone="hi" style={{ letterSpacing: "-0.04em", display: "block" }}>{n}</StatNumeral>
+      {/* 72/700, letter-spacing -2px, line-height 1 — the mockup's figures,
+          in the display face. */}
+      <div style={{ fontFamily: display, fontWeight: 700, fontSize: 72, lineHeight: 1, letterSpacing: "-2px", color: FEED_TEXT_HI }}>{n}</div>
       <div style={heroLine}>{line}</div>
       {!never && lastMatch && (
         <div style={{ ...quiet, fontSize: 13, marginTop: 8, lineHeight: 1.45 }}>
@@ -214,7 +219,7 @@ function SuggestionRow({ s, onOpenPlayer, onBook }: { s: Suggestion; onOpenPlaye
       <Avatar player={s.player} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ ...quiet, ...tabular, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.reason}</div>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, letterSpacing: "-0.02em", color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {s.player.name}{s.player.last ? " " + s.player.last : ""}
         </div>
       </div>
@@ -223,9 +228,10 @@ function SuggestionRow({ s, onOpenPlayer, onBook }: { s: Suggestion; onOpenPlaye
       <button
         onClick={(e) => { e.stopPropagation(); onBook && onBook(); }}
         style={{
-          flexShrink: 0, width: 58, height: 34, borderRadius: 17, border: "none",
-          background: FEED_RAISED, color: FEED_TEXT_HI, cursor: onBook ? "pointer" : "default",
-          fontFamily: body, fontWeight: 500, fontSize: 13,
+          // §4 secondary button: 44px tall, --line background, weight 600.
+          flexShrink: 0, height: 44, padding: "0 18px", borderRadius: 22, border: "none",
+          background: LINE, color: FEED_TEXT_HI, cursor: onBook ? "pointer" : "default",
+          fontFamily: body, fontWeight: 600, fontSize: 14,
         }}
       >
         Book

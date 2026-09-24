@@ -5,10 +5,7 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { GRADE_LABEL, TESTING_GRADES, UNGRADED_LABEL, type Grade } from "@/core/matchGrade";
 import { type GradedRow, type MatchQuality } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
-import {
-  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
-  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular,
-} from "@/lib/theme";
+import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
 // Every match, graded, newest first.
 //
@@ -55,8 +52,8 @@ function Chip({ grade, faded }: { grade: Grade | null; faded?: boolean }) {
     <span
       style={{
         display: "inline-block", fontFamily: body, fontWeight: 500, fontSize: 11.5,
-        color: lime ? FEED_LIME_INK : testing ? FEED_LIME : FEED_TEXT_MID,
-        background: lime ? FEED_LIME : FEED_RAISED,
+        color: lime ? FEED_ON_HERO : testing ? FEED_LIME : FEED_TEXT_MID,
+        background: lime ? FEED_HERO : FEED_RAISED,
         borderRadius: 999, padding: "2px 9px",
       }}
     >

@@ -2,10 +2,7 @@
 import React from "react";
 import { PlayerIdentity, StatNumeral, SurfaceCard } from "@/components/ui/Surfaces";
 import { shortNameOf } from "@/lib/format";
-import {
-  FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD,
-  FEED_TEXT_LOW, body, tabular,
-} from "@/lib/theme";
+import { FEED_HAIRLINE, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_TEXT_LOW, body, tabular } from "@/lib/theme";
 
 // A scoreline card, in the Apple Sports direction: the result is the loudest
 // thing on it and everything else gets out of the way.
@@ -105,7 +102,7 @@ export function MatchCard({ sport, dateLabel, format, winner, loser, drawn, cont
           // Cancels the card's padding so the bar reaches the edges; the card
           // clips it back to the corner radius.
           marginLeft: -FEED_PAD, marginRight: -FEED_PAD, marginBottom: -FEED_PAD, marginTop: 14,
-          background: FEED_LIME, padding: "10px " + FEED_PAD + "px",
+          background: FEED_HERO, color: FEED_ON_HERO, padding: "10px " + FEED_PAD + "px",
           display: "flex", alignItems: "center", gap: 10,
           cursor: onOpenMatch ? "pointer" : "default",
         }}

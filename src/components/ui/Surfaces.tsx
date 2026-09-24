@@ -159,11 +159,20 @@ export type FormResult = "W" | "D" | "L";
  */
 const DOT_COLOUR = { W: DOT_WIN, D: DOT_DRAW, L: DOT_LOSS };
 
-export function FormDots({ form, size = 10, ink, tone = "colour" }: {
+export function FormDots({ form, size = 10, ink, lossInk, tone = "colour" }: {
   form: FormResult[];
   size?: number;
-  /** The single ink to draw in when tone is "ink". */
+  /** The ink for a win when tone is "ink". */
   ink?: string;
+  /**
+   * The ink for a loss when tone is "ink".
+   *
+   * It used to be the win colour at 25% opacity, which is the trick §1 bans:
+   * an alpha only reads as "quieter" against a known background, and three of
+   * the four themes in Appendix A put this card on a light one. Two colours,
+   * both named, and the shape difference for a draw stays as it was.
+   */
+  lossInk?: string;
   /**
    * "colour" — green won, grey drew, red lost. Three filled dots, readable
    * at a glance and at a distance, for rows on a dark surface.
@@ -185,8 +194,9 @@ export function FormDots({ form, size = 10, ink, tone = "colour" }: {
           aria-label={r === "W" ? "win" : r === "D" ? "draw" : "loss"}
           style={{
             width: size, height: size, borderRadius: size / 2, display: "block", flexShrink: 0,
-            background: tone === "ink" ? (r === "D" ? "transparent" : colour) : DOT_COLOUR[r],
-            opacity: tone === "ink" && r === "L" ? 0.25 : 1,
+            background: tone === "ink"
+              ? (r === "D" ? "transparent" : r === "L" ? (lossInk || colour) : colour)
+              : DOT_COLOUR[r],
             border: tone === "ink" && r === "D" ? "1.5px solid " + colour : undefined,
             boxSizing: "border-box",
           }}

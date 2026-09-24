@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { initialsOf } from "@/lib/format";
-import { FEED_TEXT_LOW, PANEL2, body as bodyFont } from "@/lib/theme";
+import { FEED_OVERLAY, FEED_TEXT_LOW, PANEL2, body as bodyFont } from "@/lib/theme";
 
 // A face, and only when there is one.
 //
@@ -64,8 +64,8 @@ export function Avatar({ player, size = 34, enlargeable = false }: any) {
         <button onClick={(e) => { e.stopPropagation(); setOpen(true); }} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", borderRadius: size / 2 }} aria-label="View full-size photo">{body}</button>
       ) : body}
       {open && (
-        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24 }}>
-          <img src={photo} alt="" style={{ maxWidth: "min(92vw, 480px)", maxHeight: "80vh", borderRadius: 20, objectFit: "contain", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} />
+        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24 }}>
+          <img src={photo} alt="" style={{ maxWidth: "min(92vw, 480px)", maxHeight: "80vh", borderRadius: 20, objectFit: "contain", boxShadow: "0 20px 60px var(--shadow-strong)" }} />
         </div>
       )}
     </>

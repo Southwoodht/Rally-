@@ -139,7 +139,7 @@ function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own
           <Plus size={14} strokeWidth={2.4} />Add
         </button>
       </div>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: error ? "#F09595" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: error ? "FEED_THEY_LEAD" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
         {failure || error || (mode === "estimate"
           ? "Your estimate, because they have an account and have set no level. It counts in this league only, never on the global table, and it stops counting the moment they set their own."
           : "Effective from — it runs until the next entry starts.")}

@@ -2,7 +2,7 @@
 import React from "react";
 import { Cycler } from "@/components/ui/Cycler";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
-import { FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD, FEED_RADIUS, body, tabular } from "@/lib/theme";
+import { FEED_HERO, FEED_LIME_DIVIDER, FEED_LIME_INK_2, FEED_LOSS_ON_HERO, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_WIN_ON_HERO, body, display, tabular } from "@/lib/theme";
 
 // Where you stand, as the one thing you see first.
 //
@@ -115,9 +115,10 @@ const labelStyle: React.CSSProperties = {
  * the same lime and the caption is doing the same job on both, so a caption
  * that looked different here would read as a different kind of thing.
  */
+// The mockup's caption: 11px, weight 600, letter-spacing 1.6, 6px above.
 const unitStyle: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2,
-  textTransform: "uppercase", letterSpacing: 0.6, marginTop: 2,
+  fontFamily: body, fontWeight: 600, fontSize: 11, color: FEED_ON_HERO,
+  textTransform: "uppercase", letterSpacing: 1.6, marginTop: 6,
   whiteSpace: "nowrap",
 };
 
@@ -159,8 +160,11 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
                 <StatNumeral size={30} tone="ink" style={{ letterSpacing: "-0.03em" }}>{cur.note || "Unplaced"}</StatNumeral>
               ) : (
                 <>
-                  <StatNumeral size={52} tone="ink" style={{ letterSpacing: "-0.045em" }}>{cur.rank}</StatNumeral>
-                  <StatNumeral size={24} tone="ink" style={{ letterSpacing: "-0.045em", marginLeft: 1 }}>{ordinalSuffix(cur.rank)}</StatNumeral>
+                  {/* 64 with a 26 suffix, letter-spacing -2 and 0 — the
+                      mockup's exact figures. The suffix deliberately does NOT
+                      inherit the tracking; at 26px it would collide. */}
+                  <span style={{ fontFamily: display, fontWeight: 700, fontSize: 64, lineHeight: 1, letterSpacing: "-2px", color: FEED_ON_HERO }}>{cur.rank}</span>
+                  <span style={{ fontFamily: display, fontWeight: 700, fontSize: 26, lineHeight: 1, letterSpacing: 0, color: FEED_ON_HERO }}>{ordinalSuffix(cur.rank)}</span>
                 </>
               )}
             </div>
@@ -168,7 +172,7 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
           {/* Baseline-aligned with the rank rather than centred, so two numerals
               of very different sizes sit on one line instead of floating. */}
           <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <StatNumeral size={26} tone="ink">{cur.rating}</StatNumeral>
+            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: FEED_ON_HERO }}>{cur.rating}</div>
             <div style={unitStyle}>{cur.unit || "rating"}</div>
           </div>
         </div>
@@ -189,7 +193,10 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
                   <span style={{ ...labelStyle, fontSize: 12.5, lineHeight: 1, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur.footer}</span>
                 ) : null}
               </span>
-              {hasForm && <FormDots form={cur.form!} tone="ink" ink={FEED_LIME_INK} />}
+              {/* Dots drawn ON cream need their own pair — the page's win and
+                  loss colours have nothing to sit against here. §1 names them
+                  --win-on-hero and --loss-on-hero. */}
+              {hasForm && <FormDots form={cur.form!} tone="ink" ink={FEED_WIN_ON_HERO} lossInk={FEED_LOSS_ON_HERO} />}
             </div>
           </>
         )}
@@ -198,12 +205,15 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
   };
 
   return (
-    <div style={{ background: FEED_LIME, borderRadius: FEED_RADIUS, padding: FEED_PAD }}>
+    // Cream, per §2: this is the biggest filled surface in the app and the
+    // single clearest case of "if the old lime filled a big card, it becomes
+    // cream". 20px vertical / 18px horizontal padding, radius 26.
+    <div style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: "20px " + FEED_PAD + "px" }}>
       <Cycler
         labels={list.map((s2) => s2.scope)}
         render={slide}
         labelColor={FEED_LIME_INK_2}
-        dotColor={FEED_LIME_INK}
+        dotColor={FEED_ON_HERO}
         ariaLabel="Where you stand, by league"
       />
     </div>

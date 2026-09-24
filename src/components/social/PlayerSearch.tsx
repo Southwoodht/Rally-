@@ -7,7 +7,7 @@ import { currentUserId } from "@/lib/messages";
 import { searchLeaguePlayers, searchProfiles, type LeaguePlayerHit, type Profile } from "@/lib/profiles";
 import {
   FEED_CARD, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW,
-  FEED_TEXT_MID, body, fontImport, tight,
+  FEED_TEXT_MID, body, tight,
 } from "@/lib/theme";
 
 const RECENTS_KEY = "rally.recentProfiles";
@@ -161,7 +161,6 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
 
   return (
     <div style={{ minHeight: "100vh", background: FEED_PAGE, paddingTop: "env(safe-area-inset-top)" }}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "8px 16px 48px" }}>
         <button
           onClick={() => window.history.back()}

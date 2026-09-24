@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { BigBtn, Field } from "@/components/ui/atoms";
 import { Club, listMyAdminClubs } from "@/lib/clubs";
 import { recordTrophyForPlayer } from "@/lib/trophies";
-import { BALL, CLAY, COURT, MUTED, body, input } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CLAY, COURT, MUTED, body, input } from "@/lib/theme";
 
 // The mirror image of ClaimTrophyForm. There, a player claims an honour and
 // waits for an admin. Here the admin is the one filling it in, for somebody
@@ -50,8 +50,8 @@ export function RecordTrophyForm({ playerId, playerName, onClose, onSubmitted }:
   const who = playerName || "this player";
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED }}>Record a trophy</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontSize: 12, cursor: "pointer" }}>Close</button>

@@ -1,4 +1,3 @@
-import { AV_COLORS } from "@/lib/theme";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -70,7 +69,6 @@ export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);
 
 export const winPct = (r) => (r && r.gp ? (r.w + r.d * 0.5) / r.gp : 0);
 
-export const colorFor = (id) => { let s = 0; for (let i = 0; i < id.length; i++) s += id.charCodeAt(i); return AV_COLORS[s % AV_COLORS.length]; };
 
 export const D = (s) => new Date(s).getTime();
 

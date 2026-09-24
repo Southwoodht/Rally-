@@ -52,7 +52,7 @@ export default function PlayerClaim({
           maxWidth: 420,
           padding: 28,
           borderRadius: 18,
-          border: "1px solid #ddd",
+          border: "1px solid var(--text-mid)",
           textAlign: "center",
         }}
       >

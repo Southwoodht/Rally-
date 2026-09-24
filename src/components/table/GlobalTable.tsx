@@ -7,11 +7,7 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LEVELS } from "@/core/constants";
 import { ratingColumn } from "@/core/rankDisplay";
 import { PROVISIONAL_GAMES, loadGlobalStandings, type GlobalRow } from "@/lib/globalTable";
-import {
-  FEED_BAR, FEED_CARD, FEED_DEEP, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2,
-  FEED_RAISED, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD,
-  body, tabular, tight,
-} from "@/lib/theme";
+import { FEED_BAR, FEED_CARD, FEED_DEEP, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_RADIUS, FEED_RAISED, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, LEVEL_RAMP, body, tabular, tight } from "@/lib/theme";
 
 // A league that nobody created. Every person you can see, ranked on their own
 // record wherever they play — see src/lib/globalTable.ts for why that is the
@@ -35,13 +31,17 @@ import {
  * the top of it lands on the brand lime, which is where the strongest players
  * are and where the eye should finish.
  */
+// Six steps from the quietest surface to the accent, out of LEVEL_RAMP so a
+// theme can re-tune the whole ladder in one block. The old ramp climbed to
+// lime; this one climbs to gold, and Semi-pro and Pro still share the top
+// step for the reason the comment above gives.
 const LEVEL_COLOUR: Record<string, string> = {
-  Beginner: "#3E6E56",
-  Amateur: "#5B8F72",
-  Intermediate: "#8FB86A",
-  Advanced: "#BCD65C",
-  "Semi-pro": "#D9E84B",
-  Pro: "#D9E84B",
+  Beginner: LEVEL_RAMP[0],
+  Amateur: LEVEL_RAMP[1],
+  Intermediate: LEVEL_RAMP[2],
+  Advanced: LEVEL_RAMP[3],
+  "Semi-pro": LEVEL_RAMP[4],
+  Pro: LEVEL_RAMP[5],
 };
 const NO_LEVEL_COLOUR = FEED_TEXT_DIM;
 
@@ -196,7 +196,7 @@ function LeaderCard({ r, rating, onOpen }: { r: GlobalRow; rating: string; onOpe
   return (
     <div
       onClick={onOpen}
-      style={{ background: FEED_LIME, borderRadius: 20, padding: 18, cursor: onOpen ? "pointer" : "default", marginBottom: 12 }}
+      style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: 18, cursor: onOpen ? "pointer" : "default", marginBottom: 12 }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Face row={r} size={50} />
