@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { ChevronDown } from "lucide-react";
+import { ThemePicker } from "@/components/ui/ThemePicker";
 import { FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
 // League name, greeting, bell. The greeting arrives finished so the clock
@@ -23,7 +24,7 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
   const league = (
     // 14px per the mockup, up from 12. The club selector is the one control
     // above the greeting and it was reading as a caption.
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
       {leagueName}
       {onPickLeague && <ChevronDown size={13} color={FEED_TEXT_MID} strokeWidth={2} />}
     </span>
@@ -32,11 +33,17 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        {onPickLeague ? (
-          <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", maxWidth: "100%" }}>
-            {league}
-          </button>
-        ) : league}
+        {/* The club selector and the theme picker share this row, per the
+            brief: the picker sits right-aligned against whatever the club
+            control is on that screen. */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          {onPickLeague ? (
+            <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", minWidth: 0 }}>
+              {league}
+            </button>
+          ) : league}
+          <ThemePicker />
+        </div>
         {/* The greeting: display font, 30/700, letter-spacing -0.6px. Exactly
             the mockup, and the first place in the app where Bricolage does the
             job the old condensed face was reserved for. */}
