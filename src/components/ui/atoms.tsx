@@ -36,6 +36,6 @@ export function Select({ value, onChange, players, exclude, placeholder = "Selec
 
 export const Field = ({ label, children }: any) => <div style={{ marginBottom: 16 }}><div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, marginBottom: 7 }}>{label}</div>{children}</div>;
 
-export const BigBtn = ({ children, onClick, disabled, color, grow = true }: any) => <button onClick={onClick} disabled={disabled} style={{ flex: grow ? 1 : "none", fontFamily: body, fontWeight: 600, fontSize: 15, padding: "13px 16px", borderRadius: RADIUS_SM, cursor: disabled ? "not-allowed" : "pointer", border: "none", background: disabled ? "#2a5545" : color, color: COURT, opacity: disabled ? 0.5 : 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{children}</button>;
+export const BigBtn = ({ children, onClick, disabled, color, grow = true }: any) => <button onClick={onClick} disabled={disabled} style={{ flex: grow ? 1 : "none", fontFamily: body, fontWeight: 600, fontSize: 15, padding: "13px 16px", borderRadius: RADIUS_SM, cursor: disabled ? "not-allowed" : "pointer", border: "none", background: disabled ? "var(--line)" : color, color: COURT, opacity: disabled ? 0.5 : 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{children}</button>;
 
 export const Empty = ({ msg }: any) => <div style={{ fontFamily: body, color: MUTED, fontSize: 14, textAlign: "center", padding: "36px 12px" }}>{msg}</div>;

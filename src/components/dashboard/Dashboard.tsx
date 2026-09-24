@@ -6,7 +6,7 @@ import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/
 import { FRIENDLY_LEAGUE_ID } from "@/lib/leagueData";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
-import { BALL, CHALK, CLAY, COURT, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, display, fontImport } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, display } from "@/lib/theme";
 import RallyApp from "@/components/RallyApp";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
@@ -165,7 +165,6 @@ export default function Dashboard({ session }: { session: Session }) {
 
   const shell = (children: React.ReactNode) => (
     <div style={{ minHeight: "100vh", background: COURT, padding: "22px 18px 40px", paddingTop: "calc(22px + env(safe-area-inset-top))" }}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>

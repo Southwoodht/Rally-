@@ -439,7 +439,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
             <button
               onClick={() => setPending(null)}
               aria-label="Remove photo"
-              style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, border: "none", background: "rgba(0,0,0,0.62)", color: "#fff", cursor: "pointer", display: "grid", placeItems: "center" }}
+              style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, border: "none", background: "rgba(0,0,0,0.62)", color: "var(--text-hi)", cursor: "pointer", display: "grid", placeItems: "center" }}
             >
               <X size={15} strokeWidth={2.4} />
             </button>

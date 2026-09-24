@@ -58,7 +58,7 @@ import { WhatsNew } from "@/components/home/WhatsNew";
 import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
 import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
-import { BALL, CHALK, COURT, MUTED, PANEL, body, display, fontImport, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
+import { BALL, CHALK, COURT, MUTED, PANEL, body, display, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
@@ -958,7 +958,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   if (friendlyUnavailable) return (
     <div style={{ ...wrap, minHeight: "100vh", padding: "24px 18px 24px" }}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: CHALK }}>Friendlies aren&apos;t switched on yet</div>
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: MUTED, marginTop: 10, lineHeight: 1.55 }}>
@@ -991,7 +990,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const showSuggestion = claimUI.candidate && !declinedCandidate;
     return (
       <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 100, overflowY: "auto" }}>
-        <style dangerouslySetInnerHTML={{ __html: fontImport }} />
         {showSuggestion ? (
           <PlayerClaim player={claimUI.candidate} onClaim={() => resolveClaim(claimUI.candidate)} onNotMe={() => setDeclinedCandidate(true)} />
         ) : (
@@ -1403,7 +1401,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>

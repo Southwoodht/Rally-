@@ -1,26 +1,57 @@
 
 import type { CSSProperties } from "react";
 
-export const COURT = "#15352a", PANEL = "#1d4636", PANEL2 = "#234f3d", CHALK = "#f5f2e9";
+// EVERY COLOUR IN THIS FILE IS A CSS VARIABLE. Not one hex code, here or in
+// any component — the values live in src/styles/themes.css, one block per
+// theme, which is what makes adding paris/sw19/flushing/melbourne later a
+// CSS change and nothing more.
+//
+// The brief asked for these to be wired into Tailwind. That would have done
+// nothing: Tailwind is installed and unused here — six className attributes
+// in the whole app and no palette classes. Rally is ~1,630 inline style
+// objects reading these constants, so pointing the constants at variables
+// re-themes all of them without touching a component.
+//
+// The old names are kept and re-pointed rather than renamed. 87 files import
+// them; renaming would have been a 400-line diff in which a real mistake
+// could hide, and the names are still accurate about their ROLE.
+export const COURT = "var(--bg-page)",
+  PANEL = "var(--bg-card)",
+  PANEL2 = "var(--bg-raised)",
+  CHALK = "var(--text-hi)";
 
-export const BALL = "#d9e84b", CLAY = "#cb6d47", MUTED = "#8aa79a", LINE = "rgba(245,242,233,0.12)";
+// BALL was the lime, and the lime split in two. It is the small-accent gold
+// here — text, icons, marks, primary buttons — because that is what most of
+// its call sites are. The big filled surfaces it used to cover (the rank
+// card, a selected pill, the centre button) take FEED_HERO / FEED_FAB
+// instead, one call site at a time.
+export const BALL = "var(--accent)",
+  CLAY = "var(--danger)",
+  MUTED = "var(--text-mid)",
+  LINE = "var(--line)";
 
 export const NICKS = ["The Destroyer", "The Wall", "Silky", "The Machine", "Hurricane", "The Surgeon", "Baseline Bandit", "The Postman", "Iceman", "The Analyst", "Topspin", "The Bulldozer", "Smash Hit", "The Professor", "Nightmare", "The Cannon", "Slice King", "The Freight Train", "Deadeye", "The Magician"];
 
 export const AVATARS = ["🎾", "🏆", "🔥", "⚡", "🐐", "🦊", "🐢", "🎯", "💪", "🧱", "👑", "🏓", "🥊", "😎", "🍕", "🤖"];
 
-export const AV_COLORS = ["#cb6d47", "#d9e84b", "#6fa8dc", "#e0a3c3", "#8fd19e", "#e8c34a", "#b39ddb", "#f0946b"];
-
-export const avCell = (on: boolean): CSSProperties => ({ width: 40, height: 40, borderRadius: 12, display: "grid", placeItems: "center", cursor: "pointer", background: on ? BALL : PANEL2, border: on ? "none" : "1px solid " + LINE });
+// AV_COLORS and avCell went with the avatar picker they coloured. Nothing
+// rendered them after the avatars became "a photo or initials", and eight
+// off-palette hexes surviving in a theme file is exactly the thing this
+// change exists to stop.
 
 // ---- style tokens ----
 
 // Condensed display font — reserved for big page-level headings (TABLE,
 // PROFILE, COMPARE…) only. Everything else, including player names, reads
 // as normal sentence-case body text now.
-export const display = "'Barlow Condensed', 'Arial Narrow', sans-serif";
+// Bricolage Grotesque. Page titles, the greeting, every big number, player
+// names in headers, card headlines. Loaded by next/font in the root layout;
+// the variable indirection is in themes.css so a future theme can repoint the
+// family without touching a component.
+export const display = "var(--font-display)";
 
-export const body = "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif";
+// DM Sans. Everything else.
+export const body = "var(--font-body)";
 
 // Numbers only — ratings, scores, dates, counters.
 // The numbers font is gone. It was JetBrains Mono, kept for figures after
@@ -35,13 +66,18 @@ export const body = "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans
 // Removed rather than deprecated, so it cannot come back one call site at a
 // time, and the font is no longer fetched at all.
 
-export const SOFT_SHADOW = "0 8px 24px rgba(0,0,0,0.22)";
+export const SOFT_SHADOW = "var(--shadow)";
 export const RADIUS = 16;
 export const RADIUS_SM = 12;
 
 export const fxBtn: CSSProperties = { flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "10px 6px", borderRadius: RADIUS_SM, cursor: "pointer", border: "none", background: PANEL2, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
-export const fontImport = "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');";
+// The fonts are loaded once by next/font in the root layout. This used to be
+// an @import string injected into a <style> tag by six different components,
+// which fetched Google Fonts from inside the render tree on six screens.
+// Kept as an empty string so the call sites can be removed in their own
+// commit rather than all at once.
+export const fontImport = "";
 
 export const wrap: CSSProperties = { background: COURT, minHeight: "100vh", width: "100%" };
 
@@ -89,21 +125,21 @@ export const FEED_TEXT_HI = CHALK;       // #F5F2E9
 
 // The one genuinely new colour: a step below COURT, for tiles inset into a
 // card that need to read as recessed rather than raised.
-export const FEED_DEEP = "#102921";
+export const FEED_DEEP = "var(--bg-bar)";
 
 // Text on lime, and the same value as FEED_DEEP — a coincidence in the
 // palette rather than a relationship, so it's named separately: changing the
 // inset tile background should not silently restyle every winner bar.
-export const FEED_LIME_INK = "#102921";
+export const FEED_LIME_INK = "var(--on-accent)";
 
 // Secondary text on lime. 7.47:1, against 4.61:1 for the value this
 // replaced — same ink family as FEED_LIME_INK rather than a separate green,
 // so the two read as one voice at two volumes.
-export const FEED_LIME_INK_2 = "#2A4A12";
+export const FEED_LIME_INK_2 = "var(--on-hero-mid)";
 
 // A rule drawn on lime. Ink at low opacity rather than a named colour, so it
 // stays correct if the lime ever moves.
-export const FEED_LIME_DIVIDER = "rgba(0,0,0,0.22)";
+export const FEED_LIME_DIVIDER = "var(--on-hero-line)";
 
 // The two quiet text tiers, measured against PANEL — the card — because
 // that is the surface the brief names and the one they actually land on.
@@ -123,8 +159,10 @@ export const FEED_LIME_DIVIDER = "rgba(0,0,0,0.22)";
 // still clear 4.5, which only works if mid moves up as well. FEED_TEXT_LOW
 // is this file's own tier, not one from the brief — metadata needed a voice
 // below the losing side of a scoreline.
-export const FEED_TEXT_MID = "#9DB8AB";
-export const FEED_TEXT_LOW = "#95B0A3";
+export const FEED_TEXT_MID = "var(--text-mid)";
+// Folded into --text-mid. It was one measured step from it and the new token
+// set has three text tiers, not four; nothing on screen distinguished them.
+export const FEED_TEXT_LOW = "var(--text-mid)";
 
 // Row dividers are the raised surface colour, which makes a divider read as
 // the edge of the next surface rather than as a line drawn over this one.
@@ -136,8 +174,8 @@ export const FEED_HAIRLINE = FEED_RAISED;
 // Rank movement. Not in the palette because nothing in the app moved up or
 // down before; picked to sit beside the greens rather than reusing CLAY,
 // which means "clay court" elsewhere and would read as a surface, not a fall.
-export const FEED_UP = "#7BD88F";
-export const FEED_DOWN = "#E2705F";
+export const FEED_UP = "var(--up)";
+export const FEED_DOWN = "var(--down)";
 
 // The rating bar behind a standings row. Lime at low opacity rather than
 // FEED_RAISED, which was the first attempt and measures 1.14:1 against the
@@ -145,23 +183,23 @@ export const FEED_DOWN = "#E2705F";
 // the one element whose entire job is to be a visible length is a total
 // failure rather than a subtle one. At 16% it reads as a length without
 // competing with the numbers sitting on top of it.
-export const FEED_BAR = "rgba(217, 232, 75, 0.16)";
+export const FEED_BAR = "var(--bar-fill)";
 
 // Outcome colours, for anywhere a win, a draw and a loss have to be told
 // apart as quantities rather than as text — split bars, form bars, dots.
 // FEED_LOSS is deliberately quiet: a loss is a fact, not an alarm, and CLAY
 // would read as an error state.
 export const FEED_WIN = BALL;
-export const FEED_DRAW = "#4E7A63";
-export const FEED_LOSS = "#2F5B47";
+export const FEED_DRAW = "var(--line)";
+export const FEED_LOSS = "var(--muted-fill)";
 
 // The other person leading. Not CLAY, which means "clay court" in this app,
 // and not the movement red, which means "you dropped" — this is somebody
 // else being ahead, which is neither a fault nor a fall.
-export const FEED_THEY_LEAD = "#F09595";
+export const FEED_THEY_LEAD = "var(--danger)";
 
 // The same idea at bar and border weight, where a text colour would glare.
-export const FEED_THEY_LEAD_DIM = "#7E4A4A";
+export const FEED_THEY_LEAD_DIM = "var(--danger-dim)";
 
 // Outcome dots. Deliberately louder than the bar colours: a segment of a
 // split bar is read against its neighbours, but a dot in a row of five has
@@ -189,11 +227,48 @@ export const DOT_LOSS = FEED_DOWN;
 // locked achievement, a disabled row. Not for anything a reader has to
 // take in, which is why it is allowed below the contrast floor the other
 // text tokens hold to.
-export const FEED_TEXT_DIM = "#5E7D6E";
+export const FEED_TEXT_DIM = "var(--text-dim)";
 
-export const FEED_RADIUS = 20;
+// §4 of the brief: cards are radius 26 with 22px vertical / 18px horizontal
+// padding. FEED_PAD stays the horizontal figure because that is how every
+// call site uses it; the vertical is FEED_PAD_Y.
+export const FEED_RADIUS = 26;
 export const FEED_TILE_RADIUS = 14;
 export const FEED_PAD = 18;
+export const FEED_PAD_Y = 22;
+
+// ---- the new surfaces the lime split into --------------------------------
+//
+// Cream, for big filled surfaces: the rank card, the "one place behind" card,
+// a selected pill or tab. Gold (BALL / FEED_LIME) stays for everything small.
+export const FEED_HERO = "var(--hero)";
+export const FEED_ON_HERO = "var(--on-hero)";
+
+// The primary button. Its own token rather than an alias of the accent,
+// because Appendix A gives two themes a CTA that is not their accent.
+export const FEED_CTA = "var(--cta)";
+export const FEED_ON_CTA = "var(--on-cta)";
+
+// The centre (+) button, likewise its own in three of the four future themes.
+export const FEED_FAB = "var(--fab)";
+export const FEED_ON_FAB = "var(--on-fab)";
+
+export const FEED_ACCENT_HOVER = "var(--accent-hover)";
+export const FEED_MUTED_FILL = "var(--muted-fill)";
+export const FEED_LOST = "var(--lost)";
+export const FEED_INITIALS = "var(--text-initials)";
+export const FEED_OVERLAY = "var(--overlay)";
+
+// Form dots drawn ON the cream card, where the page's win/loss colours have
+// nothing to sit against.
+export const FEED_WIN_ON_HERO = "var(--win-on-hero)";
+export const FEED_LOSS_ON_HERO = "var(--loss-on-hero)";
+
+// The Global table's level ramp, quietest to accent.
+export const LEVEL_RAMP = [
+  "var(--ramp-1)", "var(--ramp-2)", "var(--ramp-3)",
+  "var(--ramp-4)", "var(--ramp-5)", "var(--ramp-6)",
+];
 
 // Anything with digits lines up column-wise; anything big enough to show
 // loose tracking gets pulled in.

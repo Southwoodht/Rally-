@@ -118,7 +118,7 @@ export function LeagueMembers({ leagueId, leagueName }: { leagueId: string; leag
           {/* On the row that produced it, not at the foot of the screen —
               §4's "eight hundred pixels below the tap". */}
           {failed?.id === m.userId && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: "#F09595", lineHeight: 1.45, marginTop: 6 }}>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: "FEED_THEY_LEAD", lineHeight: 1.45, marginTop: 6 }}>
               {failed.message}
             </div>
           )}

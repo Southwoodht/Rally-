@@ -14,7 +14,7 @@ import { FEED_LIME, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } fr
 // Presentational. Every number arrives finished.
 
 const RULE = "0.5px solid " + FEED_RAISED;
-const DASH = "#2F5B47";
+const DASH = "var(--muted-fill)";
 
 export interface RankingRow {
   label: string;

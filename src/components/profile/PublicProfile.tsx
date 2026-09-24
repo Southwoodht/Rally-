@@ -18,8 +18,7 @@ import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 import { formatMatchDate } from "@/lib/format";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI,
-  FEED_TEXT_LOW, FEED_TEXT_MID, body, fontImport,
-} from "@/lib/theme";
+  FEED_TEXT_LOW, FEED_TEXT_MID, body, } from "@/lib/theme";
 
 type FriendState = "none" | "requested" | "incoming" | "friends" | "unknown";
 
@@ -143,7 +142,6 @@ export function PublicProfile({ id }: { id: string }) {
 
   const shell = (children: React.ReactNode) => (
     <div style={{ minHeight: "100vh", background: FEED_PAGE, paddingTop: "env(safe-area-inset-top)" }}>
-      <style dangerouslySetInnerHTML={{ __html: fontImport }} />
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "8px 16px calc(40px + env(safe-area-inset-bottom))" }}>
         <button
           onClick={() => window.history.back()}

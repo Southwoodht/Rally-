@@ -1,0 +1,116 @@
+/*
+ * Rally's themes.
+ *
+ * ONE BLOCK PER THEME, and adding paris/sw19/flushing/melbourne later means
+ * adding another block here and nothing else. That is the whole point of this
+ * file, so the rule that protects it is absolute: no component anywhere may
+ * contain a hex code, an rgb(), or a Tailwind palette class. Every colour in
+ * the app resolves through one of the variables below.
+ *
+ * WHY THIS FILE AND NOT TAILWIND. The brief asked for the tokens to be wired
+ * into Tailwind, and that would have done nothing here: Tailwind is installed
+ * but unused — six className attributes in the whole app and no palette
+ * classes at all. Rally is styled by ~1,630 inline style objects reading
+ * constants from lib/theme.ts. So lib/theme.ts now exports `var(--…)` strings
+ * instead of hex, every one of those inline styles re-themes for free, and
+ * the end state the brief wanted is reached by the route this codebase
+ * actually uses.
+ *
+ * THREE TOKENS ARE NOT IN THE BRIEF'S TABLE and are here because real screens
+ * need them. Each is noted where it is defined.
+ *
+ * NOTHING MAY ASSUME A DARK BACKGROUND. Three of the four future themes are
+ * light, so there is no hard-coded white text and no opacity trick that only
+ * works on dark — a dimmed ink is its own token, not an alpha on white.
+ */
+
+:root,
+[data-theme="rally"] {
+  /* ---- surfaces ---------------------------------------------------- */
+  --bg-page: #16271F;
+  --bg-bar: #1C3127;
+  --bg-card: #203A2D;
+  --bg-raised: #243F31;
+  --line: #2B4A3A;
+
+  /* ---- text -------------------------------------------------------- */
+  --text-hi: #F4EFE3;
+  --text-mid: #A9B8A8;
+  --text-initials: #C9D4C4;
+
+  /*
+   * NOT IN THE BRIEF. The app has four text tiers, not three: hi, mid, low
+   * and dim. Low folds into --text-mid with no loss, but dim is deliberately
+   * below AA and exists only for text that is decoration (see §10 of
+   * CLAUDE.md). Deleting it would either promote decoration to readable or
+   * silently drop contrast on real screens, so it keeps a token of its own.
+   */
+  --text-dim: #6E8578;
+
+  /* ---- gold: small accents ----------------------------------------- */
+  --accent: #E9C46A;
+  --accent-hover: #F3D98F;
+  --on-accent: #16271F;
+
+  /* ---- primary call to action -------------------------------------- */
+  --cta: #E9C46A;
+  --on-cta: #16271F;
+
+  /* ---- cream: big filled "hero" surfaces --------------------------- */
+  --hero: #F4EFE3;
+  --on-hero: #16271F;
+
+  /*
+   * NOT IN THE BRIEF. Ink ON cream, quieter than --on-hero: the "OFFICIAL ·
+   * ALL TIME" caption and the rule under the rank both sit on the hero card
+   * and must not be full strength. The mockup does this with opacity, which
+   * is exactly the trick that breaks on a light theme — so it is a colour.
+   */
+  --on-hero-mid: #4A5A50;
+  --on-hero-line: #C9C2B4;
+
+  /* ---- centre (+) button ------------------------------------------- */
+  --fab: #F4EFE3;
+  --on-fab: #16271F;
+
+  /* ---- results ------------------------------------------------------ */
+  --muted-fill: #3A5A48;
+  --lost: #8FA594;
+  --win-on-hero: #1F5B3A;
+  --loss-on-hero: #C9BFA6;
+
+  /*
+   * NOT IN THE BRIEF. The Table draws a rating bar behind each row as a
+   * measurable length — it has to read as the accent at low strength and
+   * cannot be an alpha, for the light-theme reason above.
+   */
+  --bar-fill: #2C4433;
+
+  /* ---- movement, which is not win/loss ------------------------------ */
+  --up: #7BD88F;
+  --down: #E2705F;
+
+  /* ---- states ------------------------------------------------------- */
+  --danger: #E8836B;
+  --danger-dim: #7E4A4A;
+  --overlay: rgba(10, 20, 15, 0.6);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+
+  /* ---- the level ramp on the Global table --------------------------- */
+  /* Six steps from the quietest surface to the accent. Not derivable from
+   * one token, and the old ramp ended on lime. */
+  --ramp-1: #2F4A3A;
+  --ramp-2: #40614B;
+  --ramp-3: #6E7F55;
+  --ramp-4: #A79A5E;
+  --ramp-5: #E9C46A;
+  --ramp-6: #E9C46A;
+
+  /* ---- type --------------------------------------------------------- */
+  /* Indirection on purpose: next/font owns --font-bricolage and
+   * --font-dmsans, and a future theme swaps the face by pointing these at a
+   * different one. Appendix A gives each theme its own display font, and
+   * that only stays a one-block change if the block can repoint the family. */
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-body: var(--font-dmsans), system-ui, sans-serif;
+}

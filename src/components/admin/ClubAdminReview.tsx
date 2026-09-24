@@ -174,7 +174,7 @@ export function ClubAdminReview() {
                     </div>
                     {t.notes && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>{t.notes}</div>}
                     <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                      <button disabled={busyId === t.id} onClick={() => act(t.id, approveTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "none", background: BALL, color: "#15352a" }}>Approve</button>
+                      <button disabled={busyId === t.id} onClick={() => act(t.id, approveTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "none", background: BALL, color: "var(--bg-page)" }}>Approve</button>
                       <button disabled={busyId === t.id} onClick={() => act(t.id, rejectTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 11, textTransform: "uppercase", fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "1px solid " + CLAY, background: "transparent", color: CLAY }}>Reject</button>
                     </div>
                   </div>
