@@ -38,12 +38,26 @@ export interface ThemeOption {
   status: string;
 }
 
+/**
+ * THE ID IS NOT THE NAME, AND MUST NOT BE CHANGED TO MATCH IT.
+ *
+ * "sw19" is called London and "flushing" is called New York, because the
+ * insider names read as code to anybody who does not follow tennis — which is
+ * most of a club. The names are the city; the ids are frozen.
+ *
+ * Renaming an id is a data migration, not a rename: every id is already
+ * written into profiles.theme rows, into the profiles_theme_check constraint
+ * and into localStorage on every device that has picked one. Changing the
+ * strings here would fail the constraint on write and silently reject
+ * everybody's stored choice on read. Display names cost nothing to change;
+ * ids cost a migration and a broken week.
+ */
 export const THEMES: ThemeOption[] = [
   { id: "rally", name: "Rally", caption: "Default", swatch: ["#16271F", "#F4EFE3", "#E9C46A"], status: "#16271F" },
   { id: "paris", name: "Paris", caption: "Clay", swatch: ["#F3ECE2", "#B9502B", "#A8451F"], status: "#B9502B" },
-  { id: "sw19", name: "SW19", caption: "Grass", swatch: ["#F7F4EC", "#1F5B3A", "#1F5B3A"], status: "#1F5B3A" },
-  { id: "flushing", name: "Flushing", caption: "New York hard court", swatch: ["#0B1220", "#8FE3FF", "#FF8A5B"], status: "#0B1220" },
-  { id: "melbourne", name: "Melbourne", caption: "Melbourne hard court", swatch: ["#EAF3FB", "#0B5FB5", "#0B5FB5"], status: "#0B5FB5" },
+  { id: "sw19", name: "London", caption: "Grass", swatch: ["#F7F4EC", "#1F5B3A", "#1F5B3A"], status: "#1F5B3A" },
+  { id: "flushing", name: "New York", caption: "Night hard court", swatch: ["#0B1220", "#8FE3FF", "#FF8A5B"], status: "#0B1220" },
+  { id: "melbourne", name: "Melbourne", caption: "Hard court", swatch: ["#EAF3FB", "#0B5FB5", "#0B5FB5"], status: "#0B5FB5" },
 ];
 
 export const DEFAULT_THEME: ThemeId = "rally";
