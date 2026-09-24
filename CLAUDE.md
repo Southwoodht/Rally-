@@ -741,6 +741,25 @@ unauthenticated request has no `auth.uid()`, so it matches nothing. Names
 and photos need an account to see. The question is closed; don’t re-open it
 without a reason.
 
+**Run on 2026-09-24: `schema_profile_theme.sql`** (branch `theme/picker`).
+One additive column, `profiles.theme text not null default 'rally'`, plus a
+check constraint naming the five themes. Verified: the column is there with
+that default, and the two existing policies are unchanged — select qualified
+`auth.uid() IS NOT NULL`, update qualified `id = auth.uid()`, which is exactly
+the rule the column needs, so nothing was widened.
+
+**The five theme names are duplicated in that constraint and cannot not be.**
+`src/lib/themes.ts` is the list the app reads and SQL cannot import it, so a
+sixth theme must change both — otherwise the write fails on the constraint and
+the theme simply appears to "not save", with nothing on screen to explain it.
+
+A lesson from this one, worth more than the migration: **the verification
+select at the foot of that file checked the RLS policies, which is the part
+that needed no change, and not the column, which is the part that did.** It
+would have returned the same two rows from a paste that died before the
+`add column`. A migration's closing select should prove the thing the
+migration did.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.

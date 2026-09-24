@@ -2,9 +2,9 @@
 
 Branch `theme/picker`, five commits. Master untouched; nothing has deployed.
 
-One SQL file is waiting: **`supabase/schema_profile_theme.sql`**. Until it is
-run the picker works and remembers your choice on that device, and only the
-"follows you to a second device" half is off. Nothing breaks.
+**`supabase/schema_profile_theme.sql` was run on 2026-09-24.** The column is
+there — `theme text not null default 'rally'` — and the two profiles policies
+are untouched. So the picker saves to your account, not just to the browser.
 
 ---
 
@@ -154,11 +154,10 @@ says data colours stay).
 
 ## What is NOT done
 
-- **The second-device test cannot pass yet.** It needs
-  `schema_profile_theme.sql` run; there is no `theme` column until then, so the
-  write fails every time. Both helpers swallow it — the picker still works and
-  still remembers locally — but "follows you to another device" is unproven
-  rather than working.
+- **The second-device test is now possible but has not been done.** The column
+  landed on 2026-09-24, so the write should succeed; nobody has yet picked a
+  theme on one device and opened the app on another to watch it follow. That is
+  the one remaining check from the brief's Phase 5.
 - **Not looked at in every theme.** Messages, Compare, Match detail and the
   Global table are on-palette and go through the shared primitives, but were
   checked in one or two themes rather than five.
