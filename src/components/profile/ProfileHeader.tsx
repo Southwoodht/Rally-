@@ -4,7 +4,7 @@ import { ChevronDown, Settings } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { STAR_COUNT, starsForLevel } from "@/core/stars";
 import { fullNameOf } from "@/lib/format";
-import { FEED_CARD, FEED_LIME, FEED_LOSS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tight } from "@/lib/theme";
+import { FEED_CARD, FEED_LIME, FEED_MUTED_FILL, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
 // The top of the profile: whose it is, and how good they are.
 
@@ -24,7 +24,7 @@ function TierStar({ fraction, size = STAR_SIZE }: { fraction: number; size?: num
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="1" y2="0">
           <stop offset={stop + "%"} stopColor={FEED_LIME} />
-          <stop offset={stop + "%"} stopColor={FEED_LOSS} />
+          <stop offset={stop + "%"} stopColor={FEED_MUTED_FILL} />
         </linearGradient>
       </defs>
       <path
@@ -60,7 +60,7 @@ export function LevelStars({ level, label }: { level: any; label?: string }) {
           <TierStar key={i} fraction={stars === null ? 0 : stars - i} />
         ))}
       </span>
-      {label && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>{label}</span>}
+      {label && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}>{label}</span>}
     </span>
   );
 }
@@ -90,12 +90,15 @@ export function ProfileHeader({
           <button
             onClick={onPickLeague}
             disabled={!onPickLeague}
-            style={{ display: "inline-flex", alignItems: "center", gap: 3, background: "transparent", border: "none", padding: 0, cursor: onPickLeague ? "pointer" : "default", maxWidth: "100%" }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, padding: "0 14px", borderRadius: 18, background: FEED_CARD, border: "none", cursor: onPickLeague ? "pointer" : "default", maxWidth: "100%" }}
           >
-            <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{leagueName}</span>
-            {onPickLeague && <ChevronDown size={13} color={FEED_TEXT_MID} strokeWidth={2} />}
+            {/* §2: the club selector pill is gold text on a --bg-card pill —
+                one of the named small highlights. */}
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_LIME, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{leagueName}</span>
+            {onPickLeague && <ChevronDown size={14} color={FEED_LIME} strokeWidth={2.2} />}
           </button>
-          <div style={{ ...tight(30), fontFamily: body, fontWeight: 500, fontSize: 30, letterSpacing: "-0.035em", color: FEED_TEXT_HI, marginTop: 2 }}>
+          {/* 28/700 display at -0.5, per Appendix C's sub-header. */}
+          <div style={{ fontFamily: display, fontWeight: 700, fontSize: 28, letterSpacing: "-0.5px", color: FEED_TEXT_HI, marginTop: 10 }}>
             Profile
           </div>
         </div>
@@ -105,9 +108,9 @@ export function ProfileHeader({
           <button
             onClick={onSettings}
             aria-label="Settings"
-            style={{ width: 34, height: 34, borderRadius: 17, background: FEED_RAISED, border: "none", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
+            style={{ width: 44, height: 44, borderRadius: 22, background: FEED_RAISED, border: "none", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
           >
-            <Settings size={17} color={FEED_TEXT_MID} strokeWidth={1.9} />
+            <Settings size={20} color={FEED_TEXT_HI} strokeWidth={2} />
           </button>
         )}
       </div>
@@ -116,15 +119,19 @@ export function ProfileHeader({
         {/* Card-coloured gap inside the ring, so it reads on any avatar —
             the generated colours include the ball yellow, which would
             otherwise swallow a plain lime ring whole. */}
-        <span style={{ borderRadius: "50%", boxShadow: "0 0 0 2px " + FEED_CARD + ", 0 0 0 4px " + FEED_LIME, display: "flex", flexShrink: 0 }}>
-          <Avatar player={player} size={62} enlargeable />
+        {/* 70px with a 3px accent ring. The ring is a real border rather
+            than a boxShadow pair now: the old version needed a card-coloured
+            gap because avatars could be any generated colour, and generated
+            avatar colours no longer exist. */}
+        <span style={{ borderRadius: "50%", border: "3px solid " + FEED_LIME, display: "flex", flexShrink: 0, boxSizing: "border-box", width: 70, height: 70, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <Avatar player={player} size={64} enlargeable />
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ ...tight(22), fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: display, fontWeight: 700, fontSize: 24, letterSpacing: "-0.4px", color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {fullNameOf(player)}
           </div>
           {meta && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>
           )}
           <div style={{ marginTop: 6 }}>
             <LevelStars level={player?.level} label={levelLabel} />

@@ -2,7 +2,7 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
+import { FEED_HERO, FEED_LIME, FEED_LIME_INK_2, FEED_ON_HERO, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
 // The one sentence about where you stand that a number cannot say.
 //
@@ -18,12 +18,13 @@ export interface GapInsightProps {
   advice?: string;
 }
 
+// Cream. §2: a big filled card, not a small highlight.
 export function GapInsight({ headline, advice }: GapInsightProps) {
   return (
-    <div style={{ background: FEED_LIME, borderRadius: FEED_RADIUS, padding: 18 }}>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_LIME_INK, lineHeight: 1.35 }}>{headline}</div>
+    <div style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: "20px 18px" }}>
+      <div style={{ fontFamily: display, fontWeight: 700, fontSize: 20, letterSpacing: "-0.3px", color: FEED_ON_HERO, lineHeight: 1.3 }}>{headline}</div>
       {advice && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 6 }}>{advice}</div>
+        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 8 }}>{advice}</div>
       )}
     </div>
   );

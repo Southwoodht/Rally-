@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { MoreHorizontal, Check, Search, X } from "lucide-react";
-import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
+import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
 
 // One scrolling row of chips in place of the stack of controls that used to
 // sit between the heading and rank 1.
@@ -36,7 +36,10 @@ function Chip({ label, active, onClick, children }: any) {
   return (
     <button
       onClick={onClick}
-      style={{ ...chipBase, background: active ? FEED_LIME : FEED_RAISED, color: active ? FEED_LIME_INK : FEED_TEXT_MID }}
+      // §5: selected is --hero with --on-hero; unselected is --bg-card with
+      // --text-mid. The selected state of a pill is a filled surface, which
+      // is the cream side of the split.
+      style={{ ...chipBase, background: active ? FEED_HERO : FEED_CARD, color: active ? FEED_ON_HERO : FEED_TEXT_MID }}
     >
       {children ?? label}
     </button>
