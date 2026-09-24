@@ -95,6 +95,10 @@
   --danger-dim: #7E4A4A;
   --overlay: rgba(10, 20, 15, 0.6);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  /* A stronger scrim/shadow, and the segmented-control track. Both were
+   * alphas on black at their call sites, which is the trick §1 bans. */
+  --shadow-strong: rgba(0, 0, 0, 0.35);
+  --track: rgba(0, 0, 0, 0.22);
 
   /* ---- the level ramp on the Global table --------------------------- */
   /* Six steps from the quietest surface to the accent. Not derivable from

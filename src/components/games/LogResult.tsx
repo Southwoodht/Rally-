@@ -163,7 +163,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
       ) : (
         <>
           {p1 && p2 && existingBetween.length > 0 && onDeleteBetween && (
-            <div style={{ background: "rgba(203,109,71,.12)", border: "1px solid " + CLAY, borderRadius: 12, padding: "10px 12px", marginBottom: 14 }}>
+            <div style={{ background: "var(--bg-raised)", border: "1px solid " + CLAY, borderRadius: 12, padding: "10px 12px", marginBottom: 14 }}>
               <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: confirmClear ? 8 : 0 }}>
                 You already have <strong style={{ color: CLAY }}>{existingBetween.length}</strong> match{existingBetween.length === 1 ? "" : "es"} logged between {n1} and {n2}. Adding more stacks on top of these — to redo part or all of this record, clear it first.
               </div>

@@ -4,7 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
 import { ChevronDown, Plus } from "lucide-react";
-import { BALL, CHALK, CLAY, COURT, MUTED, PANEL, PANEL2, body, input, miniInput } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HERO, FEED_ON_HERO, MUTED, PANEL, PANEL2, body, input, miniInput } from "@/lib/theme";
 import { FEED_CARD, FEED_TEXT_HI, FEED_TEXT_MID } from "@/lib/theme";
 
 // Reusable "pick an existing player, or create a new one" control.
@@ -93,7 +93,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
       </button>
 
       {open && (
-        <div onClick={close} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
+        <div onClick={close} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "82vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "18px 16px 32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>{mode === "pick" ? "Select player" : "New player"}</div>
@@ -136,7 +136,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
                 <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "10px 0 6px" }}>Player type</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                   <button onClick={() => setNewIsAccount(false)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: !newIsAccount ? BALL : PANEL2, color: !newIsAccount ? COURT : MUTED, fontWeight: 600 }}>Shell player</button>
-                  <button onClick={() => setNewIsAccount(true)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: newIsAccount ? BALL : PANEL2, color: newIsAccount ? COURT : MUTED, fontWeight: 600 }}>Has a Rally account</button>
+                  <button onClick={() => setNewIsAccount(true)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: newIsAccount ? FEED_HERO : PANEL2, color: newIsAccount ? FEED_ON_HERO : MUTED, fontWeight: 600 }}>Has a Rally account</button>
                 </div>
                 <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>
                   {newIsAccount

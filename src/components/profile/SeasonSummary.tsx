@@ -4,7 +4,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import { computeSeasonTrophies } from "@/core/achievements";
 import { computeSeasonSummary } from "@/core/season";
 import { fmtDate } from "@/lib/format";
-import { BALL, CHALK, CLAY, COURT, MUTED, body } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, MUTED, body } from "@/lib/theme";
 
 export function SeasonSummary({ player, players, matches, year, fixtures, group, nameOf, onClose, onOpenMatch }: any) {
   const s = computeSeasonSummary(player.id, players, matches, year);
@@ -21,7 +21,7 @@ export function SeasonSummary({ player, players, matches, year, fixtures, group,
   );
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 92 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 92 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Season summary</div>

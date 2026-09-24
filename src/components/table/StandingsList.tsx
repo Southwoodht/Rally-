@@ -6,10 +6,7 @@ import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
 import { levelNow } from "@/core/levels";
 import { fullNameOf } from "@/lib/format";
-import {
-  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD, FEED_RADIUS,
-  FEED_BAR, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight,
-} from "@/lib/theme";
+import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight } from "@/lib/theme";
 
 // The standings, in the same language as the newsfeed.
 //
@@ -93,7 +90,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
   return (
     <div
       onClick={onOpen ? () => onOpen(p.player.id) : undefined}
-      style={{ background: FEED_LIME, borderRadius: FEED_RADIUS, padding: FEED_PAD, cursor: onOpen ? "pointer" : "default" }}
+      style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: FEED_PAD, cursor: onOpen ? "pointer" : "default" }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <Avatar player={p.player} size={52} />

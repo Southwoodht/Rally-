@@ -7,7 +7,7 @@ import { computeLegacyProfile } from "@/core/legacy";
 import { yearOf } from "@/core/levels";
 import { fmtDate } from "@/lib/format";
 import { listMyTrophies, Trophy } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body } from "@/lib/theme";
 
 const SPLIT_LABEL: Record<string, string> = { higher: "Against higher-rated players", similar: "Against similar-level players", lower: "Against lower-rated players" };
 
@@ -40,7 +40,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
   );
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL }}>Rally Legacy</div>

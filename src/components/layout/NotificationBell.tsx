@@ -7,7 +7,7 @@ import { computeLocalNotifications, Notification } from "@/core/notifications";
 import { listIncomingRequests } from "@/lib/friends";
 import { storage } from "@/lib/storage";
 import { listMyTrophies, listPendingClaims } from "@/lib/trophies";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body } from "@/lib/theme";
 
 const RECENT_WINDOW_MS = 7 * 86400000;
 const SEEN_KEY = "notifs_seen";
@@ -107,7 +107,7 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
         {badge > 0 && <span style={{ position: "absolute", top: -4, right: -4, background: BALL, color: COURT, fontFamily: body, fontSize: 9, fontWeight: 800, borderRadius: 999, minWidth: 16, height: 16, display: "grid", placeItems: "center", padding: "0 3px" }}>{badge}</span>}
       </button>
       {open && (
-        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
+        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "18px 16px 32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <span style={{ fontFamily: body, fontWeight: 800, fontSize: 17, color: CHALK }}>Notifications</span>

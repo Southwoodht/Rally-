@@ -11,7 +11,7 @@ import { levelAt, levelNow, levelVal } from "@/core/levels";
 import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/core/predict";
 import { computeRivalry } from "@/core/rivalries";
 import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL2, body, card, display, miniInput } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, FEED_HERO, FEED_ON_HERO, LINE, MUTED, PANEL2, body, card, display, miniInput } from "@/lib/theme";
 import { FEED_THEY_LEAD } from "@/lib/theme";
 import {
   FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_LOSS, FEED_PAGE, FEED_RAISED,
@@ -25,9 +25,9 @@ function FilterChip({ active, onClick, children }: any) {
     <button
       onClick={onClick}
       style={{
-        background: active ? FEED_LIME : FEED_CARD, border: "none", borderRadius: 999,
+        background: active ? FEED_HERO : FEED_CARD, border: "none", borderRadius: 999,
         padding: "7px 14px", cursor: "pointer", fontFamily: body, fontWeight: active ? 500 : 400,
-        fontSize: 12.5, color: active ? FEED_LIME_INK : FEED_TEXT_MID, whiteSpace: "nowrap",
+        fontSize: 12.5, color: active ? FEED_ON_HERO : FEED_TEXT_MID, whiteSpace: "nowrap",
       }}
     >
       {children}
@@ -210,7 +210,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
       </div>
 
       {sheet && (
-        <div onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
+        <div onClick={() => setSheet(null)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "70vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "18px 16px 32px" }}>
             <div style={{ ...sectionLabel, marginBottom: 12 }}>{sheet === "year" ? "Period" : "Venue"}</div>
             {(sheet === "year"

@@ -5,7 +5,7 @@ import {
   acceptThread, currentUserId, deleteThread, isSystemMessage, listMessages, listThreads,
   markThreadRead, sendMessage, startThread, type MessageRow, type Thread,
 } from "@/lib/messages";
-import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HERO, FEED_ON_HERO, LINE, MUTED, PANEL, PANEL2, RADIUS, RADIUS_SM, SOFT_SHADOW, body, input } from "@/lib/theme";
 import { ArrowUp, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { readImageForMessage } from "@/lib/photo";
 import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
@@ -384,8 +384,8 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
                 <div style={{ maxWidth: "75%" }}>
                   <div
                     style={{
-                      background: mine ? FEED_LIME : FEED_RAISED,
-                      color: mine ? FEED_LIME_INK : FEED_TEXT_HI,
+                      background: mine ? FEED_HERO : FEED_RAISED,
+                      color: mine ? FEED_ON_HERO : FEED_TEXT_HI,
                       borderRadius: round,
                       borderTopRightRadius: mine && withPrev ? tight : round,
                       borderBottomRightRadius: mine && withNext ? tight : round,
@@ -439,7 +439,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
             <button
               onClick={() => setPending(null)}
               aria-label="Remove photo"
-              style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, border: "none", background: "rgba(0,0,0,0.62)", color: "var(--text-hi)", cursor: "pointer", display: "grid", placeItems: "center" }}
+              style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 13, border: "none", background: FEED_OVERLAY, color: "var(--text-hi)", cursor: "pointer", display: "grid", placeItems: "center" }}
             >
               <X size={15} strokeWidth={2.4} />
             </button>
@@ -489,7 +489,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
       {lightbox && (
         <div
           onClick={() => setLightbox(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}
+          style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}
         >
           <img src={lightbox} alt="" style={{ maxWidth: "94vw", maxHeight: "86vh", borderRadius: 16, objectFit: "contain" }} />
         </div>

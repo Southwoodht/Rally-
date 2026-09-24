@@ -8,10 +8,7 @@ import {
   MIN_YEARS_FOR_CHART, YOU, type MatchQuality, type Record3, type Voice,
 } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
-import {
-  FEED_DEEP, FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_RAISED,
-  FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight,
-} from "@/lib/theme";
+import { FEED_DEEP, FEED_HERO, FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight } from "@/lib/theme";
 
 // Who you have actually been playing.
 //
@@ -120,7 +117,7 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
         onClick={() => setOpen(on ? null : key)}
         aria-expanded={on}
         style={{
-          background: lime ? FEED_LIME : FEED_DEEP, borderRadius: 16, padding: 14, minWidth: 0,
+          background: lime ? FEED_HERO : FEED_DEEP, borderRadius: 16, padding: 14, minWidth: 0,
           border: "1.5px solid " + (on ? (lime ? FEED_LIME_INK_2 : FEED_LIME) : "transparent"),
           textAlign: "left", cursor: "pointer", width: "100%", boxSizing: "border-box",
         }}
@@ -134,7 +131,7 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
             style={{ flexShrink: 0, transform: on ? "rotate(180deg)" : undefined }}
           />
         </span>
-        <span style={{ ...tabular, ...tight(24), display: "block", fontFamily: body, fontWeight: 500, fontSize: 24, color: lime ? FEED_LIME_INK : FEED_TEXT_HI, marginTop: 4 }}>
+        <span style={{ ...tabular, ...tight(24), display: "block", fontFamily: body, fontWeight: 500, fontSize: 24, color: lime ? FEED_ON_HERO : FEED_TEXT_HI, marginTop: 4 }}>
           {n ? recordStr(r) : "–"}
         </span>
         <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_MID, marginTop: 3 }}>{rate}</span>

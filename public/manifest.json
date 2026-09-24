@@ -4,8 +4,8 @@
   "description": "Head-to-head rankings for racket sports.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#15352A",
-  "theme_color": "#15352A",
+  "background_color": "#16271F",
+  "theme_color": "#16271F",
   "orientation": "portrait",
   "icons": [
     { "src": "/icon-48.png", "sizes": "48x48", "type": "image/png", "purpose": "any" },

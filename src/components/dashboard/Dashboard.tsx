@@ -225,7 +225,7 @@ export default function Dashboard({ session }: { session: Session }) {
             </button>
             {leagues.length > 1 && (
               confirmLeave === l.id ? (
-                <div style={{ marginTop: 10, borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 10 }}>
+                <div style={{ marginTop: 10, borderTop: "1px solid var(--line)", paddingTop: 10 }}>
                   <div style={{ fontFamily: body, fontSize: 12.5, color: CHALK, lineHeight: 1.45, marginBottom: 8 }}>
                     Leave <strong>{l.name}</strong>? It stays exactly as it is — this only takes it off your list, and code <span style={{ fontFamily: body }}>{l.join_code}</span> gets you back in.
                   </div>

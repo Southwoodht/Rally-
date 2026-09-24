@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { BigBtn, Field } from "@/components/ui/atoms";
 import { Club, createClub, listMyClubs } from "@/lib/clubs";
 import { submitLegacyFactClaim } from "@/lib/trophies";
-import { BALL, CLAY, COURT, LINE, MUTED, body, input } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CLAY, COURT, LINE, MUTED, body, input } from "@/lib/theme";
 
 // A much smaller sibling of ClaimTrophyForm — same club-picking flow, same
 // review queue, but for a career fact (currently just "started playing")
@@ -50,7 +50,7 @@ export function ClaimLegacyFactForm({ claimantName, factType, factValue, label, 
   };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED }}>Verify a fact</div>

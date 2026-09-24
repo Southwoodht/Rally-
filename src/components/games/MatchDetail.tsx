@@ -7,7 +7,7 @@ import { predictProb } from "@/core/predict";
 import { matchContext } from "@/core/rank";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
-import { BALL, CHALK, CLAY, COURT, FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, MUTED, PANEL2, body, miniInput, tabular } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, MUTED, PANEL2, body, miniInput, tabular } from "@/lib/theme";
 
 const PHOTO_SIZE = 480;
 
@@ -175,7 +175,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   };
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 20, borderTopRightRadius: 20, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>Match detail</div>

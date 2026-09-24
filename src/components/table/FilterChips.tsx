@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { MoreHorizontal, Check, Search, X } from "lucide-react";
-import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
+import { FEED_OVERLAY, FEED_CARD, FEED_HERO, FEED_LIME, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
 
 // One scrolling row of chips in place of the stack of controls that used to
 // sit between the heading and rank 1.
@@ -50,7 +50,7 @@ function Sheet({ title, children, onClose }: any) {
   return (
     <div
       onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}
+      style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}
     >
       <div
         onClick={(e) => e.stopPropagation()}

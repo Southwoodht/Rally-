@@ -99,13 +99,13 @@ export const listRow: CSSProperties = { display: "flex", alignItems: "center", g
 export const pill = (bg: string, fg: string): CSSProperties => ({ fontFamily: body, fontWeight: 600, fontSize: 11, color: fg, background: bg, borderRadius: 999, padding: "3px 10px", whiteSpace: "nowrap", display: "inline-block" });
 
 // iOS-style segmented control: a recessed track holding equal-width options.
-export const segmentTrack: CSSProperties = { display: "flex", gap: 2, background: "rgba(0,0,0,0.22)", borderRadius: 12, padding: 3 };
+export const segmentTrack: CSSProperties = { display: "flex", gap: 2, background: "var(--track)", borderRadius: 12, padding: 3 };
 
 export const segmentOption = (on: boolean): CSSProperties => ({
   flex: 1, textAlign: "center", padding: "8px 10px", borderRadius: 9, border: "none", cursor: "pointer",
   fontFamily: body, fontWeight: 600, fontSize: 13,
   background: on ? PANEL2 : "transparent", color: on ? CHALK : MUTED,
-  boxShadow: on ? "0 1px 4px rgba(0,0,0,0.3)" : "none",
+  boxShadow: on ? "0 1px 4px var(--shadow-strong)" : "none",
   transition: "background 0.15s ease, color 0.15s ease",
 });
 
@@ -117,11 +117,11 @@ export const segmentOption = (on: boolean): CSSProperties => ({
 // so there is exactly one definition of each colour — the first version of
 // this block sampled them by eye and every value was a shade off, which is
 // what a second copy of a palette always eventually becomes.
-export const FEED_PAGE = COURT;          // #15352A
-export const FEED_CARD = PANEL;          // #1D4636
-export const FEED_RAISED = PANEL2;       // #234F3D
-export const FEED_LIME = BALL;           // #D9E84B
-export const FEED_TEXT_HI = CHALK;       // #F5F2E9
+export const FEED_PAGE = COURT;
+export const FEED_CARD = PANEL;
+export const FEED_RAISED = PANEL2;
+export const FEED_LIME = BALL;
+export const FEED_TEXT_HI = CHALK;
 
 // The one genuinely new colour: a step below COURT, for tiles inset into a
 // card that need to read as recessed rather than raised.
@@ -148,8 +148,8 @@ export const FEED_LIME_DIVIDER = "var(--on-hero-line)";
 // colour now, not a text surface, so that constraint was self-imposed.
 //
 // Measured contrast on PANEL:
-//   FEED_TEXT_MID  #9DB8AB  4.98:1   two steps up from MUTED
-//   FEED_TEXT_LOW  #95B0A3  4.55:1   one step up
+//   FEED_TEXT_MID  --text-mid  4.98:1   two steps up from MUTED
+//   FEED_TEXT_LOW  --text-mid  4.55:1   one step up
 //
 // MUTED as given is 4.07:1, which fails AA for 12px text — the reason for
 // moving at all. MUTED itself is untouched: it is correct everywhere else
@@ -166,7 +166,7 @@ export const FEED_TEXT_LOW = "var(--text-mid)";
 
 // Row dividers are the raised surface colour, which makes a divider read as
 // the edge of the next surface rather than as a line drawn over this one.
-// It is very quiet by design — #234F3D on PANEL measures 1.14:1, which is
+// It is very quiet by design — barely separable from the card it sits on,
 // far too little for text and about right for a rule you are not supposed
 // to notice.
 export const FEED_HAIRLINE = FEED_RAISED;
@@ -178,7 +178,7 @@ export const FEED_UP = "var(--up)";
 export const FEED_DOWN = "var(--down)";
 
 // The rating bar behind a standings row. Lime at low opacity rather than
-// FEED_RAISED, which was the first attempt and measures 1.14:1 against the
+// FEED_RAISED, which was the first attempt and was invisible against the
 // card — I looked at it on a phone and could not see it at all, which for
 // the one element whose entire job is to be a visible length is a total
 // failure rather than a subtle one. At 16% it reads as a length without
