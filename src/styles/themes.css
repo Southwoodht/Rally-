@@ -94,6 +94,14 @@
   --danger: #E8836B;
   --danger-dim: #7E4A4A;
   --overlay: rgba(10, 20, 15, 0.6);
+  /*
+   * The safe-area strip and the browser's own chrome. The other four themes
+   * each define this and rally did not, which was not a cosmetic gap: the
+   * strip painted `var(--status-bg)` with nothing behind it, and applyTheme()
+   * skips the meta update when the value is empty — so switching BACK to
+   * rally left the phone's status bar on the previous theme's colour.
+   */
+  --status-bg: #16271F;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
   /* A stronger scrim/shadow, and the segmented-control track. Both were
    * alphas on black at their call sites, which is the trick §1 bans. */
@@ -117,4 +125,107 @@
    * that only stays a one-block change if the block can repoint the family. */
   --font-display: var(--font-bricolage), system-ui, sans-serif;
   --font-body: var(--font-dmsans), system-ui, sans-serif;
+}
+
+/* ===================================================================== *
+ * The other four.
+ *
+ * Each block defines EVERY token rally does. The brief supplied 25 of the
+ * 41 and said to stop rather than guess the rest; Sam's answer was to
+ * derive them, so the sixteen extras below come from that theme's own
+ * palette rather than from anywhere new:
+ *
+ *   --text-dim        its --text-mid, moved toward its page
+ *   --on-hero-mid     its --on-hero, moved toward its --hero
+ *   --on-hero-line    the same, further
+ *   --bar-fill        a tint of its page/muted-fill, so a bar behind a row
+ *                     reads as a length rather than a stripe
+ *   --up / --down     darkened for the light themes, where rally's pass on
+ *                     green and fail on white
+ *   --danger-dim      its --danger, moved toward its card
+ *   --ramp-1..6       six steps from its --muted-fill to its --accent
+ *   --shadow, --shadow-strong, --track, --font-body   inherited from :root,
+ *                     because black alphas and DM Sans are correct on both
+ *                     light and dark and duplicating them is four more
+ *                     places to drift
+ * ===================================================================== */
+
+[data-theme="paris"] {            /* clay */
+  --bg-page: #F3ECE2; --bg-bar: #EADCCB; --bg-card: #FBF7F1; --bg-raised: #E6D7C4; --line: #E6D7C4;
+  --text-hi: #2B1D16; --text-mid: #6B5446; --text-initials: #6B5446;
+  --text-dim: #9A8577;
+  --accent: #A8451F; --accent-hover: #8E3A18; --on-accent: #FBF3EA;
+  --cta: #2B1D16; --on-cta: #FBF3EA;
+  --hero: #B9502B; --on-hero: #FBF3EA;
+  --on-hero-mid: #E8CFC2; --on-hero-line: #D49877;
+  --fab: #B9502B; --on-fab: #FBF3EA;
+  --muted-fill: #D9C8B4; --lost: #8A7163; --win-on-hero: #FBF3EA; --loss-on-hero: #7E3316;
+  --bar-fill: #EFE3D5;
+  --up: #1F7A45; --down: #B3261E;
+  --danger: #B3261E; --danger-dim: #D9A9A3;
+  --overlay: rgba(43, 29, 22, 0.45);
+  --status-bg: #B9502B;
+  --ramp-1: #D9C8B4; --ramp-2: #CDAE92; --ramp-3: #C08F6B;
+  --ramp-4: #B5704A; --ramp-5: #A8451F; --ramp-6: #A8451F;
+  --font-display: var(--font-fraunces), Georgia, serif;
+}
+
+[data-theme="sw19"] {             /* grass */
+  --bg-page: #F7F4EC; --bg-bar: #FFFFFF; --bg-card: #FFFFFF; --bg-raised: #FFFFFF; --line: #E6E0D2;
+  --text-hi: #1E2A22; --text-mid: #5E6A60; --text-initials: #1F5B3A;
+  --text-dim: #8E978B;
+  --accent: #1F5B3A; --accent-hover: #14402A; --on-accent: #F7F4EC;
+  --cta: #4E2A6E; --on-cta: #F7F4EC;
+  --hero: #1F5B3A; --on-hero: #F7F4EC;
+  --on-hero-mid: #C5D4C8; --on-hero-line: #4E7A5F;
+  --fab: #4E2A6E; --on-fab: #F7F4EC;
+  --muted-fill: #DDD6C6; --lost: #7A857C; --win-on-hero: #F7F4EC; --loss-on-hero: #B89BD0;
+  --bar-fill: #EDEAE0;
+  --up: #1F5B3A; --down: #B3261E;
+  --danger: #B3261E; --danger-dim: #DFB0AC;
+  --overlay: rgba(30, 42, 34, 0.45);
+  --status-bg: #1F5B3A;
+  --ramp-1: #DDD6C6; --ramp-2: #BFCBB6; --ramp-3: #96B296;
+  --ramp-4: #5E8C68; --ramp-5: #1F5B3A; --ramp-6: #1F5B3A;
+  --font-display: var(--font-cormorant), Georgia, serif;
+}
+
+[data-theme="flushing"] {         /* New York hard court */
+  --bg-page: #0B1220; --bg-bar: #111A2C; --bg-card: #152036; --bg-raised: #1A2640; --line: #1F2D4A;
+  --text-hi: #EEF2F8; --text-mid: #9AA8C0; --text-initials: #C3CEDF;
+  --text-dim: #6B7A93;
+  --accent: #FF8A5B; --accent-hover: #FFB08F; --on-accent: #0B1220;
+  --cta: #FF8A5B; --on-cta: #0B1220;
+  --hero: #8FE3FF; --on-hero: #0B1220;
+  --on-hero-mid: #35566B; --on-hero-line: #63B4CE;
+  --fab: #8FE3FF; --on-fab: #0B1220;
+  --muted-fill: #2A3A5C; --lost: #7F90AE; --win-on-hero: #0B1220; --loss-on-hero: #4FA6C4;
+  --bar-fill: #1E2C49;
+  --up: #6FE3A0; --down: #FF6B6B;
+  --danger: #FF6B6B; --danger-dim: #8A4A4A;
+  --overlay: rgba(5, 9, 18, 0.6);
+  --status-bg: #0B1220;
+  --ramp-1: #2A3A5C; --ramp-2: #3F5070; --ramp-3: #6A6377;
+  --ramp-4: #B47563; --ramp-5: #FF8A5B; --ramp-6: #FF8A5B;
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+}
+
+[data-theme="melbourne"] {        /* Melbourne hard court */
+  --bg-page: #EAF3FB; --bg-bar: #FFFFFF; --bg-card: #FFFFFF; --bg-raised: #FFFFFF; --line: #D3E3F2;
+  --text-hi: #0C2340; --text-mid: #4F6480; --text-initials: #0B5FB5;
+  --text-dim: #8296AC;
+  --accent: #0B5FB5; --accent-hover: #084A8C; --on-accent: #FFFFFF;
+  --cta: #FFC93C; --on-cta: #0C2340;
+  --hero: #0B5FB5; --on-hero: #FFFFFF;
+  --on-hero-mid: #BFD8F0; --on-hero-line: #3E85CB;
+  --fab: #0B5FB5; --on-fab: #FFFFFF;
+  --muted-fill: #C5D8EC; --lost: #7389A6; --win-on-hero: #FFC93C; --loss-on-hero: #5A95D6;
+  --bar-fill: #DCEAF7;
+  --up: #1F7A45; --down: #C62828;
+  --danger: #C62828; --danger-dim: #E8AFAF;
+  --overlay: rgba(12, 35, 64, 0.45);
+  --status-bg: #0B5FB5;
+  --ramp-1: #C5D8EC; --ramp-2: #9CBFE0; --ramp-3: #6BA0D4;
+  --ramp-4: #3C7FC6; --ramp-5: #0B5FB5; --ramp-6: #0B5FB5;
+  --font-display: var(--font-sora), system-ui, sans-serif;
 }

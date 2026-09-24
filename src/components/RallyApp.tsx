@@ -31,6 +31,7 @@ import { setLevelEstimate } from "@/lib/levelAdmin";
 import { SettingsTab } from "@/components/settings/SettingsTab";
 import { Globe } from "@/components/ui/Globe";
 import { MessageRobins } from "@/components/ui/MessageRobins";
+import { ThemePicker } from "@/components/ui/ThemePicker";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -1404,9 +1405,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
-            <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15 }}>
-              {personal ? "Everyone I've played" : (group?.name || "League")} <ChevronDown size={13} />
-            </button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
+                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "League")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
+              </button>
+              <ThemePicker />
+            </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
               <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "10px 0 0", fontSize: 32, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: "-0.5px", minWidth: 0 }}>
                 {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}

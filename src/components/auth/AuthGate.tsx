@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { DEFAULT_THEME, applyTheme, isThemeId, storeTheme } from "@/lib/themes";
+import { themeFromProfile } from "@/lib/profiles";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supabase";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
@@ -51,6 +53,31 @@ export default function AuthGate() {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  /**
+   * On login, the account's theme wins over this device's.
+   *
+   * The boot script has already painted using localStorage, which is right
+   * for the common case — same person, same phone — and means there is no
+   * flash. This is the other case: signing in on a borrowed laptop, or on a
+   * second device where you picked a theme once and never again.
+   *
+   * It only acts when the two DIFFER, so the usual path does nothing at all
+   * and nobody sees a transition for a value that did not change. And it
+   * writes localStorage back, so the next cold start on this device is
+   * already right before paint.
+   */
+  useEffect(() => {
+    if (!session) return;
+    let alive = true;
+    themeFromProfile().then((stored) => {
+      if (!alive || !isThemeId(stored)) return;
+      if (stored === (document.documentElement.dataset.theme || DEFAULT_THEME)) return;
+      applyTheme(stored);
+      storeTheme(stored);
+    }).catch(() => { /* the device's own choice stands */ });
+    return () => { alive = false; };
+  }, [session]);
 
   if (!isSupabaseConfigured) return <SetupNeeded />;
 

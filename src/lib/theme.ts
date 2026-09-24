@@ -81,7 +81,7 @@ export const fontImport = "";
 
 export const wrap: CSSProperties = { background: COURT, minHeight: "100vh", width: "100%" };
 
-export const card: CSSProperties = { background: PANEL, borderRadius: 26, padding: 20, boxShadow: SOFT_SHADOW };
+export const card: CSSProperties = { background: PANEL, borderRadius: 26, padding: 20, border: "1px solid " + LINE, boxSizing: "border-box", boxShadow: SOFT_SHADOW };
 
 // §5: --bg-raised, a 1px --line border, radius 14. The border is new — the
 // old inputs were a bare fill, which reads as a panel rather than a field on
@@ -98,7 +98,7 @@ export const menuRow: CSSProperties = { display: "flex", alignItems: "center", g
 
 // One soft, shadowed card wrapping a whole list — rows separate by padding,
 // not by hairline borders.
-export const listCard: CSSProperties = { background: PANEL, borderRadius: 26, boxShadow: SOFT_SHADOW, overflow: "hidden" };
+export const listCard: CSSProperties = { background: PANEL, borderRadius: 26, border: "1px solid " + LINE, boxSizing: "border-box", boxShadow: SOFT_SHADOW, overflow: "hidden" };
 
 export const listRow: CSSProperties = { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: "transparent", border: "none", width: "100%", textAlign: "left", cursor: "pointer" };
 

@@ -48,3 +48,41 @@ select:focus {
   color: var(--text-mid);
   opacity: 1; /* Firefox dims placeholders by default; the token already is. */
 }
+
+/*
+ * THE STATUS BAR STRIP.
+ *
+ * The installed app runs black-translucent, so iOS draws the clock, signal
+ * and battery in WHITE and never changes them. On rally and flushing that is
+ * fine. On paris, sw19 and melbourne the page behind them is near-white, and
+ * white on white is an invisible status bar.
+ *
+ * So the safe-area strip is painted with --status-bg in every theme — clay on
+ * paris, green on sw19, blue on melbourne — and white icons always have
+ * something strong underneath. It is fixed rather than a body border so it
+ * survives scrolling, and it sits below every overlay (z-index 40 against the
+ * nav's 55 and the sheets' 90+) so it can never cover a sheet.
+ *
+ * Zero height when there is no inset, which is every browser that is not an
+ * installed iOS app, so nothing changes for anybody else.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--status-bg);
+  z-index: 40;
+  pointer-events: none;
+}
+
+/*
+ * Only the page's own colours animate on a theme change, and only for 200ms.
+ * Transitioning everything makes a five-colour swap look like a dissolve and
+ * costs a frame on every unrelated hover.
+ */
+body {
+  transition: background-color 200ms ease, color 200ms ease;
+}
