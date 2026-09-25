@@ -297,7 +297,13 @@ select
   (select count(*) from pg_trigger
     where tgrelid = 'public.doubles_matches'::regclass and not tgisinternal)     as doubles_triggers;
 
--- Expect: 2 flags, 1 table, 19 columns, 4 policies, 1 trigger.
+-- Expect: 2 flags, 1 table, 18 columns, 4 policies, 1 trigger.
+--
+-- (This line said 19 when the file first went out, and Sam ran it and got 18.
+-- 18 is correct — it is exactly the column list the brief specified — and the
+-- miscount was in the comment, not the table. Recorded because a verification
+-- select whose expected value is wrong is worse than none: it reports a
+-- correct migration as a failure.)
 --
 -- THEN RUN supabase/fix_function_grants.sql. This file creates a function,
 -- and section 6 of CLAUDE.md is explicit: Supabase grants EXECUTE on a new
