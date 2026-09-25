@@ -7,6 +7,15 @@ export interface League {
   join_code: string;
   created_by: string;
   role?: string;
+  /**
+   * Feature flags, from schema_doubles.sql. Both default false in the
+   * database, so a league nobody has switched on reads as off without
+   * anything here having to know that. Optional in the type because a
+   * League object built from anywhere else — the dev-auto stub, a join
+   * response — simply will not carry them, and absent must mean off.
+   */
+  doubles_enabled?: boolean;
+  competitions_enabled?: boolean;
 }
 
 /** Human-friendly code: no 0/O/1/I so nobody mistypes it. */
@@ -42,7 +51,7 @@ const ROLE_RANK: Record<string, number> = { owner: 3, editor: 2, member: 1 };
 export async function listMyLeagues(): Promise<League[]> {
   if (!supabase) return [];
   const { data, error } = await withSupabaseTimeout(
-    supabase.from("league_members").select("role, leagues (id, name, location, join_code, created_by)").order("joined_at", { ascending: true }),
+    supabase.from("league_members").select("role, leagues (id, name, location, join_code, created_by, doubles_enabled, competitions_enabled)").order("joined_at", { ascending: true }),
     { data: [], error: null } as any,
   );
   if (error) throw error;

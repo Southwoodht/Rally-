@@ -33,6 +33,10 @@ import { Globe } from "@/components/ui/Globe";
 import { MessageRobins } from "@/components/ui/MessageRobins";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { RallyMark } from "@/components/ui/RallyMark";
+import { useDoubles } from "@/components/doubles/useDoubles";
+import { ModeSwitch } from "@/components/doubles/ModeSwitch";
+import { DoublesStandings } from "@/components/doubles/DoublesStandings";
+import { DoublesEntry } from "@/components/doubles/DoublesEntry";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -122,7 +126,7 @@ function nextUpLine(pct: number | null): string {
   return "Nobody's expecting this one. Show them.";
 }
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -173,6 +177,20 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     setProfileId(id); setProfileYear(year ?? "all");
   };
   const [groupSheet, setGroupSheet] = useState(false);
+
+  // Doubles. One load for the whole app; see useDoubles. With the flag off it
+  // fetches nothing and every branch below collapses to what was there
+  // before, which is how "singles must not change" is enforced rather than
+  // promised: there is no doubles code on the singles path to go wrong.
+  const doubles = useDoubles(leagueId, !!doublesEnabled);
+  // Which sport the Table, Profile and the entry screen are showing. Not
+  // persisted: unlike the theme or the season toggle, this is a thing you
+  // flick between within a visit, and remembering it means opening the Table
+  // to doubles because of something you did last week.
+  const [sport, setSport] = useState<"singles" | "doubles">("singles");
+  // Anything that turns doubles UI on has to pass BOTH: the league allows it
+  // and the person chose it. Two separate conditions, never conflated.
+  const showDoubles = !!doublesEnabled && sport === "doubles";
   // Standby view: the Table tab shows the people you've played instead of a
   // league. The league still loads underneath — this changes what's shown,
   // not what's fetched.
@@ -1445,6 +1463,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </header>
         )}
 
+        {/* The switch only exists when the league has doubles on. With the
+            flag off these two lines render nothing and the screens below are
+            byte-for-byte what they were. */}
+        {(tab === "ladder" || tab === "add") && !!doublesEnabled && !personal && (
+          <ModeSwitch mode={sport} onMode={setSport} />
+        )}
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><Globe size={18} /><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} /></button>}
         {tab === "ladder" && (
@@ -1454,8 +1478,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </div>
         )}
         {tab === "ladder" && tableMode === "compare" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "ladder" && tableMode === "standings" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
-        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        {tab === "ladder" && tableMode === "standings" && showDoubles && !personal && (
+          doubles.unavailable
+            ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+                {/* States what happened, not why. The read failed; the cause
+                    might be the migration, might be the network, might be a
+                    league id this build made up. Naming one of those as THE
+                    reason is a guess presented as a diagnosis. */}
+                Couldn&apos;t load doubles for this league just now.
+              </div>
+            : <DoublesStandings players={players} matches={doubles.matches} meId={meId} onOpen={openProfile} />
+        )}
+        {tab === "ladder" && tableMode === "standings" && !showDoubles && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
+        {tab === "add" && showDoubles && (
+          <DoublesEntry
+            players={players}
+            history={doubles.matches}
+            meId={meId}
+            onSave={async (m) => {
+              try {
+                await doubles.add({ ...m, playedAt: Date.now(), enteredBy: meId });
+                flash("Logged");
+                setTab("home");
+              } catch (e: any) {
+                flash(e?.message || "Could not save that doubles match.");
+              }
+            }}
+          />
+        )}
+        {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
             header={{

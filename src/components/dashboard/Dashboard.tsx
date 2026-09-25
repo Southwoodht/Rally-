@@ -171,6 +171,11 @@ export default function Dashboard({ session }: { session: Session }) {
           leagueJoinCode={active.join_code}
           displayName={displayName}
           onManageLeagues={() => setView(leagues.length > 1 ? "picker" : "empty")}
+          // Absent means off. A League built anywhere but listMyLeagues — the
+          // dev stub, a fresh join response — carries no flags at all, and
+          // that has to read as "not switched on" rather than as undefined
+          // behaviour.
+          doublesEnabled={!!(active as any).doubles_enabled}
         />
       </div>
     );
