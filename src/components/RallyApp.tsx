@@ -32,6 +32,7 @@ import { SettingsTab } from "@/components/settings/SettingsTab";
 import { Globe } from "@/components/ui/Globe";
 import { MessageRobins } from "@/components/ui/MessageRobins";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { RallyMark } from "@/components/ui/RallyMark";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -1406,9 +1407,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {main && (
           <header style={{ marginBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
-                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "League")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
-              </button>
+              {/* Same corner mark as Home, in the same place. The header is
+                  identical across the four tabs and the logo has to be part
+                  of that or it reappears and vanishes as you move. */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <RallyMark title="Rally" />
+                <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
+                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "League")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
+                </button>
+              </div>
               <ThemePicker />
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>

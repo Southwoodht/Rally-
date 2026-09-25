@@ -4,6 +4,21 @@
     file by the procedure in scripts/build-icons.md, so the mark can be
     re-exported without being redrawn.
 
+    REPAINTED 2026-09-25 to the app's own colours. It had been a lime R on the
+    pre-redesign court green, which is a palette the app no longer contains
+    anywhere: cream #F4EFE3 on #16271F with a gold #E9C46A ball, which are the
+    rally theme's hero, page and accent tokens exactly. The icon on the home
+    screen was the last thing still wearing the old look.
+
+    (Those token names are written without their leading dashes on purpose.
+    An XML comment may not contain a double hyphen, so "&#45;&#45;accent" here
+    makes the whole file unparseable — which it briefly did.)
+
+    THE LETTER IS NOT REDRAWN. The three paths below are byte-identical to the
+    ones that were here before, and to the two other masters. Everything that
+    changed is colour, plus the ball and the transform that makes room for it.
+    That matters because the letterform is tuned, not styled — see below.
+
     THE R IS STROKED, NOT SET. Three strokes at one weight — stem, bowl, leg —
     round caps and joins, wider and rounder than the RALLY wordmark's
     condensed cut, because a narrow letter leaves dead air in a square tile.
@@ -28,24 +43,27 @@
       leg      (412, 523) -> (646, 767), about 46 degrees
       counter  248 x 174 — nearly 4 physical pixels wide at 16px
 
-    With the 46-unit cap radius at each extreme the mark measures 432 x 602:
-    42% of the tile wide, 59% tall, margins 276 left / 316 right / 211 top and
-    bottom.
-
-    **42% wide where the brief said 55%.** An R is taller than it is wide, so
-    both numbers cannot be had: forcing the box to 55% at a sane height gives
-    a bowl two and a half times wider than tall, and keeping the bowl round
-    while hitting 55% needs a letter 780 tall — 76% of the tile, which eats
-    the margin the brief asks for in its next line. The mark is ~59% of the
-    tile in its LARGEST dimension and the width falls where the letter wants
-    it. Sam's own reference sits at the same proportion, which settled it.
-
-    Optically centred, not measured: the bounding box sits at x 492, 2% left
-    of true centre, because the leg throws weight right.
-
     Stroke is 92 rather than the 128 first specified. 128 on a letter this
     size is 15% of the mark and closes the counter; the reference is nearer
     9%, and the lighter stroke is what lets one master serve every size.
+
+    THE BALL: centre (780, 692), radius 108 — just under a third of the R's
+    height, sitting on the R's baseline with a 10-unit gap between it and the
+    leg's cap at the point where they pass closest. Touching would read as a
+    drawing mistake at 48px and a smudge at 16.
+
+    Its seams are CLIPPED to the circle rather than drawn to fit inside it.
+    Their endpoints sit exactly on the circumference, so with a 15 stroke and
+    round caps they would otherwise bulge 7 units past the edge and give the
+    ball two small horns. The clip is what keeps the silhouette a circle.
+
+    THE WHOLE MARK IS RE-CENTRED, not just widened. R plus ball spans
+    x 276..888, whose centre is 582 — so drawn as-is the composition sits 70
+    units right of where the R alone used to. It is scaled 0.92 and moved onto
+    the same optical centre (502, 512) the letter had, which gets the margins
+    back to roughly what they were: 220 left, 241 right, 235 top and bottom.
+    Optically centred rather than measured, because the leg and now the ball
+    both throw weight right.
 
     The field gradient is deliberately almost invisible — there to stop the
     tile reading as a flat swatch, not to be seen as a gradient.
@@ -55,16 +73,26 @@
   -->
   <defs>
     <linearGradient id="rally-field" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#255140"/>
-      <stop offset="1" stop-color="#0E241D"/>
+      <stop offset="0" stop-color="#1E3529"/>
+      <stop offset="1" stop-color="#12211A"/>
     </linearGradient>
+    <clipPath id="rally-ball-clip">
+      <circle cx="780" cy="692" r="108"/>
+    </clipPath>
   </defs>
 
   <rect width="1024" height="1024" fill="url(#rally-field)"/>
 
-  <g fill="none" stroke="#D9E84B" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M322 257V767"/>
-    <path d="M322 257H529A133 133 0 0 1 529 523H322"/>
-    <path d="M412 523L646 767"/>
+  <g transform="translate(502 512) scale(0.92) translate(-582 -512)">
+    <g fill="none" stroke="#F4EFE3" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M322 257V767"/>
+      <path d="M322 257H529A133 133 0 0 1 529 523H322"/>
+      <path d="M412 523L646 767"/>
+    </g>
+    <circle cx="780" cy="692" r="108" fill="#E9C46A"/>
+    <g clip-path="url(#rally-ball-clip)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
+      <path d="M677.4 658.5Q734.6 646.6 746.5 589.4"/>
+      <path d="M882.6 725.5Q825.4 737.4 813.5 794.6"/>
+    </g>
   </g>
 </svg>

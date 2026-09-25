@@ -11,10 +11,21 @@ re-export.
 | `favicon.svg` | `favicon-16/32.png`, `favicon.ico` | the same letter scaled up for 16px — see its comment |
 
 The letter itself lives in exactly one place: the three `<path>` elements are
-byte-identical across all three masters, and the two variants differ only by a
+byte-identical across all three masters, and the variants differ only by a
 `transform` on the group. **Edit the paths in `icon.svg` and paste them into
 the other two** — or the three will drift and nobody will notice until the
 favicon stops matching the home-screen icon.
+
+**The ball is in two of the three, on purpose.** `icon.svg` and
+`icon-maskable.svg` carry it; `favicon.svg` does not, because at 16px it is
+1.7 physical pixels and at 32px a small gold dot in the corner of a browser
+tab reads as an unread badge. That is the one sanctioned difference between
+the masters and the reason is written out in `favicon.svg` itself.
+
+**There is a fourth copy of the letter, and it is not in this folder.**
+`src/components/ui/RallyMark.tsx` draws the same paths for the mark in the
+app's header, in theme tokens rather than fixed hexes. Change the geometry
+here and it has to change there too.
 
 ## Why there is no one-command build
 

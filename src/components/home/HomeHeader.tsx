@@ -2,6 +2,7 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
 import { ThemePicker } from "@/components/ui/ThemePicker";
+import { RallyMark } from "@/components/ui/RallyMark";
 import { FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
 // League name, greeting, bell. The greeting arrives finished so the clock
@@ -44,11 +45,16 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        {onPickLeague ? (
-          <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", minWidth: 0 }}>
-            {league}
-          </button>
-        ) : league}
+        {/* The mark in the top-left corner, ahead of the club name. Same
+            letter as the app icon, in theme colours — see RallyMark. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <RallyMark title="Rally" />
+          {onPickLeague ? (
+            <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", minWidth: 0 }}>
+              {league}
+            </button>
+          ) : league}
+        </div>
         <ThemePicker />
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginTop: 6 }}>

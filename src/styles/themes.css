@@ -52,6 +52,19 @@
   --accent-hover: #F3D98F;
   --on-accent: #16271F;
 
+  /*
+   * The ball in the Rally mark (components/ui/RallyMark.tsx).
+   *
+   * NOT --accent, which is what it was for about ten minutes. On sw19 and
+   * melbourne the accent and --text-hi are both dark — #1F5B3A beside
+   * #1E2A22 — so at 22px the letter and the ball merged into a single shape
+   * and the mark stopped reading as an R with a ball beside it. Each theme
+   * therefore names a ball that contrasts with its OWN text colour and still
+   * looks like a tennis ball; this is not a colour that can be derived from
+   * the others.
+   */
+  --mark-ball: #E9C46A;
+
   /* ---- primary call to action -------------------------------------- */
   --cta: #E9C46A;
   --on-cta: #16271F;
@@ -165,6 +178,7 @@
   --danger: #B3261E; --danger-dim: #D9A9A3;
   --overlay: rgba(43, 29, 22, 0.45);
   --status-bg: #B9502B;
+  --mark-ball: #D98E2B;
   --ramp-1: #D9C8B4; --ramp-2: #CDAE92; --ramp-3: #C08F6B;
   --ramp-4: #B5704A; --ramp-5: #A8451F; --ramp-6: #A8451F;
   --font-display: var(--font-fraunces), Georgia, serif;
@@ -185,6 +199,7 @@
   --danger: #B3261E; --danger-dim: #DFB0AC;
   --overlay: rgba(30, 42, 34, 0.45);
   --status-bg: #1F5B3A;
+  --mark-ball: #C6A11B;
   --ramp-1: #DDD6C6; --ramp-2: #BFCBB6; --ramp-3: #96B296;
   --ramp-4: #5E8C68; --ramp-5: #1F5B3A; --ramp-6: #1F5B3A;
   --font-display: var(--font-cormorant), Georgia, serif;
@@ -205,6 +220,7 @@
   --danger: #FF6B6B; --danger-dim: #8A4A4A;
   --overlay: rgba(5, 9, 18, 0.6);
   --status-bg: #0B1220;
+  --mark-ball: #FF8A5B;
   --ramp-1: #2A3A5C; --ramp-2: #3F5070; --ramp-3: #6A6377;
   --ramp-4: #B47563; --ramp-5: #FF8A5B; --ramp-6: #FF8A5B;
   --font-display: var(--font-space-grotesk), system-ui, sans-serif;
@@ -225,6 +241,7 @@
   --danger: #C62828; --danger-dim: #E8AFAF;
   --overlay: rgba(12, 35, 64, 0.45);
   --status-bg: #0B5FB5;
+  --mark-ball: #D08A00;
   --ramp-1: #C5D8EC; --ramp-2: #9CBFE0; --ramp-3: #6BA0D4;
   --ramp-4: #3C7FC6; --ramp-5: #0B5FB5; --ramp-6: #0B5FB5;
   --font-display: var(--font-sora), system-ui, sans-serif;
