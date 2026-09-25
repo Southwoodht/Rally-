@@ -5,14 +5,27 @@ import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
 import { ChevronDown, Plus } from "lucide-react";
 import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HERO, FEED_ON_HERO, MUTED, PANEL, PANEL2, body, input, miniInput } from "@/lib/theme";
-import { FEED_CARD, FEED_TEXT_HI, FEED_TEXT_MID } from "@/lib/theme";
+import { FEED_CARD, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID } from "@/lib/theme";
 
 // Reusable "pick an existing player, or create a new one" control.
 // Used anywhere a player needs selecting — Compare, Log Result, and future
 // features — so there is exactly one place that knows how to search players
 // and one place that knows how to create them without duplicating someone
 // who already exists.
-export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude, placeholder = "Select player…" }: any) {
+/**
+ * `triggerLabel` is additive and singles does not pass it.
+ *
+ * Without it the trigger is the control itself: full width, showing the
+ * chosen player's avatar and name. That is right on Add result, where the
+ * picker IS the field.
+ *
+ * Doubles needs the other shape. Appendix D draws each of the four players as
+ * a row — avatar, name, their doubles rating — with a small "Change" button
+ * on the right, so the picker there is a button beside the information rather
+ * than the thing displaying it. Passing a label gives that compact trigger
+ * and leaves every existing call site exactly as it was.
+ */
+export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude, placeholder = "Select player…", triggerLabel }: any) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"pick" | "create">("pick");
   const [q, setQ] = useState("");
@@ -67,32 +80,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
     pick(created.id);
   };
 
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%",
-          background: FEED_CARD, border: "none", borderRadius: 14, padding: "10px 12px",
-          boxSizing: "border-box" as const, textAlign: "left", minWidth: 0,
-        }}
-      >
-        {selected ? (
-          <>
-            <Avatar player={selected} size={26} />
-            {/* Full name, and it never wraps: a wrapped name changes the
-                control's height and the two pickers stop lining up. */}
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {selected.name}{selected.last ? " " + selected.last : ""}
-            </span>
-          </>
-        ) : (
-          <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{placeholder}</span>
-        )}
-        <ChevronDown size={15} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
-      </button>
-
-      {open && (
+  const sheet = (
         <div onClick={close} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "82vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "18px 16px 32px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -167,7 +155,52 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
             )}
           </div>
         </div>
-      )}
+  );
+
+  if (triggerLabel) {
+    return (
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          style={{
+            height: 36, padding: "0 14px", borderRadius: 18, border: "none",
+            background: FEED_RAISED, color: FEED_TEXT_HI, cursor: "pointer",
+            fontFamily: body, fontWeight: 600, fontSize: 13, whiteSpace: "nowrap",
+          }}
+        >
+          {triggerLabel}
+        </button>
+        {open && sheet}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          display: "flex", alignItems: "center", gap: 8, cursor: "pointer", width: "100%",
+          background: FEED_CARD, border: "none", borderRadius: 14, padding: "10px 12px",
+          boxSizing: "border-box" as const, textAlign: "left", minWidth: 0,
+        }}
+      >
+        {selected ? (
+          <>
+            <Avatar player={selected} size={26} />
+            {/* Full name, and it never wraps: a wrapped name changes the
+                control's height and the two pickers stop lining up. */}
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {selected.name}{selected.last ? " " + selected.last : ""}
+            </span>
+          </>
+        ) : (
+          <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{placeholder}</span>
+        )}
+        <ChevronDown size={15} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
+      </button>
+
+      {open && sheet}
     </>
   );
 }
