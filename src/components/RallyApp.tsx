@@ -121,7 +121,7 @@ function nextUpLine(pct: number | null): string {
   return "Nobody's expecting this one. Show them.";
 }
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -1569,7 +1569,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       {profilePlayer && <ProfileModal player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)} />}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
       {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
-      {groupSheet && <GroupSheet friendly={isFriendlyLeague(gid)} groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onClose={() => setGroupSheet(false)} />}
+      {groupSheet && <GroupSheet friendly={isFriendlyLeague(gid)} groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onManageLeagues={onManageLeagues} onClose={() => setGroupSheet(false)} />}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
       <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />
       {toast && <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", background: FEED_RAISED, color: FEED_TEXT_HI, fontFamily: body, fontWeight: 600, padding: "12px 18px", borderRadius: 999, fontSize: 13.5, boxShadow: "0 8px 24px var(--shadow-strong)", zIndex: 80 }}>{toast}</div>}
