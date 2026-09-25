@@ -4,7 +4,7 @@ import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, Chevr
 import { BigBtn } from "@/components/ui/atoms";
 import { FEED_OVERLAY, PANEL, BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, input, listCard, listRow } from "@/lib/theme";
 
-export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClose, personal, onPersonal, friendly, onFriendly = "/?league=friendly" }: any) {
+export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClose, personal, onPersonal, friendly, onManageLeagues, onFriendly = "/?league=friendly" }: any) {
   const [name, setName] = useState("");
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
@@ -68,6 +68,23 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
             style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15 }}
           >
             Back to your leagues
+          </button>
+        )}
+        {/* The one thing this sheet could not do, and the only reason the
+            duplicate bar at the top of every screen existed.
+
+            The list above is the app's `groups`, out of shared storage. Join
+            codes, leaving a league and joining one by code all belong to the
+            real `leagues` rows, which only the Dashboard reads — so they are
+            a different screen, not a section that could be inlined here.
+            This is the way through to it. */}
+        {onManageLeagues && (
+          <button
+            onClick={onManageLeagues}
+            style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15, textAlign: "left" }}
+          >
+            Join or leave a league
+            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: MUTED, marginTop: 2 }}>Enter a code, see your join codes, or leave one</span>
           </button>
         )}
         <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Each league keeps its own players, results and rankings — your mates and your work crew stay totally separate.</div>

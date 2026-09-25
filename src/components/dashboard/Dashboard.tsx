@@ -146,19 +146,32 @@ export default function Dashboard({ session }: { session: Session }) {
       // wrong place. Everything inside now inherits it; nothing inside
       // applies it again.
       //
-      // PANEL rather than the page colour, because the inset strip is an
-      // extension of the bar that sits in it — a COURT band above a PANEL bar
-      // reads as a gap somebody forgot to fill.
-      <div style={{ background: PANEL, paddingTop: "env(safe-area-inset-top)" }}>
-        <div style={{ background: PANEL, borderBottom: "none", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            {/* Quiet: you know which league you're in, and the join code is
-                a thing you need once. It lives on the league list instead. */}
-            <div style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: MUTED }}>{active.name}</div>
-          </div>
-          <button onClick={() => setView(leagues.length > 1 ? "picker" : "empty")} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Leagues</button>
-        </div>
-        <RallyApp leagueId={active.id} leagueName={active.name} leagueRole={active.role} leagueJoinCode={active.join_code} displayName={displayName} />
+      // THE BAR THAT USED TO BE HERE IS GONE, and the page colour comes with
+      // it. It was a white strip carrying the league name and a "Leagues"
+      // link, sitting directly above a header that already shows the league
+      // name — so the club was printed twice, a centimetre apart, on every
+      // screen in the app. Sam circled it and asked what it was for.
+      //
+      // The name was pure duplication. The link was not: joining by code,
+      // reading your join codes and leaving a league live on the Dashboard's
+      // own views and are reachable from nowhere else. So it moved into
+      // GroupSheet — which the league pill already opens — rather than being
+      // deleted with the bar.
+      //
+      // The wrapper stays, because the safe-area inset belongs HERE on the
+      // shell and nowhere below it: putting it on RallyApp's inner container
+      // once pushed the content down while leaving the bar under the status
+      // bar. It is the page colour now rather than PANEL, since there is no
+      // longer a bar for the strip to be an extension of.
+      <div style={{ background: COURT, paddingTop: "env(safe-area-inset-top)" }}>
+        <RallyApp
+          leagueId={active.id}
+          leagueName={active.name}
+          leagueRole={active.role}
+          leagueJoinCode={active.join_code}
+          displayName={displayName}
+          onManageLeagues={() => setView(leagues.length > 1 ? "picker" : "empty")}
+        />
       </div>
     );
   }
