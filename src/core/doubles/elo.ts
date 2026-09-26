@@ -221,3 +221,27 @@ export function previewDoubles(
 /** Displayed deltas are whole numbers; stored ones are not. */
 export const showDelta = (d: number): string =>
   (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(Math.round(d)).toString();
+
+/**
+ * The odds for a booked doubles match.
+ *
+ * DOUBLES RATING ONLY — no head-to-head blend, which is what singles does.
+ * Sam's instruction, and the reason is sample size: singles H2H asks "how do
+ * these two players do against each other" and a club has years of that.
+ * Doubles H2H asks about a PAIR against a PAIR, and with four people per
+ * match the number of distinct pairings explodes while the matches stay the
+ * same — most pair-versus-pair records are zero or one game, which is noise
+ * that would swamp the rating rather than refine it.
+ *
+ * Returns team A's probability. Identical maths to expectedA, which is also
+ * what actually moves the ratings afterwards, so the prediction and the
+ * consequence cannot disagree.
+ */
+export function predictDoubles(
+  teamA: [string, string],
+  teamB: [string, string],
+  stats: DoublesStats,
+): number {
+  const r = (id: string) => (stats.elo[id] !== undefined ? stats.elo[id] : DOUBLES_START);
+  return expectedA((r(teamA[0]) + r(teamA[1])) / 2, (r(teamB[0]) + r(teamB[1])) / 2);
+}

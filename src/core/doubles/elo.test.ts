@@ -9,7 +9,7 @@
  * If it ever stops producing 10.35 and 13.80 the maths has moved.
  */
 import {
-  computeDoubles, expectedA, previewDoubles, showDelta,
+  computeDoubles, expectedA, previewDoubles, predictDoubles, showDelta,
   DOUBLES_START, K_ESTABLISHED, K_PROVISIONAL,
   type DoublesMatch,
 } from "./elo";
@@ -160,4 +160,21 @@ const m = (o: Partial<DoublesMatch> & Pick<DoublesMatch, "id" | "teamA" | "teamB
   ok(showDelta(0) === "0", "zero has no sign");
 }
 
-console.log(`PASSED — ${checks}/${checks} checks`);
+// ---------------------------------------------------------------------------
+// Odds
+// ---------------------------------------------------------------------------
+{
+  const stats = computeDoubles([], { elo: { a1: 1532, a2: 1561, b1: 1508, b2: 1489 } });
+
+  near(predictDoubles(["a1", "a2"], ["b1", "b2"], stats), 0.5686, 0.0001,
+    "odds are the same expected score that moves the ratings");
+  near(
+    predictDoubles(["a1", "a2"], ["b1", "b2"], stats) + predictDoubles(["b1", "b2"], ["a1", "a2"], stats),
+    1, 1e-9, "the two sides sum to one");
+
+  // Nobody rated yet: an even match, not a divide by zero or a NaN.
+  near(predictDoubles(["x", "y"], ["z", "w"], computeDoubles([])), 0.5, 1e-9,
+    "four unrated players are 50/50");
+}
+
+console.log(`PASSED — ${checks}/${checks} checks (incl. odds)`);

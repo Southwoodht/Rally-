@@ -61,7 +61,8 @@ begin
     -- on a trigger function when the trigger is CREATED, not each time it
     -- fires. That is what makes this different from is_league_member, which
     -- is evaluated per query by the querying role and must stay open.
-    'public.doubles_match_is_sane()'
+    'public.doubles_match_is_sane()',
+    'public.doubles_fixture_is_sane()'
   ]
   loop
     -- A function that does not exist yet is skipped rather than failing the
@@ -90,7 +91,7 @@ select f.proname                                 as function,
      'public_player_card', 'search_player_accounts', 'public_league_snapshot',
      'set_player_level_estimate', 'global_standings', 'global_edges',
      'nudge_match', 'level_val', 'start_thread', 'unread_message_count',
-     'doubles_match_is_sane',
+     'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )
  order by 1;
