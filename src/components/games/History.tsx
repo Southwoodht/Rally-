@@ -4,6 +4,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import React, { useState, useMemo } from "react";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { buildEvents } from "@/components/games/events";
+import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
 import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, winnerLabel } from "@/lib/format";
@@ -14,7 +15,7 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -200,6 +201,11 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             <Toggle on={feedFilter === "league"} onClick={() => setFeedFilter("league")} label="League" />
             <Toggle on={feedFilter === "mine"} onClick={() => setFeedFilter("mine")} label="Mine" />
             <Toggle on={feedFilter === "custom"} onClick={() => setFeedFilter("custom")} label="Custom" />
+            {/* Only when there is something to filter to. A chip that always
+                shows an empty feed teaches people the feature is broken. */}
+            {!!(doublesMatches || []).length && (
+              <Toggle on={feedFilter === "doubles"} onClick={() => setFeedFilter("doubles")} label="Doubles" />
+            )}
           </div>
           {feedFilter === "custom" && (
             <div style={{ marginBottom: 14 }}>
@@ -284,6 +290,9 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                     <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(it.e.date)}</div>
                   </div>
                 </div>
+              );
+              if (it.kind === "doubles") return (
+                <DoublesScoreline key={it.key} match={it.d} players={players} meId={meId} when={fmtDate(it.d.playedAt)} />
               );
               if (it.kind === "post") return (
                 <div key={it.key} style={{ display: "flex", gap: 12, padding: "12px 4px", borderBottom: "none" }}>
