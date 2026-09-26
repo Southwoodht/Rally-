@@ -146,3 +146,23 @@ export function agoLabel(ms: number): string {
   if (hrs < 24) return hrs + "h ago";
   return "yesterday";
 }
+
+/**
+ * "1st", "2nd", "3rd", "4th" — including the teens, which are the whole
+ * reason this is a function and not a lookup on the last digit.
+ *
+ * The suffix is exported on its own because the Home rank card sets the
+ * number at 64px and the suffix at 26 — two elements, so it needs the two
+ * parts separately rather than a string it then has to pull apart.
+ *
+ * core/feedContext.ts has had a private copy of this since the feed was
+ * written, and it stays there: core is deliberately free of imports from lib,
+ * so that a file can move server-side later. This one is for components.
+ */
+export const ordinalSuffix = (n: number): string => {
+  const t = n % 100;
+  if (t >= 11 && t <= 13) return "th";
+  return ["th", "st", "nd", "rd"][n % 10] || "th";
+};
+
+export const ordinal = (n: number): string => n + ordinalSuffix(n);

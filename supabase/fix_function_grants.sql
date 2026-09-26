@@ -48,7 +48,21 @@ begin
     'public.nudge_match(text)',
     'public.level_val(jsonb)',
     'public.start_thread(uuid)',
-    'public.unread_message_count()'
+    'public.unread_message_count()',
+    -- The doubles sanity trigger's function (schema_doubles.sql). Not an
+    -- entry point — nothing calls it but the trigger — and the migration
+    -- revokes it itself. It is listed anyway because `create or replace`
+    -- counts as newly created, so a re-run of that file re-opens it to anon
+    -- exactly as re-running schema_public_player_card.sql re-opens two
+    -- others. A function closed once and left off this list is a function
+    -- that quietly reopens.
+    --
+    -- Safe to revoke even though a trigger fires it: Postgres checks EXECUTE
+    -- on a trigger function when the trigger is CREATED, not each time it
+    -- fires. That is what makes this different from is_league_member, which
+    -- is evaluated per query by the querying role and must stay open.
+    'public.doubles_match_is_sane()',
+    'public.doubles_fixture_is_sane()'
   ]
   loop
     -- A function that does not exist yet is skipped rather than failing the
@@ -77,6 +91,7 @@ select f.proname                                 as function,
      'public_player_card', 'search_player_accounts', 'public_league_snapshot',
      'set_player_level_estimate', 'global_standings', 'global_edges',
      'nudge_match', 'level_val', 'start_thread', 'unread_message_count',
+     'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )
  order by 1;

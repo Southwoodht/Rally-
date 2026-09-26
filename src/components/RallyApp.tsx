@@ -33,6 +33,14 @@ import { Globe } from "@/components/ui/Globe";
 import { MessageRobins } from "@/components/ui/MessageRobins";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { RallyMark } from "@/components/ui/RallyMark";
+import { useDoubles } from "@/components/doubles/useDoubles";
+import { ModeSwitch } from "@/components/doubles/ModeSwitch";
+import { DoublesStandings } from "@/components/doubles/DoublesStandings";
+import { DoublesEntry } from "@/components/doubles/DoublesEntry";
+import { DoublesProfile } from "@/components/doubles/DoublesProfile";
+import { DoublesRankCard } from "@/components/doubles/DoublesRankCard";
+import { RankCarousel } from "@/components/doubles/RankCarousel";
+import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -122,7 +130,7 @@ function nextUpLine(pct: number | null): string {
   return "Nobody's expecting this one. Show them.";
 }
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -173,6 +181,20 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     setProfileId(id); setProfileYear(year ?? "all");
   };
   const [groupSheet, setGroupSheet] = useState(false);
+
+  // Doubles. One load for the whole app; see useDoubles. With the flag off it
+  // fetches nothing and every branch below collapses to what was there
+  // before, which is how "singles must not change" is enforced rather than
+  // promised: there is no doubles code on the singles path to go wrong.
+  const doubles = useDoubles(leagueId, !!doublesEnabled);
+  // Which sport the Table, Profile and the entry screen are showing. Not
+  // persisted: unlike the theme or the season toggle, this is a thing you
+  // flick between within a visit, and remembering it means opening the Table
+  // to doubles because of something you did last week.
+  const [sport, setSport] = useState<"singles" | "doubles">("singles");
+  // Anything that turns doubles UI on has to pass BOTH: the league allows it
+  // and the person chose it. Two separate conditions, never conflated.
+  const showDoubles = !!doublesEnabled && sport === "doubles";
   // Standby view: the Table tab shows the people you've played instead of a
   // league. The league still loads underneath — this changes what's shown,
   // not what's fetched.
@@ -677,6 +699,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       flash("Match cancelled — couldn't message " + fullNameOf(other));
     }
     return ok;
+  };
+  /**
+   * Call off a doubles booking, and tell the other three — the singles rule
+   * above, times three. Only people with an account can be told, and the
+   * cancellation stands whether or not the messages get through.
+   */
+  const cancelDoublesFixture = async (fx) => {
+    await doubles.cancel(fx.id);
+    const me = gdata.players.find((p) => p.id === meId);
+    const mine = me ? fullNameOf(me) : "Someone";
+    const when = fx.booked ? formatMatchDateTime(fx.booked) : null;
+    const others = [...fx.teamA, ...fx.teamB]
+      .filter((id) => id !== meId)
+      .map((id) => gdata.players.find((p) => p.id === id))
+      .filter((p) => p?.auth_id);
+    const missed: string[] = [];
+    for (const other of others) {
+      try {
+        const threadId = await startThread(other.auth_id);
+        await sendMessage(threadId, systemMessage.cancelled(mine, when), null, "system");
+      } catch (e) {
+        console.error("Cancelled the doubles match but couldn't tell them", e);
+        missed.push(fullNameOf(other));
+      }
+    }
+    flash(missed.length ? "Match cancelled — couldn't message " + missed.join(", ") : "Match cancelled");
   };
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
   /**
@@ -1382,7 +1430,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
@@ -1445,6 +1493,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </header>
         )}
 
+        {/* The switch only exists when the league has doubles on. With the
+            flag off these two lines render nothing and the screens below are
+            byte-for-byte what they were. */}
+        {(tab === "ladder" || tab === "add" || tab === "profile" || tab === "fixtures") && !!doublesEnabled && !personal && (
+          <ModeSwitch mode={sport} onMode={setSport} />
+        )}
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><Globe size={18} /><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} /></button>}
         {tab === "ladder" && (
@@ -1454,10 +1508,46 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </div>
         )}
         {tab === "ladder" && tableMode === "compare" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "ladder" && tableMode === "standings" && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
-        {tab === "add" && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        {tab === "ladder" && tableMode === "standings" && showDoubles && !personal && (
+          doubles.unavailable
+            ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+                {/* States what happened, not why. The read failed; the cause
+                    might be the migration, might be the network, might be a
+                    league id this build made up. Naming one of those as THE
+                    reason is a guess presented as a diagnosis. */}
+                Couldn&apos;t load doubles for this league just now.
+              </div>
+            : <DoublesStandings players={players} matches={doubles.matches} meId={meId} onOpen={openProfile} />
+        )}
+        {tab === "ladder" && tableMode === "standings" && !showDoubles && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
+        {tab === "add" && showDoubles && (
+          <DoublesEntry
+            players={players}
+            history={doubles.matches}
+            meId={meId}
+            onSave={async (m) => {
+              try {
+                await doubles.add({ ...m, playedAt: Date.now(), enteredBy: meId });
+                flash("Logged");
+                setTab("home");
+              } catch (e: any) {
+                flash(e?.message || "Could not save that doubles match.");
+              }
+            }}
+          />
+        )}
+        {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
+            doublesCard={!!doublesEnabled && !personal && !doubles.unavailable && meId ? (
+              <DoublesRankCard
+                players={players}
+                matches={doubles.matches}
+                meId={meId}
+                leagueName={group?.name || leagueName || "League"}
+                onLogDoubles={() => { setSport("doubles"); setTab("add"); }}
+              />
+            ) : undefined}
             header={{
               leagueName: personal ? "Everyone I've played" : (group?.name || "League"),
               greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
@@ -1512,13 +1602,38 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             {feed}
           </Home>
         )}
-        {tab === "fixtures" && feed}
+        {tab === "fixtures" && !showDoubles && feed}
+        {tab === "fixtures" && showDoubles && !personal && (
+          <div style={{ marginTop: 14 }}>
+            <DoublesFixtures
+              players={players}
+              fixtures={doubles.fixtures}
+              stats={doubles.stats}
+              meId={meId}
+              canManage={!!canManageMatches}
+              unavailable={doubles.fixturesUnavailable}
+              onBook={async (f) => { await doubles.book({ ...f, createdBy: meId || null }); flash("Booked"); }}
+              onReschedule={doubles.reschedule}
+              onCancel={cancelDoublesFixture}
+              onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
+            />
+          </div>
+        )}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} onBack={() => setTab("ladder")} />}
         {/* Back to wherever you came from: the Table if a row sent you here,
             the profile menu otherwise. */}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
+        {tab === "profile" && showDoubles && !personal && (
+          doubles.unavailable
+            ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+                Couldn&apos;t load doubles for this league just now.
+              </div>
+            : meId
+              ? <DoublesProfile players={players} matches={doubles.matches} playerId={meId} leagueName={group?.name || leagueName || "League"} />
+              : null
+        )}
+        {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}

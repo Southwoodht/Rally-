@@ -31,6 +31,10 @@
     "src/core/matchStatus.ts",
     "src/core/matchStatus.test.ts",
     "src/core/booking.ts",
-    "src/core/booking.test.ts"
+    "src/core/booking.test.ts",
+    "src/core/doubles/elo.ts",
+    "src/core/doubles/elo.test.ts",
+    "src/core/doubles/partners.ts",
+    "src/core/doubles/partners.test.ts"
   ]
 }
