@@ -95,7 +95,18 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
         cursor: onOpen ? "pointer" : "default", textAlign: "left", boxSizing: "border-box",
       }}
     >
-      <span style={{ width: 22, flexShrink: 0, fontFamily: display, fontWeight: 700, fontSize: 17, ...tabular, color: mine ? FEED_LIME : FEED_TEXT_HI }}>{place}</span>
+      {/* 19px, not the appendix's 17. At 17px semibold these count as small
+          text and need 4.5:1, and on paris the accent measures 4.21 against
+          the highlighted row's background — the ONE pairing in the whole
+          feature that failed the sweep. At 19px/700 they are large text by
+          the WCAG definition and the floor drops to 3.0, which 4.21 clears
+          comfortably.
+          Raising the size rather than dropping the accent keeps what the
+          appendix is actually saying — your row is the loud one — and fixing
+          it by making the number bigger is the honest reading of why the
+          threshold exists at all. Applied to every row so the numerals do
+          not change size as you scroll past your own name. */}
+      <span style={{ width: 22, flexShrink: 0, fontFamily: display, fontWeight: 700, fontSize: 19, ...tabular, color: mine ? FEED_LIME : FEED_TEXT_HI }}>{place}</span>
       <Avatar player={r.player} size={40} />
       <span style={{ flexGrow: 1, minWidth: 0 }}>
         <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -110,7 +121,7 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
           {r.played < DOUBLES_PROVISIONAL_GAMES && ` · ${r.played} of ${DOUBLES_PROVISIONAL_GAMES} played`}
         </span>
       </span>
-      <span style={{ fontFamily: display, fontWeight: 700, fontSize: 18, ...tabular, color: mine ? FEED_LIME : (r.played < DOUBLES_PROVISIONAL_GAMES ? FEED_TEXT_MID : FEED_TEXT_HI) }}>
+      <span style={{ fontFamily: display, fontWeight: 700, fontSize: 19, ...tabular, color: mine ? FEED_LIME : (r.played < DOUBLES_PROVISIONAL_GAMES ? FEED_TEXT_MID : FEED_TEXT_HI) }}>
         {Math.round(r.elo).toLocaleString()}
       </span>
     </button>

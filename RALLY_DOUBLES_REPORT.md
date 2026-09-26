@@ -1,194 +1,217 @@
 # Rally — doubles and pairs competitions
 
-Branch `feature/doubles`. **Nothing has been changed yet.** This is A0, the
-audit the brief asks for before any code, plus three things that need a
-decision from Sam because the brief assumes something this codebase does not do.
+Branch `feature/doubles`, pushed. **Nothing is on `master` and both feature
+flags are `false`, so no member of any club can see any of this.**
+
+Rollback point if ever needed: tag `rally-pre-doubles-2026-09-25` is master
+exactly as deployed before this work started.
 
 ---
 
-## STOP — three things before A1
+## PICK UP HERE
 
-### 1. I cannot take the database backup
+Three things, in order.
 
-The brief's first instruction is "before Phase A1, export a backup of the
-database. Tell Sam where it is." I can't. A coding session can read this repo
-but cannot query or dump Supabase — that is §6 and §9 of CLAUDE.md, and it is
-why every migration in `supabase/` is run by hand.
+### 1. Run one SQL file
 
-**Sam does this:** Supabase dashboard → Database → Backups, or
-`pg_dump`. It belongs outside the repo; `backups/` is gitignored and holds real
-player PII.
+`supabase/schema_doubles_fixtures.sql`, then `supabase/fix_function_grants.sql`
+as always. Additive: one new table, no existing row or policy touched.
+Expect back `1 table, 11 columns, 4 policies, 1 trigger`.
 
-I am not treating this as optional. Part A adds tables and a league column to a
-live database with real clubs in it.
+Already run, on 2026-09-25: `schema_doubles.sql` (verified — 2 flags, 1 table,
+18 columns, 4 policies, 1 trigger) and the grants file after it (verified — all
+eleven functions closed to `anon`, with `is_league_member` and `is_club_admin`
+still open, which is correct).
 
-### 2. "All rating calculations stay server-side, like singles" — singles is not server-side
+### 2. Then the doubles booking UI
 
-This is the finding that matters most, because a whole section of the brief
-rests on it.
+The only part of Part A not built. It needs the table from step 1 to exist, so
+it was deliberately not started — same reasoning as the cancel-notification
+work in §5 of CLAUDE.md, where the middle piece breaks the feature until the
+SQL is run.
 
-**Every league rating in Rally is computed in the browser.** `computeStats()`
-and `computeOfficial()` run inside React memos — `RallyApp.tsx:778`,
-`LeagueHome.tsx:47`, `events.tsx:29`, `achievements.ts:80`. Nothing about the
-league table is computed in Postgres. The app holds no stored Elo at all: it
-replays every match from history on each render, which is exactly why a level
-history entered today retroactively regrades a 2019 match.
+### 3. Then switch it on for Seacourt and do the live checks
 
-The only server-side rating in the app is the **Global** table
-(`global_standings()`, `global_edges()`), which is a different feature.
+```sql
+update public.leagues set doubles_enabled = true where name = 'Seacourt';
+```
 
-There is also no API-route layer to put a server calculation in: `src/pages/api`
-contains one diagnostic endpoint and nothing else.
+The two A-Verify steps I could not do myself are below.
 
-So "stay server-side, like singles" cannot be followed as written. Three
-options, and I need a ruling:
+---
 
-| | what it means | cost |
+## What is built
+
+| piece | where | verified |
 |---|---|---|
-| **A. Match singles** (recommended) | doubles Elo computed in `src/core/doubles/` in the browser, same as every other rating in the app | no new infrastructure; one consistent model; the A3 live "Rating" strip is free, because the same function runs in the client already |
-| **B. Postgres function** | a `doubles_ratings()` security-definer function, like `global_standings()` | a second place the maths lives, in a language that cannot import `constants.ts`; §6 already records what SQL/TS duplication costs (`level_val()`) |
-| **C. Next API route** | a new server layer | new infrastructure for one feature; every rating read becomes a round trip |
+| Migration | `supabase/schema_doubles.sql` | run, output checked |
+| Rating engine | `src/core/doubles/elo.ts` | 34 checks incl. the brief's worked example |
+| Partners maths | `src/core/doubles/partners.ts` | 18 checks |
+| Data layer | `src/lib/doublesData.ts` | — |
+| One-load hook | `src/components/doubles/useDoubles.ts` | — |
+| Table | `DoublesStandings.tsx` | on screen, Appendix B |
+| Partners card | `PartnersCard.tsx` | on screen, Appendix C |
+| Profile | `DoublesProfile.tsx` | on screen, Appendix C |
+| Home carousel | `RankCarousel.tsx` + `DoublesRankCard.tsx` | on screen, Appendix A |
+| Entry screen | `DoublesEntry.tsx` | on screen, Appendix D, form filled |
+| Newsfeed line | `DoublesScoreline.tsx` | on screen, four cases |
+| Odds | `predictDoubles` | tested |
+| Fixtures table | `schema_doubles_fixtures.sql` | written, **not run** |
+| Booking UI | — | **not built** |
 
-**My recommendation is A**, and it makes the rest of the brief simpler rather
-than harder. If the intent behind "server-side" was *"players must not be able
-to forge their own rating"*, note that this is already true of singles and stays
-true under A: the ratings are derived from `doubles_matches` rows, and it is the
-**rows** that RLS protects. A client that lies about its own Elo convinces only
-itself — everyone else recomputes from the same matches.
-
-### 3. There is no "player's league stats" to add doubles fields to
-
-A2/A1 say to add `doubles_elo`, `doubles_played` and so on "to the player's
-league stats, or a `doubles_player_stats` table, whichever fits the existing
-pattern."
-
-**Neither fits, because the existing pattern is to store no stats at all.** The
-`players` table has no Elo, no played/won/lost, no streak — every one of those
-numbers is derived. CLAUDE.md is explicit that nothing caches a computed value,
-and the reason is the Charlie incident's cousin: a cached number and a recomputed
-number eventually disagree, and nobody notices which is wrong.
-
-The brief's doubles model — a stored `doubles_elo` seeded at 1500, a
-`doubles_rating_history` audit trail, and a full recompute when an old match is
-edited — is a **different model in kind** from singles, not a port of it. It is
-internally coherent and the audit trail is genuinely nice. But it means Rally
-would hold two philosophies at once, and the stored copy can drift from the
-recomputed truth after any failed write.
-
-Under option A above the tension disappears: doubles Elo is derived from
-`doubles_matches` in `played_at` order, so "recompute after an edit" is not a
-special path — it is the only path, and it cannot drift. `doubles_rating_history`
-then becomes optional: worth keeping if Sam wants "you went from 1532 to 1542 in
-that match" on the match detail screen, which singles already answers with
-`ratingBefore`.
+`npm run check` and `npm run build` are green. `test:core` is 383 checks
+across ten files.
 
 ---
 
-## A0 — the audit
+## The decisions that were mine, not the brief's
 
-### How a singles match is stored
+Each of these is a place I departed from the brief or filled a gap in it.
+They are the ones to overturn if you disagree.
 
-`public.matches`, in `supabase/schema_players_matches.sql`:
+**Ratings are derived, not stored.** Your ruling, and it removed two things
+the brief asked for: `doubles_rating_history` and a stored `doubles_elo`
+seeded at 1500. Rally stores no rating anywhere — `players` has no Elo, no
+W/L, no streak — so a stored copy would be a second philosophy that disagrees
+with the replay after any failed write. Derived means "recompute after an
+edit" is not a special path, it is the only path, and it cannot drift.
 
-```
-id text pk · league_id uuid · p1 text · p2 text · date timestamptz
-winner text ('p1' | 'p2' | 'draw') · score text · status text ('confirmed' | 'pending')
-reported_by text · notes · venue · photo_url · category · pending_edit jsonb
-created_at · updated_at
-```
+**Provisional players get a dash, not a low place.** On the Table and on the
+Home card. Same ruling §9 records for the Global table, for the same reason:
+the old Global screen ranked provisional players 1 and 2 *while labelling them
+provisional*, and both cannot be true. They keep their rating and record.
 
-Two facts that will bite the A1 migration if they are missed:
+**"Best with" needs three matches.** On the Partners card and the Home card.
+Below that the Home card says "Most with" instead. Picking a best partner off
+one win is what the floor exists to prevent.
 
-- **`players.id` is `text`, not `uuid`** — the app's own short id. `matches.p1`
-  and `p2` are `text` references. So `doubles_matches.team_a_p1` and its three
-  siblings must be `text`. This is the exact mistake §6 records against
-  `trophies.player_id`, where every other reference in the table was a uuid and
-  the player one could not be.
-- **`matches.id` and `fixtures.id` are `text` too.** The brief specifies
-  `doubles_matches.id` as uuid, which is fine for a new table, but
-  `fixture_id` must be `text` to reference `fixtures(id)`.
+**Most played with ≠ Best.** Both are shown on the Partners card, because one
+is habit and the other is evidence.
 
-There is **no set-by-set column.** Set scores live inside the free-text `score`
-column as `"6-2, 6-3"` and are parsed by `core/sets.ts`, which deliberately
-assumes no player-one-first convention and refuses a score it cannot reconcile
-against the recorded winner. The brief's `sets jsonb` for doubles is therefore
-*better* than singles, not the same as it — worth knowing, since it means
-doubles score handling cannot simply reuse the singles path.
+**The winner is never asked for on the entry screen.** It is derived from the
+sets, because the database derives it the same way and its trigger refuses a
+winner that contradicts the score. A winner button would let somebody enter a
+contradiction the server then rejects with a message about a trigger. The
+"Won" badge is a readout. This is a real difference from singles, where the
+winner *is* the input and the score is optional.
 
-### How a result is entered, confirmed, and becomes a rating
+**The doubles profile's last-five bars measure rating, not level.** Singles
+uses the opponent's recorded level at the time. A pair has no level, and
+averaging two dropdown guesses is arithmetic on a guess — `matchGrade.ts`
+makes that exact objection about sub-levels. So the height is the opposing
+pair's doubles rating as it stood, and the caption says "opponents' rating"
+rather than "level" so the two are not presented as the same quantity.
+**This is the one most worth your opinion.**
 
-- **Entered:** `components/games/LogResult.tsx`. Picks two players via
-  `PlayerPicker`, takes a winner and an optional free-text score.
-- **Confirmed:** `core/matchStatus.ts` decides pending vs confirmed. The rule is
-  that an opponent holding an `auth_id` must agree; a shell opponent with no
-  account confirms immediately because there is nobody to ask. Edits and deletes
-  need the same agreement, enforced in RLS as well as the UI, with a 24h
-  client-side sweep.
-- **Rating:** nowhere, as a write. `computeStats(players, matches)` derives it
-  on render. A match becomes a rating the moment it is in the array.
+**Doubles fixtures need their own table.** `fixtures` is `(p1, p2)` and every
+reader assumes it, so `p3`/`p4` would be invisible to all of them: a doubles
+booking would render as a singles one between the first two players and could
+be completed as a singles result. The cost, stated in the file rather than
+hidden: "my fixtures" becomes two queries and anything listing upcoming
+matches must read both and merge.
 
-Doubles has to extend the agreement rule to "either opponent may confirm", which
-is new shape — singles only ever has one other party.
+**Doubles standings numerals are 19px, not the appendix's 17/18.** See the
+contrast finding below.
 
-### Where each piece lives
-
-| piece | file |
-|---|---|
-| Elo | `core/elo.ts` — `computeStats`, level-gap multiplier, also returns `ratingBefore` |
-| Official points | `core/official.ts` — `computeOfficial`, five best wins × win rate² × activity |
-| Network rating | `core/rating.ts` — `computeRatings`, drives Global and the Table's Strength mode |
-| Predictions / odds | `core/predict.ts` |
-| Newsfeed items | `components/games/events.tsx` — replays history to build events |
-| Fixtures / bookings | `core/booking.ts`, `components/games/FixturesPanel.tsx` |
-| Home rank card | `components/home/Home.tsx`, `home/StandingHero.tsx` |
-| Table | `components/table/LeagueHome.tsx`, `table/StandingsList.tsx` |
-| Profile | `components/profile/ProfileView.tsx` over `ProfileContainer.tsx` |
-| New match | `components/games/LogResult.tsx` |
-| Row ↔ app shape | `lib/leagueData.ts` — `rowToMatch` / `matchToRow`, `syncEntity` |
-
-### Everywhere that assumes exactly two players
-
-**39 files, 361 references to `p1`/`p2`.** Not changing any of them, as
-instructed — this is the list so nothing is touched by accident:
-
-`core/`: elo, official, rank, predict, tiebreak, season, legacy, rivalries,
-memories, notifications, achievements, feedContext, matchQuality, matchStatus,
-ratingTimeline, sets (+ their tests)
-
-`components/`: RallyApp, LogResult, MatchDetail, History, FixturesPanel,
-WeeklyRoundup, events, bulk, Home, ResultPrompt, ProfileContainer, SettingsTab,
-LeagueHome, RecapCard, HeadToHead
-
-`lib/`: leagueData, format, historyImport · `data/seed.ts`
-
-The concentration in `core/` is why the brief is right that doubles belongs in
-`core/doubles/` rather than in a generalised engine. Widening `p1`/`p2` into
-arrays would touch every rating, every screen and every test in one change, on a
-live app, with no CI.
-
-### Feature flags
-
-`public.leagues` currently has only `id, name, location, join_code, created_by,
-created_at`. Both flags are new columns — additive, defaulting false, no row
-rewritten.
+**The Singles/Doubles switch is not remembered.** Unlike the theme or the
+season toggle, it is something you flick between within a visit; persisting it
+means opening the Table to doubles because of something you did last week.
 
 ---
 
-## What I have not done
+## A-Verify
 
-Everything after A0. No migration written, no table created, no component
-touched, nothing committed beyond this file. A1 is blocked on the backup, and
-A2's shape depends on the ruling in point 2 above.
+### Passed
 
-**What I need from Sam:**
+**Singles unchanged, by construction.** Every new branch is gated on the
+league flag, so with it off there is no doubles code on the singles path.
+Checked that way round first, in the app: flag off, the Table still shows the
+Global link, Standings/Compare, the filter pills and the leader card, and
+there is no switch anywhere. Home renders the singles hero with no carousel
+wrapper at all — not a one-page carousel, which would still draw the dots and
+"Swipe for doubles" on a screen with nowhere to go.
 
-1. Take the database backup and say where it is.
-2. Rule on point 2 — A (compute like singles, recommended), B (Postgres
-   function) or C (API route).
-3. Confirm point 3 follows from that: under A there is no stored
-   `doubles_elo`, and `doubles_rating_history` becomes optional rather than the
-   source of truth.
+Four files singles shares were touched, all additively: `PlayerPicker` gained
+an optional `triggerLabel` (singles does not pass it, and I re-checked Add
+result end to end — the sheet opens, picking Charlie Henry fills the field),
+`Home` gained an optional `doublesCard`, `History` gained an optional
+`doublesMatches`, `leagues.ts` selects two more columns.
 
-Say "A" and I will build Part A straight through — the A2 worked example still
-has to produce +10.35 and +13.80 whichever option is chosen, so the maths and
-its tests are unaffected either way.
+**With the flag on**, the switch appears, Doubles swaps the standings list,
+and Add result renders the doubles form. The override was removed afterwards.
+
+**Tests.** 383 checks, including the worked example to your stated decimals:
++10.35 each winner, −10.35 each loser, +13.80 when the 1532 player is
+provisional with his partner and both opponents unmoved. Plus a draw,
+input-order independence, and recompute-after-edit equalling
+processed-in-order.
+
+**Contrast, all five themes, measured not eyeballed.** Every text node in every
+doubles surface, against the first opaque background above it, at the WCAG
+threshold for its own size and weight. 135 nodes × 5 themes.
+
+**One real failure, found and fixed.** On **paris**, the viewer's own row in
+the doubles table: the accent place number at 17px and rating at 18px measured
+**4.21** against the highlighted background, below the 4.5 floor for small
+text. Only that theme, only that row.
+
+Fixed by raising both to **19px at weight 700**, which makes them large text
+by the WCAG definition and drops the floor to 3.0. Raising the size rather
+than dropping the accent keeps what Appendix B is saying — your row is the
+loud one — and applied to every row so the numerals do not change size as you
+scroll past your own name. Re-measured: **135/135 pass in all five themes.**
+
+**Grep.** No `rgb()` and no hex in any doubles file. The single hex match is
+the word `#16271F` inside a comment explaining the bug below.
+
+**One other bug that only rendering found:** the Home carousel's page dots
+were invisible. I had coloured them `--on-hero`, which is correct for ink *on*
+the cream card and is *also* the page's own background colour — dark green on
+dark green, with the hint text below reading as the only thing there. The
+indicator sits below the card, on the page, so it needs page tokens. A token
+named for what it sits on stops being right the moment the thing moves off it.
+
+### Not done, and why
+
+**Singles standings export, before and after.** Step 1 of A-Verify asks for
+this and I cannot produce it: the repo holds only
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, which RLS treats as a signed-out visitor.
+There is no service-role key and no database password, which is the same
+reason I cannot run migrations. The construction argument and the flag-off
+render above are what I have instead. **If you want the export, it is one
+query you run before and after switching the flag on.**
+
+**Three live test doubles matches in a scratch league.** Needs a signed-in
+write, so same blocker. This is the one genuinely outstanding verification:
+log a win, a loss and one involving a provisional player, then check the
+ratings, the table and its provisional split, Partners, the Home card, the
+feed and the notifications, edit one match and confirm the recompute. Then
+delete the scratch data.
+
+**Screenshots of all four screens in all five themes.** I swept the five
+themes on one page holding every doubles surface, and measured rather than
+photographed. Two visual captures kept (rally, paris). If you want the full
+twenty, say so.
+
+**Part B (pairs competitions) is not started.** The brief gates it behind
+A-Verify, and A-Verify is not fully passed until the two live checks above are
+done.
+
+---
+
+## Known limitations
+
+- **Compare stays singles-only**, as the brief specifies.
+- **No pair head-to-head in the odds.** Rating only, your instruction. Worth
+  recording why it is right: singles H2H asks how two players do against each
+  other and a club has years of that; doubles H2H asks about a pair against a
+  pair, and with four people per match the pairings explode while the matches
+  do not. Most pair-versus-pair records would be zero or one game — noise that
+  swamps the rating rather than refining it.
+- **`doubles_matches.fixture_id` points at the singles `fixtures` table**,
+  which is the wrong target for a doubles booking. Left alone rather than
+  repointed: it is nullable, nothing writes it, and changing a foreign key is
+  not additive. `doubles_fixtures.match_id` is the link doubles uses.
+- **Doubles Elo starts at 1500 and singles at 0**, with no level term at all
+  in doubles. The two numbers are not comparable and must never share a
+  column.
