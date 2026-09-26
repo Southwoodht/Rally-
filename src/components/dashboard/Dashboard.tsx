@@ -169,6 +169,11 @@ export default function Dashboard({ session }: { session: Session }) {
           leagueName={active.name}
           leagueRole={active.role}
           leagueJoinCode={active.join_code}
+          leagueCreatedBy={(active as any).created_by || null}
+          // The switches in "Run your league" change the league row; the flags
+          // above are read from it, so the app has to be told or the switch
+          // would flip back on the next render.
+          onLeagueFlags={(patch: any) => setActive((a) => (a ? { ...a, ...patch } : a))}
           displayName={displayName}
           onManageLeagues={() => setView(leagues.length > 1 ? "picker" : "empty")}
           // Absent means off. A League built anywhere but listMyLeagues — the

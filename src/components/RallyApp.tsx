@@ -28,7 +28,8 @@ import { myLeaguePlaces } from "@/lib/myLeaguePlaces";
 import { listMyLeagues } from "@/lib/leagues";
 import { OFFICIAL_UNIT, type Standing } from "@/components/home/StandingHero";
 import { setLevelEstimate } from "@/lib/levelAdmin";
-import { SettingsTab } from "@/components/settings/SettingsTab";
+import { LeagueHub } from "@/components/settings/LeagueHub";
+import { setLeagueFlags } from "@/lib/leagues";
 import { Globe } from "@/components/ui/Globe";
 import { MessageRobins } from "@/components/ui/MessageRobins";
 import { ThemePicker } from "@/components/ui/ThemePicker";
@@ -134,7 +135,7 @@ function nextUpLine(pct: number | null): string {
   return "Nobody's expecting this one. Show them.";
 }
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -193,6 +194,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const doubles = useDoubles(leagueId, !!doublesEnabled);
   // Competitions need doubles on AND their own flag. Off, this loads nothing.
   const comps = useCompetitions(leagueId, !!doublesEnabled && !!competitionsEnabled);
+  // "Start a competition" in Run your league opens the doubles create form.
+  const [compCreateSignal, setCompCreateSignal] = useState(0);
   // Which sport the Table, Profile and the entry screen are showing. Not
   // persisted: unlike the theme or the season toggle, this is a thing you
   // flick between within a visit, and remembering it means opening the Table
@@ -660,7 +663,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const setMode = (m) => { setRankingMode(m); persistSettings({ rankingMode: m }); };
   const fixtures = gdata.fixtures || [];
   const generateFixtures = (rounds = 1) => {
-    const ps = gdata.players; const fx: Array<{ id: string; p1: string; p2: string; done: boolean }> = [];
+    // Players marked not currently playing are left out: a fixture against
+    // somebody who is not playing is one nobody will ever fill in, and the
+    // screen that offers this says "every pair of the active players".
+    const ps = gdata.players.filter((p) => !p.inactive); const fx: Array<{ id: string; p1: string; p2: string; done: boolean }> = [];
     for (let r = 0; r < rounds; r++) for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) fx.push({ id: uid(), p1: ps[i].id, p2: ps[j].id, done: false });
     saveData({ ...gdata, fixtures: fx });
     flash(fx.length + " fixtures created");
@@ -1622,6 +1628,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               meId={meId}
               canManage={!!canManageMatches}
               unavailable={comps.unavailable || !competitionsEnabled}
+              createSignal={compCreateSignal}
               onCreatePlayer={addPlayer}
               onCreate={async (c, entries) => {
                 // League: the whole schedule now. Knockout: whatever the seeding
@@ -1685,8 +1692,22 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
-        {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}
-        {tab === "settings" && <SettingsTab group={group} updateGroup={updateGroup} onRemovePlayer={removePlayer} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture} onLoadDemo={() => { flash("Demo data is off in the live app"); }} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults} players={players} setPlayers={setPlayers} matches={matches} flash={flash} meId={meId} leagueId={gid} displayName={displayName} />}
+        {tab === "settings" && <SubHeader title={canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"} onBack={() => setTab("profile")} />}
+        {tab === "settings" && (
+          <LeagueHub
+            group={group} updateGroup={updateGroup} players={players} setPlayers={setPlayers} matches={matches}
+            fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture}
+            onRemovePlayer={removePlayer} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults}
+            flash={flash} meId={meId} leagueId={gid} displayName={displayName} leagueJoinCode={leagueJoinCode}
+            canManage={canManageMatches || isFriendlyLeague(gid)}
+            isCreator={!!myAuthId && !!leagueCreatedBy && myAuthId === leagueCreatedBy}
+            doublesEnabled={!!doublesEnabled} competitionsEnabled={!!competitionsEnabled}
+            hasCompetition={comps.competitions.length > 0}
+            onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
+            onStartDoublesCompetition={() => { setSport("doubles"); setTab("fixtures"); setCompCreateSignal((n) => n + 1); }}
+            onLogResult={() => setTab("add")}
+          />
+        )}
         {tab === "matches" && (
           <SubHeader
             title={!matchesFor || matchesFor === meId ? "Your matches" : shortNameOf(players.find((p) => p.id === matchesFor)) + "'s matches"}
@@ -1729,7 +1750,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><Robin size={18} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Manage players &amp; league</span><span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"}</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>

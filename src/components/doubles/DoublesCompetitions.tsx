@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trophy, X } from "lucide-react";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
@@ -52,6 +52,8 @@ interface Props {
   /** The ordinary doubles fixtures, shown under the list and hidden while a
    *  competition or the create form is open, so one screen does one thing. */
   children?: React.ReactNode;
+  /** Bumped by "Start a competition" in Run your league: open the create form. */
+  createSignal?: number;
 }
 
 /** "Winter Doubles · Semi-finals" — how a competition tie labels itself anywhere. */
@@ -90,6 +92,9 @@ export function DoublesCompetitions(props: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  useEffect(() => {
+    if (props.createSignal && canManage) { setOpenId(null); setCreating(true); }
+  }, [props.createSignal, canManage]);
 
   // The SQL is not run yet: say nothing rather than something wrong, and
   // leave the ordinary fixtures exactly as they were.

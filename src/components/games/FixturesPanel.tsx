@@ -190,8 +190,8 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>Nothing booked yet.</div>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             {canBookNew
-              ? <>Book a match with anyone in the league above. A league owner can also set up a whole season at once in <span style={{ color: FEED_TEXT_HI }}>Profile → Manage players &amp; league → Fixtures</span>.</>
-              : <>A league owner can set these up in <span style={{ color: FEED_TEXT_HI }}>Profile → Manage players &amp; league → Fixtures</span> — either an automatic round-robin or hand-picked matchups.</>}
+              ? <>Book a match with anyone in the league above. A league owner can also set up a whole season at once in <span style={{ color: FEED_TEXT_HI }}>Menu → Run your league → Singles fixtures</span>.</>
+              : <>A league owner can set these up in <span style={{ color: FEED_TEXT_HI }}>Menu → Run your league → Singles fixtures</span> — either an automatic round-robin or hand-picked matchups.</>}
           </div>
         </SurfaceCard>
       </div>

@@ -233,3 +233,30 @@ export async function setLeagueRole(leagueId: string, userId: string, role: "own
     throw e;
   }
 }
+
+/**
+ * Switch doubles or competitions on or off for a league — the switches in
+ * "Run your league", which used to be an SQL update Sam pasted by hand.
+ *
+ * AN UPDATE THAT RLS REFUSES IS NOT AN ERROR IN POSTGRES: it matches no rows
+ * and reports success, exactly like the refused DELETE §6 describes. The
+ * policy is "owner can update league" and it means the CREATOR
+ * (created_by = auth.uid()), not anyone with the owner role — so an editor,
+ * or an owner who did not create the league, would otherwise see the switch
+ * flip and then quietly flip back on the next load. The row is asked for
+ * back, and no row means refused, said out loud.
+ */
+export async function setLeagueFlags(
+  id: string,
+  patch: { doubles_enabled?: boolean; competitions_enabled?: boolean },
+): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.from("leagues").update(patch).eq("id", id).select("id"),
+    { data: null, error: new Error("Timed out saving that.") } as any,
+  );
+  if (res.error) throw res.error;
+  if (!res.data || !res.data.length) {
+    throw new Error("Only the person who created this league can change that.");
+  }
+}
