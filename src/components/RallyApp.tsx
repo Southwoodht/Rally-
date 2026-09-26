@@ -37,6 +37,9 @@ import { useDoubles } from "@/components/doubles/useDoubles";
 import { ModeSwitch } from "@/components/doubles/ModeSwitch";
 import { DoublesStandings } from "@/components/doubles/DoublesStandings";
 import { DoublesEntry } from "@/components/doubles/DoublesEntry";
+import { DoublesProfile } from "@/components/doubles/DoublesProfile";
+import { DoublesRankCard } from "@/components/doubles/DoublesRankCard";
+import { RankCarousel } from "@/components/doubles/RankCarousel";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -1466,7 +1469,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {/* The switch only exists when the league has doubles on. With the
             flag off these two lines render nothing and the screens below are
             byte-for-byte what they were. */}
-        {(tab === "ladder" || tab === "add") && !!doublesEnabled && !personal && (
+        {(tab === "ladder" || tab === "add" || tab === "profile") && !!doublesEnabled && !personal && (
           <ModeSwitch mode={sport} onMode={setSport} />
         )}
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
@@ -1509,6 +1512,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
+            doublesCard={!!doublesEnabled && !personal && !doubles.unavailable && meId ? (
+              <DoublesRankCard
+                players={players}
+                matches={doubles.matches}
+                meId={meId}
+                leagueName={group?.name || leagueName || "League"}
+                onLogDoubles={() => { setSport("doubles"); setTab("add"); }}
+              />
+            ) : undefined}
             header={{
               leagueName: personal ? "Everyone I've played" : (group?.name || "League"),
               greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
@@ -1569,7 +1581,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             the profile menu otherwise. */}
         {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
         {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "profile" && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
+        {tab === "profile" && showDoubles && !personal && (
+          doubles.unavailable
+            ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+                Couldn&apos;t load doubles for this league just now.
+              </div>
+            : meId
+              ? <DoublesProfile players={players} matches={doubles.matches} playerId={meId} leagueName={group?.name || leagueName || "League"} />
+              : null
+        )}
+        {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
         {tab === "settings" && <SubHeader title="Settings" onBack={() => setTab("profile")} />}

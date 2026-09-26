@@ -4,6 +4,7 @@ import { AwaitingResult, ResultPrompt } from "@/components/home/ResultPrompt";
 import { HomeHeader, type HomeHeaderProps } from "@/components/home/HomeHeader";
 import { HomeFocus, type HomeFocusProps } from "@/components/home/HomeFocus";
 import { StandingHero, type StandingHeroProps } from "@/components/home/StandingHero";
+import { RankCarousel } from "@/components/doubles/RankCarousel";
 import { Reveal } from "@/components/ui/Reveal";
 
 // The home screen: a dashboard with the newsfeed running on underneath it.
@@ -27,6 +28,8 @@ export interface HomeProps {
    *  The hero is the screen's answer to "where am I", so with no answer it
    *  is left out rather than shown holding zeros. */
   standing?: StandingHeroProps | null;
+  /** Page 2 of the rank card. Absent = doubles off = no carousel at all. */
+  doublesCard?: React.ReactNode;
   /** The middle block: days-since or this week's record, the summary line,
    *  and either your next match or the person just above you. */
   focus?: HomeFocusProps | null;
@@ -40,7 +43,7 @@ export interface HomeProps {
 }
 
 export function Home({
-  header, standing, focus, awaitingResult, levelRecheck, whatsNew,
+  header, standing, doublesCard, focus, awaitingResult, levelRecheck, whatsNew,
   onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   let step = 0;
@@ -50,7 +53,15 @@ export function Home({
 
       {standing && (
         <Reveal index={step++} style={{ marginBottom: 12 }}>
-          <StandingHero {...standing} />
+          {/* doublesCard is the second page of the rank carousel. When it is
+              absent — every league with doubles off — this is exactly what it
+              was: the singles hero, alone, with no carousel around it. The
+              carousel is not rendered at all rather than rendered with one
+              page, so the page dots and the swipe hint cannot appear on a
+              screen that has nowhere to swipe to. */}
+          {doublesCard
+            ? <RankCarousel>{[<StandingHero key="s" {...standing} />, doublesCard] as [React.ReactNode, React.ReactNode]}</RankCarousel>
+            : <StandingHero {...standing} />}
         </Reveal>
       )}
 

@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo } from "react";
-import { fullNameOf } from "@/lib/format";
+import { fullNameOf, ordinalSuffix } from "@/lib/format";
 import { computeDoubles, DOUBLES_PROVISIONAL_GAMES, type DoublesMatch } from "@/core/doubles/elo";
 import { partnersOf, bestPartner, mostPlayedWith } from "@/core/doubles/partners";
 import {
@@ -28,12 +28,6 @@ interface Props {
   leagueName: string;
   onLogDoubles?: () => void;
 }
-
-const ordinal = (n: number): string => {
-  const rem100 = n % 100;
-  if (rem100 >= 11 && rem100 <= 13) return "th";
-  return ["th", "st", "nd", "rd"][n % 10] || "th";
-};
 
 export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubles }: Props) {
   const stats = useMemo(() => computeDoubles(matches), [matches]);
@@ -92,7 +86,7 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 10 }}>
         <div style={{ fontFamily: display, fontWeight: 700, fontSize: 64, lineHeight: 1, ...tight(64), ...tabular }}>
           {provisional ? "–" : place}
-          {!provisional && <span style={{ fontSize: 26, letterSpacing: 0 }}>{ordinal(place)}</span>}
+          {!provisional && <span style={{ fontSize: 26, letterSpacing: 0 }}>{ordinalSuffix(place)}</span>}
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontFamily: display, fontSize: 34, fontWeight: 700, lineHeight: 1, ...tabular }}>
