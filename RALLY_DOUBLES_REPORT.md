@@ -10,31 +10,25 @@ exactly as deployed before this work started.
 
 ## PICK UP HERE
 
-Three things, in order.
+**Updated 26 Sep 2026.** Both migrations are run and verified, and the
+booking UI is built (branch `claude/continuation-luuz5s`, commit "The doubles
+booking screen"). What is left:
 
-### 1. Run one SQL file
+### 1. Merge the booking screen into this branch
 
-`supabase/schema_doubles_fixtures.sql`, then `supabase/fix_function_grants.sql`
-as always. Additive: one new table, no existing row or policy touched.
-Expect back `1 table, 11 columns, 4 policies, 1 trigger`.
-
-Already run, on 2026-09-25: `schema_doubles.sql` (verified — 2 flags, 1 table,
-18 columns, 4 policies, 1 trigger) and the grants file after it (verified — all
-eleven functions closed to `anon`, with `is_league_member` and `is_club_admin`
-still open, which is correct).
-
-### 2. Then the doubles booking UI
-
-The only part of Part A not built. It needs the table from step 1 to exist, so
-it was deliberately not started — same reasoning as the cancel-notification
-work in §5 of CLAUDE.md, where the middle piece breaks the feature until the
-SQL is run.
-
-### 3. Then switch it on for Seacourt and do the live checks
+### 2. Switch it on for Seacourt and do the live checks
 
 ```sql
 update public.leagues set doubles_enabled = true where name = 'Seacourt';
 ```
+
+Run and verified on 2026-09-26: `schema_doubles_fixtures.sql` (1 table, 11
+columns, 4 policies, 1 trigger) and the grants file after it (twelve
+functions closed to `anon`, `is_league_member` and `is_club_admin` still
+open, which is correct).
+
+Already run, on 2026-09-25: `schema_doubles.sql` (verified — 2 flags, 1 table,
+18 columns, 4 policies, 1 trigger) and the grants file after it.
 
 The two A-Verify steps I could not do myself are below.
 
@@ -56,8 +50,8 @@ The two A-Verify steps I could not do myself are below.
 | Entry screen | `DoublesEntry.tsx` | on screen, Appendix D, form filled |
 | Newsfeed line | `DoublesScoreline.tsx` | on screen, four cases |
 | Odds | `predictDoubles` | tested |
-| Fixtures table | `schema_doubles_fixtures.sql` | written, **not run** |
-| Booking UI | — | **not built** |
+| Fixtures table | `schema_doubles_fixtures.sql` | run 2026-09-26, output checked |
+| Booking UI | `DoublesFixtures.tsx` | on screen, book / reschedule / result / cancel driven in the dev league |
 
 `npm run check` and `npm run build` are green. `test:core` is 383 checks
 across ten files.
