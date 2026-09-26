@@ -47,7 +47,7 @@ const parsed = (rows: SetScore[]): Array<{ a: number; b: number }> =>
     .filter((r) => Number.isFinite(r.a) && Number.isFinite(r.b));
 
 /** The same rule the trigger applies, so the screen and the database agree. */
-const winnerFromSets = (sets: Array<{ a: number; b: number }>): string | null => {
+export const winnerFromSets = (sets: Array<{ a: number; b: number }>): string | null => {
   if (!sets.length) return null;
   let a = 0, b = 0;
   for (const s of sets) { if (s.a > s.b) a++; else if (s.b > s.a) b++; }

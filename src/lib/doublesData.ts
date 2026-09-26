@@ -156,3 +156,102 @@ export async function deleteDoubles(id: string): Promise<void> {
     throw new Error("That delete was refused — only league staff can delete a doubles match.");
   }
 }
+
+// ---------------------------------------------------------------------------
+// Doubles fixtures — a booked match that has not been played yet
+// ---------------------------------------------------------------------------
+//
+// Its own table (schema_doubles_fixtures.sql), for the reason written at the
+// top of that file: public.fixtures is (p1, p2) and every reader of it would
+// show a doubles booking as a singles one between the first two players.
+
+export interface DoublesFixture {
+  id: string;
+  leagueId: string;
+  teamA: [string, string];
+  teamB: [string, string];
+  /** ms, or null for "agreed but not scheduled" — as fixtures.booked. */
+  booked: number | null;
+  done: boolean;
+  matchId: string | null;
+  createdBy: string | null;
+}
+
+export const rowToDoublesFixture = (r: any): DoublesFixture => ({
+  id: r.id,
+  leagueId: r.league_id,
+  teamA: [r.team_a_p1, r.team_a_p2],
+  teamB: [r.team_b_p1, r.team_b_p2],
+  booked: r.booked ? new Date(r.booked).getTime() : null,
+  done: !!r.done,
+  matchId: r.match_id ?? null,
+  createdBy: r.created_by ?? null,
+});
+
+/**
+ * Null on failure, never [] — see loadDoublesSafe. This one matters more than
+ * that one: doubles_fixtures is a SEPARATE migration from doubles_matches, so
+ * a league can have doubles switched on and working while this table does
+ * not exist yet. "Nothing booked" would be a lie told on exactly that day.
+ */
+export async function loadDoublesFixturesSafe(leagueId: string): Promise<DoublesFixture[] | null> {
+  if (!supabase) return [];
+  try {
+    const result: any = await withSupabaseTimeout(
+      supabase.from("doubles_fixtures").select("*").eq("league_id", leagueId),
+      FETCH_FAILED as any,
+    );
+    if (result === (FETCH_FAILED as any) || result.error) return null;
+    return (result.data || []).map(rowToDoublesFixture);
+  } catch {
+    return null;
+  }
+}
+
+export async function insertDoublesFixture(
+  leagueId: string,
+  f: { teamA: [string, string]; teamB: [string, string]; booked: number | null; createdBy: string | null },
+): Promise<DoublesFixture> {
+  if (!supabase) throw new Error("Not connected.");
+  // id, done, match_id and created_at are the database's defaults.
+  const data = await run(
+    supabase.from("doubles_fixtures").insert({
+      league_id: leagueId,
+      team_a_p1: f.teamA[0], team_a_p2: f.teamA[1],
+      team_b_p1: f.teamB[0], team_b_p2: f.teamB[1],
+      booked: f.booked ? new Date(f.booked).toISOString() : null,
+      created_by: f.createdBy,
+    }).select().single(),
+    "booking the doubles match",
+  );
+  return rowToDoublesFixture(data);
+}
+
+export async function updateDoublesFixture(
+  id: string,
+  patch: { booked?: number | null; done?: boolean; matchId?: string | null },
+): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const row: any = {};
+  if (patch.booked !== undefined) row.booked = patch.booked ? new Date(patch.booked).toISOString() : null;
+  if (patch.done !== undefined) row.done = patch.done;
+  if (patch.matchId !== undefined) row.match_id = patch.matchId;
+  await run(supabase.from("doubles_fixtures").update(row).eq("id", id), "updating the doubles booking");
+}
+
+/** Same refused-delete check as deleteDoubles, for the same reason. */
+export async function deleteDoublesFixture(id: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const gone = await run(
+    supabase.from("doubles_fixtures").delete().eq("id", id).select("id"),
+    "cancelling the doubles match",
+  );
+  if (gone && gone.length) return;
+  const still: any = await withSupabaseTimeout(
+    supabase.from("doubles_fixtures").select("id").eq("id", id).maybeSingle(),
+    FETCH_FAILED as any,
+  );
+  if (still !== (FETCH_FAILED as any) && !still.error && still.data) {
+    throw new Error("That cancel was refused — only the four players or league staff can cancel it.");
+  }
+}

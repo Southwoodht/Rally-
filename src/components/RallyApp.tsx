@@ -40,6 +40,7 @@ import { DoublesEntry } from "@/components/doubles/DoublesEntry";
 import { DoublesProfile } from "@/components/doubles/DoublesProfile";
 import { DoublesRankCard } from "@/components/doubles/DoublesRankCard";
 import { RankCarousel } from "@/components/doubles/RankCarousel";
+import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -698,6 +699,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       flash("Match cancelled — couldn't message " + fullNameOf(other));
     }
     return ok;
+  };
+  /**
+   * Call off a doubles booking, and tell the other three — the singles rule
+   * above, times three. Only people with an account can be told, and the
+   * cancellation stands whether or not the messages get through.
+   */
+  const cancelDoublesFixture = async (fx) => {
+    await doubles.cancel(fx.id);
+    const me = gdata.players.find((p) => p.id === meId);
+    const mine = me ? fullNameOf(me) : "Someone";
+    const when = fx.booked ? formatMatchDateTime(fx.booked) : null;
+    const others = [...fx.teamA, ...fx.teamB]
+      .filter((id) => id !== meId)
+      .map((id) => gdata.players.find((p) => p.id === id))
+      .filter((p) => p?.auth_id);
+    const missed: string[] = [];
+    for (const other of others) {
+      try {
+        const threadId = await startThread(other.auth_id);
+        await sendMessage(threadId, systemMessage.cancelled(mine, when), null, "system");
+      } catch (e) {
+        console.error("Cancelled the doubles match but couldn't tell them", e);
+        missed.push(fullNameOf(other));
+      }
+    }
+    flash(missed.length ? "Match cancelled — couldn't message " + missed.join(", ") : "Match cancelled");
   };
   const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
   /**
@@ -1469,7 +1496,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {/* The switch only exists when the league has doubles on. With the
             flag off these two lines render nothing and the screens below are
             byte-for-byte what they were. */}
-        {(tab === "ladder" || tab === "add" || tab === "profile") && !!doublesEnabled && !personal && (
+        {(tab === "ladder" || tab === "add" || tab === "profile" || tab === "fixtures") && !!doublesEnabled && !personal && (
           <ModeSwitch mode={sport} onMode={setSport} />
         )}
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
@@ -1575,7 +1602,23 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             {feed}
           </Home>
         )}
-        {tab === "fixtures" && feed}
+        {tab === "fixtures" && !showDoubles && feed}
+        {tab === "fixtures" && showDoubles && !personal && (
+          <div style={{ marginTop: 14 }}>
+            <DoublesFixtures
+              players={players}
+              fixtures={doubles.fixtures}
+              stats={doubles.stats}
+              meId={meId}
+              canManage={!!canManageMatches}
+              unavailable={doubles.fixturesUnavailable}
+              onBook={async (f) => { await doubles.book({ ...f, createdBy: meId || null }); flash("Booked"); }}
+              onReschedule={doubles.reschedule}
+              onCancel={cancelDoublesFixture}
+              onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
+            />
+          </div>
+        )}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} onBack={() => setTab("ladder")} />}
         {/* Back to wherever you came from: the Table if a row sent you here,
             the profile menu otherwise. */}
