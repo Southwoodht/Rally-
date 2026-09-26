@@ -36,8 +36,10 @@ const firstName = (p: any): string => (p?.name || "").trim() || "Someone";
 
 export function DoublesScoreline({ match, players, meId, when }: Props) {
   const byId = new Map(players.map((p) => [p.id, p]));
-  const a = match.teamA.map((id) => byId.get(id));
-  const b = match.teamB.map((id) => byId.get(id));
+  // An empty seat is somebody nobody could name. It stays in the list as
+  // null so "& partner" can be said, and is skipped for avatars and titles.
+  const a = match.teamA.map((id) => (id == null ? null : byId.get(id)));
+  const b = match.teamB.map((id) => (id == null ? null : byId.get(id)));
 
   const drew = match.winner === "draw";
   // The winning pair leads the sentence, so it reads as a result rather than
@@ -53,7 +55,7 @@ export function DoublesScoreline({ match, players, meId, when }: Props) {
 
   const pair = (ps: any[]) => (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-      {ps.map((p, i) => (
+      {ps.filter(Boolean).map((p, i) => (
         <span key={i} style={{ marginLeft: i ? -10 : 0, display: "inline-flex" }}>
           <Avatar player={p} size={26} />
         </span>
@@ -61,7 +63,7 @@ export function DoublesScoreline({ match, players, meId, when }: Props) {
     </span>
   );
 
-  const names = (ps: any[]) => ps.map(firstName).join(" & ");
+  const names = (ps: any[]) => ps.map((p) => (p === null ? "partner" : firstName(p))).join(" & ");
   const mine = [...match.teamA, ...match.teamB].includes(meId || "");
 
   return (
@@ -70,7 +72,7 @@ export function DoublesScoreline({ match, players, meId, when }: Props) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}
-          title={`${left.map((p) => fullNameOf(p)).join(" & ")} ${drew ? "drew with" : "beat"} ${right.map((p) => fullNameOf(p)).join(" & ")}`}
+          title={`${left.map((p) => (p ? fullNameOf(p) : "partner")).join(" & ")} ${drew ? "drew with" : "beat"} ${right.map((p) => (p ? fullNameOf(p) : "partner")).join(" & ")}`}
         >
           <strong style={{ fontWeight: mine ? 700 : 600 }}>{names(left)}</strong>
           {drew ? " drew with " : " beat "}

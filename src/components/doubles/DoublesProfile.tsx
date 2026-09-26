@@ -64,7 +64,9 @@ export function DoublesProfile({ players, matches, playerId, leagueName }: Props
     return mine.map((m) => {
       const onA = m.teamA.includes(playerId);
       const opp = onA ? m.teamB : m.teamA;
-      const before = (id: string) => stats.deltas.find((d) => d.matchId === m.id && d.playerId === id)?.before ?? 1500;
+      // An unknown opponent was never rated, so they stand at 1500 -- the same
+      // number the engine used for them in the team average.
+      const before = (id: string | null) => id == null ? 1500 : stats.deltas.find((d) => d.matchId === m.id && d.playerId === id)?.before ?? 1500;
       const oppRating = (before(opp[0]) + before(opp[1])) / 2;
       const outcome: "w" | "d" | "l" =
         m.winner === "draw" ? "d" : (m.winner === "A") === onA ? "w" : "l";

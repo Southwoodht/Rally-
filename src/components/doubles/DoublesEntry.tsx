@@ -38,7 +38,7 @@ interface Props {
    *  same addPlayer singles uses — without it the picker's "Create" did
    *  nothing, because it called a function nobody had passed. */
   onCreatePlayer?: (p: any) => void;
-  onSave: (m: { teamA: [string, string]; teamB: [string, string]; sets: Array<{ a: number; b: number }>; winner: string }) => void;
+  onSave: (m: { teamA: [string, string | null]; teamB: [string, string | null]; sets: Array<{ a: number; b: number }>; winner: string }) => void;
   saving?: boolean;
 }
 
@@ -58,19 +58,35 @@ export const winnerFromSets = (sets: Array<{ a: number; b: number }>): string | 
   return a > b ? "A" : b > a ? "B" : "draw";
 };
 
+/**
+ * "Don't know" in a player slot. A sentinel in the form's own state only --
+ * it becomes null on the way out, which is what the engine and the database
+ * mean by a seat nobody could name. Only your partner's seat and the second
+ * opponent's can hold it: the first opponent is the person you did know, so
+ * every match has at least one real player a side.
+ */
+const UNKNOWN = "__unknown__";
+const seat = (id: string): string | null => (id === UNKNOWN ? null : id);
+
 export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving }: Props) {
   const [partner, setPartner] = useState<string>("");
   const [opp1, setOpp1] = useState<string>("");
   const [opp2, setOpp2] = useState<string>("");
   const [sets, setSets] = useState<SetScore[]>([{ a: "", b: "" }, { a: "", b: "" }]);
+  // Nobody can remember the score: then, and only then, the winner is the
+  // input -- the same as singles, where the score has always been optional.
+  // The database accepts a winner as entered when there are no sets and still
+  // checks it against them when there are.
+  const [noScore, setNoScore] = useState(false);
+  const [pickedWinner, setPickedWinner] = useState<string | null>(null);
 
   const chosen = [meId, partner, opp1, opp2].filter(Boolean);
   const eligible = (self: string) => players.filter((p) => p.id === self || !chosen.includes(p.id));
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
   const clean = parsed(sets);
-  const winner = winnerFromSets(clean);
-  const complete = !!(partner && opp1 && opp2 && clean.length && winner);
+  const winner = noScore ? pickedWinner : winnerFromSets(clean);
+  const complete = !!(partner && opp1 && opp2 && (noScore || clean.length) && winner);
 
   const stats = useMemo(() => computeDoubles(history), [history]);
   const eloOf = (id: string) => (id && stats.elo[id] !== undefined ? Math.round(stats.elo[id]) : 1500);
@@ -78,8 +94,8 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
   const preview = useMemo(() => {
     if (!complete) return null;
     return previewDoubles(history, {
-      teamA: [meId, partner],
-      teamB: [opp1, opp2],
+      teamA: [meId, seat(partner)],
+      teamB: [opp1, seat(opp2)],
       winner: winner as string,
     });
   }, [complete, history, meId, partner, opp1, opp2, winner]);
@@ -92,6 +108,18 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
 
   const personRow = (id: string, slot: React.ReactNode, isMe = false) => {
     const p = byId.get(id);
+    if (id === UNKNOWN) return (
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
+        <span style={{ width: 40, height: 40, borderRadius: 20, background: FEED_RAISED, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_MID }}>?</span>
+        <div style={{ flexGrow: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI }}>Don&apos;t know</div>
+          {/* Say what it costs, next to it: an unknown counts as a new player
+              in the maths, and is never rated or listed themselves. */}
+          <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>Counts as a new player · not rated</div>
+        </div>
+        <div style={{ flexShrink: 0 }}>{slot}</div>
+      </div>
+    );
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
         {p
@@ -124,6 +152,34 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
     />
   );
 
+  // A picker, plus "Don't know" while the seat is empty. Picking somebody
+  // from an unknown seat replaces it, so there is no separate undo.
+  const unknownable = (id: string, set: (v: string) => void, emptyLabel: string) => (
+    <div style={{ display: "flex", gap: 6 }}>
+      {!id && (
+        <button
+          onClick={() => set(UNKNOWN)}
+          style={{ height: 36, padding: "0 12px", borderRadius: 18, border: "none", background: "transparent", color: FEED_TEXT_MID, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 13, whiteSpace: "nowrap" }}
+        >
+          Don&apos;t know
+        </button>
+      )}
+      <PlayerPicker players={eligible(id)} value={id === UNKNOWN ? "" : id} onChange={set} onCreatePlayer={onCreatePlayer} triggerLabel={id ? "Change" : emptyLabel} />
+    </div>
+  );
+
+  const outcomeBtn = (w: string, text: string) => {
+    const on = pickedWinner === w;
+    return (
+      <button
+        onClick={() => setPickedWinner(w)}
+        style={{ flex: w === "draw" ? "0 0 auto" : 1, height: 44, padding: "0 14px", borderRadius: 14, border: "none", cursor: "pointer", background: on ? FEED_LIME : FEED_RAISED, color: on ? FEED_LIME_INK : FEED_TEXT_HI, fontFamily: body, fontSize: 14, fontWeight: 600 }}
+      >
+        {text}
+      </button>
+    );
+  };
+
   return (
     <>
       <div style={card}>
@@ -134,9 +190,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
           {winner === "draw" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_TEXT_MID }}>Drawn</span>}
         </div>
         {personRow(meId, <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, padding: "0 4px" }}>You</span>, true)}
-        {personRow(partner, (
-          <PlayerPicker players={eligible(partner)} value={partner} onChange={setPartner} onCreatePlayer={onCreatePlayer} triggerLabel={partner ? "Change" : "Partner"} />
-        ))}
+        {personRow(partner, unknownable(partner, setPartner, "Partner"))}
       </div>
 
       <div style={{ textAlign: "center", fontFamily: display, fontWeight: 700, fontSize: 16, color: FEED_TEXT_MID, marginTop: 12 }}>vs</div>
@@ -147,13 +201,24 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
           {winner === "B" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
         </div>
         {personRow(opp1, <PlayerPicker players={eligible(opp1)} value={opp1} onChange={setOpp1} onCreatePlayer={onCreatePlayer} triggerLabel={opp1 ? "Change" : "Add"} />)}
-        {personRow(opp2, <PlayerPicker players={eligible(opp2)} value={opp2} onChange={setOpp2} onCreatePlayer={onCreatePlayer} triggerLabel={opp2 ? "Change" : "Add"} />)}
+        {personRow(opp2, unknownable(opp2, setOpp2, "Add"))}
       </div>
 
       <div style={{ ...card, display: "flex", flexDirection: "column", gap: 12, padding: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", ...label }}>
-          <span>SCORE</span><span>You · Them</span>
+          <span>SCORE</span>{!noScore && <span>You · Them</span>}
         </div>
+        {noScore ? (
+          <>
+            <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_MID }}>Who won?</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {outcomeBtn("A", "We won")}
+              {outcomeBtn("draw", "Draw")}
+              {outcomeBtn("B", "They won")}
+            </div>
+          </>
+        ) : (
+          <>
         {sets.map((s, i) => {
           const a = parseInt(s.a, 10), b = parseInt(s.b, 10);
           const known = Number.isFinite(a) && Number.isFinite(b);
@@ -174,6 +239,14 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
         >
           + Add set
         </button>
+          </>
+        )}
+        <button
+          onClick={() => { setNoScore(!noScore); setPickedWinner(null); }}
+          style={{ alignSelf: "flex-start", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 13, fontWeight: 600, padding: "2px 0", cursor: "pointer" }}
+        >
+          {noScore ? "Enter the score instead" : "Don't know the score"}
+        </button>
       </div>
 
       {/* Only once there is something to say. A strip reading "+0 · −0" while
@@ -191,9 +264,9 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
         <button
           disabled={!complete || saving}
           onClick={() => complete && onSave({
-            teamA: [meId, partner],
-            teamB: [opp1, opp2],
-            sets: clean,
+            teamA: [meId, seat(partner)],
+            teamB: [opp1, seat(opp2)],
+            sets: noScore ? [] : clean,
             winner: winner as string,
           })}
           style={{

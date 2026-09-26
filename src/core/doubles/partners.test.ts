@@ -8,7 +8,7 @@ const ok = (cond: boolean, what: string) => {
 };
 
 let n = 0;
-const m = (teamA: [string, string], teamB: [string, string], winner: string, status?: string): DoublesMatch =>
+const m = (teamA: [string, string | null], teamB: [string, string | null], winner: string, status?: string): DoublesMatch =>
   ({ id: "m" + (++n), playedAt: n, teamA, teamB, winner, status: status ?? "confirmed" });
 
 // ---------------------------------------------------------------------------
@@ -87,6 +87,13 @@ const m = (teamA: [string, string], teamB: [string, string], winner: string, sta
   ok(partnersOf([m(["a", "b"], ["c", "d"], "A")], "nobody").length === 0,
     "a player who has played no doubles has no partners");
   ok(mostPlayedWith([]) === null && bestPartner([]) === null, "and the headers say nothing");
+}
+
+// An unknown partner is nobody to list: the match counts for you everywhere
+// else, but "Most played with" must not grow a row for an empty seat.
+{
+  const rows = partnersOf([m(["me", null], ["x", "y"], "A"), m(["me", "p"], ["x", null], "A")], "me");
+  ok(rows.length === 1 && rows[0].partnerId === "p", "an unknown partner never becomes a partner row");
 }
 
 console.log(`PASSED — ${checks}/${checks} checks`);

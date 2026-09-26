@@ -177,4 +177,42 @@ const m = (o: Partial<DoublesMatch> & Pick<DoublesMatch, "id" | "teamA" | "teamB
     "four unrated players are 50/50");
 }
 
+// ---------------------------------------------------------------------------
+// An unknown player — Sam's ruling, 26 Sep 2026
+// ---------------------------------------------------------------------------
+// An empty seat counts as DOUBLES_START in the team average, so the three
+// known players must move EXACTLY as they would against a brand-new player —
+// and the unknown must never be rated, counted or listed.
+{
+  const seed = {
+    elo: { a1: 1532, a2: 1561, b1: 1508 },
+    played: { a1: 9, a2: 9, b1: 9 },
+  };
+  const unknown = computeDoubles([m({ id: "u", teamA: ["a1", "a2"], teamB: ["b1", null], winner: "A" })], seed);
+  const fresh = computeDoubles([m({ id: "u", teamA: ["a1", "a2"], teamB: ["b1", "newbie"], winner: "A" })], seed);
+
+  for (const id of ["a1", "a2", "b1"]) {
+    near(unknown.elo[id], fresh.elo[id], 1e-9, `${id} moves as if the unknown were a new 1500 player`);
+    ok(unknown.played[id] === 1 + 9, `${id}'s match is counted`);
+  }
+  ok(!("null" in unknown.elo) && Object.keys(unknown.elo).length === 3, "the unknown gets no rating");
+  ok(Object.keys(unknown.played).length === 3, "and no match count");
+  ok(unknown.deltas.length === 3, "and no rating change");
+  ok(unknown.deltas.every((d) => d.playerId !== null), "no delta is recorded against nobody");
+
+  // Two empty seats, one a side: still a match between the two known people.
+  const two = computeDoubles([m({ id: "t", teamA: ["a1", null], teamB: ["b1", null], winner: "B" })]);
+  ok(Object.keys(two.elo).length === 2, "two unknowns: only the two known players are rated");
+  ok(two.elo.b1 > DOUBLES_START && two.elo.a1 < DOUBLES_START, "and the result still moves them the right way");
+
+  near(
+    predictDoubles(["a1", "a2"], ["b1", null], computeDoubles([], seed)),
+    predictDoubles(["a1", "a2"], ["b1", "newbie"], computeDoubles([], seed)),
+    1e-9, "odds treat an unknown as a new player too");
+
+  // The preview on the entry screen goes through the same function.
+  const pv = previewDoubles([], { teamA: ["a1", null], teamB: ["b1", "b2"], winner: "A" });
+  ok(pv.length === 3 && pv.every((d) => d.playerId !== null), "preview skips the unknown");
+}
+
 console.log(`PASSED — ${checks}/${checks} checks (incl. odds)`);

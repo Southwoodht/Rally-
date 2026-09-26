@@ -123,13 +123,16 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
   const [open, setOpen] = useState<string | null>(null);
   const [whenText, setWhenText] = useState("");
   const [sets, setSets] = useState<SetScore[]>([{ a: "", b: "" }, { a: "", b: "" }]);
+  // Can't remember the score: pick who won instead, as on the entry screen.
+  const [noScore, setNoScore] = useState(false);
+  const [pickedWinner, setPickedWinner] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
 
   // Opening a different booking clears the score; reopening the same one
   // keeps it. Same rule, and same reason, as the singles panel.
   const openRow = (f: DoublesFixture) => {
-    if (open !== f.id) setSets([{ a: "", b: "" }, { a: "", b: "" }]);
+    if (open !== f.id) { setSets([{ a: "", b: "" }, { a: "", b: "" }]); setNoScore(false); setPickedWinner(null); }
     setRowError(null); setConfirmCancel(null);
     setWhenText(toInputValue(f.booked));
     setOpen(open === f.id ? null : f.id);
@@ -236,7 +239,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
             const past = f.booked != null && f.booked < Date.now();
             const dateLabel = f.booked != null ? formatMatchDateTime(f.booked) : null;
             const clean = parsed(sets);
-            const winner = winnerFromSets(clean);
+            const winner = noScore ? pickedWinner : winnerFromSets(clean);
 
             return (
               <SurfaceCard key={f.id} radius={16} pad="12px 14px">
@@ -319,8 +322,21 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                       <>
                         <div style={{ display: "flex", justifyContent: "space-between", ...label, marginBottom: 7 }}>
                           <span>Enter result</span>
-                          <span style={{ textTransform: "none" }}>{nm(f.teamA[0]).split(" ")[0]}&apos;s team · other team</span>
+                          {!noScore && <span style={{ textTransform: "none" }}>{nm(f.teamA[0]).split(" ")[0]}&apos;s team · other team</span>}
                         </div>
+                        {noScore ? (
+                          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                            {([["A", pair(f.teamA)], ["draw", "Draw"], ["B", pair(f.teamB)]] as const).map(([w, text]) => (
+                              <button
+                                key={w}
+                                onClick={() => setPickedWinner(w)}
+                                style={{ ...actionBtn(pickedWinner === w ? FEED_LIME : FEED_RAISED, pickedWinner === w ? FEED_LIME_INK : FEED_TEXT_HI), flex: w === "draw" ? "0 0 auto" : 1, padding: "10px 12px", whiteSpace: "normal" }}
+                              >
+                                {w === "draw" ? text : text + " won"}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (<>
                         {sets.map((s, i) => (
                           <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                             <span style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID }}>Set {i + 1}</span>
@@ -346,13 +362,20 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                         <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, fontWeight: 500, padding: "2px 0 10px", cursor: "pointer" }}>
                           + Add set
                         </button>
+                        </>)}
+                        <button
+                          onClick={() => { setNoScore(!noScore); setPickedWinner(null); }}
+                          style={{ display: "block", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 12, fontWeight: 500, padding: "0 0 10px", cursor: "pointer" }}
+                        >
+                          {noScore ? "Enter the score instead" : "Don't know the score"}
+                        </button>
                         {/* A readout of the score, not an input. */}
                         <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 10, minHeight: 18 }}>
                           {winner === "A" ? pair(f.teamA) + " won" : winner === "B" ? pair(f.teamB) + " won" : winner === "draw" ? "Drawn" : ""}
                         </div>
                         <button
                           disabled={!winner || busy}
-                          onClick={() => winner && act(() => onComplete(f, { sets: clean, winner }), () => setOpen(null))}
+                          onClick={() => winner && act(() => onComplete(f, { sets: noScore ? [] : clean, winner }), () => setOpen(null))}
                           style={{ ...actionBtn(winner ? FEED_LIME : FEED_RAISED, winner ? FEED_LIME_INK : FEED_TEXT_LOW), width: "100%", flex: "none", cursor: winner && !busy ? "pointer" : "default" }}
                         >
                           {busy ? "Saving…" : "Save result"}

@@ -33,11 +33,26 @@ export const DOUBLES_PROVISIONAL_GAMES = 5;
 export const K_PROVISIONAL = 32;
 export const K_ESTABLISHED = 24;
 
+/**
+ * A player slot. NULL MEANS "SOMEBODY NOBODY COULD NAME" -- an opponent's
+ * partner you had never met. Sam's ruling, 26 Sep 2026: an unknown player
+ * counts as DOUBLES_START (where every new player begins) in their team's
+ * average, so the three people who ARE known move exactly as they would
+ * against any newcomer, and the unknown gets no rating, no record, and no
+ * row on any table. Only the second seat on a team can be empty: the entry
+ * screen enforces it and so does the database.
+ *
+ * Not a shared "Unknown" player row, which would be the thing the doubles
+ * plan says never to do: one fake id collecting a rating from every stranger
+ * in the club, and rising up the table as if it were a person.
+ */
+export type DoublesSlot = string | null;
+
 export interface DoublesMatch {
   id: string;
   playedAt: number;
-  teamA: [string, string];
-  teamB: [string, string];
+  teamA: [string, DoublesSlot];
+  teamB: [string, DoublesSlot];
   /** 'A' | 'B' | 'draw' */
   winner: string;
   status?: string;
@@ -121,7 +136,7 @@ export function computeDoubles(matches: DoublesMatch[], seed?: DoublesSeed): Dou
   const bestStreak: Record<string, number> = {};
   const deltas: DoublesDelta[] = [];
 
-  const rating = (id: string): number => (id in elo ? elo[id] : DOUBLES_START);
+  const rating = (id: DoublesSlot): number => (id != null && id in elo ? elo[id] : DOUBLES_START);
   const bump = (r: Record<string, number>, id: string, by = 1) => {
     r[id] = (r[id] || 0) + by;
   };
@@ -134,7 +149,7 @@ export function computeDoubles(matches: DoublesMatch[], seed?: DoublesSeed): Dou
   for (const m of order) {
     const a = m.teamA;
     const b = m.teamB;
-    for (const id of [...a, ...b]) if (!(id in elo)) elo[id] = DOUBLES_START;
+    for (const id of [...a, ...b]) if (id != null && !(id in elo)) elo[id] = DOUBLES_START;
 
     const ratingA = (rating(a[0]) + rating(a[1])) / 2;
     const ratingB = (rating(b[0]) + rating(b[1])) / 2;
@@ -145,7 +160,7 @@ export function computeDoubles(matches: DoublesMatch[], seed?: DoublesSeed): Dou
     // stood walking on court. Applying A's change and then computing B's K
     // from an updated count would make the result depend on which team the
     // loop happened to handle first.
-    const sides: Array<{ ids: [string, string]; e: number; s: number; team: "A" | "B" }> = [
+    const sides: Array<{ ids: [string, DoublesSlot]; e: number; s: number; team: "A" | "B" }> = [
       { ids: a, e: eA, s: scoreFor(m.winner, "A"), team: "A" },
       { ids: b, e: eB, s: scoreFor(m.winner, "B"), team: "B" },
     ];
@@ -153,6 +168,7 @@ export function computeDoubles(matches: DoublesMatch[], seed?: DoublesSeed): Dou
     const pending: DoublesDelta[] = [];
     for (const side of sides) {
       for (const id of side.ids) {
+        if (id == null) continue; // an unknown player is never rated
         const k = (played[id] || 0) < DOUBLES_PROVISIONAL_GAMES ? K_PROVISIONAL : K_ESTABLISHED;
         const before = rating(id);
         const delta = k * (side.s - side.e);
@@ -167,6 +183,7 @@ export function computeDoubles(matches: DoublesMatch[], seed?: DoublesSeed): Dou
 
     for (const side of sides) {
       for (const id of side.ids) {
+        if (id == null) continue;
         bump(played, id);
         if (m.winner === "draw") {
           bump(drawn, id);
@@ -238,10 +255,10 @@ export const showDelta = (d: number): string =>
  * consequence cannot disagree.
  */
 export function predictDoubles(
-  teamA: [string, string],
-  teamB: [string, string],
+  teamA: [string, DoublesSlot],
+  teamB: [string, DoublesSlot],
   stats: DoublesStats,
 ): number {
-  const r = (id: string) => (stats.elo[id] !== undefined ? stats.elo[id] : DOUBLES_START);
+  const r = (id: DoublesSlot) => (id != null && stats.elo[id] !== undefined ? stats.elo[id] : DOUBLES_START);
   return expectedA((r(teamA[0]) + r(teamA[1])) / 2, (r(teamB[0]) + r(teamB[1])) / 2);
 }
