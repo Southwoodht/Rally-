@@ -275,11 +275,22 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           {(() => {
             const s2 = new Set(customSel);
             const inScope = (ids) => feedFilter === "mine" ? ids.includes(meId) : feedFilter === "custom" ? (s2.size >= 2 && ids.every((i) => s2.has(i))) : true;
-            const items = [
+            // Doubles results, in the same stream. The chip and the row renderer
+            // shipped without this, so no doubles match ever reached the feed
+            // and "Doubles" showed the singles list. Confirmed only, as every
+            // other number and list in the app counts. "Custom" is a pick of
+            // two singles players and says nothing about pairs, so it leaves
+            // doubles out rather than guessing.
+            const doublesItems = (doublesMatches || [])
+              .filter((d) => d.status === undefined || d.status === "confirmed")
+              .filter((d) => feedFilter === "mine" ? [...d.teamA, ...d.teamB].includes(meId) : feedFilter !== "custom")
+              .map((d) => ({ kind: "doubles", date: d.playedAt, key: "d-" + d.id, d }));
+            const items = (feedFilter === "doubles" ? doublesItems : [
               ...feedList.map((m) => ({ kind: "result", date: m.date, key: m.id, m })),
               ...events.filter((e) => true).map((e) => ({ kind: "event", date: e.date, key: e.id, e })),
               ...(posts || []).filter((p) => !p.isAnnouncement).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),
-            ].sort((a, b) => b.date - a.date);
+              ...doublesItems,
+            ]).sort((a: any, b: any) => b.date - a.date);
             if (!items.length) return null;
             return <div style={listCard}>{items.map((it) => {
               if (it.kind === "event") return (
