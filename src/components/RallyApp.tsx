@@ -1528,7 +1528,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onCreatePlayer={addPlayer}
             onSave={async (m) => {
               try {
-                await doubles.add({ ...m, playedAt: Date.now(), enteredBy: meId });
+                await doubles.add({ ...m, enteredBy: meId });
                 flash("Logged");
                 setTab("home");
               } catch (e: any) {

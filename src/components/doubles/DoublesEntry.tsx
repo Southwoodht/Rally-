@@ -38,7 +38,7 @@ interface Props {
    *  same addPlayer singles uses — without it the picker's "Create" did
    *  nothing, because it called a function nobody had passed. */
   onCreatePlayer?: (p: any) => void;
-  onSave: (m: { teamA: [string, string | null]; teamB: [string, string | null]; sets: Array<{ a: number; b: number }>; winner: string }) => void;
+  onSave: (m: { teamA: [string, string | null]; teamB: [string, string | null]; sets: Array<{ a: number; b: number }>; winner: string; playedAt: number }) => void;
   saving?: boolean;
 }
 
@@ -66,6 +66,25 @@ export const winnerFromSets = (sets: Array<{ a: number; b: number }>): string | 
  * every match has at least one real player a side.
  */
 const UNKNOWN = "__unknown__";
+
+/** Today as the "YYYY-MM-DD" a date input wants, in the phone's own day. */
+const todayStr = (): string => {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+/**
+ * When it was played, as the engine's number.
+ *
+ * TODAY IS NOW, NOT MIDNIGHT. Two results entered this evening must replay in
+ * the order they were entered, and midnight would tie them. An earlier day is
+ * midday on that day: it lands in the right place in the replay, and a
+ * midnight timestamp is the one that slips to the day before in the
+ * formatter once British Summer Time is involved.
+ */
+const playedAtFor = (day: string): number =>
+  !day || day === todayStr() ? Date.now() : new Date(day + "T12:00:00").getTime();
 const seat = (id: string): string | null => (id === UNKNOWN ? null : id);
 
 export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving }: Props) {
@@ -78,6 +97,9 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
   // The database accepts a winner as entered when there are no sets and still
   // checks it against them when there are.
   const [noScore, setNoScore] = useState(false);
+  // Defaults to today, because that is when nearly every result is entered.
+  // Changing it is for the match from last Tuesday nobody got round to.
+  const [day, setDay] = useState<string>(todayStr());
   const [pickedWinner, setPickedWinner] = useState<string | null>(null);
 
   const chosen = [meId, partner, opp1, opp2].filter(Boolean);
@@ -93,12 +115,15 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
 
   const preview = useMemo(() => {
     if (!complete) return null;
+    // Replayed at its own date: a backdated result is rated against who
+    // everybody was then, which is what saving it will do.
     return previewDoubles(history, {
+      playedAt: playedAtFor(day),
       teamA: [meId, seat(partner)],
       teamB: [opp1, seat(opp2)],
       winner: winner as string,
     });
-  }, [complete, history, meId, partner, opp1, opp2, winner]);
+  }, [complete, history, meId, partner, opp1, opp2, winner, day]);
 
   const mine = preview?.find((d) => d.playerId === meId);
   const theirs = preview?.find((d) => d.playerId === opp1);
@@ -106,7 +131,10 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
   const label = { fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, letterSpacing: 1 } as const;
   const card = { margin: "12px 16px 0", padding: "16px 18px", borderRadius: FEED_RADIUS, background: FEED_CARD } as const;
 
-  const personRow = (id: string, slot: React.ReactNode, isMe = false) => {
+  // `hint` false on the two seats that also offer "Don't know": with two
+  // buttons beside it "Pick a player" only fits as "Pick a…", and the buttons
+  // already say what the row wants.
+  const personRow = (id: string, slot: React.ReactNode, isMe = false, hint = true) => {
     const p = byId.get(id);
     if (id === UNKNOWN) return (
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
@@ -131,7 +159,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
               <div style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(p)}</div>
               <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, ...tabular }}>Doubles {eloOf(id).toLocaleString()}</div>
             </>
-          ) : <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_MID }}>Pick a player</div>}
+          ) : <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{hint ? "Pick a player" : ""}</div>}
         </div>
         <div style={{ flexShrink: 0 }}>{slot}</div>
       </div>
@@ -190,7 +218,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
           {winner === "draw" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_TEXT_MID }}>Drawn</span>}
         </div>
         {personRow(meId, <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, padding: "0 4px" }}>You</span>, true)}
-        {personRow(partner, unknownable(partner, setPartner, "Partner"))}
+        {personRow(partner, unknownable(partner, setPartner, "Partner"), false, false)}
       </div>
 
       <div style={{ textAlign: "center", fontFamily: display, fontWeight: 700, fontSize: 16, color: FEED_TEXT_MID, marginTop: 12 }}>vs</div>
@@ -201,7 +229,18 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
           {winner === "B" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
         </div>
         {personRow(opp1, <PlayerPicker players={eligible(opp1)} value={opp1} onChange={setOpp1} onCreatePlayer={onCreatePlayer} triggerLabel={opp1 ? "Change" : "Add"} />)}
-        {personRow(opp2, unknownable(opp2, setOpp2, "Add"))}
+        {personRow(opp2, unknownable(opp2, setOpp2, "Add"), false, false)}
+      </div>
+
+      <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <span style={label}>DATE PLAYED</span>
+        <input
+          type="date"
+          value={day}
+          max={todayStr()}
+          onChange={(e) => setDay(e.target.value)}
+          style={{ background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 12, padding: "9px 12px", fontFamily: body, fontSize: 15, colorScheme: "dark", ...tabular }}
+        />
       </div>
 
       <div style={{ ...card, display: "flex", flexDirection: "column", gap: 12, padding: 18 }}>
@@ -267,6 +306,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
             teamA: [meId, seat(partner)],
             teamB: [opp1, seat(opp2)],
             sets: noScore ? [] : clean,
+            playedAt: playedAtFor(day),
             winner: winner as string,
           })}
           style={{
