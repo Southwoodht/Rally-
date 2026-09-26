@@ -3,13 +3,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trophy, X } from "lucide-react";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
-import type { DoublesStats } from "@/core/doubles/elo";
 import {
   bracketSize, champion, knockoutBracket, leagueTable, roundName, roundRobin, tiesReadyToDraw,
-  type Competition, type CompetitionFormat, type CompetitionPair, type KnockoutFixture, type Tie,
+  type Competition, type CompetitionFormat, type CompetitionKind, type CompetitionPair,
+  type CompetitionResult, type KnockoutFixture, type Tie,
 } from "@/core/doubles/competition";
-import type { DoublesFixture, DoublesRow } from "@/lib/doublesData";
 import { fullNameOf } from "@/lib/format";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
@@ -17,50 +15,60 @@ import {
 } from "@/lib/theme";
 
 /**
- * Doubles competitions — Part B.
+ * Competitions — one component for singles and doubles.
  *
- * Sam, 26 Sep 2026: "custom yourself, I guess it's different per club." So a
- * competition is a container with a format rather than one club's rulebook:
- * a league (everyone plays everyone, once or twice, points of the club's own
- * choosing) or a seeded knockout. Staff set it up; everybody plays it through
- * the same doubles fixtures and results as any other match, and every match
- * still counts towards the doubles ratings, because it is a real match.
+ * Sam, 26 Sep 2026: "custom yourself, I guess it's different per club", and
+ * then: the admin must be simple "yet with the same impressive ideas". So a
+ * competition is a container with a format — a league (everyone plays
+ * everyone, once or twice, points of the club's choosing) or a seeded
+ * knockout — and singles and doubles run on exactly the same rules, drawn
+ * the same way, so there is one thing to learn rather than two.
  *
- * Nothing here is stored that could be derived. The table is computed from
- * the results and the bracket from the fixtures, so correcting a result
- * corrects both with nothing to repair by hand.
+ * THIS COMPONENT NEVER READS A FIXTURES OR MATCHES TABLE. Singles and doubles
+ * store their fixtures and results differently (the singles ones go through
+ * the league's own save; the doubles ones are their own tables), so the
+ * parent hands in each competition's ties and results already in the shape
+ * the core wants, and a function that draws its fixture list. That is what
+ * lets one screen serve both without knowing which it is.
+ *
+ * Nothing derivable is stored. The table is computed from the results and
+ * the bracket from the ties, so correcting a result corrects both.
  */
 
+export interface CompetitionCounts { unplayed: number; played: number }
+
 interface Props {
+  kind: CompetitionKind;
   players: any[];
+  /** This kind's competitions only. */
   competitions: Competition[];
-  pairs: CompetitionPair[];
-  fixtures: DoublesFixture[];
-  matches: DoublesRow[];
-  stats: DoublesStats;
+  entries: CompetitionPair[];
   meId: string;
   canManage: boolean;
   unavailable: boolean;
   onCreatePlayer?: (p: any) => void;
-  onCreate: (c: { name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number }, pairs: Array<{ p1: string; p2: string }>) => Promise<string>;
+  onCreate: (c: { name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number }, entries: Array<{ p1: string; p2: string | null }>) => Promise<string>;
   onDraw: (c: Competition, ties: Tie[]) => Promise<void>;
   onDelete: (c: Competition) => Promise<void>;
   onFinish: (c: Competition, finished: boolean) => Promise<void>;
-  onReschedule: (id: string, booked: number | null) => Promise<void>;
-  onCancel: (f: DoublesFixture) => Promise<void>;
-  onComplete: (f: DoublesFixture, m: { sets: Array<{ a: number; b: number }>; winner: string }) => Promise<void>;
-  /** The ordinary doubles fixtures, shown under the list and hidden while a
-   *  competition or the create form is open, so one screen does one thing. */
+  /** Each tie with its winner ('A'/'B' by entry side), for the bracket. */
+  tiesOf: (c: Competition) => KnockoutFixture[];
+  /** Confirmed results by entry, for the league table. */
+  resultsOf: (c: Competition) => CompetitionResult[];
+  countsOf: (c: Competition) => CompetitionCounts;
+  /** The competition's unplayed fixtures, drawn by the parent's own panel. */
+  renderFixtures: (c: Competition, labelFor: (round: number | null) => string, knockout: boolean, emptyText: string) => React.ReactNode;
+  /** The ordinary fixtures, under the list; hidden while a competition or the form is open. */
   children?: React.ReactNode;
   /** Bumped by "Start a competition" in Run your league: open the create form. */
   createSignal?: number;
 }
 
 /** "Winter Doubles · Semi-finals" — how a competition tie labels itself anywhere. */
-export function competitionLabel(c: Competition, pairCount: number, round: number | null): string {
+export function competitionLabel(c: Competition, entryCount: number, round: number | null): string {
   if (round == null) return c.name;
   if (c.format === "knockout") {
-    const total = Math.round(Math.log2(bracketSize(pairCount)));
+    const total = Math.round(Math.log2(bracketSize(entryCount)));
     return `${c.name} · ${roundName(round, total)}`;
   }
   return `${c.name} · Round ${round}`;
@@ -87,8 +95,12 @@ const segment = (on: boolean): React.CSSProperties => ({
   fontFamily: body, fontSize: 14, fontWeight: 500,
 });
 
-export function DoublesCompetitions(props: Props) {
-  const { players, competitions, pairs, fixtures, matches, stats, meId, canManage, unavailable } = props;
+/** "pairs" or "players" — the one word that differs between the two kinds. */
+const unit = (kind: CompetitionKind, n: number) =>
+  kind === "doubles" ? (n === 1 ? "pair" : "pairs") : (n === 1 ? "player" : "players");
+
+export function Competitions(props: Props) {
+  const { kind, players, competitions, entries, canManage, unavailable } = props;
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
@@ -100,24 +112,24 @@ export function DoublesCompetitions(props: Props) {
   // leave the ordinary fixtures exactly as they were.
   if (unavailable) return <>{props.children}</>;
 
-  const pairsOf = (cid: string) => pairs.filter((p) => p.competitionId === cid).sort((a, b) => a.seed - b.seed);
-  const pairName = (pid: string | null | undefined, short = true): string => {
-    const p = pairs.find((x) => x.id === pid);
-    if (!p) return "";
-    const n = (id: string) => { const pl = byId.get(id); return pl ? (short ? (pl.name || "").trim() || fullNameOf(pl) : fullNameOf(pl)) : "?"; };
-    return `${n(p.p1)} & ${n(p.p2)}`;
+  const entriesOf = (cid: string) => entries.filter((p) => p.competitionId === cid).sort((a, b) => a.seed - b.seed);
+  const entryName = (eid: string | null | undefined, short = true): string => {
+    const e = entries.find((x) => x.id === eid);
+    if (!e) return "";
+    const n = (id: string) => { const pl = byId.get(id); return pl ? (short && e.p2 ? (pl.name || "").trim() || fullNameOf(pl) : fullNameOf(pl)) : "?"; };
+    return e.p2 ? `${n(e.p1)} & ${n(e.p2)}` : n(e.p1);
   };
 
   const open = competitions.find((c) => c.id === openId) || null;
-  if (open) return <Detail {...props} c={open} cPairs={pairsOf(open.id)} pairName={pairName} onBack={() => setOpenId(null)} />;
+  if (open) return <Detail {...props} c={open} cEntries={entriesOf(open.id)} entryName={entryName} onBack={() => setOpenId(null)} />;
   if (creating) {
     return (
       <CreateForm
+        kind={kind}
         players={players}
-        meId={meId}
         onCreatePlayer={props.onCreatePlayer}
         onCancel={() => setCreating(false)}
-        onCreate={async (c, ps) => { const id = await props.onCreate(c, ps); setCreating(false); setOpenId(id); }}
+        onCreate={async (c, es) => { const id = await props.onCreate(c, es); setCreating(false); setOpenId(id); }}
       />
     );
   }
@@ -127,12 +139,11 @@ export function DoublesCompetitions(props: Props) {
   if (!competitions.length && !canManage) return <>{props.children}</>;
 
   const row = (c: Competition) => {
-    const cp = pairsOf(c.id);
-    let sub = `${c.format === "league" ? "League" : "Knockout"} · ${cp.length} pairs`;
+    const ce = entriesOf(c.id);
+    let sub = `${c.format === "league" ? "League" : "Knockout"} · ${ce.length} ${unit(kind, ce.length)}`;
     if (c.format === "knockout") {
-      const ko = knockoutBracket(cp, koFixtures(c, fixtures, matches));
-      const champ = champion(ko);
-      if (champ) sub = `Won by ${pairName(champ)}`;
+      const champ = champion(knockoutBracket(ce, props.tiesOf(c)));
+      if (champ) sub = `Won by ${entryName(champ)}`;
     }
     return (
       <button key={c.id} onClick={() => setOpenId(c.id)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "11px 0", cursor: "pointer", textAlign: "left", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
@@ -148,61 +159,47 @@ export function DoublesCompetitions(props: Props) {
 
   return (
     <>
-    <SurfaceCard radius={16} pad="14px 14px 6px" style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>Competitions</span>
-        {canManage && (
-          <button onClick={() => setCreating(true)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>
-            <Plus size={14} strokeWidth={2.4} />New
-          </button>
-        )}
-      </div>
-      {!competitions.length && (
-        <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "4px 0 10px" }}>
-          Run a doubles league or a knockout: pick the pairs and Rally draws the fixtures, keeps the table and moves winners through.
+      <SurfaceCard radius={16} pad="14px 14px 6px" style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>Competitions</span>
+          {canManage && (
+            <button onClick={() => setCreating(true)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>
+              <Plus size={14} strokeWidth={2.4} />New
+            </button>
+          )}
         </div>
-      )}
-      {running.map(row)}
-      {finished.length > 0 && <div style={{ ...label, padding: "12px 0 2px" }}>Finished</div>}
-      {finished.map(row)}
-    </SurfaceCard>
-    {props.children}
+        {!competitions.length && (
+          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "4px 0 10px" }}>
+            Run a {kind} league or a knockout: pick the {unit(kind, 2)} and Rally draws the matches, keeps the table and moves winners through.
+          </div>
+        )}
+        {running.map(row)}
+        {finished.length > 0 && <div style={{ ...label, padding: "12px 0 2px" }}>Finished</div>}
+        {finished.map(row)}
+      </SurfaceCard>
+      {props.children}
     </>
   );
-}
-
-/** A competition's fixtures as the bracket reads them: winner from the linked result. */
-function koFixtures(c: Competition, fixtures: DoublesFixture[], matches: DoublesRow[]): KnockoutFixture[] {
-  const byMatch = new Map(matches.map((m) => [m.id, m]));
-  return fixtures
-    .filter((f) => f.competitionId === c.id)
-    .map((f) => {
-      const m = f.matchId ? byMatch.get(f.matchId) : undefined;
-      const counted = m && (m.status === undefined || m.status === "confirmed");
-      return { id: f.id, round: f.round, pairA: f.pairA, pairB: f.pairB, winner: counted ? m!.winner : null };
-    });
 }
 
 // ---------------------------------------------------------------------------
 // One competition
 // ---------------------------------------------------------------------------
 
-function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats, meId, canManage, onDraw, onDelete, onFinish, onReschedule, onCancel, onComplete, onCreatePlayer }: Props & {
-  c: Competition; cPairs: CompetitionPair[]; pairName: (id: string | null | undefined, short?: boolean) => string; onBack: () => void;
+function Detail(props: Props & {
+  c: Competition; cEntries: CompetitionPair[]; entryName: (id: string | null | undefined, short?: boolean) => string; onBack: () => void;
 }) {
+  const { c, cEntries, entryName, onBack, meId, canManage, kind, onDraw, onDelete, onFinish } = props;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const mine = fixtures.filter((f) => f.competitionId === c.id);
-  const unplayed = mine.filter((f) => !f.done);
-  const results = matches.filter((m) => m.competitionId === c.id);
-  const bracket = c.format === "knockout" ? knockoutBracket(cPairs, koFixtures(c, fixtures, matches)) : [];
+  const counts = props.countsOf(c);
+  const bracket = c.format === "knockout" ? knockoutBracket(cEntries, props.tiesOf(c)) : [];
   const ready = c.format === "knockout" && c.status === "running" ? tiesReadyToDraw(bracket) : [];
   const champ = c.format === "knockout" ? champion(bracket) : null;
-  const table = c.format === "league"
-    ? leagueTable(cPairs, results.filter((m) => m.teamAPairId && m.teamBPairId).map((m) => ({ pairA: m.teamAPairId as string, pairB: m.teamBPairId as string, winner: m.winner, sets: m.sets, status: m.status })), c.pointsWin, c.pointsDraw)
-    : [];
+  const table = c.format === "league" ? leagueTable(cEntries, props.resultsOf(c), c.pointsWin, c.pointsDraw) : [];
+  const n = cEntries.length;
 
   const act = async (fn: () => Promise<void>) => {
     setBusy(true); setErr(null);
@@ -210,8 +207,7 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
     setBusy(false);
   };
 
-  const roundOf = (f: DoublesFixture) => competitionLabel(c, cPairs.length, f.round);
-
+  const cols = "22px 1fr 26px 26px 26px 26px 34px 34px";
   return (
     <div>
       <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "0 0 10px" }}>
@@ -222,30 +218,30 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_TEXT_HI }}>{c.name}</div>
         <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3 }}>
           {c.format === "league"
-            ? `League · ${cPairs.length} pairs · play each ${c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · ${c.pointsWin} for a win, ${c.pointsDraw} for a draw`
-            : `Knockout · ${cPairs.length} pairs, seeded`}
+            ? `League · ${n} ${unit(kind, n)} · play each ${c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · ${c.pointsWin} for a win, ${c.pointsDraw} for a draw`
+            : `Knockout · ${n} ${unit(kind, n)}, seeded`}
           {c.status === "finished" ? " · Finished" : ""}
         </div>
 
         {champ && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 12, padding: "12px 14px", marginTop: 14 }}>
             <Trophy size={20} strokeWidth={2} />
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15 }}>Won by {pairName(champ, false)}</span>
+            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15 }}>Won by {entryName(champ, false)}</span>
           </div>
         )}
 
         {c.format === "league" && (
           <div style={{ marginTop: 14 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "22px 1fr 26px 26px 26px 26px 34px 34px", gap: 4, ...label, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
-              <span /><span>Pair</span><span style={{ textAlign: "right" }}>P</span><span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
+            <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
+              <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span><span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
             </div>
             {table.map((r) => {
-              const isMine = cPairs.some((p) => p.id === r.pairId && (p.p1 === meId || p.p2 === meId));
+              const isMine = cEntries.some((p) => p.id === r.pairId && (p.p1 === meId || p.p2 === meId));
               const sd = r.setsFor - r.setsAgainst;
               return (
-                <div key={r.pairId} style={{ display: "grid", gridTemplateColumns: "22px 1fr 26px 26px 26px 26px 34px 34px", gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, ...tabular }}>
+                <div key={r.pairId} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, ...tabular }}>
                   <span style={{ color: isMine ? FEED_LIME : FEED_TEXT_MID }}>{r.place}</span>
-                  <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{pairName(r.pairId)}</span>
+                  <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{entryName(r.pairId)}</span>
                   <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
                   <span style={{ textAlign: "right" }}>{r.won}</span>
                   <span style={{ textAlign: "right" }}>{r.drawn}</span>
@@ -266,7 +262,7 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
                 if (p === null) return <span style={{ color: FEED_TEXT_LOW }}>bye</span>;
                 if (p === undefined) return <span style={{ color: FEED_TEXT_LOW }}>to be decided</span>;
                 const won = t.winner === p, lost = typeof t.winner === "string" && t.winner !== p;
-                return <span style={{ color: won ? FEED_LIME : lost ? FEED_TEXT_MID : FEED_TEXT_HI, fontWeight: won ? 600 : 400 }}>{pairName(p)}</span>;
+                return <span style={{ color: won ? FEED_LIME : lost ? FEED_TEXT_MID : FEED_TEXT_HI, fontWeight: won ? 600 : 400 }}>{entryName(p)}</span>;
               };
               return (
                 <div key={ti} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderTop: ti ? "0.5px solid " + FEED_HAIRLINE : "none", fontFamily: body, fontSize: 14 }}>
@@ -279,8 +275,8 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
           </div>
         ))}
 
-        {/* Anyone in the league can draw a tie whose two pairs are known: it
-            only creates the fixture the bracket already implies, and the
+        {/* Anyone in the league can draw a tie whose two entries are known:
+            it only creates the fixture the bracket already implies, and the
             unique index makes two people pressing it at once harmless. */}
         {ready.length > 0 && (
           <button disabled={busy} onClick={() => act(() => onDraw(c, ready))} style={{ ...btn(FEED_LIME, FEED_LIME_INK), width: "100%", marginTop: 14 }}>
@@ -291,23 +287,12 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
       </SurfaceCard>
 
       <div style={{ ...label, marginBottom: 8 }}>Matches to play</div>
-      <DoublesFixtures
-        players={players}
-        fixtures={unplayed}
-        stats={stats}
-        meId={meId}
-        canManage={canManage}
-        unavailable={false}
-        hideBooking
-        emptyText={c.format === "knockout" && champ ? "All played." : c.format === "knockout" ? "Nothing to play until the next round is drawn." : "Every match has a result."}
-        labelFor={roundOf}
-        noDraw={() => c.format === "knockout"}
-        onCreatePlayer={onCreatePlayer}
-        onBook={async () => { /* hidden */ }}
-        onReschedule={onReschedule}
-        onCancel={onCancel}
-        onComplete={onComplete}
-      />
+      {props.renderFixtures(
+        c,
+        (round) => competitionLabel(c, n, round),
+        c.format === "knockout",
+        c.format === "knockout" && champ ? "All played." : c.format === "knockout" ? "Nothing to play until the next round is drawn." : "Every match has a result.",
+      )}
 
       {canManage && (
         <div style={{ marginTop: 18 }}>
@@ -322,8 +307,8 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
             // Two steps, and the confirm says the numbers out loud (§3).
             <div style={{ background: FEED_CARD, borderRadius: 14, padding: 14 }}>
               <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
-                Delete {c.name}? {unplayed.length ? `Its ${unplayed.length} unplayed ${unplayed.length === 1 ? "match goes" : "matches go"} with it. ` : ""}
-                {results.length ? `The ${results.length} ${results.length === 1 ? "result" : "results"} already played ${results.length === 1 ? "is" : "are"} kept, and still count on the doubles table.` : ""} This cannot be undone.
+                Delete {c.name}? {counts.unplayed ? `Its ${counts.unplayed} unplayed ${counts.unplayed === 1 ? "match goes" : "matches go"} with it. ` : ""}
+                {counts.played ? `The ${counts.played} ${counts.played === 1 ? "result" : "results"} already played ${counts.played === 1 ? "is" : "are"} kept, and still count on the ${kind} table.` : ""} This cannot be undone.
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button disabled={busy} onClick={() => act(() => onDelete(c).then(onBack))} style={btn(DOT_LOSS, FEED_LIME_INK)}>Delete</button>
@@ -341,42 +326,53 @@ function Detail({ c, cPairs, pairName, onBack, fixtures, matches, players, stats
 // Setting one up
 // ---------------------------------------------------------------------------
 
-function CreateForm({ players, meId, onCreatePlayer, onCancel, onCreate }: {
-  players: any[]; meId: string; onCreatePlayer?: (p: any) => void;
+function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate }: {
+  kind: CompetitionKind; players: any[]; onCreatePlayer?: (p: any) => void;
   onCancel: () => void;
-  onCreate: (c: { name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number }, pairs: Array<{ p1: string; p2: string }>) => Promise<void>;
+  onCreate: (c: { name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number }, entries: Array<{ p1: string; p2: string | null }>) => Promise<void>;
 }) {
+  const doubles = kind === "doubles";
+  const blank = () => ({ p1: "", p2: "" });
   const [name, setName] = useState("");
   const [format, setFormat] = useState<CompetitionFormat>("league");
   const [legs, setLegs] = useState(1);
   const [pointsWin, setPointsWin] = useState("3");
   const [pointsDraw, setPointsDraw] = useState("1");
-  const [entries, setEntries] = useState<Array<{ p1: string; p2: string }>>([{ p1: "", p2: "" }, { p1: "", p2: "" }]);
+  const [entries, setEntries] = useState<Array<{ p1: string; p2: string }>>([blank(), blank()]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  void meId;
 
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const used = entries.flatMap((e) => [e.p1, e.p2]).filter(Boolean);
   const eligible = (self: string) => players.filter((p) => p.id === self || !used.includes(p.id));
   const set = (i: number, k: "p1" | "p2", v: string) => setEntries(entries.map((e, j) => (j === i ? { ...e, [k]: v } : e)));
 
-  const complete = entries.filter((e) => e.p1 && e.p2);
+  const isComplete = (e: { p1: string; p2: string }) => !!e.p1 && (!doubles || !!e.p2);
+  const complete = entries.filter(isComplete);
   const n = complete.length;
-  const half = entries.some((e) => !!e.p1 !== !!e.p2);
+  const half = doubles && entries.some((e) => !!e.p1 !== !!e.p2);
   const pw = parseInt(pointsWin, 10), pd = parseInt(pointsDraw, 10);
   const ready = !!name.trim() && n >= 2 && !half && (format === "knockout" || (Number.isFinite(pw) && Number.isFinite(pd) && pw >= 0 && pd >= 0));
 
-  // Say what pressing Create will actually do, before it does it.
-  const summary = n < 2 ? "Add at least two pairs."
-    : format === "league" ? `${n} pairs · ${roundRobin(complete.map((_, i) => String(i)), legs).length} matches`
-    : (() => { const size = bracketSize(n); const byes = size - n; return `${n} pairs · ${byes ? `${byes} ${byes === 1 ? "bye" : "byes"} for the top seed${byes === 1 ? "" : "s"}` : "no byes"}`; })();
+  // Singles: the whole active league in one tap, which is what "everyone
+  // plays everyone" meant on the old fixtures screen.
+  const everyone = () => {
+    const active = players.filter((p) => !p.inactive).sort((a, b) => fullNameOf(a).localeCompare(fullNameOf(b)));
+    setEntries(active.map((p) => ({ p1: p.id, p2: "" })));
+  };
+
+  const summary = n < 2 ? `Add at least two ${unit(kind, 2)}.`
+    : format === "league" ? `${n} ${unit(kind, n)} · ${roundRobin(complete.map((_, i) => String(i)), legs).length} matches`
+    : (() => { const size = bracketSize(n); const byes = size - n; return `${n} ${unit(kind, n)} · ${byes ? `${byes} ${byes === 1 ? "bye" : "byes"} for the top seed${byes === 1 ? "" : "s"}` : "no byes"}`; })();
 
   const create = async () => {
     if (!ready || busy) return;
     setBusy(true); setErr(null);
     try {
-      await onCreate({ name: name.trim(), format, legs: format === "league" ? legs : 1, pointsWin: format === "league" ? pw : 3, pointsDraw: format === "league" ? pd : 1 }, complete);
+      await onCreate(
+        { name: name.trim(), format, legs: format === "league" ? legs : 1, pointsWin: format === "league" ? pw : 3, pointsDraw: format === "league" ? pd : 1 },
+        complete.map((e) => ({ p1: e.p1, p2: doubles ? e.p2 : null })),
+      );
     } catch (e: any) {
       setErr(e?.message || "Couldn't create it. Try again.");
     }
@@ -384,13 +380,14 @@ function CreateForm({ players, meId, onCreatePlayer, onCancel, onCreate }: {
   };
 
   const who = (id: string) => { const p = byId.get(id); return p ? fullNameOf(p) : ""; };
+  const slots: Array<"p1" | "p2"> = doubles ? ["p1", "p2"] : ["p1"];
 
   return (
     <SurfaceCard radius={16} pad="16px 14px">
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 14 }}>New competition</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 14 }}>New {kind} competition</div>
 
       <div style={{ ...label, marginBottom: 6 }}>Name</div>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Winter Doubles 2026" style={{ ...field, marginBottom: 14 }} />
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder={doubles ? "e.g. Winter Doubles 2026" : "e.g. Club Championship 2026"} style={{ ...field, marginBottom: 14 }} />
 
       <div style={{ ...label, marginBottom: 6 }}>Format</div>
       <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
@@ -399,13 +396,13 @@ function CreateForm({ players, meId, onCreatePlayer, onCancel, onCreate }: {
       </div>
       <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14 }}>
         {format === "league"
-          ? "Every pair plays every other pair. A table on points, then sets, then games."
-          : "Seeded in the order below — the top pair is seed 1. Winners go through; a match can't end level."}
+          ? `Every ${doubles ? "pair" : "player"} plays every other. A table on points, then sets, then games.`
+          : `Seeded in the order below — the top ${doubles ? "pair" : "player"} is seed 1. Winners go through; a match can't end level.`}
       </div>
 
       {format === "league" && (
         <>
-          <div style={{ ...label, marginBottom: 6 }}>Play each pair</div>
+          <div style={{ ...label, marginBottom: 6 }}>Play each {doubles ? "pair" : "player"}</div>
           <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
             <button onClick={() => setLegs(1)} style={segment(legs === 1)}>Once</button>
             <button onClick={() => setLegs(2)} style={segment(legs === 2)}>Twice</button>
@@ -423,12 +420,17 @@ function CreateForm({ players, meId, onCreatePlayer, onCancel, onCreate }: {
         </>
       )}
 
-      <div style={{ ...label, marginBottom: 4 }}>Pairs</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+        <span style={label}>{doubles ? "Pairs" : "Players"}</span>
+        {!doubles && (
+          <button onClick={everyone} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>Add everyone</button>
+        )}
+      </div>
       {entries.map((e, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
-          <span style={{ width: 18, fontFamily: body, fontSize: 13, color: FEED_TEXT_LOW, ...tabular }}>{i + 1}</span>
+          <span style={{ width: 20, fontFamily: body, fontSize: 13, color: FEED_TEXT_LOW, ...tabular }}>{i + 1}</span>
           <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-            {(["p1", "p2"] as const).map((k) => (
+            {slots.map((k) => (
               <span key={k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: e[k] ? FEED_TEXT_HI : FEED_TEXT_LOW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {e[k] ? who(e[k]) : k === "p1" ? "Player" : "Partner"}
@@ -438,14 +440,14 @@ function CreateForm({ players, meId, onCreatePlayer, onCancel, onCreate }: {
             ))}
           </span>
           {entries.length > 2 && (
-            <button aria-label={`Remove pair ${i + 1}`} onClick={() => setEntries(entries.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}>
+            <button aria-label={`Remove ${i + 1}`} onClick={() => setEntries(entries.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}>
               <X size={16} color={FEED_TEXT_MID} />
             </button>
           )}
         </div>
       ))}
-      <button onClick={() => setEntries([...entries, { p1: "", p2: "" }])} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13.5, cursor: "pointer", padding: "8px 0 14px" }}>
-        <Plus size={14} strokeWidth={2.4} />Add a pair
+      <button onClick={() => setEntries([...entries, blank()])} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13.5, cursor: "pointer", padding: "8px 0 14px" }}>
+        <Plus size={14} strokeWidth={2.4} />Add a {doubles ? "pair" : "player"}
       </button>
 
       <div style={{ fontFamily: body, fontSize: 13, color: half ? DOT_LOSS : FEED_TEXT_MID, marginBottom: 12 }}>

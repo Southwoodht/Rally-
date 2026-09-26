@@ -66,7 +66,7 @@ export function LeagueHub(props: any) {
   const {
     group, updateGroup, players, setPlayers, matches, fixtures, flash, meId, leagueId, displayName,
     leagueJoinCode, canManage, isCreator, doublesEnabled, competitionsEnabled, hasCompetition,
-    onSetFlags, onStartDoublesCompetition, onLogResult,
+    onSetFlags, onStartDoublesCompetition, onStartSinglesCompetition, onLogResult,
   } = props;
   const friendly = isFriendlyLeague(leagueId);
   const [page, setPage] = useState<Page>("home");
@@ -114,7 +114,8 @@ export function LeagueHub(props: any) {
   );
 
   if (page === "players") return <><>{back("Run your league")}</><PlayersPage {...props} /></>;
-  if (page === "singles") return <><>{back("Run your league")}</><SinglesFixturesPage {...props} /></>;
+  // Competition ties are managed from their competition, not from here.
+  if (page === "singles") return <><>{back("Run your league")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
   if (page === "seasons") return <><>{back("Run your league")}</><SeasonsPage group={group} updateGroup={updateGroup} /></>;
   if (page === "roles") return <><>{back("Run your league")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
   if (page === "settings") return <><>{back("Run your league")}</><SettingsPage {...props} /></>;
@@ -158,7 +159,7 @@ export function LeagueHub(props: any) {
     </button>
   );
 
-  const toPlay = (fixtures || []).filter((f: any) => !f.done).length;
+  const toPlay = (fixtures || []).filter((f: any) => !f.done && !f.competitionId).length;
   const ic = (C: any) => <C size={18} color={FEED_LIME} strokeWidth={2} />;
 
   return (
@@ -195,7 +196,7 @@ export function LeagueHub(props: any) {
       <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 14 }}>
         <div style={{ marginTop: -1 }}>
           {!friendly && row(ic(Calendar), "Seasons", group?.season ? `${group.season.name} · running` : "None running", "seasons")}
-          {!friendly && row(ic(Trophy), "Singles fixtures", toPlay ? `${toPlay} to play` : "Everyone plays everyone, or single matches", "singles")}
+          {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
           {!friendly && row(ic(Settings2), "League settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
           {row(ic(Database), "Data", "Import old results · clear results", "data")}
@@ -206,13 +207,14 @@ export function LeagueHub(props: any) {
 
       {choosing && (
         <StartSheet
-          doubles={!!doublesEnabled && !!competitionsEnabled}
+          competitions={!!competitionsEnabled}
+          doubles={!!doublesEnabled}
           isCreator={isCreator}
           onClose={() => setChoosing(false)}
           onDoubles={() => { setChoosing(false); onStartDoublesCompetition(); }}
-          onSingles={() => { setChoosing(false); setPage("singles"); }}
-          onTurnOn={async () => {
-            try { await onSetFlags({ doubles_enabled: true, competitions_enabled: true }); flash("Doubles competitions switched on"); }
+          onSingles={() => { setChoosing(false); onStartSinglesCompetition(); }}
+          onTurnOn={async (patch: Record<string, boolean>) => {
+            try { await onSetFlags(patch); flash("Switched on"); }
             catch (e: any) { flash(e?.message || "Couldn't switch that on."); }
           }}
         />
@@ -225,30 +227,33 @@ export function LeagueHub(props: any) {
 // Start a competition: one question, two answers
 // ---------------------------------------------------------------------------
 
-function StartSheet({ doubles, isCreator, onClose, onDoubles, onSingles, onTurnOn }: any) {
+function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSingles, onTurnOn }: any) {
   const option = (title: string, sub: string, onClick: () => void, disabled = false) => (
     <button disabled={disabled} onClick={onClick} style={{ display: "block", width: "100%", textAlign: "left", background: FEED_CARD, border: "none", borderRadius: 14, padding: "14px 14px", marginBottom: 10, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.55 : 1 }}>
       <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>{title}</span>
       <span style={{ display: "block", ...note, marginTop: 3 }}>{sub}</span>
     </button>
   );
+  // What is off, and one tap to turn it on for whoever is allowed to.
+  const off = (what: string, patch: Record<string, boolean>) => (
+    <div style={{ ...note, margin: "-4px 2px 12px" }}>
+      {what} switched off for this league.{" "}
+      {isCreator
+        ? <button onClick={() => onTurnOn(patch)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>Switch on</button>
+        : "The person who created the league can switch it on."}
+    </div>
+  );
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_RAISED, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 34px", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Start a competition</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 14, cursor: "pointer" }}>Close</button>
         </div>
-        {option("Doubles", "Fixed pairs in a league or a knockout. Rally draws the matches, keeps the table and moves winners through.", onDoubles, !doubles)}
-        {!doubles && (
-          <div style={{ ...note, margin: "-4px 2px 12px" }}>
-            Doubles competitions are switched off for this league.{" "}
-            {isCreator
-              ? <button onClick={onTurnOn} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>Switch them on</button>
-              : "The person who created the league can switch them on."}
-          </div>
-        )}
-        {option("Singles", "Everyone plays everyone, once or more — or add single matches by hand. Results go in as normal.", onSingles)}
+        <div style={{ ...note, marginBottom: 14 }}>A league (everyone plays everyone, with a table) or a knockout (winners go through). You choose next.</div>
+        {option("Singles", "Pick the players — or add everyone in one tap. Rally draws the matches, keeps the table and moves winners through.", onSingles, !competitions)}
+        {option("Doubles", "Fixed pairs, the same way.", onDoubles, !competitions || !doubles)}
+        {!competitions ? off("Competitions are", { competitions_enabled: true }) : !doubles ? off("Doubles is", { doubles_enabled: true }) : null}
       </div>
     </div>
   );
@@ -475,9 +480,9 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
 
       <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 10 }}>
         {toggle("Doubles", "A separate doubles table, ratings and profile. Singles is untouched.", !!doublesEnabled,
-          () => flip({ doubles_enabled: !doublesEnabled, ...(doublesEnabled ? { competitions_enabled: false } : {}) }, doublesEnabled ? "Doubles switched off" : "Doubles switched on"), !!isCreator)}
-        {toggle("Doubles competitions", "Leagues and knockouts for fixed pairs.", !!competitionsEnabled,
-          () => flip({ competitions_enabled: !competitionsEnabled, ...(!competitionsEnabled ? { doubles_enabled: true } : {}) }, competitionsEnabled ? "Competitions switched off" : "Competitions switched on"), !!isCreator)}
+          () => flip({ doubles_enabled: !doublesEnabled }, doublesEnabled ? "Doubles switched off" : "Doubles switched on"), !!isCreator)}
+        {toggle("Competitions", "Leagues and knockouts, singles and doubles, set up from Start a competition.", !!competitionsEnabled,
+          () => flip({ competitions_enabled: !competitionsEnabled }, competitionsEnabled ? "Competitions switched off" : "Competitions switched on"), !!isCreator)}
         {/* Was "Fair play: Open / Setup required", which named neither what
             it does nor who it affects. */}
         {toggle("Players need a level to be ranked", "On: anyone without a level stays greyed out and unranked until they set one — fairer for a serious league. Off: everyone is ranked straight away.",

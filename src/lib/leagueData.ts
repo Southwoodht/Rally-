@@ -190,6 +190,11 @@ const fixtureToRow = (leagueId: string, f: any) => ({
   winner: f.winner ?? null,
   match_id: f.matchId ?? null,
   booked: toIsoOrNull(f.booked),
+  // Competition ties only (schema_singles_competitions.sql). Written ONLY
+  // when present, so every ordinary booking writes exactly the columns it
+  // always has — and keeps saving on a database where that file has not been
+  // run, where naming a missing column would fail every fixture save.
+  ...(f.competitionId ? { competition_id: f.competitionId, round: f.round ?? null } : {}),
 });
 
 const rowToFixture = (r: any) => ({
@@ -200,6 +205,8 @@ const rowToFixture = (r: any) => ({
   winner: r.winner ?? undefined,
   matchId: r.match_id ?? undefined,
   booked: r.booked ?? undefined,
+  competitionId: r.competition_id ?? undefined,
+  round: r.round ?? undefined,
 });
 
 const postToRow = (leagueId: string, p: any) => ({

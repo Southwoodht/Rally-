@@ -58,7 +58,11 @@ const timeOf = (v: any): number | null => {
   return isNaN(t) ? null : t;
 };
 
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer }: any) {
+// labelFor / noDraw / hideBooking / emptyText are what a competition needs,
+// the same four the doubles panel takes: "Club Champs · Semi-finals" on a
+// tie, no Draw button in a knockout, and no "Book a match" inside a
+// competition, which is for casual games.
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer, labelFor, noDraw, hideBooking, emptyText }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
@@ -127,7 +131,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const q = search.trim().toLowerCase();
   const shown = q ? ordered.filter((f: any) => (nm(f.p1) + " " + nm(f.p2)).toLowerCase().includes(q)) : ordered;
 
-  const canBookNew = !!(onAddFixture && meId && onCreatePlayer);
+  const canBookNew = !hideBooking && !!(onAddFixture && meId && onCreatePlayer);
   const opponents = useMemo(
     () => players.filter((p: any) => p.id !== meId).sort((a: any, b: any) => fullNameOf(a).localeCompare(fullNameOf(b))),
     [players, meId],
@@ -187,12 +191,14 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       <div>
         {bookPanel}
         <SurfaceCard radius={18}>
+          {emptyText ? <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{emptyText}</div> : <>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>Nothing booked yet.</div>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             {canBookNew
               ? <>Book a match with anyone in the league above. A league owner can also set up a whole season at once in <span style={{ color: FEED_TEXT_HI }}>Menu → Run your league → Singles fixtures</span>.</>
               : <>A league owner can set these up in <span style={{ color: FEED_TEXT_HI }}>Menu → Run your league → Singles fixtures</span> — either an automatic round-robin or hand-picked matchups.</>}
           </div>
+          </>}
         </SurfaceCard>
       </div>
     );
@@ -220,13 +226,16 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
         <div style={{ width: (total ? (done / total) * 100 : 0) + "%", height: "100%", background: FEED_LIME }} />
       </div>
 
-      {shown.length === 0 && <Empty msg={q ? "No fixtures match that search." : "Nothing left to play. Every fixture has a result."} />}
+      {shown.length === 0 && <Empty msg={q ? "No fixtures match that search." : emptyText || "Nothing left to play. Every fixture has a result."} />}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {shown.map((f: any) => (
           (
             <SurfaceCard key={f.id} radius={16} pad="12px 14px">
               <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
+                {labelFor?.(f) && (
+                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(f)}</div>
+                )}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
@@ -348,7 +357,8 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                   />
                   <div style={{ display: "flex", gap: 8 }}>
                     <button disabled={saving} onClick={() => submit(f, "p1")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p1)} won</button>
-                    <button disabled={saving} onClick={() => submit(f, "draw")} style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 14px" }}>Draw</button>
+                    {/* A knockout tie needs somebody to send through. */}
+                    {!noDraw?.(f) && <button disabled={saving} onClick={() => submit(f, "draw")} style={{ ...actionBtn(FEED_RAISED, FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 14px" }}>Draw</button>}
                     <button disabled={saving} onClick={() => submit(f, "p2")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p2)} won</button>
                   </div>
                   {saveError && (

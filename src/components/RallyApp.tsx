@@ -42,7 +42,9 @@ import { DoublesProfile } from "@/components/doubles/DoublesProfile";
 import { DoublesRankCard } from "@/components/doubles/DoublesRankCard";
 import { RankCarousel } from "@/components/doubles/RankCarousel";
 import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
-import { DoublesCompetitions, competitionLabel } from "@/components/doubles/DoublesCompetitions";
+import { Competitions, competitionLabel } from "@/components/competitions/Competitions";
+import { FixturesPanel } from "@/components/games/FixturesPanel";
+import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/competitionAdapters";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
 import { createCompetition, deleteCompetition, drawTies, finishCompetition } from "@/lib/doublesData";
 import { knockoutBracket, roundRobin, tiesReadyToDraw } from "@/core/doubles/competition";
@@ -193,9 +195,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // promised: there is no doubles code on the singles path to go wrong.
   const doubles = useDoubles(leagueId, !!doublesEnabled);
   // Competitions need doubles on AND their own flag. Off, this loads nothing.
-  const comps = useCompetitions(leagueId, !!doublesEnabled && !!competitionsEnabled);
+  // Competitions have their own flag, and cover singles as well as doubles.
+  const comps = useCompetitions(leagueId, !!competitionsEnabled);
+  const singlesComps = comps.competitions.filter((c) => c.kind === "singles");
+  const doublesComps = comps.competitions.filter((c) => c.kind === "doubles");
   // "Start a competition" in Run your league opens the doubles create form.
   const [compCreateSignal, setCompCreateSignal] = useState(0);
+  const [singlesCreateSignal, setSinglesCreateSignal] = useState(0);
   // Which sport the Table, Profile and the entry screen are showing. Not
   // persisted: unlike the theme or the season toggle, this is a thing you
   // flick between within a visit, and remembering it means opening the Table
@@ -668,10 +674,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     // screen that offers this says "every pair of the active players".
     const ps = gdata.players.filter((p) => !p.inactive); const fx: Array<{ id: string; p1: string; p2: string; done: boolean }> = [];
     for (let r = 0; r < rounds; r++) for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) fx.push({ id: uid(), p1: ps[i].id, p2: ps[j].id, done: false });
-    saveData({ ...gdata, fixtures: fx });
+    // Competition ties are kept: "everyone plays everyone" replaces the
+    // league's own list, never a competition's draw.
+    saveData({ ...gdata, fixtures: [...(gdata.fixtures || []).filter((f) => f.competitionId), ...fx] });
     flash(fx.length + " fixtures created");
   };
-  const clearFixtures = () => saveData({ ...gdata, fixtures: [] });
+  const clearFixtures = () => saveData({ ...gdata, fixtures: (gdata.fixtures || []).filter((f) => f.competitionId) });
+
+  // --- competitions, both kinds -------------------------------------------
+  // "Club Champs · Semi-finals" on any fixture that belongs to one, and no
+  // Draw button on a knockout tie — the same two rules on singles and doubles.
+  const compLabelFor = (f: any): string | null => {
+    const c = f?.competitionId ? comps.competitions.find((x) => x.id === f.competitionId) : null;
+    return c ? competitionLabel(c, comps.pairs.filter((p) => p.competitionId === c.id).length, f.round ?? null) : null;
+  };
+  const compNoDraw = (f: any): boolean =>
+    !!f?.competitionId && comps.competitions.find((x) => x.id === f.competitionId)?.format === "knockout";
+  /**
+   * Singles ties are ordinary singles fixtures, so they go through the
+   * league's own save like every other booking. A tie is two ENTRIES, and a
+   * singles entry is one player, so the fixture's p1/p2 are the entries' p1.
+   */
+  const addSinglesTies = (competitionId: string, ties: Array<{ round: number; pairA: string; pairB: string }>, entries: Array<{ id: string; p1: string }>) => {
+    const p1Of = new Map(entries.map((e) => [e.id, e.p1]));
+    const fresh = ties.map((t) => ({ id: uid(), p1: p1Of.get(t.pairA), p2: p1Of.get(t.pairB), done: false, booked: null, competitionId, round: t.round }));
+    return saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), ...fresh] });
+  };
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
@@ -1442,7 +1470,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
@@ -1615,16 +1643,68 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             {feed}
           </Home>
         )}
-        {tab === "fixtures" && !showDoubles && feed}
+        {tab === "fixtures" && !showDoubles && (personal ? feed : (
+          <div style={{ marginTop: 14 }}>
+            <Competitions
+              kind="singles"
+              players={players}
+              competitions={singlesComps}
+              entries={comps.pairs}
+              meId={meId}
+              canManage={!!canManageMatches}
+              unavailable={comps.unavailable || !competitionsEnabled}
+              createSignal={singlesCreateSignal}
+              onCreatePlayer={addPlayer}
+              onCreate={async (c, entries) => {
+                const r = await createCompetition(leagueId, { ...c, kind: "singles", createdBy: meId || null }, entries,
+                  (es) => c.format === "league" ? roundRobin(es.map((e) => e.id), c.legs) : tiesReadyToDraw(knockoutBracket(es, [])));
+                comps.added(r.competition, r.pairs);
+                const ok = await addSinglesTies(r.competition.id, r.ties, r.pairs);
+                flash(ok ? r.ties.length + " matches drawn" : "Created, but the matches didn't save — open it and press Draw");
+                return r.competition.id;
+              }}
+              onDraw={async (c, ties) => {
+                const ok = await addSinglesTies(c.id, ties, comps.pairs.filter((p) => p.competitionId === c.id));
+                // A refused save re-reads the league (saveData), so if someone
+                // else drew it a moment ago, what is really there now shows.
+                if (!ok) throw new Error("Couldn't draw that — it may already have been drawn.");
+                flash(ties.length === 1 ? "Match drawn" : ties.length + " matches drawn");
+              }}
+              onDelete={async (c) => {
+                await deleteCompetition(c.id);
+                comps.removed(c.id);
+                // The database took the ties with it (cascade); drop them here
+                // without writing, since there is nothing left to delete.
+                setGdata((g: any) => ({ ...g, fixtures: (g.fixtures || []).filter((f: any) => f.competitionId !== c.id) }));
+                flash("Deleted " + c.name);
+              }}
+              onFinish={async (c, done) => { await finishCompetition(c.id, done); comps.statusChanged(c.id, done ? "finished" : "running"); }}
+              tiesOf={(c) => singlesCompetitionView(c.id, comps.pairs, fixtures, matches).ties}
+              resultsOf={(c) => singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results}
+              countsOf={(c) => singlesCompetitionView(c.id, comps.pairs, fixtures, matches).counts}
+              renderFixtures={(c, label, knockout, emptyText) => (
+                <FixturesPanel
+                  // All of them: the panel lists the unplayed ones itself and
+                  // counts the played ones for its "3 of 6 played" line.
+                  fixtures={fixtures.filter((f: any) => f.competitionId === c.id)}
+                  players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId}
+                  onResolve={resolveFixture} onBook={bookFixture} onRemoveFixture={removeFixture}
+                  canManage={canManageMatches} hideBooking emptyText={emptyText}
+                  labelFor={(f: any) => label(f.round ?? null)} noDraw={() => knockout}
+                />
+              )}
+            >
+              {feed}
+            </Competitions>
+          </div>
+        ))}
         {tab === "fixtures" && showDoubles && !personal && (
           <div style={{ marginTop: 14 }}>
-            <DoublesCompetitions
+            <Competitions
+              kind="doubles"
               players={players}
-              competitions={comps.competitions}
-              pairs={comps.pairs}
-              fixtures={doubles.fixtures}
-              matches={doubles.matches}
-              stats={doubles.stats}
+              competitions={doublesComps}
+              entries={comps.pairs}
               meId={meId}
               canManage={!!canManageMatches}
               unavailable={comps.unavailable || !competitionsEnabled}
@@ -1633,7 +1713,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               onCreate={async (c, entries) => {
                 // League: the whole schedule now. Knockout: whatever the seeding
                 // makes playable now; later rounds are drawn from results.
-                const r = await createCompetition(leagueId, { ...c, createdBy: meId || null }, entries,
+                const r = await createCompetition(leagueId, { ...c, kind: "doubles", createdBy: meId || null }, entries,
                   (ps) => c.format === "league" ? roundRobin(ps.map((p) => p.id), c.legs) : tiesReadyToDraw(knockoutBracket(ps, [])));
                 comps.added(r.competition, r.pairs);
                 doubles.addFixtures(r.fixtures);
@@ -1653,9 +1733,28 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               }}
               onDelete={async (c) => { await deleteCompetition(c.id); comps.removed(c.id); doubles.dropCompetitionFixtures(c.id); flash("Deleted " + c.name); }}
               onFinish={async (c, done) => { await finishCompetition(c.id, done); comps.statusChanged(c.id, done ? "finished" : "running"); }}
-              onReschedule={doubles.reschedule}
-              onCancel={cancelDoublesFixture}
-              onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
+              tiesOf={(c) => doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).ties}
+              resultsOf={(c) => doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).results}
+              countsOf={(c) => doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).counts}
+              renderFixtures={(c, label, knockout, emptyText) => (
+                <DoublesFixtures
+                  players={players}
+                  fixtures={doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).unplayed as any}
+                  stats={doubles.stats}
+                  meId={meId}
+                  canManage={!!canManageMatches}
+                  unavailable={false}
+                  hideBooking
+                  emptyText={emptyText}
+                  labelFor={(f) => label(f.round)}
+                  noDraw={() => knockout}
+                  onCreatePlayer={addPlayer}
+                  onBook={async () => { /* hidden inside a competition */ }}
+                  onReschedule={doubles.reschedule}
+                  onCancel={cancelDoublesFixture}
+                  onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
+                />
+              )}
             >
               <DoublesFixtures
                 players={players}
@@ -1669,10 +1768,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 onReschedule={doubles.reschedule}
                 onCancel={cancelDoublesFixture}
                 onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
-                labelFor={(f) => { const c = f.competitionId ? comps.competitions.find((x) => x.id === f.competitionId) : null; return c ? competitionLabel(c, comps.pairs.filter((p) => p.competitionId === c.id).length, f.round) : null; }}
-                noDraw={(f) => !!f.competitionId && comps.competitions.find((x) => x.id === f.competitionId)?.format === "knockout"}
+                labelFor={compLabelFor}
+                noDraw={compNoDraw}
               />
-            </DoublesCompetitions>
+            </Competitions>
           </div>
         )}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} onBack={() => setTab("ladder")} />}
@@ -1705,6 +1804,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             hasCompetition={comps.competitions.length > 0}
             onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
             onStartDoublesCompetition={() => { setSport("doubles"); setTab("fixtures"); setCompCreateSignal((n) => n + 1); }}
+            onStartSinglesCompetition={() => { setSport("singles"); setTab("fixtures"); setSinglesCreateSignal((n) => n + 1); }}
             onLogResult={() => setTab("add")}
           />
         )}

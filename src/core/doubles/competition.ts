@@ -7,11 +7,14 @@
  */
 
 export type CompetitionFormat = "league" | "knockout";
+/** Singles competitions use exactly the same schedule, draw and table. */
+export type CompetitionKind = "doubles" | "singles";
 
 export interface Competition {
   id: string;
   leagueId: string;
   name: string;
+  kind: CompetitionKind;
   format: CompetitionFormat;
   /** League: how many times each pair plays each other. */
   legs: number;
@@ -26,7 +29,8 @@ export interface CompetitionPair {
   id: string;
   competitionId: string;
   p1: string;
-  p2: string;
+  /** Null for a singles entry, which is one player. */
+  p2: string | null;
   /** 1 is top. */
   seed: number;
 }

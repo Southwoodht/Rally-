@@ -282,6 +282,9 @@ const rowToCompetition = (r: any): Competition => ({
   id: r.id,
   leagueId: r.league_id,
   name: r.name,
+  // Absent until schema_singles_competitions.sql runs, and every competition
+  // before that was doubles, so absent means doubles.
+  kind: r.kind === "singles" ? "singles" : "doubles",
   format: r.format,
   legs: r.legs ?? 1,
   pointsWin: r.points_win ?? 3,
@@ -343,15 +346,19 @@ const tieRow = (leagueId: string, competitionId: string, t: Tie, byId: Map<strin
  */
 export async function createCompetition(
   leagueId: string,
-  c: { name: string; format: Competition["format"]; legs: number; pointsWin: number; pointsDraw: number; createdBy: string | null },
-  pairs: Array<{ p1: string; p2: string }>,
+  c: { name: string; kind: Competition["kind"]; format: Competition["format"]; legs: number; pointsWin: number; pointsDraw: number; createdBy: string | null },
+  pairs: Array<{ p1: string; p2: string | null }>,
   schedule: (pairs: CompetitionPair[]) => Tie[],
-): Promise<{ competition: Competition; pairs: CompetitionPair[]; fixtures: DoublesFixture[] }> {
+): Promise<{ competition: Competition; pairs: CompetitionPair[]; fixtures: DoublesFixture[]; ties: Tie[] }> {
   if (!supabase) throw new Error("Not connected.");
   const comp = rowToCompetition(await run(
     supabase.from("doubles_competitions").insert({
       league_id: leagueId, name: c.name.trim(), format: c.format, legs: c.legs,
       points_win: c.pointsWin, points_draw: c.pointsDraw, created_by: c.createdBy,
+      // Only written for singles, so creating a DOUBLES competition keeps
+      // working on a database where schema_singles_competitions.sql has not
+      // been run yet (the column would not exist).
+      ...(c.kind === "singles" ? { kind: "singles" } : {}),
     }).select().single(),
     "creating the competition",
   ));
@@ -361,8 +368,12 @@ export async function createCompetition(
     ).select(),
     "entering the pairs",
   ) || []).map(rowToPair);
-  const fixtures = await drawTies(leagueId, comp.id, schedule(saved), saved, c.createdBy);
-  return { competition: comp, pairs: saved, fixtures };
+  const ties = schedule(saved);
+  // Doubles ties are doubles_fixtures rows, written here. Singles ties are
+  // ordinary singles fixtures, which go through the league's own save (the
+  // caller's), so they arrive back as ties for it to write.
+  const fixtures = c.kind === "doubles" ? await drawTies(leagueId, comp.id, ties, saved, c.createdBy) : [];
+  return { competition: comp, pairs: saved, fixtures, ties };
 }
 
 /** Insert ties as doubles fixtures. The unique index makes a double draw harmless. */
