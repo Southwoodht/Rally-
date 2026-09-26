@@ -39,6 +39,8 @@ interface Props {
   meId: string;
   canManage: boolean;
   unavailable: boolean;
+  /** See DoublesEntry: the same addPlayer singles uses. */
+  onCreatePlayer?: (p: any) => void;
   onBook: (f: { teamA: [string, string]; teamB: [string, string]; booked: number | null }) => Promise<void>;
   onReschedule: (id: string, booked: number | null) => Promise<void>;
   onCancel: (f: DoublesFixture) => Promise<void>;
@@ -83,7 +85,7 @@ const parsed = (rows: SetScore[]) =>
     .map((r) => ({ a: parseInt(r.a, 10), b: parseInt(r.b, 10) }))
     .filter((r) => Number.isFinite(r.a) && Number.isFinite(r.b));
 
-export function DoublesFixtures({ players, fixtures, stats, meId, canManage, unavailable, onBook, onReschedule, onCancel, onComplete }: Props) {
+export function DoublesFixtures({ players, fixtures, stats, meId, canManage, unavailable, onCreatePlayer, onBook, onReschedule, onCancel, onComplete }: Props) {
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const nm = (id: string) => { const p = byId.get(id); return p ? fullNameOf(p) : "Unknown player"; };
   const pair = (t: [string, string]) => nm(t[0]) + " & " + nm(t[1]);
@@ -168,7 +170,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
       <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: slots[i] ? 500 : 400, fontSize: 15, color: slots[i] ? FEED_TEXT_HI : FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         {slots[i] ? (slots[i] === meId ? nm(slots[i]) + " (you)" : nm(slots[i])) : prompt}
       </span>
-      <PlayerPicker players={eligible(i)} value={slots[i]} onChange={(id: string) => setSlot(i, id)} triggerLabel={slots[i] ? "Change" : "Add"} />
+      <PlayerPicker players={eligible(i)} value={slots[i]} onChange={(id: string) => setSlot(i, id)} onCreatePlayer={onCreatePlayer} triggerLabel={slots[i] ? "Change" : "Add"} />
     </div>
   );
 

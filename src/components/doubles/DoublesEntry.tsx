@@ -34,6 +34,10 @@ interface Props {
   /** Every confirmed doubles match in the league, for the rating preview. */
   history: DoublesMatch[];
   meId: string;
+  /** Adding somebody who isn't in the league yet, from inside a picker. The
+   *  same addPlayer singles uses — without it the picker's "Create" did
+   *  nothing, because it called a function nobody had passed. */
+  onCreatePlayer?: (p: any) => void;
   onSave: (m: { teamA: [string, string]; teamB: [string, string]; sets: Array<{ a: number; b: number }>; winner: string }) => void;
   saving?: boolean;
 }
@@ -54,7 +58,7 @@ export const winnerFromSets = (sets: Array<{ a: number; b: number }>): string | 
   return a > b ? "A" : b > a ? "B" : "draw";
 };
 
-export function DoublesEntry({ players, history, meId, onSave, saving }: Props) {
+export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving }: Props) {
   const [partner, setPartner] = useState<string>("");
   const [opp1, setOpp1] = useState<string>("");
   const [opp2, setOpp2] = useState<string>("");
@@ -131,7 +135,7 @@ export function DoublesEntry({ players, history, meId, onSave, saving }: Props) 
         </div>
         {personRow(meId, <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, padding: "0 4px" }}>You</span>, true)}
         {personRow(partner, (
-          <PlayerPicker players={eligible(partner)} value={partner} onChange={setPartner} triggerLabel={partner ? "Change" : "Partner"} />
+          <PlayerPicker players={eligible(partner)} value={partner} onChange={setPartner} onCreatePlayer={onCreatePlayer} triggerLabel={partner ? "Change" : "Partner"} />
         ))}
       </div>
 
@@ -142,8 +146,8 @@ export function DoublesEntry({ players, history, meId, onSave, saving }: Props) 
           <span style={label}>OPPONENTS</span>
           {winner === "B" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
         </div>
-        {personRow(opp1, <PlayerPicker players={eligible(opp1)} value={opp1} onChange={setOpp1} triggerLabel={opp1 ? "Change" : "Add"} />)}
-        {personRow(opp2, <PlayerPicker players={eligible(opp2)} value={opp2} onChange={setOpp2} triggerLabel={opp2 ? "Change" : "Add"} />)}
+        {personRow(opp1, <PlayerPicker players={eligible(opp1)} value={opp1} onChange={setOpp1} onCreatePlayer={onCreatePlayer} triggerLabel={opp1 ? "Change" : "Add"} />)}
+        {personRow(opp2, <PlayerPicker players={eligible(opp2)} value={opp2} onChange={setOpp2} onCreatePlayer={onCreatePlayer} triggerLabel={opp2 ? "Change" : "Add"} />)}
       </div>
 
       <div style={{ ...card, display: "flex", flexDirection: "column", gap: 12, padding: 18 }}>

@@ -91,13 +91,17 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
             {mode === "pick" ? (
               <>
                 <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" autoFocus style={{ ...miniInput, fontFamily: body, width: "100%", marginBottom: 12, boxSizing: "border-box" as const }} />
-                <button onClick={() => setMode("create")} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: PANEL, borderRadius: 14, padding: "11px 12px", marginBottom: 12, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 700, border: "none" }}>
+                {/* Only where the screen can actually save a new player. A
+                    Create that calls a function nobody passed throws on the
+                    tap and does nothing, which is how the doubles screens
+                    shipped: the button looked live and was dead. */}
+                {onCreatePlayer && <button onClick={() => setMode("create")} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: PANEL, borderRadius: 14, padding: "11px 12px", marginBottom: 12, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 700, border: "none" }}>
                   <Plus size={16} strokeWidth={2.6} /> Create new player
-                </button>
+                </button>}
                 {/* Searching for somebody who isn't there is the moment you
                     find out they need adding, so the answer belongs right
                     there rather than back up at the generic button. */}
-                {shown.length === 0 && term && (
+                {shown.length === 0 && term && onCreatePlayer && (
                   <button
                     onClick={() => { const parts = q.trim().split(/s+/); setNewName(parts[0] || ""); setNewLast(parts.slice(1).join(" ")); setMode("create"); }}
                     style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", background: BALL, borderRadius: 14, padding: "11px 12px", marginBottom: 10, cursor: "pointer", color: COURT, fontFamily: body, fontSize: 14, fontWeight: 700, border: "none", textAlign: "left" }}

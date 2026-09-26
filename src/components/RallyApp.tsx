@@ -1525,6 +1525,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             players={players}
             history={doubles.matches}
             meId={meId}
+            onCreatePlayer={addPlayer}
             onSave={async (m) => {
               try {
                 await doubles.add({ ...m, playedAt: Date.now(), enteredBy: meId });
@@ -1612,6 +1613,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               meId={meId}
               canManage={!!canManageMatches}
               unavailable={doubles.fixturesUnavailable}
+              onCreatePlayer={addPlayer}
               onBook={async (f) => { await doubles.book({ ...f, createdBy: meId || null }); flash("Booked"); }}
               onReschedule={doubles.reschedule}
               onCancel={cancelDoublesFixture}
