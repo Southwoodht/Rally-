@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { fullNameOf } from "@/lib/format";
-import { partnersOf, mostPlayedWith } from "@/core/doubles/partners";
+import { partnersOf, mostPlayedWith, BEST_PARTNER_MINIMUM } from "@/core/doubles/partners";
 import type { DoublesMatch } from "@/core/doubles/elo";
 import {
   FEED_BAR, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RADIUS, FEED_TEXT_HI,
@@ -26,9 +26,16 @@ interface Props {
   players: any[];
   matches: DoublesMatch[];
   playerId: string;
+  /**
+   * Your overall doubles win rate, counted the same way (a draw is half), so
+   * each partnership can say how it compares. The doubles-only question the
+   * singles profile has no version of: not "how good am I" but "who am I
+   * better with".
+   */
+  overall?: number;
 }
 
-export function PartnersCard({ players, matches, playerId }: Props) {
+export function PartnersCard({ players, matches, playerId, overall }: Props) {
   const rows = useMemo(() => partnersOf(matches, playerId), [matches, playerId]);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const most = mostPlayedWith(rows);
@@ -74,8 +81,19 @@ export function PartnersCard({ players, matches, playerId }: Props) {
                 </span>
               </div>
             </div>
-            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 18, width: 48, textAlign: "right", color: FEED_TEXT_HI, ...tabular }}>
-              {pct}%
+            <div style={{ width: 56, textAlign: "right", flexShrink: 0 }}>
+              <div style={{ fontFamily: display, fontWeight: 700, fontSize: 18, color: FEED_TEXT_HI, ...tabular }}>{pct}%</div>
+              {/* Only once it means something: the same three-match floor the
+                  Best badge uses. "+50 on your average" off one win is the
+                  claim that floor exists to stop. */}
+              {overall !== undefined && r.played >= BEST_PARTNER_MINIMUM && (() => {
+                const diff = pct - Math.round(overall * 100);
+                return (
+                  <div style={{ fontFamily: body, fontSize: 11, marginTop: 2, whiteSpace: "nowrap", color: diff > 0 ? FEED_LIME : FEED_TEXT_MID, ...tabular }}>
+                    {diff === 0 ? "your avg" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)} vs avg`}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         );

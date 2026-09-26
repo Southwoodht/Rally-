@@ -35,6 +35,10 @@
     "src/core/doubles/elo.ts",
     "src/core/doubles/elo.test.ts",
     "src/core/doubles/partners.ts",
-    "src/core/doubles/partners.test.ts"
+    "src/core/doubles/partners.test.ts",
+    "src/core/doubles/standings.ts",
+    "src/core/doubles/standings.test.ts",
+    "src/core/doubles/profile.ts",
+    "src/core/doubles/profile.test.ts"
   ]
 }

@@ -3,6 +3,9 @@ import React, { useMemo } from "react";
 import { PartnersCard } from "@/components/doubles/PartnersCard";
 import { ordinal } from "@/lib/format";
 import { computeDoubles, DOUBLES_PROVISIONAL_GAMES, type DoublesMatch } from "@/core/doubles/elo";
+import { doublesPlace, rankedDoubles } from "@/core/doubles/standings";
+import { bestDoublesWins, doublesHistory, opponentRecords, overallWinRate } from "@/core/doubles/profile";
+import { DoublesBestWins, DoublesHistory, DoublesRecordAgainst } from "@/components/doubles/DoublesProfileSections";
 import {
   FEED_CARD, FEED_LIME, FEED_MUTED_FILL, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_MID,
   LINE, body, display, tabular,
@@ -44,12 +47,17 @@ export function DoublesProfile({ players, matches, playerId, leagueName }: Props
   const lost = stats.lost[playerId] || 0;
   const drawn = stats.drawn[playerId] || 0;
 
-  const ranked = useMemo(() => players
-    .filter((p) => (stats.played[p.id] || 0) >= DOUBLES_PROVISIONAL_GAMES)
-    .sort((a, b) => Math.round(stats.elo[b.id] ?? 0) - Math.round(stats.elo[a.id] ?? 0)),
-    [players, stats]);
-  const place = ranked.findIndex((p) => p.id === playerId) + 1;
+  // The Table's ordering, from core, so this "3rd of 8" and the Table's
+  // place for the same person cannot differ on a tie.
+  const ranked = useMemo(() => rankedDoubles(stats, players), [players, stats]);
+  const place = doublesPlace(stats, players, playerId) ?? 0;
+
+  // One pass for the three lists below, so they cannot disagree about what a
+  // match was. See core/doubles/profile.ts.
+  const history = useMemo(() => doublesHistory(matches, stats, playerId), [matches, stats, playerId]);
+  const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const provisional = played < DOUBLES_PROVISIONAL_GAMES;
+  const streak = stats.currentStreak[playerId] || 0;
 
   /**
    * Each of the last five, with the opposing pair's rating as it stood at the
@@ -145,8 +153,11 @@ export function DoublesProfile({ players, matches, playerId, leagueName }: Props
             <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>win rate</div>
           </div>
           <div>
-            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_LIME, ...tabular }}>
-              {Math.abs(stats.currentStreak[playerId] || 0)}
+            {/* W or L, and coloured by which. It used to print the length
+                alone in the win colour, so three straight losses read as a
+                big lime 3 -- a losing run dressed as a winning one. */}
+            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 24, color: streak > 0 ? FEED_LIME : streak < 0 ? "var(--lost)" : FEED_TEXT_HI, ...tabular }}>
+              {streak > 0 ? `W${streak}` : streak < 0 ? `L${-streak}` : "–"}
             </div>
             <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>current streak</div>
           </div>
@@ -168,7 +179,10 @@ export function DoublesProfile({ players, matches, playerId, leagueName }: Props
         {row("Doubles Elo", Math.round(stats.elo[playerId] ?? 0).toLocaleString())}
       </div>
 
-      <PartnersCard players={players} matches={matches} playerId={playerId} />
+      <PartnersCard players={players} matches={matches} playerId={playerId} overall={overallWinRate(history)} />
+      <DoublesBestWins wins={bestDoublesWins(history)} byId={byId} />
+      <DoublesRecordAgainst records={opponentRecords(history)} byId={byId} />
+      <DoublesHistory rows={history} byId={byId} />
     </>
   );
 }

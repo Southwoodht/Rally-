@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { fullNameOf } from "@/lib/format";
 import { computeDoubles, DOUBLES_PROVISIONAL_GAMES, type DoublesMatch, type DoublesStats } from "@/core/doubles/elo";
+import { rankedDoubles } from "@/core/doubles/standings";
 import {
   FEED_CARD, FEED_LIME, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID,
   body, display, tabular,
@@ -70,8 +71,11 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
   const stats = useMemo(() => computeDoubles(matches), [matches]);
   const { ranked, provisional } = useMemo(() => {
     const all = buildRows(players, stats).sort(byRating);
+    // The placed order comes from core, the one ordering the Home card and
+    // its weekly arrow also read, so no two screens can number people apart.
+    const byId = new Map(all.map((r) => [r.id, r]));
     return {
-      ranked: all.filter((r) => r.played >= DOUBLES_PROVISIONAL_GAMES),
+      ranked: rankedDoubles(stats, players).map((id) => byId.get(id)).filter(Boolean) as Row[],
       provisional: all.filter((r) => r.played < DOUBLES_PROVISIONAL_GAMES),
     };
   }, [players, stats]);

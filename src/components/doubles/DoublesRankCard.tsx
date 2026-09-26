@@ -3,6 +3,8 @@ import React, { useMemo } from "react";
 import { fullNameOf, ordinalSuffix } from "@/lib/format";
 import { computeDoubles, DOUBLES_PROVISIONAL_GAMES, type DoublesMatch } from "@/core/doubles/elo";
 import { partnersOf, bestPartner, mostPlayedWith } from "@/core/doubles/partners";
+import { doublesMovement, doublesPlace } from "@/core/doubles/standings";
+import { MovementIndicator } from "@/components/ui/Surfaces";
 import {
   FEED_CTA, FEED_HERO, FEED_LIME_INK, FEED_ON_HERO, FEED_RADIUS, FEED_TEXT_MID,
   body, display, tabular, tight,
@@ -57,11 +59,14 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
     );
   }
 
-  const ranked = players
-    .filter((p) => (stats.played[p.id] || 0) >= DOUBLES_PROVISIONAL_GAMES)
-    .sort((a, b) => Math.round(stats.elo[b.id] ?? 0) - Math.round(stats.elo[a.id] ?? 0));
-  const place = ranked.findIndex((p) => p.id === meId) + 1;
+  // The Table's own ordering, from core — this card used to break ties on
+  // nothing while the Table broke them on wins, so two level players could
+  // each read a different place depending on the screen.
+  const place = doublesPlace(stats, players, meId) ?? 0;
   const provisional = played < DOUBLES_PROVISIONAL_GAMES;
+  // Places gained this week, as singles shows. Exact rather than stored:
+  // last week's doubles table is just the replay up to a week ago.
+  const movement = provisional ? null : doublesMovement(matches, players, meId);
 
   const rows = partnersOf(matches, meId);
   const byId = new Map(players.map((p) => [p.id, p]));
@@ -87,6 +92,18 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
         <div style={{ fontFamily: display, fontWeight: 700, fontSize: 64, lineHeight: 1, ...tight(64), ...tabular }}>
           {provisional ? "–" : place}
           {!provisional && <span style={{ fontSize: 26, letterSpacing: 0 }}>{ordinalSuffix(place)}</span>}
+          {/* Same wording and treatment as the singles card, so the two pages
+              of the carousel read as one card. */}
+          {movement !== null && (
+            <div style={{ fontFamily: body, fontSize: 12, fontWeight: 500, lineHeight: 1, marginTop: 8, letterSpacing: 0 }}>
+              <MovementIndicator
+                delta={movement}
+                tone="onAccent"
+                size={13}
+                label={movement === 0 ? "Level this week" : (movement > 0 ? "Up " : "Down ") + Math.abs(movement) + " this week"}
+              />
+            </div>
+          )}
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontFamily: display, fontSize: 34, fontWeight: 700, lineHeight: 1, ...tabular }}>
