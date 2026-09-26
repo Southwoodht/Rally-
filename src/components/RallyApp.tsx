@@ -41,6 +41,10 @@ import { DoublesProfile } from "@/components/doubles/DoublesProfile";
 import { DoublesRankCard } from "@/components/doubles/DoublesRankCard";
 import { RankCarousel } from "@/components/doubles/RankCarousel";
 import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
+import { DoublesCompetitions, competitionLabel } from "@/components/doubles/DoublesCompetitions";
+import { useCompetitions } from "@/components/doubles/useCompetitions";
+import { createCompetition, deleteCompetition, drawTies, finishCompetition } from "@/lib/doublesData";
+import { knockoutBracket, roundRobin, tiesReadyToDraw } from "@/core/doubles/competition";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -130,7 +134,7 @@ function nextUpLine(pct: number | null): string {
   return "Nobody's expecting this one. Show them.";
 }
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -187,6 +191,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // before, which is how "singles must not change" is enforced rather than
   // promised: there is no doubles code on the singles path to go wrong.
   const doubles = useDoubles(leagueId, !!doublesEnabled);
+  // Competitions need doubles on AND their own flag. Off, this loads nothing.
+  const comps = useCompetitions(leagueId, !!doublesEnabled && !!competitionsEnabled);
   // Which sport the Table, Profile and the entry screen are showing. Not
   // persisted: unlike the theme or the season toggle, this is a thing you
   // flick between within a visit, and remembering it means opening the Table
@@ -1606,19 +1612,60 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "fixtures" && !showDoubles && feed}
         {tab === "fixtures" && showDoubles && !personal && (
           <div style={{ marginTop: 14 }}>
-            <DoublesFixtures
+            <DoublesCompetitions
               players={players}
+              competitions={comps.competitions}
+              pairs={comps.pairs}
               fixtures={doubles.fixtures}
+              matches={doubles.matches}
               stats={doubles.stats}
               meId={meId}
               canManage={!!canManageMatches}
-              unavailable={doubles.fixturesUnavailable}
+              unavailable={comps.unavailable || !competitionsEnabled}
               onCreatePlayer={addPlayer}
-              onBook={async (f) => { await doubles.book({ ...f, createdBy: meId || null }); flash("Booked"); }}
+              onCreate={async (c, entries) => {
+                // League: the whole schedule now. Knockout: whatever the seeding
+                // makes playable now; later rounds are drawn from results.
+                const r = await createCompetition(leagueId, { ...c, createdBy: meId || null }, entries,
+                  (ps) => c.format === "league" ? roundRobin(ps.map((p) => p.id), c.legs) : tiesReadyToDraw(knockoutBracket(ps, [])));
+                comps.added(r.competition, r.pairs);
+                doubles.addFixtures(r.fixtures);
+                flash(r.fixtures.length + " matches drawn");
+                return r.competition.id;
+              }}
+              onDraw={async (c, ties) => {
+                try {
+                  doubles.addFixtures(await drawTies(leagueId, c.id, ties, comps.pairs.filter((p) => p.competitionId === c.id), meId || null));
+                  flash(ties.length === 1 ? "Match drawn" : ties.length + " matches drawn");
+                } catch (e) {
+                  // Most likely somebody else drew it a moment ago (the unique
+                  // index refused the duplicate). Show what is really there.
+                  await doubles.reload();
+                  throw e;
+                }
+              }}
+              onDelete={async (c) => { await deleteCompetition(c.id); comps.removed(c.id); doubles.dropCompetitionFixtures(c.id); flash("Deleted " + c.name); }}
+              onFinish={async (c, done) => { await finishCompetition(c.id, done); comps.statusChanged(c.id, done ? "finished" : "running"); }}
               onReschedule={doubles.reschedule}
               onCancel={cancelDoublesFixture}
               onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
-            />
+            >
+              <DoublesFixtures
+                players={players}
+                fixtures={doubles.fixtures}
+                stats={doubles.stats}
+                meId={meId}
+                canManage={!!canManageMatches}
+                unavailable={doubles.fixturesUnavailable}
+                onCreatePlayer={addPlayer}
+                onBook={async (f) => { await doubles.book({ ...f, createdBy: meId || null }); flash("Booked"); }}
+                onReschedule={doubles.reschedule}
+                onCancel={cancelDoublesFixture}
+                onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
+                labelFor={(f) => { const c = f.competitionId ? comps.competitions.find((x) => x.id === f.competitionId) : null; return c ? competitionLabel(c, comps.pairs.filter((p) => p.competitionId === c.id).length, f.round) : null; }}
+                noDraw={(f) => !!f.competitionId && comps.competitions.find((x) => x.id === f.competitionId)?.format === "knockout"}
+              />
+            </DoublesCompetitions>
           </div>
         )}
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} onBack={() => setTab("ladder")} />}

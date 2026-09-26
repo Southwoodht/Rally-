@@ -39,6 +39,8 @@
     "src/core/doubles/standings.ts",
     "src/core/doubles/standings.test.ts",
     "src/core/doubles/profile.ts",
-    "src/core/doubles/profile.test.ts"
+    "src/core/doubles/profile.test.ts",
+    "src/core/doubles/competition.ts",
+    "src/core/doubles/competition.test.ts"
   ]
 }

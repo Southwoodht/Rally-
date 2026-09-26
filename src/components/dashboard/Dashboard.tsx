@@ -176,6 +176,7 @@ export default function Dashboard({ session }: { session: Session }) {
           // that has to read as "not switched on" rather than as undefined
           // behaviour.
           doublesEnabled={!!(active as any).doubles_enabled}
+          competitionsEnabled={!!(active as any).competitions_enabled}
         />
       </div>
     );

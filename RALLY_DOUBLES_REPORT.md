@@ -187,7 +187,15 @@ themes on one page holding every doubles surface, and measured rather than
 photographed. Two visual captures kept (rally, paris). If you want the full
 twenty, say so.
 
-**Part B (pairs competitions) is not started.** The brief gates it behind
+**Part B (pairs competitions) — built 26 Sep 2026**, behind
+`leagues.competitions_enabled`, needing `schema_doubles_competitions.sql`.
+League (round robin, 1-2 legs, the club's own points) or seeded knockout with
+byes; staff create, anyone in the league draws a knockout tie once both pairs
+are known. Table and bracket are derived from results, never stored. Tested
+in core (322 checks) and driven through in the dev league. The original note
+follows.
+
+~~Part B (pairs competitions) is not started.~~ The brief gates it behind
 A-Verify, and A-Verify is not fully passed until the two live checks above are
 done.
 

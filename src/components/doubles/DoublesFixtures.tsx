@@ -45,6 +45,14 @@ interface Props {
   onReschedule: (id: string, booked: number | null) => Promise<void>;
   onCancel: (f: DoublesFixture) => Promise<void>;
   onComplete: (f: DoublesFixture, m: { sets: Array<{ a: number; b: number }>; winner: string }) => Promise<void>;
+  /** Inside a competition: no "Book a doubles match", which is for casual games. */
+  hideBooking?: boolean;
+  /** "Winter Doubles · Semi-finals" on a competition tie; null on a casual booking. */
+  labelFor?: (f: DoublesFixture) => string | null;
+  /** A knockout tie needs a winner: no Draw button, and a drawn score will not save. */
+  noDraw?: (f: DoublesFixture) => boolean;
+  /** What to say when there is nothing to list, when the default is wrong. */
+  emptyText?: string;
 }
 
 const label: React.CSSProperties = {
@@ -85,7 +93,7 @@ const parsed = (rows: SetScore[]) =>
     .map((r) => ({ a: parseInt(r.a, 10), b: parseInt(r.b, 10) }))
     .filter((r) => Number.isFinite(r.a) && Number.isFinite(r.b));
 
-export function DoublesFixtures({ players, fixtures, stats, meId, canManage, unavailable, onCreatePlayer, onBook, onReschedule, onCancel, onComplete }: Props) {
+export function DoublesFixtures({ players, fixtures, stats, meId, canManage, unavailable, onCreatePlayer, onBook, onReschedule, onCancel, onComplete, hideBooking, labelFor, noDraw, emptyText }: Props) {
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const nm = (id: string) => { const p = byId.get(id); return p ? fullNameOf(p) : "Unknown player"; };
   const pair = (t: [string, string]) => nm(t[0]) + " & " + nm(t[1]);
@@ -220,14 +228,18 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
 
   return (
     <div>
-      {bookPanel}
+      {!hideBooking && bookPanel}
 
       {upcoming.length === 0 ? (
         <SurfaceCard radius={18}>
+          {emptyText ? (
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{emptyText}</div>
+          ) : (<>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No doubles booked.</div>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             {played ? "Every doubles booking has a result." : "Book one above — pick the four and a time."}
           </div>
+          </>)}
         </SurfaceCard>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -240,10 +252,20 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
             const dateLabel = f.booked != null ? formatMatchDateTime(f.booked) : null;
             const clean = parsed(sets);
             const winner = noScore ? pickedWinner : winnerFromSets(clean);
+            const knockout = !!noDraw?.(f);
+            // A knockout tie that came out level has nobody to send through.
+            // Refused here, with the reason, rather than saved and then
+            // silently left open in the bracket.
+            const drawBlocked = knockout && winner === "draw";
+            const canSave = !!winner && !drawBlocked;
+            const tag = labelFor?.(f) || null;
 
             return (
               <SurfaceCard key={f.id} radius={16} pad="12px 14px">
                 <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
+                  {tag && (
+                    <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tag}</div>
+                  )}
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       {f.teamA.map((id) => (
@@ -326,7 +348,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                         </div>
                         {noScore ? (
                           <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                            {([["A", pair(f.teamA)], ["draw", "Draw"], ["B", pair(f.teamB)]] as const).map(([w, text]) => (
+                            {([["A", pair(f.teamA)], ["draw", "Draw"], ["B", pair(f.teamB)]] as const).filter(([w]) => !(knockout && w === "draw")).map(([w, text]) => (
                               <button
                                 key={w}
                                 onClick={() => setPickedWinner(w)}
@@ -371,12 +393,12 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                         </button>
                         {/* A readout of the score, not an input. */}
                         <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 10, minHeight: 18 }}>
-                          {winner === "A" ? pair(f.teamA) + " won" : winner === "B" ? pair(f.teamB) + " won" : winner === "draw" ? "Drawn" : ""}
+                          {drawBlocked ? "A knockout match needs a winner — that score is level." : winner === "A" ? pair(f.teamA) + " won" : winner === "B" ? pair(f.teamB) + " won" : winner === "draw" ? "Drawn" : ""}
                         </div>
                         <button
-                          disabled={!winner || busy}
-                          onClick={() => winner && act(() => onComplete(f, { sets: noScore ? [] : clean, winner }), () => setOpen(null))}
-                          style={{ ...actionBtn(winner ? FEED_LIME : FEED_RAISED, winner ? FEED_LIME_INK : FEED_TEXT_LOW), width: "100%", flex: "none", cursor: winner && !busy ? "pointer" : "default" }}
+                          disabled={!canSave || busy}
+                          onClick={() => canSave && act(() => onComplete(f, { sets: noScore ? [] : clean, winner: winner as string }), () => setOpen(null))}
+                          style={{ ...actionBtn(canSave ? FEED_LIME : FEED_RAISED, canSave ? FEED_LIME_INK : FEED_TEXT_LOW), width: "100%", flex: "none", cursor: canSave && !busy ? "pointer" : "default" }}
                         >
                           {busy ? "Saving…" : "Save result"}
                         </button>

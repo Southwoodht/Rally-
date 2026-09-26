@@ -47,6 +47,10 @@ export interface UseDoubles {
   cancel: (id: string) => Promise<void>;
   /** Save the result of a booking, then mark the booking played. */
   complete: (f: DoublesFixture, m: { sets: Array<{ a: number; b: number }>; winner: string; enteredBy: string }) => Promise<void>;
+  /** Fixtures created elsewhere (a competition draw), shown without a reload. */
+  addFixtures: (list: DoublesFixture[]) => void;
+  /** A deleted competition's fixtures went with it (cascade). */
+  dropCompetitionFixtures: (competitionId: string) => void;
 }
 
 const EMPTY: DoublesStats = {
@@ -117,6 +121,9 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
   const complete = useCallback(async (f: DoublesFixture, m: { sets: Array<{ a: number; b: number }>; winner: string; enteredBy: string }) => {
     const saved = await insertDoubles(leagueId, {
       teamA: f.teamA, teamB: f.teamB, sets: m.sets, winner: m.winner, enteredBy: m.enteredBy,
+      // A competition tie records which ENTRIES played, which is what the
+      // competition's table counts. Null on an ordinary booking.
+      competitionId: f.competitionId, teamAPairId: f.pairA, teamBPairId: f.pairB,
       // Dated from the booking, as singles does: Saturday's match entered on
       // Monday is still Saturday's, and the rating replays in date order.
       playedAt: f.booked ?? Date.now(),
@@ -130,7 +137,14 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
     setFixtures((prev) => prev.map((x) => (x.id === f.id ? { ...x, done: true, matchId: saved.id } : x)));
   }, [leagueId]);
 
+  const addFixtures = useCallback((list: DoublesFixture[]) => {
+    setFixtures((prev) => [...prev, ...list.filter((f) => !prev.some((x) => x.id === f.id))]);
+  }, []);
+  const dropCompetitionFixtures = useCallback((competitionId: string) => {
+    setFixtures((prev) => prev.filter((f) => f.competitionId !== competitionId));
+  }, []);
+
   const stats = useMemo(() => (enabled ? computeDoubles(matches) : EMPTY), [enabled, matches]);
 
-  return { matches, stats, loading, unavailable, reload, add, fixtures, fixturesUnavailable, book, reschedule, cancel, complete };
+  return { matches, stats, loading, unavailable, reload, add, fixtures, fixturesUnavailable, book, reschedule, cancel, complete, addFixtures, dropCompetitionFixtures };
 }

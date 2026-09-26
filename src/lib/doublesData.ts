@@ -1,5 +1,6 @@
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 import type { DoublesMatch } from "@/core/doubles/elo";
+import type { Competition, CompetitionPair, Tie } from "@/core/doubles/competition";
 
 /**
  * Reading and writing doubles matches.
@@ -28,6 +29,9 @@ export interface DoublesRow extends DoublesMatch {
   enteredBy: string | null;
   confirmedBy: string | null;
   competitionId: string | null;
+  /** The competition entries on each side, when this was a competition tie. */
+  teamAPairId: string | null;
+  teamBPairId: string | null;
   fixtureId: string | null;
 }
 
@@ -44,6 +48,8 @@ export const rowToDoubles = (r: any): DoublesRow => ({
   enteredBy: r.entered_by ?? null,
   confirmedBy: r.confirmed_by ?? null,
   competitionId: r.competition_id ?? null,
+  teamAPairId: r.team_a_pair_id ?? null,
+  teamBPairId: r.team_b_pair_id ?? null,
   fixtureId: r.fixture_id ?? null,
 });
 
@@ -69,6 +75,8 @@ const doublesToRow = (leagueId: string, m: Partial<DoublesRow>) => ({
   entered_by: m.enteredBy ?? null,
   confirmed_by: m.confirmedBy ?? null,
   competition_id: m.competitionId ?? null,
+  team_a_pair_id: m.teamAPairId ?? null,
+  team_b_pair_id: m.teamBPairId ?? null,
   fixture_id: m.fixtureId ?? null,
 });
 
@@ -175,6 +183,11 @@ export interface DoublesFixture {
   done: boolean;
   matchId: string | null;
   createdBy: string | null;
+  /** Set on a competition tie (schema_doubles_competitions.sql); null otherwise. */
+  competitionId: string | null;
+  round: number | null;
+  pairA: string | null;
+  pairB: string | null;
 }
 
 export const rowToDoublesFixture = (r: any): DoublesFixture => ({
@@ -186,6 +199,10 @@ export const rowToDoublesFixture = (r: any): DoublesFixture => ({
   done: !!r.done,
   matchId: r.match_id ?? null,
   createdBy: r.created_by ?? null,
+  competitionId: r.competition_id ?? null,
+  round: r.round ?? null,
+  pairA: r.pair_a ?? null,
+  pairB: r.pair_b ?? null,
 });
 
 /**
@@ -254,4 +271,130 @@ export async function deleteDoublesFixture(id: string): Promise<void> {
   if (still !== (FETCH_FAILED as any) && !still.error && still.data) {
     throw new Error("That cancel was refused — only the four players or league staff can cancel it.");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Competitions — schema_doubles_competitions.sql
+// ---------------------------------------------------------------------------
+
+
+const rowToCompetition = (r: any): Competition => ({
+  id: r.id,
+  leagueId: r.league_id,
+  name: r.name,
+  format: r.format,
+  legs: r.legs ?? 1,
+  pointsWin: r.points_win ?? 3,
+  pointsDraw: r.points_draw ?? 1,
+  status: r.status,
+  createdBy: r.created_by ?? null,
+  createdAt: new Date(r.created_at).getTime(),
+});
+
+const rowToPair = (r: any): CompetitionPair => ({
+  id: r.id, competitionId: r.competition_id, p1: r.p1, p2: r.p2, seed: r.seed,
+});
+
+/**
+ * Every competition in the league, with its pairs. Null on failure, never
+ * empty — same rule as the other Safe reads, and it matters more here: the
+ * tables are a separate migration, so "no competitions" and "cannot ask" will
+ * genuinely differ on the day between the code shipping and the SQL running.
+ */
+export async function loadCompetitionsSafe(leagueId: string): Promise<{ competitions: Competition[]; pairs: CompetitionPair[] } | null> {
+  if (!supabase) return { competitions: [], pairs: [] };
+  try {
+    const comps: any = await withSupabaseTimeout(
+      supabase.from("doubles_competitions").select("*").eq("league_id", leagueId),
+      FETCH_FAILED as any,
+    );
+    if (comps === (FETCH_FAILED as any) || comps.error) return null;
+    const competitions = (comps.data || []).map(rowToCompetition);
+    if (!competitions.length) return { competitions, pairs: [] };
+    const pr: any = await withSupabaseTimeout(
+      supabase.from("doubles_competition_pairs").select("*").in("competition_id", competitions.map((c: Competition) => c.id)),
+      FETCH_FAILED as any,
+    );
+    if (pr === (FETCH_FAILED as any) || pr.error) return null;
+    return { competitions, pairs: (pr.data || []).map(rowToPair) };
+  } catch {
+    return null;
+  }
+}
+
+/** The four players of a tie, looked up from its two pairs. */
+const tieRow = (leagueId: string, competitionId: string, t: Tie, byId: Map<string, CompetitionPair>, createdBy: string | null) => {
+  const a = byId.get(t.pairA)!, b = byId.get(t.pairB)!;
+  return {
+    league_id: leagueId, competition_id: competitionId, round: t.round,
+    pair_a: a.id, pair_b: b.id,
+    team_a_p1: a.p1, team_a_p2: a.p2, team_b_p1: b.p1, team_b_p2: b.p2,
+    created_by: createdBy,
+  };
+};
+
+/**
+ * Create a competition, its pairs, and the ties that can be drawn now.
+ *
+ * THREE WRITES, NO TRANSACTION (§7). Ordered so a failure part-way leaves
+ * something a person can see and delete, never something invisible: the
+ * competition row first, so a failed pairs insert leaves an empty competition
+ * on screen with a Delete button rather than orphaned pairs nobody can reach.
+ */
+export async function createCompetition(
+  leagueId: string,
+  c: { name: string; format: Competition["format"]; legs: number; pointsWin: number; pointsDraw: number; createdBy: string | null },
+  pairs: Array<{ p1: string; p2: string }>,
+  schedule: (pairs: CompetitionPair[]) => Tie[],
+): Promise<{ competition: Competition; pairs: CompetitionPair[]; fixtures: DoublesFixture[] }> {
+  if (!supabase) throw new Error("Not connected.");
+  const comp = rowToCompetition(await run(
+    supabase.from("doubles_competitions").insert({
+      league_id: leagueId, name: c.name.trim(), format: c.format, legs: c.legs,
+      points_win: c.pointsWin, points_draw: c.pointsDraw, created_by: c.createdBy,
+    }).select().single(),
+    "creating the competition",
+  ));
+  const saved: CompetitionPair[] = (await run(
+    supabase.from("doubles_competition_pairs").insert(
+      pairs.map((p, i) => ({ competition_id: comp.id, p1: p.p1, p2: p.p2, seed: i + 1 })),
+    ).select(),
+    "entering the pairs",
+  ) || []).map(rowToPair);
+  const fixtures = await drawTies(leagueId, comp.id, schedule(saved), saved, c.createdBy);
+  return { competition: comp, pairs: saved, fixtures };
+}
+
+/** Insert ties as doubles fixtures. The unique index makes a double draw harmless. */
+export async function drawTies(
+  leagueId: string, competitionId: string, ties: Tie[], pairs: CompetitionPair[], createdBy: string | null,
+): Promise<DoublesFixture[]> {
+  if (!supabase) throw new Error("Not connected.");
+  if (!ties.length) return [];
+  const byId = new Map(pairs.map((p) => [p.id, p]));
+  const data = await run(
+    supabase.from("doubles_fixtures").insert(ties.map((t) => tieRow(leagueId, competitionId, t, byId, createdBy))).select(),
+    "drawing the fixtures",
+  );
+  return (data || []).map(rowToDoublesFixture);
+}
+
+export async function finishCompetition(id: string, finished: boolean): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  await run(supabase.from("doubles_competitions").update({ status: finished ? "finished" : "running" }).eq("id", id), "updating the competition");
+}
+
+/**
+ * Delete a competition. Its unplayed fixtures and its pairs go with it
+ * (cascade); results already played are doubles matches and are kept.
+ * Same refused-delete check as every other delete here.
+ */
+export async function deleteCompetition(id: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const gone = await run(
+    supabase.from("doubles_competitions").delete().eq("id", id).select("id"),
+    "deleting the competition",
+  );
+  if (gone && gone.length) return;
+  throw new Error("That delete was refused — only league staff can delete a competition.");
 }
