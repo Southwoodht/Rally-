@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { MoreHorizontal, Check, Search, X } from "lucide-react";
+import { MoreHorizontal, Check, Pin, Search, X } from "lucide-react";
 import { FEED_OVERLAY, FEED_CARD, FEED_HERO, FEED_LIME, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, input } from "@/lib/theme";
 
 // One scrolling row of chips in place of the stack of controls that used to
@@ -83,7 +83,7 @@ function OptionRow({ option, selected, onPick }: { option: FilterOption; selecte
   );
 }
 
-export function FilterChips({ filters, overflow, search }: {
+export function FilterChips({ filters, overflow, search, pin }: {
   filters: FilterDef[];
   /** Was a permanent text field above the table. It is a chip now: a box
    *  you use occasionally should not hold a row of the screen open all the
@@ -93,6 +93,9 @@ export function FilterChips({ filters, overflow, search }: {
   /** What sits behind the "..." chip — the ranking explainer, and anything
    *  else read once rather than every visit. */
   overflow?: { title: string; content: React.ReactNode };
+  /** Make what is showing now the view this screen opens on. `on` when the
+   *  current filters ARE the saved default; tapping then turns it off. */
+  pin?: { on: boolean; onToggle: () => void };
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const active = filters.find((f) => f.key === open);
@@ -117,6 +120,19 @@ export function FilterChips({ filters, overflow, search }: {
           <Chip active={false} onClick={() => setOpen("__overflow")} label="More">
             <MoreHorizontal size={16} strokeWidth={2} style={{ display: "block" }} />
           </Chip>
+        )}
+        {/* Icon only, after the dots: it is set once and then left, so it
+            gets the least room on the row. Filled when what is showing IS
+            your default. */}
+        {pin && (
+          <button
+            onClick={pin.onToggle}
+            aria-label={pin.on ? "Default view — tap to turn off" : "Make this my default view"}
+            aria-pressed={pin.on}
+            style={{ ...chipBase, background: pin.on ? FEED_HERO : FEED_CARD, color: pin.on ? FEED_ON_HERO : FEED_TEXT_MID }}
+          >
+            <Pin size={15} strokeWidth={2} fill={pin.on ? "currentColor" : "none"} style={{ display: "block" }} />
+          </button>
         )}
       </div>
 

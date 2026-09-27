@@ -118,6 +118,31 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const activeRanked = useMemo(() => ranked.filter((p) => recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
   const nonActiveRanked = useMemo(() => ranked.filter((p) => !recentlyActiveIds.has(p.id)), [ranked, recentlyActiveIds]);
   const [activeScope, setActiveScope] = useState<"active" | "nonactive" | "all">("active");
+
+  // The view this table opens on — Sam, 27 Sep: "a small option next to the
+  // dots and search so when I log in it's on that default unless turned
+  // off". Saved per league on this device, the way the season toggle above
+  // already is: it is a preference about how YOU read the table, not a
+  // league setting, so nobody else's table changes.
+  const defaultKey = "rally.tableDefault." + (group?.id || "none");
+  type TableDefault = { metric: string; who: string; when: string };
+  const [savedDefault, setSavedDefault] = useState<TableDefault | null>(null);
+  useEffect(() => {
+    let d: TableDefault | null = null;
+    try { const raw = window.localStorage.getItem(defaultKey); d = raw ? JSON.parse(raw) : null; } catch { d = null; }
+    setSavedDefault(d);
+    if (!d) return;
+    // Applied once, when the table opens for this league. After that the
+    // chips are yours to change for the visit; the pin just shows it is no
+    // longer the default view.
+    if (d.metric && onMode && d.metric !== (!mode || mode === "overall" ? "official" : mode)) onMode(d.metric);
+    if (d.who === "legacy") setView("legacy");
+    else if (d.who === "active" || d.who === "nonactive" || d.who === "all") { setView("active"); setActiveScope(d.who); }
+    if (d.when === "season") { setScope("season"); setTableYr("all"); }
+    else if (d.when === "all") { setScope("all"); setTableYr("all"); }
+    else if (/^\d{4}$/.test(d.when)) { setScope("all"); setTableYr(Number(d.when)); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultKey]);
   const [query, setQuery] = useState("");
   const scopedRanked = activeScope === "active" ? activeRanked : activeScope === "nonactive" ? nonActiveRanked : ranked;
 
@@ -243,10 +268,23 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     };
   });
 
+  const current: TableDefault = { metric: metricValue, who: view === "legacy" ? "legacy" : activeScope, when: periodValue };
+  const pinned = !!savedDefault && savedDefault.metric === current.metric && savedDefault.who === current.who && savedDefault.when === current.when;
+  const togglePin = () => {
+    if (pinned) {
+      try { window.localStorage.removeItem(defaultKey); } catch { /* nothing saved to remove */ }
+      setSavedDefault(null);
+      return;
+    }
+    try { window.localStorage.setItem(defaultKey, JSON.stringify(current)); } catch { /* private window: it lasts this visit */ }
+    setSavedDefault(current);
+  };
+
   return (
     <div>
       <FilterChips
         filters={filters}
+        pin={{ on: pinned, onToggle: togglePin }}
         search={{ value: query, onChange: setQuery }}
         overflow={{ title: "How the ranking works", content: <RankingInfo /> }}
       />
