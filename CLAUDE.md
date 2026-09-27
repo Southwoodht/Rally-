@@ -1171,6 +1171,24 @@ before and after.
 the table prints has to have enough resolution for `Math.round` to mean
 something, because that rounding is what the ranking uses.
 
+**REBUILT 2026-09-27: Official judges every result by the opponent's proven
+strength.** Sam's ruling, after seeing three versions on Seacourt 2026's real
+matches with levels at the date. Supersedes everything below about the five
+best wins, win rate squared and `LOSS_GAP_FORGIVE` — those constants are gone.
+An opponent's strength is the Strength table's network rating blended with
+their level at the time, the level counting as `OFFICIAL_LEVEL_TRUST` (6)
+matches of evidence; a win earns q = strength / club average, a loss costs
+clamp(2 − q, 0.4, 1.6), and points = (earned + 1) / (earned + cost + 2) ×
+games/(games+10) × 100. The +1/+2 is load-bearing: without it an unbeaten
+record scores 100% whoever it beat. `official.test.ts` pins Seacourt 2026 at
+Zaach 58.3, Sam 50.0, Charlie 42.8, Adrian 32.4 (was 85.4 / 55.4 / 39.8 /
+20.5); nobody changed place, Sam/Charlie went from 1.39× to 1.17×, and
+Charlie's thirteen matches against Zaach now add to his score. By design,
+beating the best and losing to the worst scores the same as the reverse —
+the same performance, as in a chess performance rating.
+
+The history below is kept because it is how this was arrived at.
+
 **APPLIED 2026-09-20: Official weighs a loss by the gap.** Sam ruled after
 seeing the numbers. `LOSS_GAP_FORGIVE` 0.10 with symmetric clamps 0.40/1.60,
 in `core/constants.ts` next to `LV_FACTOR` and `MARGIN_WEIGHT`. One category

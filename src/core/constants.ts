@@ -36,48 +36,22 @@ export const SUBS = ["Low", "Medium", "High"];
 // cost of changing every pair the new scale never touched.
 export const LV_FACTOR = 0.45, LV_MIN = 0.05, LV_MAX = 4.0;
 
-// Divides the opponent's level into the win-quality multiplier in
-// core/official.ts. Was 4 on the 12-point scale, where the best possible
-// opponent gave 1 + 11/4 = 3.75. 6.2 keeps the top of the range worth the
-// same on an 18-point scale (1 + 17/6.2 = 3.74) instead of inflating every
-// win over a rated opponent by half again. With this, no league position
-// changes on the Official table; left at 4, two players swap places.
-export const WIN_QUALITY_DIVISOR = 6.2;
-
-// What a loss is worth, by who it was against.
+// Official points: how an opponent's strength is judged, and what a loss to
+// them costs. Sam ruled on 2026-09-27; the reasoning is on computeOfficial.
 //
-// Official points counted every loss the same: losing to the best player in
-// the club cost exactly what losing to a beginner cost. Measured on Seacourt
-// 2026, that meant Charlie playing Zaach thirteen times and going 3-10 scored
-// him 29.1 where avoiding Zaach altogether would have scored 39.9 — the table
-// was paying him 10.7 points to duck the fixture.
+// OFFICIAL_LEVEL_TRUST is how many matches' worth of evidence a recorded level
+// counts for. An opponent's strength is their level and their results blended
+// by weight: with 3 matches the level is two-thirds of it, with 6 it is half,
+// with 25 (Zaach, 2026) under a fifth. Six is the number the Global table
+// already uses for "six matches halve the trust in a claim".
 //
-// So a loss now weighs by the gap: one category to the better of you costs
-// 0.7 of a loss, one category below you costs 1.3. Linear in level points
-// (three to a category) and clamped, so a four-category gap does not reduce a
-// defeat to nothing.
-//
-// **The clamps are symmetric about 1 on purpose.** 0.45/1.45 was written
-// first and a test caught it: at a gap of five it forgave 0.50 and punished
-// only 0.45, so the same gap meant different things depending which way round
-// it ran. That is the shape §9 records as genuinely broken in elo.ts, where
-// LV_MIN 0.05 against LV_MAX 4.0 means beating somebody below you scores a
-// twentieth while losing to them costs quadruple. One of those in the engine
-// is enough. At 0.40/1.60 the clamp bites at exactly two categories, so both
-// full categories of gap can still be expressed.
-//
-// LOSS_GAP_FORGIVE is deliberately gentler than LV_FACTOR's 0.45. Elo is
-// settling one match; this is reweighting a season, and a season has more
-// chances to compound.
-//
-// The global table learned this on 2026-09-05 and weighs a bad loss there
-// too — see badLossPenalty. This is the same idea arriving at the league
-// table, in the form the league's formula can take.
-//
-// **A missing level on either side means no adjustment at all: the loss
-// weighs exactly 1.** A gap needs two ends, and guessing one is the mistake
-// the 2026-09-06 ruling exists to prevent.
-export const LOSS_GAP_FORGIVE = 0.10, LOSS_WEIGHT_MIN = 0.40, LOSS_WEIGHT_MAX = 1.60;
+// A loss costs (2 - q) where q is the opponent's strength against the club
+// average, clamped to 0.40..1.60 — symmetric about 1, so a gap means the same
+// thing whichever way round it runs (see §9 on LV_MIN/LV_MAX in elo.ts for
+// what an asymmetric pair does). These replaced WIN_QUALITY_DIVISOR and
+// LOSS_GAP_FORGIVE, which judged opponents by level alone.
+export const OFFICIAL_LEVEL_TRUST = 6;
+export const OFFICIAL_LOSS_MIN = 0.40, OFFICIAL_LOSS_MAX = 1.60;
 
 // How much of a scored result is the margin rather than the bare win or
 // loss: worth `(1 - W) * result + W * share`. Lived in globalTable.ts until

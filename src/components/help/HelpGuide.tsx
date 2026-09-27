@@ -17,7 +17,7 @@ const SECTIONS: Sect[] = [
   {
     id: "rankings", icon: "📊", title: "Rankings",
     points: [
-      { label: "Official", text: "The headline table. Built from the average strength of your wins, your win rate, and how much you play. Beating strong players matters far more than piling up easy ones." },
+      { label: "Official", text: "The headline table. Every result is judged by how strong the opponent really is — from their results, with their level filling in until they have played a few matches. Beating a strong player earns far more than beating a weak one, losing to a strong player costs little, and how much you play counts too." },
       { label: "ELO", text: "A pure skill rating, starting at 0. Beating someone stronger than you earns a lot; losing to someone stronger costs almost nothing." },
       { label: "Record", text: "Your win rate (a draw counts as half), nudged by opponent strength and how much you've played." },
       { label: "Form", text: "Just your last 5 results — shows who's hot right now, regardless of overall record." },

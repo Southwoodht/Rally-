@@ -167,7 +167,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // of chips. The stack ran to roughly 1400px of chrome before rank 1
   // appeared, which is more table than table.
   const METRICS = [
-    { value: "official", label: "Official", note: "Your five best wins by opponent quality, times how regularly you play." },
+    { value: "official", label: "Official", note: "Every result judged by how strong the opponent really is, times how regularly you play." },
     { value: "elo", label: "Elo", note: "Moves every match, by how surprising the result was." },
     { value: "network", label: "Strength", note: "Built from who beat whom, so it counts who you played and not just how many you won." },
     { value: "record", label: "Record", note: "Win rate, weighted by opposition and how much you have played." },
