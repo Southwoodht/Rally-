@@ -207,11 +207,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             <Toggle on={feedFilter === "league"} onClick={() => setFeedFilter("league")} label="League" />
             <Toggle on={feedFilter === "mine"} onClick={() => setFeedFilter("mine")} label="Mine" />
             {!doublesMode && <Toggle on={feedFilter === "custom"} onClick={() => setFeedFilter("custom")} label="Custom" />}
-            {/* Only when there is something to filter to. A chip that always
-                shows an empty feed teaches people the feature is broken. */}
-            {!doublesMode && !!(doublesMatches || []).length && (
-              <Toggle on={feedFilter === "doubles"} onClick={() => setFeedFilter("doubles")} label="Doubles" />
-            )}
+
           </div>
           {feedFilter === "custom" && (
             <div style={{ marginBottom: 14 }}>
@@ -291,11 +287,14 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               .filter((d) => d.status === undefined || d.status === "confirmed")
               .filter((d) => feedFilter === "mine" ? [...d.teamA, ...d.teamB].includes(meId) : feedFilter !== "custom")
               .map((d) => ({ kind: "doubles", date: d.playedAt, key: "d-" + d.id, d }));
-            const items = (feedFilter === "doubles" || doublesMode ? doublesItems : [
+            // Two feeds, not one mixed stream. Since Home got its doubles
+            // twin (Singles / Doubles switch), the singles feed is singles
+            // only — Sam, 27 Sep: "these doubles are still showing in the
+            // singles page". Doubles results live in the doubles feed.
+            const items = (doublesMode ? doublesItems : [
               ...feedList.map((m) => ({ kind: "result", date: m.date, key: m.id, m })),
               ...events.filter((e) => true).map((e) => ({ kind: "event", date: e.date, key: e.id, e })),
               ...(posts || []).filter((p) => !p.isAnnouncement).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),
-              ...doublesItems,
             ]).sort((a: any, b: any) => b.date - a.date);
             if (!items.length) return null;
             return <div style={listCard}>{items.map((it) => {
