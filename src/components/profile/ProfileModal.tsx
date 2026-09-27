@@ -2,7 +2,11 @@
 import React from "react";
 import { ChevronLeft } from "lucide-react";
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
-import { FEED_PAGE, FEED_TEXT_MID, body } from "@/lib/theme";
+import { ModeSwitch } from "@/components/doubles/ModeSwitch";
+import { DoublesProfile } from "@/components/doubles/DoublesProfile";
+import { Avatar } from "@/components/ui/Avatar";
+import { fullNameOf } from "@/lib/format";
+import { FEED_PAGE, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
 
 // The same profile, read by somebody else. viewer="other" is the whole
 // difference: no settings, no linked player, no Edit on a result that isn't
@@ -21,7 +25,15 @@ import { FEED_PAGE, FEED_TEXT_MID, body } from "@/lib/theme";
 // you were. /players/[id] is the route, and it exists for people whose data
 // this app does NOT have — somebody from search or the friends list, where
 // there is no shared league to read from.
-export function ProfileModal({ player, onClose, profileYear, ...shared }: any) {
+/**
+ * `doubles` is present only when the league has doubles on. With it, the page
+ * carries the same Singles / Doubles switch as your own profile — Sam, 27 Sep:
+ * "same as me" — and the doubles half is the very DoublesProfile you see for
+ * yourself, pointed at them. The switch is the app-wide one (sport), so
+ * opening somebody from the doubles table lands on their doubles.
+ */
+export function ProfileModal({ player, onClose, profileYear, doubles, sport, onSport, ...shared }: any) {
+  const showDoubles = !!doubles && sport === "doubles";
   return (
     <div style={{ position: "fixed", inset: 0, background: FEED_PAGE, zIndex: 120, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "calc(8px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))" }}>
@@ -35,12 +47,40 @@ export function ProfileModal({ player, onClose, profileYear, ...shared }: any) {
           <ChevronLeft size={22} strokeWidth={2.2} /> Back
         </button>
 
-        <ProfileContainer
-          key={player.id + ":" + String(profileYear ?? "all")}
-          {...shared}
-          player={player}
-          viewer={shared?.meId === player.id ? "self" : "other"}
-        />
+        {doubles && (
+          <div style={{ margin: "0 -16px 10px" }}>
+            <ModeSwitch mode={sport} onMode={onSport} />
+          </div>
+        )}
+
+        {showDoubles ? (
+          <>
+            {/* The singles half opens on their name and photo; the doubles
+                half has none of its own, so it gets the same identity line. */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0 2px" }}>
+              <Avatar player={player} size={48} />
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 22, color: FEED_TEXT_HI }}>{fullNameOf(player)}</span>
+            </div>
+            <div style={{ margin: "0 -16px" }}>
+              <DoublesProfile
+                players={shared.players}
+                matches={doubles.matches}
+                playerId={player.id}
+                leagueName={doubles.leagueName}
+                isMe={shared?.meId === player.id}
+                onOpenProfile={shared.onOpen}
+                onOpenMatch={doubles.onOpenMatch}
+              />
+            </div>
+          </>
+        ) : (
+          <ProfileContainer
+            key={player.id + ":" + String(profileYear ?? "all")}
+            {...shared}
+            player={player}
+            viewer={shared?.meId === player.id ? "self" : "other"}
+          />
+        )}
       </div>
     </div>
   );

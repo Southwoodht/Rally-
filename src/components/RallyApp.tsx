@@ -1901,7 +1901,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const mayEdit = [...m.teamA, ...m.teamB].includes(meId) || !!canManageMatches;
         const close = () => setEditDoublesId(null);
         return (
-          <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 95, overflowY: "auto", paddingBottom: 40 }}>
+          // Above ProfileModal (120): a result opened from somebody's doubles
+          // profile has to open on top of it, not behind.
+          <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 130, overflowY: "auto", paddingBottom: 40 }}>
             <div style={{ ...wrap, paddingTop: "calc(env(safe-area-inset-top) + 14px)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
                 <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{mayEdit ? "Edit doubles result" : "Doubles result"}</span>
@@ -1954,7 +1956,17 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </div>
         </div>
       )}
-      {profilePlayer && <ProfileModal player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)} />}
+      {profilePlayer && (
+        <ProfileModal
+          player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)}
+          sport={sport} onSport={setSport}
+          doubles={!!doublesEnabled && !personal && !doubles.unavailable ? {
+            matches: doubles.matches,
+            leagueName: group?.name || leagueName || "League",
+            onOpenMatch: setEditDoublesId,
+          } : undefined}
+        />
+      )}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
       {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && <GroupSheet friendly={isFriendlyLeague(gid)} groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onManageLeagues={onManageLeagues} onClose={() => setGroupSheet(false)} />}

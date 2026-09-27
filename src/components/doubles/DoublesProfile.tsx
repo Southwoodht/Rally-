@@ -39,11 +39,13 @@ interface Props {
   onOpenProfile?: (id: string) => void;
   /** Tap a result to see — and, if allowed, correct — the match. */
   onOpenMatch?: (matchId: string) => void;
+  /** False when reading somebody else's — the empty state speaks to them. */
+  isMe?: boolean;
 }
 
 const pct = (n: number) => Math.round(n * 100);
 
-export function DoublesProfile({ players, matches, playerId, leagueName, onOpenProfile, onOpenMatch }: Props) {
+export function DoublesProfile({ players, matches, playerId, leagueName, onOpenProfile, onOpenMatch, isMe = true }: Props) {
   const stats = useMemo(() => computeDoubles(matches), [matches]);
 
   const played = stats.played[playerId] || 0;
@@ -114,7 +116,9 @@ export function DoublesProfile({ players, matches, playerId, leagueName, onOpenP
   if (!played) {
     return (
       <div style={{ margin: "12px 16px 0", padding: 22, borderRadius: FEED_RADIUS, background: FEED_CARD, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
-        No doubles matches yet. Log one and this fills in.
+        {isMe
+          ? "No doubles matches yet. Log one and this fills in."
+          : `${(players.find((p) => p.id === playerId)?.name || "They").trim()} hasn't played any doubles yet.`}
       </div>
     );
   }
