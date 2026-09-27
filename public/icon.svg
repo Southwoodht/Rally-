@@ -1,52 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Southwood">
   <!--
     Southwood app icon — the master. Every PNG in public/ is rendered from
-    this file (scripts/build-icons.md), so the mark can be re-exported
-    without being redrawn.
+    this file (scripts/build-icons.md).
 
-    REDRAWN 2026-09-27 from the R to an S, when the app stopped being called
-    Rally (the name was taken several times over, the LTA's booking service
-    among them). Everything but the letter is the R's: cream #F4EFE3 on the
-    #16271F field, a gold #E9C46A ball, the same 92 stroke with round caps,
-    the same 0.92 scale onto the same optical centre.
+    THE S IS FRAUNCES 600's OWN "S", its outline copied into this file, not
+    drawn. Sam, 2026-09-27, after two hand-drawn monoline S's: he wanted it
+    "more like" the serif greetings on the Paris and SW19 themes. Four were
+    compared side by side (Fraunces 600, Fraunces 700, Fraunces at its 144
+    optical size, Cormorant Garamond 700) and he chose this one. Fraunces is
+    the Paris theme's display face and is under the SIL Open Font Licence,
+    which permits using its outlines in a logo.
 
-    THE S IS ONE SMOOTH STROKE OF CUBIC CURVES. The first S (same day)
-    was built from the R's parts — two stadium bowls with flat top, spine
-    and foot — and Sam called it "wonky and weird": straight runs make an S
-    read as blocky, halfway to a 5. This one is a classic monoline S: round
-    bowls, a spine that runs diagonally down to the right, the lower bowl a
-    touch wider than the upper as type does it, terminals that open out
-    rather than hook. Chosen from three drawn and compared side by side.
+    Being an outline it is FILLED, not stroked, so there is no stroke width
+    to keep in step across the masters — the path data is the letter. Cap
+    height 560 on the 1024 tile, vertically centred; the ball (r 108, gold,
+    seams clipped to the circle) sits on the letter's baseline 34 units to
+    its right, and letter plus ball are centred on x 506 — a touch right of
+    the tile centre, because the ball throws weight right less than the
+    serifs throw it left.
 
-    Geometry on the 1024 master, stroke centre lines:
-      spans       x 302..642, y 257..767 — the R's height exactly
-      ball        centre (818, 703) r 108, clear of the lower bowl
-    Mark plus ball spans x 256..926, centre 591, which the transform moves
-    onto the optical centre (502, 512).
-
-    The ball's seams are clipped to the circle so their round caps cannot
-    give it horns. No rounded corners: iOS and Android apply their own mask.
+    Regenerate rather than edit by hand: the outline came from opentype.js
+    reading the font file, scaled so the glyph's bounding box is 560 tall.
+    No rounded corners — iOS and Android apply their own mask.
   -->
   <defs>
     <linearGradient id="sw-field" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#1E3529"/>
       <stop offset="1" stop-color="#12211A"/>
     </linearGradient>
-    <clipPath id="sw-ball-clip">
-      <circle cx="818" cy="703" r="108"/>
-    </clipPath>
+    <clipPath id="sw-ball"><circle cx="721.2" cy="684.0" r="108"/></clipPath>
   </defs>
-
   <rect width="1024" height="1024" fill="url(#sw-field)"/>
-
-  <g transform="translate(502 512) scale(0.92) translate(-591 -512)">
-    <g fill="none" stroke="#F4EFE3" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M626 322C598 280 545 257 474 257C382 257 322 304 322 376C322 448 380 478 474 503C572 529 642 566 642 648C642 728 574 767 474 767C386 767 326 736 302 690"/>
-    </g>
-    <circle cx="818" cy="703" r="108" fill="#E9C46A"/>
-    <g clip-path="url(#sw-ball-clip)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
-      <path d="M715.4 669.5Q772.6 657.6 784.5 600.4"/>
-      <path d="M920.6 736.5Q863.4 748.4 851.5 805.6"/>
-    </g>
+  <path d="M400.0 791.2L400.0 791.2Q368.6 791.2 346.0 783.8Q323.4 776.3 309.1 769.0Q294.7 761.7 287.8 761.7L287.8 761.7Q280.1 761.7 275.2 766.3Q270.2 770.9 265.8 776.9Q261.4 782.8 256.4 787.4Q251.4 792 244.1 792L244.1 792Q236.1 792 230.9 787.2Q225.7 782.4 223.8 771.3L223.8 771.3L197.4 646.4Q195.9 638.0 199.5 631.9Q203.1 625.8 211.6 623.1L211.6 623.1Q220.8 620.0 227.7 623.5Q234.6 626.9 239.5 636.9L239.5 636.9Q261.4 679.8 286.1 705.1Q310.8 730.3 337.6 741.1Q364.4 751.8 392.4 751.8L392.4 751.8Q431.4 751.8 454.0 731.5Q476.6 711.2 476.6 677.1L476.6 677.1Q477.0 654.9 466.7 637.1Q456.3 619.3 427.6 602.4Q398.9 585.5 342.6 567.2L342.6 567.2Q284.3 548.4 249.3 523.7Q214.3 499.0 198.5 466.0Q182.8 433.1 182.8 389.4L182.8 389.4Q182.8 343.1 204.9 307.8Q226.9 272.6 266.9 252.9Q306.9 233.1 360.6 233.1L360.6 233.1Q395.0 233.1 417.6 240.2Q440.2 247.3 454.8 254.6Q469.4 261.9 478.9 261.9L478.9 261.9Q487.4 261.9 492.0 254.4Q496.6 246.9 501.9 239.5Q507.3 232 518.0 232L518.0 232Q526.4 232 532.0 237.4Q537.5 242.7 541.7 257.3L541.7 257.3L577.8 382.9Q580.8 392.9 577.2 400.7Q573.5 408.6 564.7 411.3L564.7 411.3Q555.9 414.3 548.8 410.7Q541.7 407.0 537.2 398.2L537.2 398.2Q513.4 350.7 486.4 323.4Q459.4 296.0 430.7 284.1Q401.9 272.2 372.4 272.2L372.4 272.2Q333.4 272.2 310.2 294.6Q287.0 317.0 287.0 353.0L287.0 353.0Q287.0 374.9 297.2 393.6Q307.3 412.4 335.7 430.2Q364.0 448.0 417.6 468.0L417.6 468.0Q477.0 489.0 512.1 513.5Q547.1 538.0 562.2 568.9Q577.4 599.7 577.4 639.6L577.4 639.6Q577.4 681.3 556.3 715.8Q535.2 750.2 495.8 770.7Q456.3 791.2 400.0 791.2Z" fill="#F4EFE3"/>
+  <circle cx="721.2" cy="684.0" r="108" fill="#E9C46A"/>
+  <g clip-path="url(#sw-ball)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
+    <path d="M618.6 650.5Q675.8 638.6 687.7 581.4"/>
+    <path d="M823.8 717.5Q766.6 729.4 754.7 786.6"/>
   </g>
 </svg>

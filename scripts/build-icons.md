@@ -1,8 +1,9 @@
 # Rebuilding the app icons
 
 **2026-09-27: the letter is an S now.** The app became Southwood and the R
-was redrawn as an S — a smooth monoline S in the same 92 stroke, with the
-ball moved to (818, 703).
+became an S: FRAUNCES 600's own S outline (filled, not stroked), chosen by
+Sam from four serif options. It is generated, not drawn: opentype.js reads
+the font file and writes the path — see the comment in icon.svg.
 Where this file says "the R" or "the letter", read the S — the rules are the
 same. That rebuild was rasterised with Playwright's Chromium in a cloud
 session (`/tmp/.../raster.mjs`: open each master as an <img> at the target
