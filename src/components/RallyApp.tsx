@@ -1597,7 +1597,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             flag off these two lines render nothing and the screens below are
             byte-for-byte what they were. */}
         {(tab === "ladder" || tab === "add" || tab === "profile" || tab === "fixtures") && !!doublesEnabled && !personal && (
-          <ModeSwitch mode={sport} onMode={setSport} />
+          // A gap under it: the Global table button and the league pill sat
+          // flush against the switch and read as touching it (Sam, 27 Sep).
+          <div style={{ marginBottom: 14 }}>
+            <ModeSwitch mode={sport} onMode={setSport} />
+          </div>
         )}
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><Globe size={18} /><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} /></button>}
