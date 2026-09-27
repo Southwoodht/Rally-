@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import { ChevronDown, Settings } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { STAR_COUNT, starsForLevel } from "@/core/stars";
 import { fullNameOf } from "@/lib/format";
-import { FEED_CARD, FEED_LIME, FEED_MUTED_FILL, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
+import { FEED_CARD, FEED_LIME, FEED_MUTED_FILL, FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
 // The top of the profile: whose it is, and how good they are.
 
@@ -75,16 +75,23 @@ export interface ProfileHeaderProps {
   levelLabel?: string;
   viewer?: "self" | "other";
   onPickLeague?: () => void;
-  onSettings?: () => void;
 }
 
 export function ProfileHeader({
-  leagueName, player, meta, levelLabel, viewer = "self", onPickLeague, onSettings,
+  leagueName, player, meta, levelLabel, viewer = "self", onPickLeague,
 }: ProfileHeaderProps) {
   const isSelf = viewer === "self";
 
   return (
     <div>
+      {/* Your own profile is a tab, and the app header above it already
+          carries the league pill — drawing a second one here put "Seacourt"
+          on the screen twice. The settings gear went with it: it opened Run
+          your league, which the menu already opens, so it was two doors to
+          one room. Friends and Linked player are rows at the foot of the
+          profile. Somebody else's profile keeps the pill, because there it
+          says which league you are reading them in. */}
+      {!isSelf && (
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 18 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <button
@@ -102,18 +109,8 @@ export function ProfileHeader({
             Profile
           </div>
         </div>
-        {/* Somebody else's profile has no settings — there is nothing on it
-            that belongs to the person reading. */}
-        {isSelf && onSettings && (
-          <button
-            onClick={onSettings}
-            aria-label="Settings"
-            style={{ width: 44, height: 44, borderRadius: 22, background: FEED_RAISED, border: "none", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
-          >
-            <Settings size={20} color={FEED_TEXT_HI} strokeWidth={2} />
-          </button>
-        )}
       </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         {/* Card-coloured gap inside the ring, so it reads on any avatar —

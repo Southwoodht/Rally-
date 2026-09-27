@@ -42,7 +42,7 @@ const shortDate = (ts: number) => {
 
 export function ProfileContainer({
   player, players, matches, elo, wdl, form, deltas, ratingBefore, meId, group, groups,
-  viewer = "self", onOpen, onOpenMatch, onProposeEdit, onSettings, onPickLeague,
+  viewer = "self", onOpen, onOpenMatch, onProposeEdit, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
   myAuthId, onMessage, onOpenMatches,
 }: any) {
@@ -314,7 +314,6 @@ export function ProfileContainer({
         meta: data.meta || undefined,
         levelLabel: (() => { const lv = levelNow(player); return lv ? lv.cat + " · " + lv.sub : "No level set"; })(),
         onPickLeague: groups && groups.length > 1 ? onPickLeague : undefined,
-        onSettings,
       }}
       record={data.record}
       gap={data.gap}
