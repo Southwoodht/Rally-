@@ -31,7 +31,9 @@ const AVATAR = 40;
 /** Enough to show the shape of somebody's circle without becoming a list. */
 const SHOWN = 8;
 
-export function FriendsCard({ authId, isMe, onOpenProfile }: {
+export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
+  /** Spacing, which depends on what the card sits between. */
+  style?: React.CSSProperties;
   /** Whose profile this is. Their ACCOUNT id — a shell player has none. */
   authId?: string | null;
   isMe?: boolean;
@@ -61,7 +63,7 @@ export function FriendsCard({ authId, isMe, onOpenProfile }: {
   const shown = all ? rows : rows.slice(0, SHOWN);
 
   return (
-    <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 12 }}>
+    <SurfaceCard radius={18} pad="14px" style={style || { marginTop: 16 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
         <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, textTransform: "uppercase", letterSpacing: 0.8 }}>
           Friends
@@ -87,7 +89,9 @@ export function FriendsCard({ authId, isMe, onOpenProfile }: {
             }}
           >
             <Avatar player={{ id: f.authId, name: f.name, avatarUrl: f.avatarUrl }} size={AVATAR} />
-            <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_HI, lineHeight: 1.25, width: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {/* Two lines, not an ellipsis: "Samuel Hen…" cut off the half of
+                the name that says which Samuel. */}
+            <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_HI, lineHeight: 1.25, width: "100%", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
               {f.name}
             </span>
             {/* Marked rather than grouped. A separate "Mutual" section would

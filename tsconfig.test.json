@@ -45,6 +45,8 @@
     "src/core/doubles/competitionAdapters.ts",
     "src/core/doubles/competitionAdapters.test.ts",
     "src/core/doubles/home.ts",
-    "src/core/doubles/home.test.ts"
+    "src/core/doubles/home.test.ts",
+    "src/core/social/suggestions.ts",
+    "src/core/social/suggestions.test.ts"
   ]
 }

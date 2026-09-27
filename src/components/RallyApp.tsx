@@ -1894,7 +1894,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "help" && <HelpGuide />}
         {tab === "messages" && <Messages startWith={msgWith} onStarted={() => setMsgWith(null)} players={players} onBack={() => setTab("profile")} onOpenProfile={openProfile} />}
         {tab === "friends" && <SubHeader title="Friends" onBack={() => setTab("profile")} />}
-        {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }} />}
+        {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }} meAuthId={myAuthId} mePlayerId={meId} players={players} matches={matches} leagueName={group?.name || leagueName} />}
       </div>
 
       {editDoublesId && (() => {

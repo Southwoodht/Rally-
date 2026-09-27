@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { PeopleYouMayKnow } from "@/components/social/PeopleYouMayKnow";
 import { inviteUrl } from "@/lib/invite";
 import { acceptFriendRequest, FriendWithProfile, listFriends, listIncomingRequests, listOutgoingRequests, removeFriendship, sendFriendRequest } from "@/lib/friends";
 import { getMyProfile, Profile, searchProfiles } from "@/lib/profiles";
@@ -8,7 +9,7 @@ import { BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, listCard, listRow, miniI
 
 const asPlayer = (p: Profile) => ({ id: p.id, name: p.display_name, avatarUrl: p.avatar_url, avatar: null });
 
-export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
+export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, mePlayerId, players, matches, leagueName }: any) {
   const [me, setMe] = useState<Profile | null>(null);
   const [friends, setFriends] = useState<FriendWithProfile[]>([]);
   const [incoming, setIncoming] = useState<FriendWithProfile[]>([]);
@@ -144,6 +145,22 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage }: any) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Under the requests you owe an answer to, above the friends you
+          already have. Keyed on the counts so accepting or removing somebody
+          re-reads who is already known and nobody is suggested twice. */}
+      {meAuthId && players && !loading && (
+        <PeopleYouMayKnow
+          key={friends.length + ":" + incoming.length + ":" + outgoing.length}
+          variant="list"
+          meAuthId={meAuthId}
+          mePlayerId={mePlayerId}
+          players={players}
+          matches={matches || []}
+          leagueName={leagueName}
+          flash={flash}
+        />
       )}
 
       <div>

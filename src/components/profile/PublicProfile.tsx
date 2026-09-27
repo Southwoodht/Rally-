@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { GapInsight } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { FriendsCard } from "@/components/profile/FriendsCard";
 import { RecordCard } from "@/components/profile/RecordCard";
 import { OpponentRecords } from "@/components/profile/OpponentRecords";
 import { RivalryCard } from "@/components/profile/RivalryCard";
@@ -385,6 +386,17 @@ export function PublicProfile({ id }: { id: string }) {
           </button>
         </div>
       )}
+
+      {/* Their friends, mutuals first — the same card a league profile has,
+          so somebody outside your league is not the one profile where you
+          cannot see who they know. It is absent, not empty, when they have
+          none. */}
+      <FriendsCard
+        authId={authId}
+        isMe={isMe}
+        style={{ marginBottom: 16 }}
+        onOpenProfile={(aid) => { if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(aid); }}
+      />
 
       {s ? (
         <>

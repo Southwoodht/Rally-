@@ -11,6 +11,7 @@ import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
+import { PeopleYouMayKnow } from "@/components/social/PeopleYouMayKnow";
 import { TIER_HEIGHTS } from "@/core/stars";
 import { listApprovedTrophiesForPlayer } from "@/lib/trophies";
 import { fullNameOf } from "@/lib/format";
@@ -330,11 +331,24 @@ export function ProfileContainer({
         />
       }
       actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage }}
-      friends={<FriendsCard
-        authId={player?.auth_id ?? null}
-        isMe={isSelf}
-        onOpenProfile={(aid) => { if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(aid); }}
-      />}
+      friends={<>
+        <FriendsCard
+          authId={player?.auth_id ?? null}
+          isMe={isSelf}
+          onOpenProfile={(aid) => { if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(aid); }}
+        />
+        {/* Your own profile only: suggestions are about who YOU might know. */}
+        {isSelf && myAuthId && (
+          <PeopleYouMayKnow
+            meAuthId={myAuthId}
+            mePlayerId={pid}
+            players={players}
+            matches={matches}
+            leagueName={group?.name}
+            onSeeAll={onFriends}
+          />
+        )}
+      </>}
       playingStyle={data.playingStyle ? { ...data.playingStyle, onDetails: onStyleDetails || (onOpenMatches ? () => onOpenMatches(pid, "quality") : undefined) } : null}
       rivalries={data.rivalries}
       bestWins={data.bestWins}
