@@ -36,6 +36,7 @@ import { ThemePicker } from "@/components/ui/ThemePicker";
 import { RallyMark } from "@/components/ui/RallyMark";
 import { useDoubles } from "@/components/doubles/useDoubles";
 import { ModeSwitch } from "@/components/doubles/ModeSwitch";
+import { DoublesCompare } from "@/components/doubles/DoublesCompare";
 import { DoublesStandings } from "@/components/doubles/DoublesStandings";
 import { DoublesEntry } from "@/components/doubles/DoublesEntry";
 import { DoublesProfile } from "@/components/doubles/DoublesProfile";
@@ -1611,7 +1612,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             <button onClick={() => setTableMode("compare")} style={segmentOption(tableMode === "compare")}>Compare</button>
           </div>
         )}
-        {tab === "ladder" && tableMode === "compare" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
+        {/* Doubles compares two PAIRS; singles stays exactly as it was. */}
+        {tab === "ladder" && tableMode === "compare" && showDoubles && !personal && (
+          <DoublesCompare players={players} matches={doubles.matches} meId={meId} onOpen={openProfile} onCreatePlayer={addPlayer} />
+        )}
+        {tab === "ladder" && tableMode === "compare" && !(showDoubles && !personal) && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
         {tab === "ladder" && tableMode === "standings" && showDoubles && !personal && (
           doubles.unavailable
             ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>

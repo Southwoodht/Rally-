@@ -47,6 +47,8 @@
     "src/core/doubles/home.ts",
     "src/core/doubles/home.test.ts",
     "src/core/social/suggestions.ts",
-    "src/core/social/suggestions.test.ts"
+    "src/core/social/suggestions.test.ts",
+    "src/core/doubles/compare.ts",
+    "src/core/doubles/compare.test.ts"
   ]
 }
