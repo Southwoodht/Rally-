@@ -62,7 +62,8 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
 import { SEED_GROUP_DATA } from "@/data/seed";
 import { FRIENDLY_LEAGUE_ID, isFriendlyLeague } from "@/lib/leagueData";
@@ -202,6 +203,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // "Start a competition" in Run your league opens the doubles create form.
   const [compCreateSignal, setCompCreateSignal] = useState(0);
   const [singlesCreateSignal, setSinglesCreateSignal] = useState(0);
+  // The doubles result open for viewing or correcting, if any.
+  const [editDoublesId, setEditDoublesId] = useState<string | null>(null);
   // Which sport the Table, Profile and the entry screen are showing. Not
   // persisted: unlike the theme or the season toggle, this is a thing you
   // flick between within a visit, and remembering it means opening the Table
@@ -1470,7 +1473,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} />;
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
@@ -1785,7 +1788,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 Couldn&apos;t load doubles for this league just now.
               </div>
             : meId
-              ? <DoublesProfile players={players} matches={doubles.matches} playerId={meId} leagueName={group?.name || leagueName || "League"} />
+              ? <DoublesProfile players={players} matches={doubles.matches} playerId={meId} leagueName={group?.name || leagueName || "League"} onOpenProfile={openProfile} onOpenMatch={setEditDoublesId} />
               : null
         )}
         {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goSettings={() => setTab("settings")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
@@ -1838,6 +1841,47 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }} />}
       </div>
 
+      {editDoublesId && (() => {
+        const m = doubles.matches.find((x) => x.id === editDoublesId);
+        if (!m) return null;
+        // Who may change it is exactly who the database lets: one of the
+        // four, or league staff. Delete is staff only, as the RLS says.
+        const mayEdit = [...m.teamA, ...m.teamB].includes(meId) || !!canManageMatches;
+        const close = () => setEditDoublesId(null);
+        return (
+          <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 95, overflowY: "auto", paddingBottom: 40 }}>
+            <div style={{ ...wrap, paddingTop: "calc(env(safe-area-inset-top) + 14px)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
+                <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{mayEdit ? "Edit doubles result" : "Doubles result"}</span>
+                <button onClick={close} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 15, cursor: "pointer" }}>Close</button>
+              </div>
+              {mayEdit ? (
+                <DoublesEntry
+                  key={m.id}
+                  players={players}
+                  history={doubles.matches.filter((x) => x.id !== m.id)}
+                  meId={meId}
+                  onCreatePlayer={addPlayer}
+                  initial={{ teamA: m.teamA, teamB: m.teamB, sets: m.sets, winner: m.winner, playedAt: m.playedAt }}
+                  onSave={async (patch) => {
+                    try { await doubles.edit(m.id, patch); flash("Result updated"); close(); }
+                    catch (e: any) { flash(e?.message || "Couldn't save that change."); }
+                  }}
+                  onDelete={canManageMatches ? async () => {
+                    try { await doubles.remove(m.id); flash("Result deleted"); close(); }
+                    catch (e: any) { flash(e?.message || "Couldn't delete that."); }
+                  } : undefined}
+                />
+              ) : (
+                <div style={{ margin: "12px 16px 0", padding: 16, borderRadius: 20, background: PANEL }}>
+                  <DoublesScoreline match={m} players={players} meId={meId} when={fmtDate(m.playedAt)} />
+                  <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 8 }}>Only the four players or league staff can change this result.</div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {menuOpen && (
         <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 96 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 36px", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>

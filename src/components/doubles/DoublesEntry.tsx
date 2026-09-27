@@ -40,6 +40,16 @@ interface Props {
   onCreatePlayer?: (p: any) => void;
   onSave: (m: { teamA: [string, string | null]; teamB: [string, string | null]; sets: Array<{ a: number; b: number }>; winner: string; playedAt: number }) => void;
   saving?: boolean;
+  /**
+   * EDITING a logged match: the form opens filled in with it, and every seat
+   * can change — including the first, which on a new result is always "You",
+   * because the person correcting a match may be on either side of the net or
+   * league staff not on court at all. `history` should leave this match out,
+   * so the rating strip shows the match as it will be, not on top of itself.
+   */
+  initial?: { teamA: [string, string | null]; teamB: [string, string | null]; sets: Array<{ a: number; b: number }>; winner: string; playedAt: number };
+  /** Offered only to whoever may delete (league staff); two steps. */
+  onDelete?: () => void;
 }
 
 type SetScore = { a: string; b: string };
@@ -86,29 +96,49 @@ const todayStr = (): string => {
 const playedAtFor = (day: string): number =>
   !day || day === todayStr() ? Date.now() : new Date(day + "T12:00:00").getTime();
 const seat = (id: string): string | null => (id === UNKNOWN ? null : id);
+const unseat = (id: string | null | undefined): string => (id == null ? UNKNOWN : id);
 
-export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving }: Props) {
-  const [partner, setPartner] = useState<string>("");
-  const [opp1, setOpp1] = useState<string>("");
-  const [opp2, setOpp2] = useState<string>("");
-  const [sets, setSets] = useState<SetScore[]>([{ a: "", b: "" }, { a: "", b: "" }]);
+/** A stored time as the phone's own "YYYY-MM-DD", for the date box. */
+const dayOf = (t: number): string => {
+  const d = new Date(t);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+
+export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving, initial, onDelete }: Props) {
+  const editing = !!initial;
+  // The first seat: "You" on a new result, any player when editing.
+  const [first, setFirst] = useState<string>(initial ? initial.teamA[0] : meId);
+  const [partner, setPartner] = useState<string>(initial ? unseat(initial.teamA[1]) : "");
+  const [opp1, setOpp1] = useState<string>(initial ? initial.teamB[0] : "");
+  const [opp2, setOpp2] = useState<string>(initial ? unseat(initial.teamB[1]) : "");
+  const [sets, setSets] = useState<SetScore[]>(
+    initial && initial.sets.length
+      ? initial.sets.map((x) => ({ a: String(x.a), b: String(x.b) }))
+      : [{ a: "", b: "" }, { a: "", b: "" }],
+  );
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // Nobody can remember the score: then, and only then, the winner is the
   // input -- the same as singles, where the score has always been optional.
   // The database accepts a winner as entered when there are no sets and still
   // checks it against them when there are.
-  const [noScore, setNoScore] = useState(false);
+  const [noScore, setNoScore] = useState(!!initial && !initial.sets.length);
   // Defaults to today, because that is when nearly every result is entered.
   // Changing it is for the match from last Tuesday nobody got round to.
-  const [day, setDay] = useState<string>(todayStr());
-  const [pickedWinner, setPickedWinner] = useState<string | null>(null);
+  const [day, setDay] = useState<string>(initial ? dayOf(initial.playedAt) : todayStr());
+  const [pickedWinner, setPickedWinner] = useState<string | null>(initial && !initial.sets.length ? initial.winner : null);
+  // An edit that leaves the date alone keeps the stored time exactly. Without
+  // this, correcting a score on a result entered today would re-stamp it
+  // "now" and could reorder it against the evening's other matches.
+  const when = (): number => (initial && day === dayOf(initial.playedAt) ? initial.playedAt : playedAtFor(day));
 
-  const chosen = [meId, partner, opp1, opp2].filter(Boolean);
+  const chosen = [first, partner, opp1, opp2].filter(Boolean);
   const eligible = (self: string) => players.filter((p) => p.id === self || !chosen.includes(p.id));
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
   const clean = parsed(sets);
   const winner = noScore ? pickedWinner : winnerFromSets(clean);
-  const complete = !!(partner && opp1 && opp2 && (noScore || clean.length) && winner);
+  const complete = !!(first && partner && opp1 && opp2 && (noScore || clean.length) && winner);
 
   const stats = useMemo(() => computeDoubles(history), [history]);
   const eloOf = (id: string) => (id && stats.elo[id] !== undefined ? Math.round(stats.elo[id]) : 1500);
@@ -118,14 +148,15 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
     // Replayed at its own date: a backdated result is rated against who
     // everybody was then, which is what saving it will do.
     return previewDoubles(history, {
-      playedAt: playedAtFor(day),
-      teamA: [meId, seat(partner)],
+      playedAt: when(),
+      teamA: [first, seat(partner)],
       teamB: [opp1, seat(opp2)],
       winner: winner as string,
     });
-  }, [complete, history, meId, partner, opp1, opp2, winner, day]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [complete, history, first, partner, opp1, opp2, winner, day]);
 
-  const mine = preview?.find((d) => d.playerId === meId);
+  const mine = preview?.find((d) => d.playerId === first);
   const theirs = preview?.find((d) => d.playerId === opp1);
 
   const label = { fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, letterSpacing: 1 } as const;
@@ -217,7 +248,9 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
           {winner === "A" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
           {winner === "draw" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_TEXT_MID }}>Drawn</span>}
         </div>
-        {personRow(meId, <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, padding: "0 4px" }}>You</span>, true)}
+        {editing
+          ? personRow(first, <PlayerPicker players={eligible(first)} value={first} onChange={setFirst} onCreatePlayer={onCreatePlayer} triggerLabel="Change" />, first === meId)
+          : personRow(meId, <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, padding: "0 4px" }}>You</span>, true)}
         {personRow(partner, unknownable(partner, setPartner, "Partner"), false, false)}
       </div>
 
@@ -294,7 +327,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
         <div style={{ margin: "12px 16px 0", padding: "14px 18px", borderRadius: 20, background: FEED_HERO, color: FEED_ON_HERO, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
           <span style={{ fontFamily: body, fontSize: 14, fontWeight: 600 }}>Rating</span>
           <span style={{ fontFamily: display, fontWeight: 700, fontSize: 16, ...tabular }}>
-            You &amp; {(byId.get(partner)?.name) || "partner"} {showDelta(mine.delta)} · them {showDelta(theirs.delta)}
+            {first === meId ? "You" : (byId.get(first)?.name || "Them")} &amp; {(byId.get(partner)?.name) || "partner"} {showDelta(mine.delta)} · {first === meId ? "them" : "other pair"} {showDelta(theirs.delta)}
           </span>
         </div>
       )}
@@ -303,10 +336,10 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
         <button
           disabled={!complete || saving}
           onClick={() => complete && onSave({
-            teamA: [meId, seat(partner)],
+            teamA: [first, seat(partner)],
             teamB: [opp1, seat(opp2)],
             sets: noScore ? [] : clean,
-            playedAt: playedAtFor(day),
+            playedAt: when(),
             winner: winner as string,
           })}
           style={{
@@ -317,8 +350,24 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
             cursor: complete && !saving ? "pointer" : "default",
           }}
         >
-          {saving ? "Saving…" : "Save result"}
+          {saving ? "Saving…" : editing ? "Save changes" : "Save result"}
         </button>
+        {/* Two steps, and it says what it removes (§3). */}
+        {onDelete && (confirmDelete ? (
+          <div style={{ marginTop: 12, padding: 14, borderRadius: 16, background: FEED_CARD }}>
+            <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
+              Delete this doubles result? Everyone&apos;s doubles ratings are recalculated without it. This cannot be undone.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={onDelete} style={{ flex: 1, height: 44, borderRadius: 12, border: "none", background: "var(--lost)", color: FEED_LIME_INK, fontFamily: body, fontSize: 15, cursor: "pointer" }}>Delete</button>
+              <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, height: 44, borderRadius: 12, border: "none", background: FEED_RAISED, color: FEED_TEXT_HI, fontFamily: body, fontSize: 15, cursor: "pointer" }}>Keep it</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmDelete(true)} style={{ width: "100%", marginTop: 10, background: "none", border: "none", color: "var(--lost)", fontFamily: body, fontSize: 15, cursor: "pointer", padding: "10px 0" }}>
+            Delete this result
+          </button>
+        ))}
       </div>
     </>
   );

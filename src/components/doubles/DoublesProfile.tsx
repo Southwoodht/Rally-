@@ -35,11 +35,15 @@ interface Props {
   matches: DoublesMatch[];
   playerId: string;
   leagueName: string;
+  /** Tap a name to see that person's profile. */
+  onOpenProfile?: (id: string) => void;
+  /** Tap a result to see — and, if allowed, correct — the match. */
+  onOpenMatch?: (matchId: string) => void;
 }
 
 const pct = (n: number) => Math.round(n * 100);
 
-export function DoublesProfile({ players, matches, playerId, leagueName }: Props) {
+export function DoublesProfile({ players, matches, playerId, leagueName, onOpenProfile, onOpenMatch }: Props) {
   const stats = useMemo(() => computeDoubles(matches), [matches]);
 
   const played = stats.played[playerId] || 0;
@@ -179,10 +183,10 @@ export function DoublesProfile({ players, matches, playerId, leagueName }: Props
         {row("Doubles Elo", Math.round(stats.elo[playerId] ?? 0).toLocaleString())}
       </div>
 
-      <PartnersCard players={players} matches={matches} playerId={playerId} overall={overallWinRate(history)} />
-      <DoublesBestWins wins={bestDoublesWins(history)} byId={byId} />
-      <DoublesRecordAgainst records={opponentRecords(history)} byId={byId} />
-      <DoublesHistory rows={history} byId={byId} />
+      <PartnersCard players={players} matches={matches} playerId={playerId} overall={overallWinRate(history)} onOpenProfile={onOpenProfile} />
+      <DoublesBestWins wins={bestDoublesWins(history)} byId={byId} onOpenProfile={onOpenProfile} onOpenMatch={onOpenMatch ? (r) => onOpenMatch(r.match.id) : undefined} />
+      <DoublesRecordAgainst records={opponentRecords(history)} byId={byId} onOpenProfile={onOpenProfile} />
+      <DoublesHistory rows={history} byId={byId} onOpenProfile={onOpenProfile} onOpenMatch={onOpenMatch ? (r) => onOpenMatch(r.match.id) : undefined} />
     </>
   );
 }

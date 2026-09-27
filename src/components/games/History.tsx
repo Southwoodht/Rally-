@@ -15,7 +15,7 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches, fixtureLabel, fixtureNoDraw }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches, fixtureLabel, fixtureNoDraw, onOpenDoubles }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -303,7 +303,11 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                 </div>
               );
               if (it.kind === "doubles") return (
-                <DoublesScoreline key={it.key} match={it.d} players={players} meId={meId} when={fmtDate(it.d.playedAt)} />
+                // Tapping a doubles result opens it, the way a singles card
+                // opens Match detail.
+                <div key={it.key} onClick={() => onOpenDoubles?.(it.d.id)} style={{ cursor: onOpenDoubles ? "pointer" : "default" }}>
+                  <DoublesScoreline match={it.d} players={players} meId={meId} when={fmtDate(it.d.playedAt)} />
+                </div>
               );
               if (it.kind === "post") return (
                 <div key={it.key} style={{ display: "flex", gap: 12, padding: "12px 4px", borderBottom: "none" }}>

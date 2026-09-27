@@ -33,9 +33,11 @@ interface Props {
    * better with".
    */
   overall?: number;
+  /** A partner row opens their profile, as a name does anywhere else. */
+  onOpenProfile?: (id: string) => void;
 }
 
-export function PartnersCard({ players, matches, playerId, overall }: Props) {
+export function PartnersCard({ players, matches, playerId, overall, onOpenProfile }: Props) {
   const rows = useMemo(() => partnersOf(matches, playerId), [matches, playerId]);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const most = mostPlayedWith(rows);
@@ -57,7 +59,7 @@ export function PartnersCard({ players, matches, playerId, overall }: Props) {
         const partner = byId.get(r.partnerId);
         const pct = Math.round(r.winRate * 100);
         return (
-          <div key={r.partnerId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0" }}>
+          <div key={r.partnerId} onClick={() => partner && onOpenProfile?.(r.partnerId)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", cursor: partner && onOpenProfile ? "pointer" : "default" }}>
             <Avatar player={partner} size={40} />
             <div style={{ flexGrow: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, minWidth: 0 }}>

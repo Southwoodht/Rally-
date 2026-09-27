@@ -133,13 +133,30 @@ export async function insertDoubles(leagueId: string, m: Partial<DoublesRow>): P
   return rowToDoubles(data);
 }
 
-export async function updateDoubles(id: string, patch: Partial<DoublesRow>, leagueId: string): Promise<void> {
+/**
+ * Change a logged doubles match — ONLY the fields given.
+ *
+ * It used to run the patch through doublesToRow and drop the undefined keys,
+ * but doublesToRow fills its own defaults — `?? null` for entered_by, the
+ * competition and the pair ids, "confirmed" for status, now for played_at —
+ * so those were never undefined and every edit would have nulled them. An
+ * edited competition result would have silently left its competition. Nothing
+ * called this until the edit screen, which is when it was caught.
+ */
+export async function updateDoubles(id: string, patch: Partial<DoublesRow>, _leagueId?: string): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
-  const row: any = doublesToRow(leagueId, patch);
-  // Only send what the caller actually set. A partial patch that spelled every
-  // other column as undefined would blank them.
-  for (const k of Object.keys(row)) if (row[k] === undefined) delete row[k];
-  await run(supabase.from("doubles_matches").update(row).eq("id", id), "updating the doubles match");
+  const row: Record<string, any> = {};
+  if (patch.teamA) { row.team_a_p1 = patch.teamA[0]; row.team_a_p2 = patch.teamA[1]; }
+  if (patch.teamB) { row.team_b_p1 = patch.teamB[0]; row.team_b_p2 = patch.teamB[1]; }
+  if (patch.sets) row.sets = patch.sets;
+  if (patch.winner) row.winner = patch.winner;
+  if (patch.playedAt !== undefined) row.played_at = new Date(patch.playedAt).toISOString();
+  if (patch.status) row.status = patch.status;
+  if (!Object.keys(row).length) return;
+  // Ask for the row back: an UPDATE that RLS refuses matches nothing and
+  // reports success, the same trap as a refused DELETE (§6).
+  const data = await run(supabase.from("doubles_matches").update(row).eq("id", id).select("id"), "updating the doubles match");
+  if (!data || !data.length) throw new Error("That change was refused — only the four players or league staff can edit a doubles result.");
 }
 
 /**

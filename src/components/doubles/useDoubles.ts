@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  deleteDoublesFixture, insertDoubles, insertDoublesFixture, loadDoublesFixturesSafe,
+  deleteDoubles, deleteDoublesFixture, insertDoubles, updateDoubles, insertDoublesFixture, loadDoublesFixturesSafe,
   loadDoublesSafe, updateDoublesFixture, type DoublesFixture, type DoublesRow,
 } from "@/lib/doublesData";
 import { computeDoubles, type DoublesStats } from "@/core/doubles/elo";
@@ -47,6 +47,10 @@ export interface UseDoubles {
   cancel: (id: string) => Promise<void>;
   /** Save the result of a booking, then mark the booking played. */
   complete: (f: DoublesFixture, m: { sets: Array<{ a: number; b: number }>; winner: string; enteredBy: string }) => Promise<void>;
+  /** Correct a logged result. Ratings recompute from the new history. */
+  edit: (id: string, patch: Partial<DoublesRow>) => Promise<void>;
+  /** Delete a result (league staff only — the RLS says so too). */
+  remove: (id: string) => Promise<void>;
   /** Fixtures created elsewhere (a competition draw), shown without a reload. */
   addFixtures: (list: DoublesFixture[]) => void;
   /** A deleted competition's fixtures went with it (cascade). */
@@ -137,6 +141,17 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
     setFixtures((prev) => prev.map((x) => (x.id === f.id ? { ...x, done: true, matchId: saved.id } : x)));
   }, [leagueId]);
 
+  // Ratings are derived, never stored (see computeDoubles), so an edit needs
+  // no recalculation step: change the row and the next render replays it.
+  const edit = useCallback(async (id: string, patch: Partial<DoublesRow>) => {
+    await updateDoubles(id, patch);
+    setMatches((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
+  }, []);
+  const remove = useCallback(async (id: string) => {
+    await deleteDoubles(id);
+    setMatches((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
   const addFixtures = useCallback((list: DoublesFixture[]) => {
     setFixtures((prev) => [...prev, ...list.filter((f) => !prev.some((x) => x.id === f.id))]);
   }, []);
@@ -146,5 +161,5 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
 
   const stats = useMemo(() => (enabled ? computeDoubles(matches) : EMPTY), [enabled, matches]);
 
-  return { matches, stats, loading, unavailable, reload, add, fixtures, fixturesUnavailable, book, reschedule, cancel, complete, addFixtures, dropCompetitionFixtures };
+  return { matches, stats, loading, unavailable, reload, add, fixtures, fixturesUnavailable, book, reschedule, cancel, complete, edit, remove, addFixtures, dropCompetitionFixtures };
 }

@@ -31,6 +31,38 @@ const Card = ({ title, right, children }: { title: string; right?: React.ReactNo
 type ById = Map<string, any>;
 
 /** "Zaach Rodriguez & partner" — an empty seat is somebody nobody named. */
+/**
+ * Names you can tap, each opening that person's profile — "like normal", as
+ * a name anywhere else in Rally does. An empty seat is "partner" and is not a
+ * link, because there is nobody to open. The tap stops at the name, so a name
+ * inside a row that itself opens the match opens the person instead.
+ */
+const Names = ({ ids, byId, first = false, onOpenProfile }: { ids: DoublesSlot[]; byId: ById; first?: boolean; onOpenProfile?: (id: string) => void }) => (
+  <>
+    {ids.map((id, i) => {
+      const sep = i ? " & " : "";
+      if (id == null) return <React.Fragment key={i}>{sep}partner</React.Fragment>;
+      const p = byId.get(id);
+      const text = !p ? "Unknown player" : first ? (p.name || "").trim() || fullNameOf(p) : fullNameOf(p);
+      return (
+        <React.Fragment key={i}>
+          {sep}
+          {onOpenProfile && p ? (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onOpenProfile(id); }}
+              style={{ cursor: "pointer", textDecoration: "underline", textDecorationColor: "var(--hairline, currentColor)", textUnderlineOffset: 3 }}
+            >
+              {text}
+            </span>
+          ) : text}
+        </React.Fragment>
+      );
+    })}
+  </>
+);
+
 const pairName = (ids: DoublesSlot[], byId: ById, first = false): string =>
   ids.map((id) => {
     if (id == null) return "partner";
@@ -58,18 +90,20 @@ const OutcomeChip = ({ o }: { o: "w" | "d" | "l" }) => (
 
 // ---------------------------------------------------------------- Best wins
 
-export function DoublesBestWins({ wins, byId }: { wins: DoublesHistoryRow[]; byId: ById }) {
+type Open = { onOpenProfile?: (id: string) => void; onOpenMatch?: (r: DoublesHistoryRow) => void };
+
+export function DoublesBestWins({ wins, byId, onOpenProfile, onOpenMatch }: { wins: DoublesHistoryRow[]; byId: ById } & Open) {
   if (!wins.length) return null;
   return (
     <Card title="Best wins" right={<span style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>their rating then</span>}>
       {wins.map((r) => (
-        <div key={r.match.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0" }}>
+        <div key={r.match.id} onClick={() => onOpenMatch?.(r)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", cursor: onOpenMatch ? "pointer" : "default" }}>
           <div style={{ flexGrow: 1, minWidth: 0 }}>
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {pairName(r.opponents, byId)}
+              <Names ids={r.opponents} byId={byId} onOpenProfile={onOpenProfile} />
             </div>
             <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              with {pairName([r.partner], byId)} · {formatMatchDate(r.match.playedAt)}
+              with <Names ids={[r.partner]} byId={byId} onOpenProfile={onOpenProfile} /> · {formatMatchDate(r.match.playedAt)}
             </div>
           </div>
           {/* The pair's rating walking on court, which is what "best" means
@@ -87,7 +121,7 @@ export function DoublesBestWins({ wins, byId }: { wins: DoublesHistoryRow[]; byI
 
 const RECORD_PREVIEW = 5;
 
-export function DoublesRecordAgainst({ records, byId }: { records: OpponentRecord[]; byId: ById }) {
+export function DoublesRecordAgainst({ records, byId, onOpenProfile }: { records: OpponentRecord[]; byId: ById } & Open) {
   const [all, setAll] = useState(false);
   if (!records.length) return null;
   const shown = all ? records : records.slice(0, RECORD_PREVIEW);
@@ -102,7 +136,7 @@ export function DoublesRecordAgainst({ records, byId }: { records: OpponentRecor
         const p = byId.get(r.opponentId);
         const pct = Math.round(((r.won + r.drawn * 0.5) / r.played) * 100);
         return (
-          <div key={r.opponentId} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0" }}>
+          <div key={r.opponentId} onClick={() => p && onOpenProfile?.(r.opponentId)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", cursor: p && onOpenProfile ? "pointer" : "default" }}>
             <Avatar player={p} size={34} />
             <div style={{ flexGrow: 1, minWidth: 0 }}>
               <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -129,7 +163,7 @@ export function DoublesRecordAgainst({ records, byId }: { records: OpponentRecor
 
 const HISTORY_PREVIEW = 5;
 
-export function DoublesHistory({ rows, byId }: { rows: DoublesHistoryRow[]; byId: ById }) {
+export function DoublesHistory({ rows, byId, onOpenProfile, onOpenMatch }: { rows: DoublesHistoryRow[]; byId: ById } & Open) {
   const [all, setAll] = useState(false);
   if (!rows.length) return null;
   const shown = all ? rows : rows.slice(0, HISTORY_PREVIEW);
@@ -143,11 +177,11 @@ export function DoublesHistory({ rows, byId }: { rows: DoublesHistoryRow[]; byId
       {shown.map((r, i) => {
         const score = scoreText(r);
         return (
-          <div key={r.match.id} style={{ padding: "11px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
+          <div key={r.match.id} onClick={() => onOpenMatch?.(r)} style={{ padding: "11px 0", cursor: onOpenMatch ? "pointer" : "default", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <OutcomeChip o={r.outcome} />
               <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                v {pairName(r.opponents, byId, true)}
+                v <Names ids={r.opponents} byId={byId} first onOpenProfile={onOpenProfile} />
               </span>
               {r.delta !== null && (
                 <span style={{ fontFamily: display, fontWeight: 700, fontSize: 16, color: r.delta >= 0 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, ...tabular }}>
@@ -157,7 +191,7 @@ export function DoublesHistory({ rows, byId }: { rows: DoublesHistoryRow[]; byId
             </div>
             <div style={{ display: "flex", gap: 8, fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 4 }}>
               <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                with {pairName([r.partner], byId, true)} · {formatMatchDate(r.match.playedAt)}
+                with <Names ids={[r.partner]} byId={byId} first onOpenProfile={onOpenProfile} /> · {formatMatchDate(r.match.playedAt)}
               </span>
               {score && <span style={{ flexShrink: 0, ...tabular }}>{score}</span>}
             </div>
