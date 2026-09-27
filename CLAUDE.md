@@ -35,14 +35,16 @@ readlink .next/...` means the dev server is running and holding the
 directory `next build` wants to clear — stop the preview first. `ENOSPC`
 means the disk is full, which it has genuinely been.
 
-**The repo lives at `C:devally`, and deliberately not in OneDrive.** It
+**The repo lives at `C:dev
+ally`, and deliberately not in OneDrive.** It
 was moved there on 2026-09-10. OneDrive was syncing `node_modules` and
 `.next` — `.gitignore` means nothing to it — which made every build slow and
 kept a few hundred megabytes of regenerable junk permanently on a nearly full
 disk. `.next/cache` alone regrows to ~100MB per build, so **clear `.next`
 after a build gate** rather than leaving it sitting there. If a session's
 preview server reports `'next' is not recognized`, it is pointed at the old
-OneDrive path, which no longer has `node_modules`; reopen on `C:devally`.
+OneDrive path, which no longer has `node_modules`; reopen on `C:dev
+ally`.
 
 `README.md` is from the original prototype conversion and is **stale** in
 places — it says `storage.ts` uses browser storage (it's Supabase now) and
@@ -759,6 +761,15 @@ that needed no change, and not the column, which is the part that did.** It
 would have returned the same two rows from a paste that died before the
 `add column`. A migration's closing select should prove the thing the
 migration did.
+
+**Run on 2026-09-26/27, all verified from their closing selects:**
+`schema_doubles_fixtures.sql` (1, 11, 4, 1), `schema_doubles_unknown_scoreless.sql`
+(an empty second seat and a result with no score), `schema_doubles_competitions.sql`
+(2, 4, 4, 1) and `schema_singles_competitions.sql` (1, YES, 2, 1), with the grants
+sweep after the two that created or recreated a function. Seacourt has
+`doubles_enabled` and `competitions_enabled` on. Both flags can now be switched
+from Run your league → League settings, by the league's CREATOR only — the
+leagues UPDATE policy is `created_by = auth.uid()`, not the owner role.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
