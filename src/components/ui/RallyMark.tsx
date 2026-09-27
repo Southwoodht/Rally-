@@ -39,8 +39,8 @@ export function RallyMark({ size = 22, title }: { size?: number; title?: string 
   return (
     <svg
       width={size}
-      height={size * (602 / 676)}
-      viewBox="250 211 676 602"
+      height={size * (602 / 670)}
+      viewBox="256 211 670 602"
       role={title ? "img" : "presentation"}
       aria-label={title}
       aria-hidden={title ? undefined : true}
@@ -53,7 +53,7 @@ export function RallyMark({ size = 22, title }: { size?: number; title?: string 
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M608 296Q586 257 536 257H424A127.5 127.5 0 0 0 424 512H520A127.5 127.5 0 0 1 520 767H408Q358 767 336 728" />
+        <path d="M626 322C598 280 545 257 474 257C382 257 322 304 322 376C322 448 380 478 474 503C572 529 642 566 642 648C642 728 574 767 474 767C386 767 326 736 302 690" />
       </g>
       <circle cx={818} cy={703} r={108} fill="var(--mark-ball)" />
     </svg>

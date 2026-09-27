@@ -17,6 +17,6 @@
 
   <g transform="translate(512 512) scale(1.3) translate(-472 -512)"
      fill="none" stroke="#F4EFE3" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M608 296Q586 257 536 257H424A127.5 127.5 0 0 0 424 512H520A127.5 127.5 0 0 1 520 767H408Q358 767 336 728"/>
+    <path d="M626 322C598 280 545 257 474 257C382 257 322 304 322 376C322 448 380 478 474 503C572 529 642 566 642 648C642 728 574 767 474 767C386 767 326 736 302 690"/>
   </g>
 </svg>

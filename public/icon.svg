@@ -10,22 +10,19 @@
     #16271F field, a gold #E9C46A ball, the same 92 stroke with round caps,
     the same 0.92 scale onto the same optical centre.
 
-    THE S IS ONE STROKE BUILT FROM TWO STADIUMS, the R's bowl turned into a
-    letter: top run, semicircle (r 127.5) down the left, a flat spine at
-    y 512, semicircle down the right, bottom run. Flat runs rather than a
-    classic swash, so it is visibly the same family as the R it replaces and
-    its counters stay open at 16px. The terminals turn in on a short curve
-    rather than stopping flat, which is what makes it an S and not a 5.
+    THE S IS ONE SMOOTH STROKE OF CUBIC CURVES. The first S (same day)
+    was built from the R's parts — two stadium bowls with flat top, spine
+    and foot — and Sam called it "wonky and weird": straight runs make an S
+    read as blocky, halfway to a 5. This one is a classic monoline S: round
+    bowls, a spine that runs diagonally down to the right, the lower bowl a
+    touch wider than the upper as type does it, terminals that open out
+    rather than hook. Chosen from three drawn and compared side by side.
 
     Geometry on the 1024 master, stroke centre lines:
-      top bowl    centre (424, 384.5), bottom bowl centre (520, 639.5)
-      spans       x 296..648, y 257..767 — the R's height exactly
-      ball        centre (818, 703) r 108, 24 units clear of the lower bowl
-                  at the closest point. At 11 it read as touching at 300px,
-                  which at 48px would read as one blob.
-
-    Mark plus ball spans x 250..926, centre 588, and that is the centre the
-    transform moves onto (502, 512).
+      spans       x 302..642, y 257..767 — the R's height exactly
+      ball        centre (818, 703) r 108, clear of the lower bowl
+    Mark plus ball spans x 256..926, centre 591, which the transform moves
+    onto the optical centre (502, 512).
 
     The ball's seams are clipped to the circle so their round caps cannot
     give it horns. No rounded corners: iOS and Android apply their own mask.
@@ -42,9 +39,9 @@
 
   <rect width="1024" height="1024" fill="url(#sw-field)"/>
 
-  <g transform="translate(502 512) scale(0.92) translate(-588 -512)">
+  <g transform="translate(502 512) scale(0.92) translate(-591 -512)">
     <g fill="none" stroke="#F4EFE3" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M608 296Q586 257 536 257H424A127.5 127.5 0 0 0 424 512H520A127.5 127.5 0 0 1 520 767H408Q358 767 336 728"/>
+      <path d="M626 322C598 280 545 257 474 257C382 257 322 304 322 376C322 448 380 478 474 503C572 529 642 566 642 648C642 728 574 767 474 767C386 767 326 736 302 690"/>
     </g>
     <circle cx="818" cy="703" r="108" fill="#E9C46A"/>
     <g clip-path="url(#sw-ball-clip)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
