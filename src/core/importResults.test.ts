@@ -1,5 +1,5 @@
 /** Reading pasted results. Plain asserts; relative imports (see tiebreak.test.ts). */
-import { findDate, isAlreadyIn, parseResults, resolveName, scoreSays, splitName } from "./importResults";
+import { expandRecord, findDate, isAlreadyIn, parseResults, resolveName, scoreSays, splitName } from "./importResults";
 
 let checks = 0;
 const ok = (cond: boolean, what: string) => {
@@ -23,6 +23,8 @@ ok(findDate("Sat 12th March 2019", NOW)!.t === day(2019, 3, 12), "words");
 ok(findDate("March 12, 2019", NOW)!.t === day(2019, 3, 12), "month first in words");
 ok(findDate("31/02/2019", NOW) === null, "31 February is not a date");
 ok(findDate("6-4 6-2", NOW) === null, "a score is not a date");
+ok(findDate("10-2-12", NOW) === null, "a dashed W-D-L is not a date");
+ok(findDate("12-03-2019", NOW)!.t === day(2019, 3, 12), "a dashed date with a full year is");
 
 // ----------------------------------------------------------------- scores
 ok(scoreSays([{ a: 4, b: 6 }, { a: 6, b: 3 }, { a: 6, b: 2 }]) === "left", "sets decide");
@@ -91,6 +93,45 @@ ok(scoreSays([{ a: 6, b: 1 }, { a: 5, b: 7 }]) === "left", "one set each: games 
   ok(r.rows[2].date === day(2019, 3, 19), "until a line carries its own");
 }
 ok(parseResults("Sam beat Sam 6-0", [], NOW).unreadable.length === 1, "the same name on both sides is refused");
+
+// ---------------------------------------------------------------- records
+{
+  // Sam's own paste, 27 Sep: read as ONE match with the numbers thrown away.
+  const r = parseResults("George Henry and Will Allen are 2 and 2 in matches estimated 2026", ["George Henry", "Will Allen"], NOW);
+  ok(r.rows.length === 0 && r.records.length === 1, "a record is a record, not one match");
+  const x = r.records[0];
+  ok(x.left === "George Henry" && x.right === "Will Allen" && x.leftWins === 2 && x.rightWins === 2 && x.draws === 0 && x.year === 2026, "names, 2 and 2, 2026");
+}
+{
+  const x = parseResults("Sam v Charlie 5-1-3 (2025)", [], NOW).records[0];
+  ok(x && x.leftWins === 5 && x.draws === 1 && x.rightWins === 3 && x.year === 2025, "W-D-L with a year in brackets");
+  const y = parseResults("Zaach leads Adrian 6-4", [], NOW).records[0];
+  ok(y && y.left === "Zaach" && y.right === "Adrian" && y.leftWins === 6 && y.rightWins === 4 && y.year === null, "leads");
+  const z = parseResults("Sam and Charlie 3 each", [], NOW).records[0];
+  ok(z && z.leftWins === 3 && z.rightWins === 3, "N each");
+  const w = parseResults("Hugh v Mike 4-2 with 1 draw in 2019", [], NOW).records[0];
+  ok(w && w.leftWins === 4 && w.rightWins === 2 && w.draws === 1 && w.year === 2019, "draws named separately");
+}
+ok(parseResults("Sam v Charlie 6-4", [], NOW).records.length === 0, "a single set is not a record");
+ok(parseResults("Sam v Charlie 6-4 6-2 2025", [], NOW).records.length === 0, "two sets are a match, even with a year");
+ok(parseResults("Sam beat Charlie 6-4 in 2019", [], NOW).records.length === 0, "'beat' is one match");
+{
+  const r = parseResults("George Henry Will Allen 2 2 whatever", ["George Henry", "Will Allen"], NOW);
+  ok(r.rows.length === 0 && r.unreadable.length === 1, "numbers it can't explain: unreadable, never one silent match");
+}
+{
+  const rec = { line: 1, raw: "", left: "a", right: "b", leftWins: 3, draws: 1, rightWins: 2, year: 2025 };
+  const out = expandRecord(rec, 0, NOW.getTime());
+  ok(out.length === 6, "one match per result");
+  ok(out.filter((o) => o.winner === "left").length === 3 && out.filter((o) => o.winner === "draw").length === 1, "the counts survive");
+  ok(out[0].date === day(2025, 1, 1) && out[5].date === day(2025, 12, 31), "spread across the year");
+  const seq = out.map((o) => o.winner[0]).join("");
+  ok(!/lll|rr r/.test(seq) && seq !== "llldrr", `interleaved, not all the wins first — got ${seq}`);
+  const thisYear = expandRecord({ ...rec, year: 2026 }, 0, NOW.getTime());
+  ok(thisYear.every((o) => o.date <= NOW.getTime()), "this year's record never dated in the future");
+  const noYear = expandRecord({ ...rec, year: null }, 12345, NOW.getTime());
+  ok(noYear.every((o) => o.date === 12345), "no year: the date the screen asks for");
+}
 
 // ------------------------------------------------------------------ names
 const players = [

@@ -49,8 +49,27 @@ export interface ParsedRow {
 
 export interface Unreadable { line: number; raw: string; reason: string }
 
+/**
+ * A head-to-head RECORD rather than one match: "George and Will are 2 and 2
+ * in 2026", "Sam v Charlie 5-3-1 (2025)", "Zaach leads Adrian 6-4". It is
+ * what Bulk / history always took, one pair at a time; here it arrives in the
+ * same paste. It becomes left + draws + right matches when added.
+ */
+export interface ParsedRecord {
+  line: number;
+  raw: string;
+  left: string;
+  right: string;
+  leftWins: number;
+  draws: number;
+  rightWins: number;
+  /** The year it covers, or null when none was written. */
+  year: number | null;
+}
+
 export interface ParseResult {
   rows: ParsedRow[];
+  records: ParsedRecord[];
   unreadable: Unreadable[];
 }
 
@@ -69,7 +88,9 @@ const fullYear = (y: number, now: Date) => {
   return y <= cur ? 2000 + y : 1900 + y;
 };
 
-const NUMERIC_DATE = /\b(\d{1,4})[/.\-](\d{1,2})[/.\-](\d{1,4})\b/;
+// Dashes need a four-digit year: "10-2-12" is far more likely a W-D-L
+// record than 10 February 2012. Slashes and dots may use two digits.
+const NUMERIC_DATE = /\b(\d{4})[/.\-](\d{1,2})[/.\-](\d{1,2})\b|\b(\d{1,2})([/.])(\d{1,2})\5(\d{2}|\d{4})\b|\b(\d{1,2})-(\d{1,2})-(\d{4})\b/;
 const WORD_DATE = /\b(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})\.?,?\s+(\d{2,4})\b/i;
 const WORD_DATE_US = /\b([a-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{2,4})\b/i;
 
@@ -77,8 +98,9 @@ const WORD_DATE_US = /\b([a-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{2,4}
 export function findDate(text: string, now = new Date()): { t: number; match: string } | null {
   let m = NUMERIC_DATE.exec(text);
   if (m) {
-    const [a, b, c] = [m[1], m[2], m[3]].map(Number);
-    const t = m[1].length === 4 ? at(a, b, c) : at(fullYear(c, now), b, a);
+    const t = m[1] ? at(+m[1], +m[2], +m[3])
+      : m[4] ? at(fullYear(+m[7], now), +m[6], +m[4])
+      : at(+m[10], +m[9], +m[8]);
     if (t != null) return { t, match: m[0] };
   }
   m = WORD_DATE.exec(text);
@@ -192,10 +214,79 @@ const splitCells = (line: string): string[] | null => {
   return null;
 };
 
+// ---------------------------------------------------------------- records
+
+// Words that say "this is a tally, not one match".
+const RECORD_WORDS = /\b(record|head[\s-]*to[\s-]*head|h2h|matches|games\s+won|wins|times|each|all|leads?|overall|in\s+total|estimated|approx(?:imately)?|roughly|about|draws?|drawn)\b/i;
+// Filler between the names and the numbers ("are", "have", "record:").
+const RECORD_FILLER = /\b(are|is|have|has|had|went|stand|stands|at|record|head[\s-]*to[\s-]*head|h2h|overall|currently|about|roughly|approx(?:imately)?|estimated|played)\b|[:=]/gi;
+const RECORD_SPLIT = /\s+(?:and|&|v|vs\.?|versus|against|leads?|over|-|–)\s+/i;
+const MAX_RECORD = 500;
+
+function readRecord(text: string, hasFullDate: boolean): Omit<ParsedRecord, "line" | "raw"> | null {
+  let t = " " + text + " ";
+  // A year on its own — "in 2026", "(2025)" — is the span the record covers.
+  let year: number | null = null;
+  if (!hasFullDate) {
+    const y = /(?:\b(?:in|during|for|from|season)\s+)?\(?\b(19\d{2}|20\d{2})\b\)?/i.exec(t);
+    if (y) { year = Number(y[1]); t = t.replace(y[0], " "); }
+  }
+  // "Sam beat Charlie 6-4 in 2019" is one match with a year, not a tally.
+  if (/\b(beat|beats|bt|def\.?|defeated|lost\s+to|beaten\s+by|drew\s+with)\b/i.test(t)) return null;
+  let a: number, b: number, d = 0;
+  let at: number;
+  const wdl = /(\d{1,3})\s*[-–]\s*(\d{1,3})\s*[-–]\s*(\d{1,3})/.exec(t);
+  const each = /(\d{1,3})\s+(?:all|each|apiece)\b/i.exec(t);
+  const pair = /(\d{1,3})\s*(?:and|-|–|to|:|\/)\s*(\d{1,3})/i.exec(t);
+  const andPair = /(\d{1,3})\s+and\s+(\d{1,3})/i.test(t);
+  if (wdl) { a = +wdl[1]; d = +wdl[2]; b = +wdl[3]; at = wdl.index; }
+  else if (each) { a = b = +each[1]; at = each.index; }
+  else if (pair) { a = +pair[1]; b = +pair[2]; at = pair.index; }
+  else return null;
+  // Only a tally if something says so. "Sam v Charlie 6-4" is one set.
+  const pairsSeen = (t.match(/\d{1,3}\s*[-–/]\s*\d{1,3}/g) || []).length;
+  if (!(wdl || each || andPair || RECORD_WORDS.test(t) || year != null) || pairsSeen > 1) return null;
+  const drawsM = /(\d{1,3})\s*(?:draws?|drawn|tied)/i.exec(t.slice(at + 1));
+  if (!wdl && drawsM) d = +drawsM[1];
+  if (a + b + d === 0 || a + b + d > MAX_RECORD) return null;
+
+  const namesPart = t.slice(0, at).replace(RECORD_FILLER, " ").replace(/\s+/g, " ").trim();
+  const parts = namesPart.split(RECORD_SPLIT);
+  if (parts.length !== 2) return null;
+  const left = tidyName(parts[0]), right = tidyName(parts[1]);
+  if (!left || !right || !looksLikeName(left) || !looksLikeName(right)) return null;
+  return { left, right, leftWins: a, draws: d, rightWins: b, year };
+}
+
+/**
+ * A record as dated results. Spread evenly across its year (up to today),
+ * and INTERLEAVED — W, L, W, D, L — not all the wins then all the losses,
+ * which would hand somebody a fictional five-match streak. With no year they
+ * all take `fallback`, the date the screen asks for.
+ */
+export function expandRecord(r: ParsedRecord, fallback: number, now: number = Date.now()): Array<{ date: number; winner: Side }> {
+  const kinds: Array<{ side: Side; n: number }> = [
+    { side: "left", n: r.leftWins }, { side: "draw", n: r.draws }, { side: "right", n: r.rightWins },
+  ];
+  const slots: Array<{ side: Side; pos: number }> = [];
+  kinds.forEach(({ side, n }) => { for (let i = 0; i < n; i++) slots.push({ side, pos: (i + 0.5) / n }); });
+  slots.sort((x, y) => x.pos - y.pos || (x.side < y.side ? -1 : 1));
+  const total = slots.length;
+  let from = fallback, to = fallback;
+  if (r.year != null) {
+    from = new Date(r.year, 0, 1, 12).getTime();
+    to = Math.min(new Date(r.year, 11, 31, 12).getTime(), now);
+    if (to < from) to = from;
+  }
+  return slots.map((s, i) => ({ side: s.side, date: total > 1 ? Math.round(from + (to - from) * (i / (total - 1))) : from }))
+    .map(({ side, date }) => ({ date, winner: side }));
+}
+
 // ------------------------------------------------------------------ parse
 
 export function parseResults(text: string, knownNames: string[] = [], now = new Date()): ParseResult {
   const rows: ParsedRow[] = [];
+  const records: ParsedRecord[] = [];
   const unreadable: Unreadable[] = [];
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   let columns: Column[] | null = null;
@@ -267,6 +358,8 @@ export function parseResults(text: string, knownNames: string[] = [], now = new 
     let text = " " + raw.replace(NOISE, " ") + " ";
     const d = findDate(text, now);
     if (d) text = text.replace(d.match, " ");
+    const rec = readRecord(text, !!d);
+    if (rec) { records.push({ line, raw, ...rec }); return; }
     const { sets, rest } = takeSets(text);
     text = rest.replace(/[,;|\t]+/g, " ").replace(/\s+/g, " ");
 
@@ -306,8 +399,17 @@ export function parseResults(text: string, knownNames: string[] = [], now = new 
       }
       if (found.length === 2) {
         found.sort((a, b) => a.at - b.at);
-        left = found[0].name; right = found[1].name;
         const leftover = rem.replace(/\s+/g, " ").trim().toLowerCase();
+        // Whatever is left once the names are out has to be accounted for.
+        // Numbers or words it cannot explain mean the line says something
+        // this reader did not understand, and turning it into one match
+        // anyway is exactly the silent guess rule 1 forbids.
+        const explained = !leftover || !!RESULT_WORD[leftover] || /^(?:and|&|with|played|on|at|the|a|match|game)(?:\s+(?:and|&|with|played|on|at|the|a|match|game))*$/.test(leftover);
+        if (!explained) {
+          unreadable.push({ line, raw, reason: `Couldn't make sense of “${leftover}” — write it as “Name beat Name 6-4”, or a record as “Name v Name 3-2 2025”` });
+          return;
+        }
+        left = found[0].name; right = found[1].name;
         if (RESULT_WORD[leftover] && worded == null) worded = RESULT_WORD[leftover];
       }
     }
@@ -340,7 +442,7 @@ export function parseResults(text: string, knownNames: string[] = [], now = new 
     rows.push({ line, raw, date, left, right, winner, sets: oriented });
   }
 
-  return { rows, unreadable };
+  return { rows, records, unreadable };
 }
 
 // ------------------------------------------------------------------ names

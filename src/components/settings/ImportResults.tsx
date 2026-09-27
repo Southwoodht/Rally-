@@ -4,7 +4,7 @@ import { AlertCircle, Check, ChevronLeft, X } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import {
-  isAlreadyIn, parseResults, resolveName, splitName,
+  expandRecord, isAlreadyIn, parseResults, resolveName, splitName,
   type NameStatus, type ParsedRow, type Side,
 } from "@/core/importResults";
 import { formatSets } from "@/core/sets";
@@ -67,6 +67,9 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
   // Per-row overrides: a winner chosen by hand, or a row left out.
   const [winners, setWinners] = useState<Record<number, Side>>({});
   const [excluded, setExcluded] = useState<Record<number, boolean>>({});
+  // Records are keyed by line too, in their own map: a line is a row or a
+  // record, never both, but keeping them apart keeps the two lists honest.
+  const [excludedRec, setExcludedRec] = useState<Record<number, boolean>>({});
   const [undatedDate, setUndatedDate] = useState(todayStr());
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,16 +82,18 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
 
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const knownNames = useMemo(() => players.flatMap((p) => [fullNameOf(p), p.name, p.nick].filter(Boolean)), [players]);
-  const parsed = useMemo(() => (text.trim() ? parseResults(text, knownNames) : { rows: [], unreadable: [] }), [text, knownNames]);
+  const parsed = useMemo(() => (text.trim() ? parseResults(text, knownNames) : { rows: [], records: [], unreadable: [] }), [text, knownNames]);
 
   // Distinct names, in the order they first appear, with how many results each.
   const names = useMemo(() => {
     const seen = new Map<string, { written: string; count: number }>();
-    parsed.rows.forEach((r) => [r.left, r.right].forEach((n) => {
+    const add = (n: string, by: number) => {
       const k = keyOf(n);
       const e = seen.get(k);
-      if (e) e.count++; else seen.set(k, { written: n, count: 1 });
-    }));
+      if (e) e.count += by; else seen.set(k, { written: n, count: by });
+    };
+    parsed.rows.forEach((r) => { add(r.left, 1); add(r.right, 1); });
+    parsed.records.forEach((r) => { const n = r.leftWins + r.draws + r.rightWins; add(r.left, n); add(r.right, n); });
     return Array.from(seen.entries()).map(([key, v]) => ({ key, ...v }));
   }, [parsed]);
 
@@ -138,11 +143,25 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
     return { r, p1, p2, winner, date, problem, duplicate, out };
   }), [parsed, picks, winners, excluded, undatedT, baseline, newIds]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Records: one line, several matches. Not duplicate-checked — their dates
+  // are spread across a year, so there is no single day to compare on.
+  const checkedRec = useMemo(() => parsed.records.map((r) => {
+    const p1 = idFor(r.left), p2 = idFor(r.right);
+    const n = r.leftWins + r.draws + r.rightWins;
+    let problem: string | null = null;
+    if (!p1 || !p2) problem = "A name still needs choosing";
+    else if (p1 === p2) problem = "Both names are the same player";
+    return { r, p1, p2, n, problem, out: !!excludedRec[r.line] };
+  }), [parsed, picks, excludedRec, newIds]); // eslint-disable-line react-hooks/exhaustive-deps
+  const readyRec = checkedRec.filter((c) => !c.problem && !c.out);
+  const recMatches = readyRec.reduce((acc, c) => acc + c.n, 0);
+
   const ready = checked.filter((c) => !c.problem && !c.out);
   const needWinner = checked.filter((c) => c.problem === "Who won?" && !c.out);
   const dupes = checked.filter((c) => c.duplicate && c.out);
-  const undated = parsed.rows.filter((r) => r.date == null).length;
-  const newPlayerKeys = Array.from(new Set(ready.flatMap((c) => [c.r.left, c.r.right].map(keyOf)).filter((k) => picks[k]?.kind === "new")));
+  const undated = parsed.rows.filter((r) => r.date == null).length + parsed.records.filter((r) => r.year == null).length;
+  const newPlayerKeys = Array.from(new Set([...ready, ...readyRec].flatMap((c) => [c.r.left, c.r.right].map(keyOf)).filter((k) => picks[k]?.kind === "new")));
+  const total = ready.length + recMatches;
 
   const save = async () => {
     setSaving(true);
@@ -156,7 +175,18 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
     });
     const real = (id: string) => realIds[id] || id;
     const now = Date.now();
-    const newMatches = ready.map((c) => ({
+    const fromRecords = readyRec.flatMap((c) => expandRecord(c.r, undatedT).map((x) => ({
+      id: uid(),
+      date: x.date,
+      p1: real(c.p1!),
+      p2: real(c.p2!),
+      winner: x.winner === "left" ? "p1" : x.winner === "right" ? "p2" : "draw",
+      score: "",
+      status: "confirmed",
+      reportedBy: meId || null,
+      loggedAt: now,
+    })));
+    const newMatches = [...fromRecords, ...ready.map((c) => ({
       id: uid(),
       date: c.date,
       p1: real(c.p1!),
@@ -166,7 +196,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       status: "confirmed",
       reportedBy: meId || null,
       loggedAt: now,
-    }));
+    }))];
     const ok = await onImport(newPlayers, newMatches);
     setSaving(false);
     setConfirming(false);
@@ -187,7 +217,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
 
   // ---------------------------------------------------------------- paste
   if (step === "paste") {
-    const found = parsed.rows.length;
+    const found = parsed.rows.length + parsed.records.reduce((acc, r) => acc + r.leftWins + r.draws + r.rightWins, 0);
     return (
       <>
         {back("Run your league", onBack)}
@@ -205,7 +235,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
         <div style={{ ...note, margin: "8px 2px 14px", ...tabular }}>
           {text.trim()
             ? `${found} result${found === 1 ? "" : "s"} found${parsed.unreadable.length ? ` · ${parsed.unreadable.length} line${parsed.unreadable.length === 1 ? "" : "s"} couldn't be read` : ""}`
-            : "Works with: “Sam beat Charlie 6-4 6-2”, “Sam v Charlie”, “Charlie lost to Sam”, and spreadsheet columns such as Date · Winner · Loser · Score. A date on its own line counts for the results under it."}
+            : "Works with: “Sam beat Charlie 6-4 6-2”, “Sam v Charlie”, “Charlie lost to Sam”, and spreadsheet columns such as Date · Winner · Loser · Score. A date on its own line counts for the results under it. Head-to-head records work too: “Sam v Charlie 5-3 2025”."}
         </div>
         <button disabled={!found} onClick={goNames} style={btn(FEED_LIME, FEED_LIME_INK, !found)}>Next: check the names</button>
       </>
@@ -287,7 +317,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
             {added.players ? `${added.players} new player${added.players === 1 ? "" : "s"} too. ` : ""}The table, profiles and head-to-heads already include them.
           </div>
         </SurfaceCard>
-        <button onClick={() => { setText(""); setPicks({}); setWinners({}); setExcluded({}); setAdded(null); setStep("paste"); }} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), marginBottom: 10 }}>Import more</button>
+        <button onClick={() => { setText(""); setPicks({}); setWinners({}); setExcluded({}); setExcludedRec({}); setAdded(null); setStep("paste"); }} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), marginBottom: 10 }}>Import more</button>
         <button onClick={onBack} style={btn(FEED_LIME, FEED_LIME_INK)}>Done</button>
       </>
     );
@@ -302,7 +332,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
 
       <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 12 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, ...tabular }}>
-          <Stat n={ready.length} label="ready to add" hi />
+          <Stat n={total} label="ready to add" hi />
           {needWinner.length > 0 && <Stat n={needWinner.length} label="need a winner" />}
           {dupes.length > 0 && <Stat n={dupes.length} label="already in Rally" />}
           {parsed.unreadable.length > 0 && <Stat n={parsed.unreadable.length} label="couldn't read" />}
@@ -315,6 +345,38 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
         )}
       </SurfaceCard>
 
+      {checkedRec.length > 0 && (
+        <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 12 }}>
+          {checkedRec.map((c, i) => {
+            const L = nameFor(c.r.left), R = nameFor(c.r.right);
+            const rec = `${c.r.leftWins}–${c.r.rightWins}${c.r.draws ? `, ${c.r.draws} drawn` : ""}`;
+            return (
+              <div key={c.r.line} style={{ padding: "10px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none", opacity: c.out ? 0.5 : 1 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, textDecoration: c.out ? "line-through" : "none" }}>
+                      {L} v {R} <span style={{ color: FEED_TEXT_MID, ...tabular }}>· {rec}</span>
+                    </div>
+                    <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
+                      A record: {c.n} result{c.n === 1 ? "" : "s"}{c.r.year != null ? `, spread across ${c.r.year}` : `, all dated ${formatMatchDate(undatedT)}`} · line {c.r.line}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setExcludedRec((cur) => ({ ...cur, [c.r.line]: !c.out }))}
+                    aria-label={c.out ? "Include this record" : "Leave this record out"}
+                    style={{ background: FEED_RAISED, border: "none", borderRadius: 14, width: 28, height: 28, display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}
+                  >
+                    {c.out ? <Check size={14} color={FEED_TEXT_MID} strokeWidth={2.5} /> : <X size={14} color={FEED_TEXT_MID} strokeWidth={2.5} />}
+                  </button>
+                </div>
+                {c.problem && !c.out && <div style={{ ...note, color: DOT_LOSS, marginTop: 6 }}>{c.problem} — it will be left out.</div>}
+              </div>
+            );
+          })}
+        </SurfaceCard>
+      )}
+
+      {checked.length > 0 && (
       <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 12 }}>
         {visible.map((c, i) => {
           const L = nameFor(c.r.left), R = nameFor(c.r.right);
@@ -360,6 +422,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
           </button>
         )}
       </SurfaceCard>
+      )}
 
       {parsed.unreadable.length > 0 && (
         <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 12 }}>
@@ -380,16 +443,16 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       {confirming ? (
         <SurfaceCard radius={18} pad="16px 14px">
           <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12, ...tabular }}>
-            Add {ready.length} result{ready.length === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this league"}? They count straight away — nobody is asked to confirm results from before the league used Rally.
+            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this league"}? They count straight away — nobody is asked to confirm results from before the league used Rally.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button disabled={saving} onClick={save} style={{ ...btn(FEED_LIME, FEED_LIME_INK, saving), flex: 1 }}>{saving ? "Adding…" : `Add ${ready.length}`}</button>
+            <button disabled={saving} onClick={save} style={{ ...btn(FEED_LIME, FEED_LIME_INK, saving), flex: 1 }}>{saving ? "Adding…" : `Add ${total}`}</button>
             <button disabled={saving} onClick={() => setConfirming(false)} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), flex: 1 }}>Cancel</button>
           </div>
         </SurfaceCard>
       ) : (
-        <button disabled={!ready.length} onClick={() => setConfirming(true)} style={btn(FEED_LIME, FEED_LIME_INK, !ready.length)}>
-          {ready.length ? `Add ${ready.length} result${ready.length === 1 ? "" : "s"}…` : "Nothing ready to add yet"}
+        <button disabled={!total} onClick={() => setConfirming(true)} style={btn(FEED_LIME, FEED_LIME_INK, !total)}>
+          {total ? `Add ${total} result${total === 1 ? "" : "s"}…` : "Nothing ready to add yet"}
         </button>
       )}
     </>
