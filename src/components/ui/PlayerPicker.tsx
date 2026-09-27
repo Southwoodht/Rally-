@@ -128,7 +128,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
                 <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "10px 0 6px" }}>Player type</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                   <button onClick={() => setNewIsAccount(false)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: !newIsAccount ? BALL : PANEL2, color: !newIsAccount ? COURT : MUTED, fontWeight: 600 }}>Shell player</button>
-                  <button onClick={() => setNewIsAccount(true)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: newIsAccount ? FEED_HERO : PANEL2, color: newIsAccount ? FEED_ON_HERO : MUTED, fontWeight: 600 }}>Has a Rally account</button>
+                  <button onClick={() => setNewIsAccount(true)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: newIsAccount ? FEED_HERO : PANEL2, color: newIsAccount ? FEED_ON_HERO : MUTED, fontWeight: 600 }}>Has a Southwood account</button>
                 </div>
                 <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>
                   {newIsAccount

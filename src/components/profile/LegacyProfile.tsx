@@ -43,7 +43,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 70 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL }}>Rally Legacy</div>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: BALL }}>Southwood Legacy</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
 
@@ -67,7 +67,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
             </div>
             <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 6, marginTop: 4 }}>Career</div>
             <Row label="Span">{legacy.firstYear} – {legacy.lastYear}</Row>
-            <Row label="Matches recorded">{legacy.matches} <span style={{ color: MUTED, fontFamily: body, fontSize: 10 }}>· Rally verified</span></Row>
+            <Row label="Matches recorded">{legacy.matches} <span style={{ color: MUTED, fontFamily: body, fontSize: 10 }}>· Southwood verified</span></Row>
             <Row label="Pace">~{legacy.matchesPerYear} matches/year</Row>
             {reportedStart != null && reportedStart !== legacy.firstYear && (
               <Row label="Started playing">

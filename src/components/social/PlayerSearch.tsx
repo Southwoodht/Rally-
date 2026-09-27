@@ -176,13 +176,13 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
 
         {signedOut && (
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
-            Sign in to search for players. <a href="/" style={{ color: FEED_TEXT_HI }}>Go to Rally</a>
+            Sign in to search for players. <a href="/" style={{ color: FEED_TEXT_HI }}>Go to Southwood</a>
           </div>
         )}
 
         {/* iOS offers Contacts over any text field it thinks might hold a
             name, and a contact card is never the answer here — the only
-            useful completions are Rally accounts, which the list below
+            useful completions are Southwood accounts, which the list below
             already gives. All four attributes, because autoComplete alone
             still leaves iOS capitalising and "correcting" surnames. */}
         {!signedOut && <div style={{ display: "flex", alignItems: "center", gap: 9, background: FEED_RAISED, borderRadius: 14, padding: "0 13px", marginBottom: 16 }}>

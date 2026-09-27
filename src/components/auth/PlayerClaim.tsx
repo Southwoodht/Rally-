@@ -59,7 +59,7 @@ export default function PlayerClaim({
         <h1 style={{ marginTop: 0 }}>Is this you?</h1>
 
         <p style={{ fontSize: 18, marginBottom: 24 }}>
-          We found an existing Rally player called{" "}
+          We found an existing Southwood player called{" "}
           <strong>{playerName}</strong>.
         </p>
 

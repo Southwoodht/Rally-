@@ -4,6 +4,15 @@ Head-to-head rankings for racket sports. Real app, real users, real data:
 Sam's club (Seacourt) plus a few others are live in it. Treat production
 data as sacred — see **The Charlie incident** in §3 for why.
 
+**The app is called SOUTHWOOD since 2026-09-27** (Sam's company is
+Southwood HT Ltd). "Rally" was taken several times over — the LTA's own
+booking service among them. Every user-facing string, the manifest, the
+page title and the icon (an S with the ball, same stroke as the old R) were
+changed; code identifiers (`RallyApp`, `RallyMark`), storage keys
+(`rally.*`) and the default theme's id (`rally`, in a DB check constraint)
+deliberately were not, because renaming them changes nothing on screen and
+the keys would lose everybody's saved preferences. Say "Southwood" to Sam.
+
 Read this before touching anything. It exists so you don't have to
 re-derive the reasoning from the commit log every session.
 

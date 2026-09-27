@@ -1,7 +1,7 @@
 {
-  "name": "Rally",
-  "short_name": "Rally",
-  "description": "Head-to-head rankings for racket sports.",
+  "name": "Southwood",
+  "short_name": "Southwood",
+  "description": "Leagues and head-to-head rankings for racket sports.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#16271F",

@@ -151,7 +151,7 @@ export function LoadingScreen({ label = "Loading your league" }: { label?: strin
         </div>
 
         <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, letterSpacing: "0.02em", textTransform: "uppercase", color: FEED_LIME, marginTop: 22, lineHeight: 1 }}>
-          Rally
+          Southwood
         </div>
         {/* The one thing that changes between the three screens. */}
         <div key={label} className="rally-arrive" style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_MID, marginTop: 8 }}>

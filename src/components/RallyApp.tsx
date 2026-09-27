@@ -135,7 +135,7 @@ function nextUpLine(pct: number | null): string {
   if (pct >= 65) return "You're the favourite for a reason. Play like it.";
   if (pct >= 55) return "Slight edge. Don't hand it back.";
   if (pct >= 45) return "Coin flip. First to blink loses.";
-  if (pct >= 35) return "Rally's been wrong before.";
+  if (pct >= 35) return "Southwood's been wrong before.";
   return "Nobody's expecting this one. Show them.";
 }
 
@@ -1011,7 +1011,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const place = await globalRankFor(globalKeyFor(mineRow));
         if (place) {
           found.push({
-            scope: "Across Rally",
+            scope: "Across Southwood",
             rank: place.rank,
             // A provisional player has no place on the global table — it
             // prints a dash and a count, and so does this, rather than a
@@ -1550,7 +1550,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   identical across the four tabs and the logo has to be part
                   of that or it reappears and vanishes as you move. */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                <RallyMark title="Rally" />
+                <RallyMark title="Southwood" />
                 <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
                   <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "League")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
                 </button>

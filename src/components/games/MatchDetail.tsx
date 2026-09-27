@@ -50,7 +50,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   return (
     <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "13px 15px", margin: "12px 0" }}>
       <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
-        {favoredId && favoredPct != null && <>Rally {stored ? "made" : "would have made"} <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
+        {favoredId && favoredPct != null && <>Southwood {stored ? "made" : "would have made"} <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
         {isDraw ? <>They drew.</> : <><strong>{winnerName}</strong> won{predictionCorrect === false ? " — the underdog took it." : "."}</>}
       </div>
       {(["p1", "p2"] as const).map((which) => {
@@ -244,7 +244,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         <Row label="Head-to-head">{h2hP1 === h2hP2 ? `${h2hP1}-${h2hD}-${h2hP2} · even` : h2hP1 > h2hP2 ? `${nm(match.p1)} leads ${h2hP1}-${h2hD}-${h2hP2}` : `${nm(match.p2)} leads ${h2hP2}-${h2hD}-${h2hP1}`}</Row>
 
         {prediction && (
-          <Row label={match.prediction ? "Rally predicted" : "Rally would have predicted"}>
+          <Row label={match.prediction ? "Southwood predicted" : "Southwood would have predicted"}>
             {nm(favoredId)} {favoredPct}%
             {predictionCorrect != null && <span style={{ marginLeft: 8, color: predictionCorrect ? BALL : CLAY, fontWeight: 700 }}>{predictionCorrect ? "Correct ✓" : "Incorrect ✗"}</span>}
           </Row>
@@ -320,7 +320,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
             ) : confirmDelete ? (
               <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Delete this match?</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{needsApproval ? "They have a Rally account — this needs their agreement, or 24h with no response." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>{needsApproval ? "Request delete" : "Delete"}</button>
                   <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Cancel</button>

@@ -38,7 +38,7 @@ export function LevelRecheck({ current, onPick, onDismiss }: {
   return (
     <SurfaceCard radius={20} pad="18px 16px 16px" style={{ marginBottom: 12 }}>
       <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
-        Rally has six levels now
+        Southwood has six levels now
       </div>
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.5 }}>
         Amateur and Semi-pro were added after you picked yours. Worth a look —

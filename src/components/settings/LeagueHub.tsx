@@ -80,7 +80,7 @@ export function LeagueHub(props: any) {
   const invite = async () => {
     const link = inviteUrl(leagueJoinCode || "");
     if (!link) { flash("This league has no invite code."); return; }
-    const text = `Join ${group?.name || "our league"} on Rally`;
+    const text = `Join ${group?.name || "our league"} on Southwood`;
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {
         await (navigator as any).share({ title: text, text, url: link });
@@ -259,7 +259,7 @@ function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSi
           <button onClick={onClose} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 14, cursor: "pointer" }}>Close</button>
         </div>
         <div style={{ ...note, marginBottom: 14 }}>A league (everyone plays everyone, with a table) or a knockout (winners go through). You choose next.</div>
-        {option("Singles", "Pick the players — or add everyone in one tap. Rally draws the matches, keeps the table and moves winners through.", onSingles, !competitions)}
+        {option("Singles", "Pick the players — or add everyone in one tap. Southwood draws the matches, keeps the table and moves winners through.", onSingles, !competitions)}
         {option("Doubles", "Fixed pairs, the same way.", onDoubles, !competitions || !doubles)}
         {!competitions ? off("Competitions are", { competitions_enabled: true }) : !doubles ? off("Doubles is", { doubles_enabled: true }) : null}
       </div>
@@ -515,7 +515,7 @@ function DataPage({ matches, onClearResults, onImport }: any) {
           league pressed it. It now opens the real importer. */}
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>Import old results</div>
-        <div style={{ ...note, margin: "4px 0 12px" }}>Paste results from before the league used Rally — from a spreadsheet, notes or a group chat. You check every one before it&apos;s added.</div>
+        <div style={{ ...note, margin: "4px 0 12px" }}>Paste results from before the league used Southwood — from a spreadsheet, notes or a group chat. You check every one before it&apos;s added.</div>
         <button onClick={onImport} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>Import results</button>
       </SurfaceCard>
       {/* Two steps and the number out loud (§3). It sits alone on its own

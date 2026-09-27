@@ -57,7 +57,7 @@ const FONT_VARS = [bricolage, dmSans, fraunces, cormorant, spaceGrotesk, sora]
   .join(" ");
 
 export const metadata: Metadata = {
-  title: "Rally",
+  title: "Southwood",
   description: "Head-to-head rankings for racket sports.",
   manifest: "/manifest.json",
   icons: {
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Rally",
+    title: "Southwood",
   },
 };
 

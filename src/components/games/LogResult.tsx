@@ -157,7 +157,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submit("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
-            {needsConfirm ? "Your opponent has 24 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Rally account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
+            {needsConfirm ? "Your opponent has 24 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Southwood account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
           </div>
         </>
       ) : (

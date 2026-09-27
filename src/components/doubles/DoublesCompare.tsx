@@ -133,7 +133,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
         const mt = c.meetings.w + c.meetings.d + c.meetings.l;
         const why = c.chanceA === 50
           ? "Dead level on doubles rating — this one is a coin toss."
-          : `Rally favours ${pairName(fav.pair)} — a ${gap}-point edge on doubles rating, the average of the two partners.`;
+          : `Southwood favours ${pairName(fav.pair)} — a ${gap}-point edge on doubles rating, the average of the two partners.`;
         return (
           <>
             <SurfaceCard radius={18} style={{ marginBottom: 12 }}>

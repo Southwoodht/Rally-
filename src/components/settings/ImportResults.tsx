@@ -223,7 +223,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
         {back("Run your league", onBack)}
         {stepLabel(1, "Paste your old results")}
         <div style={{ ...note, marginBottom: 12 }}>
-          From a spreadsheet, a notes app or a group chat — one result per line. Rally reads dates, scores and who beat whom, and you check everything before it&apos;s added.
+          From a spreadsheet, a notes app or a group chat — one result per line. Southwood reads dates, scores and who beat whom, and you check everything before it&apos;s added.
         </div>
         <textarea
           value={text}
@@ -250,7 +250,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
         {back("Edit the paste", () => setStep("paste"))}
         {stepLabel(2, "Who's who")}
         <div style={{ ...note, marginBottom: 12 }}>
-          {names.length} names. Rally only links a name to a player when nobody else could be meant — anything else is your call, so nobody&apos;s results land on the wrong person.
+          {names.length} names. Southwood only links a name to a player when nobody else could be meant — anything else is your call, so nobody&apos;s results land on the wrong person.
         </div>
         <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 14 }}>
           {names.map((n, i) => {
@@ -334,7 +334,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, ...tabular }}>
           <Stat n={total} label="ready to add" hi />
           {needWinner.length > 0 && <Stat n={needWinner.length} label="need a winner" />}
-          {dupes.length > 0 && <Stat n={dupes.length} label="already in Rally" />}
+          {dupes.length > 0 && <Stat n={dupes.length} label="already in Southwood" />}
           {parsed.unreadable.length > 0 && <Stat n={parsed.unreadable.length} label="couldn't read" />}
         </div>
         {undated > 0 && (
@@ -391,7 +391,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
                   </div>
                   <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
                     {formatMatchDate(c.date)}{c.r.date == null ? " (no date given)" : ""} · line {c.r.line}
-                    {c.duplicate && " · already in Rally"}
+                    {c.duplicate && " · already in Southwood"}
                   </div>
                 </div>
                 <button
@@ -443,7 +443,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       {confirming ? (
         <SurfaceCard radius={18} pad="16px 14px">
           <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12, ...tabular }}>
-            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this league"}? They count straight away — nobody is asked to confirm results from before the league used Rally.
+            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this league"}? They count straight away — nobody is asked to confirm results from before the league used Southwood.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button disabled={saving} onClick={save} style={{ ...btn(FEED_LIME, FEED_LIME_INK, saving), flex: 1 }}>{saving ? "Adding…" : `Add ${total}`}</button>

@@ -170,7 +170,7 @@ export function Competitions(props: Props) {
         </div>
         {!competitions.length && (
           <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "4px 0 10px" }}>
-            Run a {kind} league or a knockout: pick the {unit(kind, 2)} and Rally draws the matches, keeps the table and moves winners through.
+            Run a {kind} league or a knockout: pick the {unit(kind, 2)} and Southwood draws the matches, keeps the table and moves winners through.
           </div>
         )}
         {running.map(row)}

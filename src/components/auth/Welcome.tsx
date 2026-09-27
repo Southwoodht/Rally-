@@ -69,7 +69,7 @@ export default function Welcome() {
     <div style={{ minHeight: "100vh", background: COURT, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontFamily: display, fontSize: 54, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -1, lineHeight: 1 }}>Rally</div>
+          <div style={{ fontFamily: display, fontSize: "min(54px, 14vw)", fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -1, lineHeight: 1 }}>Southwood</div>
           <div style={{ fontFamily: body, fontSize: 14, color: MUTED, marginTop: 8 }}>Head-to-head rankings for racket sports.</div>
         </div>
 

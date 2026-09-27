@@ -162,19 +162,19 @@ export function PublicProfile({ id }: { id: string }) {
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>{detail}</div>
       {cta && (
         <a href="/" style={{ display: "block", textAlign: "center", background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 16, padding: "12px 14px", marginTop: 16, textDecoration: "none", fontFamily: body, fontWeight: 500, fontSize: 15 }}>
-          Go to Rally
+          Go to Southwood
         </a>
       )}
     </SurfaceCard>
   );
 
   if (state === "loading") return shell(<div style={{ fontFamily: body, color: FEED_TEXT_MID, padding: 30, textAlign: "center" }}>Loading…</div>);
-  if (state === "signedOut") return note("Sign in to see profiles", "Rally profiles are for people with an account.", true);
-  if (state === "unclaimed") return note("Not on Rally yet", "This player has a record in a league but no account, so there is no profile to open. Their results still count wherever they have played.");
+  if (state === "signedOut") return note("Sign in to see profiles", "Southwood profiles are for people with an account.", true);
+  if (state === "unclaimed") return note("Not on Southwood yet", "This player has a record in a league but no account, so there is no profile to open. Their results still count wherever they have played.");
   // Deliberately not "no account". We do not know that: the row is in a league
   // this account cannot read, and the only thing that could tell us apart from
   // a shell is auth_id_for_player(), which is not installed.
-  if (state === "unresolved") return note("Can't open this one", "They play in a league this account can't see, so Rally can't tell which profile to open. Nothing is wrong with their record.");
+  if (state === "unresolved") return note("Can't open this one", "They play in a league this account can't see, so Southwood can't tell which profile to open. Nothing is wrong with their record.");
   if (state === "missing" || !card) return note("No such player", "That profile does not exist, or it is not shared with you.");
 
   /**
@@ -205,7 +205,7 @@ export function PublicProfile({ id }: { id: string }) {
           deltas={stats.deltas}
           ratingBefore={stats.ratingBefore}
           meId={null}
-          group={{ name: them.home || "Rally" }}
+          group={{ name: them.home || "Southwood" }}
           viewer="other"
           /**
            * Link with the account id when we already hold it. The snapshot
@@ -236,7 +236,7 @@ export function PublicProfile({ id }: { id: string }) {
    * about a screen that shows you nothing.
    */
   const summaryNote = snapReason === "not-installed" || card.cardStale
-    ? "Rally can't load their league on this account yet, so this is a summary rather than their full profile — and older results may be missing their opponent links."
+    ? "Southwood can't load their league on this account yet, so this is a summary rather than their full profile — and older results may be missing their opponent links."
     : snapReason === "failed"
       ? "Their league didn't load, so this is a summary. Pull down to try again."
       : null;
@@ -364,7 +364,7 @@ export function PublicProfile({ id }: { id: string }) {
   return shell(
     <>
       <ProfileHeader
-        leagueName={s?.home || "Rally"}
+        leagueName={s?.home || "Southwood"}
         player={asPlayer}
         meta={meta || undefined}
         levelLabel={s?.level ? s.level.cat + " · " + s.level.sub : undefined}

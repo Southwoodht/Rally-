@@ -48,7 +48,7 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
         {/* The mark in the top-left corner, ahead of the club name. Same
             letter as the app icon, in theme colours — see RallyMark. */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <RallyMark title="Rally" />
+          <RallyMark title="Southwood" />
           {onPickLeague ? (
             <button onClick={onPickLeague} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "block", minWidth: 0 }}>
               {league}

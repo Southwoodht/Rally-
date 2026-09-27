@@ -1,9 +1,11 @@
 "use client";
 import React from "react";
 
-// The Rally mark, for use inside the app.
+// The Southwood mark, for use inside the app. (Still named RallyMark: the
+// app was Rally until 2026-09-27, and renaming the component would touch
+// every importer for no change on screen.)
 //
-// Same letter as the app icon — the three paths are copied from
+// Same letter as the app icon — the S path is copied from
 // public/icon.svg and the ball sits at the same place, so the thing in the
 // corner of the header and the thing on the home screen are one mark. If the
 // icon's geometry is ever changed, change it here too; the build notes in
@@ -23,7 +25,7 @@ import React from "react";
 // nothing to its background.
 //
 // The colours are tokens, not the icon's hexes, so the mark follows the
-// theme: cream-on-green in Rally, ink-on-cream in Paris, and so on. The app
+// theme: cream-on-green in Southwood, ink-on-cream in Paris, and so on. The app
 // icon cannot do that — it is baked into a PNG the operating system owns —
 // and that is the right split: the icon is the brand, this is the interface.
 //
@@ -37,8 +39,8 @@ export function RallyMark({ size = 22, title }: { size?: number; title?: string 
   return (
     <svg
       width={size}
-      height={size * (602 / 612)}
-      viewBox="276 211 612 602"
+      height={size * (602 / 676)}
+      viewBox="250 211 676 602"
       role={title ? "img" : "presentation"}
       aria-label={title}
       aria-hidden={title ? undefined : true}
@@ -51,11 +53,9 @@ export function RallyMark({ size = 22, title }: { size?: number; title?: string 
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M322 257V767" />
-        <path d="M322 257H529A133 133 0 0 1 529 523H322" />
-        <path d="M412 523L646 767" />
+        <path d="M608 296Q586 257 536 257H424A127.5 127.5 0 0 0 424 512H520A127.5 127.5 0 0 1 520 767H408Q358 767 336 728" />
       </g>
-      <circle cx={780} cy={692} r={108} fill="var(--mark-ball)" />
+      <circle cx={818} cy={703} r={108} fill="var(--mark-ball)" />
     </svg>
   );
 }

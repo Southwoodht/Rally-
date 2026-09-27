@@ -165,7 +165,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
         ? `${favoredName} and ${otherName} haven't played each other yet — this leans on overall form and level, and it's close.`
         : `This one's close — ${favoredName} has the slightest edge overall.`;
     }
-    return `Rally favours ${favoredName} — ${top.join(" and ")}.`;
+    return `Southwood favours ${favoredName} — ${top.join(" and ")}.`;
   }, [a, b, scoped, eloS, players, pctA]);
   return (
     <div>

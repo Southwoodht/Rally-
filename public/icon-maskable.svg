@@ -1,53 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Rally">
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Southwood">
   <!--
-    Rally app icon, maskable variant — for Android adaptive icons.
-    Identical to icon.svg except the mark is scaled a further 0.8 about the
-    composition's own optical centre (502, 512), not the tile's, so the
-    leftward shift survives the scaling instead of being undone by it. The
-    two scales are folded into one number: 0.92 x 0.8 = 0.736.
+    Southwood app icon, maskable variant — for Android adaptive icons.
+    Identical to icon.svg except the mark is scaled 0.736 (0.92 x 0.8) about
+    the composition's optical centre, so it sits inside the circle every
+    Android mask guarantees. The ball is the rightmost part and the part a
+    circular mask reaches first. The field is full-bleed and unscaled —
+    it is the part the crop is supposed to eat.
 
-    Android crops this to a shape that varies by device — circle, squircle,
-    rounded square, teardrop — and only the centre 80% is guaranteed. At 0.736
-    the mark measures 450 x 443 and its half-diagonal is 315, so it sits
-    inside a 630px circle where the guaranteed safe circle is 819. Comfortably
-    clear of every mask, which is the point: the failure here is not subtle,
-    it is a letter with its leg cut off on somebody's phone.
-
-    THE BALL IS THE NEW THING TO CHECK. It is the rightmost part of the mark
-    now, so it is the part a circular mask reaches first — which is exactly
-    why the scale is computed from the R-plus-ball bounding box rather than
-    kept at the letter's old 0.8. Scaling the letter and leaving the ball
-    where it was would have pushed the ball out to a 350 radius on its own.
-
-    The field is full-bleed and unscaled, because that is the part the crop is
-    SUPPOSED to eat.
-
-    Declared separately in manifest.json with "purpose": "maskable", and it
-    must not also be offered as "any" — a launcher applying no mask would show
-    a small letter adrift in a large tile.
+    Declared in manifest.json with "purpose": "maskable" only.
   -->
   <defs>
-    <linearGradient id="rally-field-maskable" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="sw-field-maskable" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#1E3529"/>
       <stop offset="1" stop-color="#12211A"/>
     </linearGradient>
-    <clipPath id="rally-ball-clip-maskable">
-      <circle cx="780" cy="692" r="108"/>
+    <clipPath id="sw-ball-clip-maskable">
+      <circle cx="818" cy="703" r="108"/>
     </clipPath>
   </defs>
 
-  <rect width="1024" height="1024" fill="url(#rally-field-maskable)"/>
+  <rect width="1024" height="1024" fill="url(#sw-field-maskable)"/>
 
-  <g transform="translate(502 512) scale(0.736) translate(-582 -512)">
+  <g transform="translate(502 512) scale(0.736) translate(-588 -512)">
     <g fill="none" stroke="#F4EFE3" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M322 257V767"/>
-      <path d="M322 257H529A133 133 0 0 1 529 523H322"/>
-      <path d="M412 523L646 767"/>
+      <path d="M608 296Q586 257 536 257H424A127.5 127.5 0 0 0 424 512H520A127.5 127.5 0 0 1 520 767H408Q358 767 336 728"/>
     </g>
-    <circle cx="780" cy="692" r="108" fill="#E9C46A"/>
-    <g clip-path="url(#rally-ball-clip-maskable)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
-      <path d="M677.4 658.5Q734.6 646.6 746.5 589.4"/>
-      <path d="M882.6 725.5Q825.4 737.4 813.5 794.6"/>
+    <circle cx="818" cy="703" r="108" fill="#E9C46A"/>
+    <g clip-path="url(#sw-ball-clip-maskable)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
+      <path d="M715.4 669.5Q772.6 657.6 784.5 600.4"/>
+      <path d="M920.6 736.5Q863.4 748.4 851.5 805.6"/>
     </g>
   </g>
 </svg>

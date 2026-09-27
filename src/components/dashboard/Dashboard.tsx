@@ -192,14 +192,14 @@ export default function Dashboard({ session }: { session: Session }) {
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>
-            <div style={{ fontFamily: display, fontSize: 34, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -0.5, lineHeight: 1 }}>Rally</div>
+            <div style={{ fontFamily: display, fontSize: 34, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -0.5, lineHeight: 1 }}>Southwood</div>
             <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6 }}>Welcome, {displayName}.</div>
           </div>
           <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Log out</button>
         </div>
         {error && <div style={{ fontFamily: body, fontSize: 13, color: CLAY, marginBottom: 12 }}>{error}</div>}
         {children}
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 30, textAlign: "center" }}>Rally v1.0 Foundation</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 30, textAlign: "center" }}>Southwood</div>
       </div>
     </div>
   );

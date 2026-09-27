@@ -1,5 +1,14 @@
 # Rebuilding the app icons
 
+**2026-09-27: the letter is an S now.** The app became Southwood and the R
+was redrawn as an S in the same stroke, with the ball moved to (818, 703).
+Where this file says "the R" or "the letter", read the S — the rules are the
+same. That rebuild was rasterised with Playwright's Chromium in a cloud
+session (`/tmp/.../raster.mjs`: open each master as an <img> at the target
+size and screenshot it), then `node scripts/build-favicon-ico.js public` for
+the .ico — the browser procedure below does the same job on a machine
+without Playwright.
+
 The three SVGs in `public/` are the masters. Everything else in the icon set
 is rendered from them, so **never redraw the R** — edit the master and
 re-export.
@@ -10,7 +19,7 @@ re-export.
 | `icon-maskable.svg` | `icon-maskable-*.png` | mark scaled to 0.8 for Android's crop |
 | `favicon.svg` | `favicon-16/32.png`, `favicon.ico` | the same letter scaled up for 16px — see its comment |
 
-The letter itself lives in exactly one place: the three `<path>` elements are
+The letter itself lives in exactly one place: the letter `<path>` elements are
 byte-identical across all three masters, and the variants differ only by a
 `transform` on the group. **Edit the paths in `icon.svg` and paste them into
 the other two** — or the three will drift and nobody will notice until the

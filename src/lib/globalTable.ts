@@ -331,7 +331,7 @@ export async function globalRankFor(key: string, now = Date.now()): Promise<Glob
 // the play-style chip uses.
 export function standingWord(place: { rank: number; of: number }): { label: string; tier: "gold" | "blue" | "green" | "orange" | "muted"; note: string } {
   const p = place.rank / Math.max(1, place.of);
-  const of = `of the ${place.of} players ranked across every league Rally can see for you`;
+  const of = `of the ${place.of} players ranked across every league Southwood can see for you`;
   if (p <= 0.1) return { label: "Elite", tier: "gold", note: `Top 10% ${of}.` };
   if (p <= 0.25) return { label: "Strong", tier: "blue", note: `Top quarter ${of}.` };
   if (p <= 0.5) return { label: "Decent", tier: "green", note: `Top half ${of}.` };

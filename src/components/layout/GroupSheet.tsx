@@ -9,7 +9,7 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
-        {/* Not being in a league is a legitimate way to use Rally: some people
+        {/* Not being in a league is a legitimate way to use Southwood: some people
             just play the same handful of opponents and don't want a table with
             a name and a season. Ticking this unticks every league. */}
         <div style={{ ...listCard, marginBottom: 14 }}>

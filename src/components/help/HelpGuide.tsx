@@ -8,9 +8,9 @@ interface Sect { id: string; icon: string; title: string; points: Point[]; }
 
 const SECTIONS: Sect[] = [
   {
-    id: "basics", icon: "🎾", title: "Rally basics",
+    id: "basics", icon: "🎾", title: "Southwood basics",
     points: [
-      { label: "What Rally is", text: "Rally tracks head-to-head results for racket sports and turns them into rankings, records and a shared history for your group." },
+      { label: "What Southwood is", text: "Southwood tracks head-to-head results for racket sports and turns them into rankings, records and a shared history for your group." },
       { label: "Players, matches and records", text: "Every match is one result between two players — a win, a loss, or a draw. Once confirmed, it counts toward both players' record, rating and rankings. Nothing is entered twice." },
     ],
   },
@@ -28,19 +28,19 @@ const SECTIONS: Sect[] = [
   {
     id: "compare", icon: "⚔️", title: "Compare",
     points: [
-      { label: "Pick any two players", text: "Works even if they've never played each other — Rally still has a view based on form, level and history against others." },
+      { label: "Pick any two players", text: "Works even if they've never played each other — Southwood still has a view based on form, level and history against others." },
       { label: "The numbers", text: "ELO, Official, Record and Form are shown side by side, with the higher value highlighted for each." },
       { label: "Winning / Losing records", text: "Who each player has a winning or losing head-to-head against — tap through to see the actual matches." },
       { label: "Head-to-head", text: "The real matches between the two players you've selected." },
-      { label: "Rally AI prediction", text: "A percentage chance based on ELO, head-to-head, recent form and level, with the reasoning shown underneath. It's a model, not a promise — and it says so when two players haven't played enough for it to be confident." },
+      { label: "Southwood prediction", text: "A percentage chance based on ELO, head-to-head, recent form and level, with the reasoning shown underneath. It's a model, not a promise — and it says so when two players haven't played enough for it to be confident." },
     ],
   },
   {
     id: "recording", icon: "🎾", title: "Recording a match",
     points: [
       { label: "Existing player", text: "Pick from anyone already in your league." },
-      { label: "Creating a new player", text: "If they're not in Rally yet, add them on the spot from the same screen." },
-      { label: "Real account vs shell", text: "A \"shell\" player doesn't have their own Rally login yet — you're keeping their record on their behalf. A \"real account\" player has signed up themselves." },
+      { label: "Creating a new player", text: "If they're not in Southwood yet, add them on the spot from the same screen." },
+      { label: "Real account vs shell", text: "A \"shell\" player doesn't have their own Southwood login yet — you're keeping their record on their behalf. A \"real account\" player has signed up themselves." },
       { label: "Winner, score, date", text: "Pick who won (or draw), and optionally add the score and the date it was actually played." },
       { label: "Notes, venue, photos", text: "All optional — a quick note, where you played, or a photo, shown on that match's detail page." },
       { label: "Confirmation", text: "Covered in full under Data / confirmation below." },
@@ -59,7 +59,7 @@ const SECTIONS: Sect[] = [
   {
     id: "achievements", icon: "🏆", title: "Achievements vs Trophies",
     points: [
-      { label: "Achievements", text: "Automatically earned Rally milestones — first win, win streaks, matches played. Rally computes these itself from your real results; nobody has to approve them, and nobody can invent one that didn't happen." },
+      { label: "Achievements", text: "Automatically earned Southwood milestones — first win, win streaks, matches played. Southwood computes these itself from your real results; nobody has to approve them, and nobody can invent one that didn't happen." },
       { label: "Trophies", text: "Official competitive honours — verified or awarded by a club or league administrator. A player can submit a claim (e.g. \"2019 — Club Champion\") but it only becomes a trophy on their profile once an administrator approves it. A player can never award one to themselves." },
     ],
   },
@@ -75,15 +75,15 @@ const SECTIONS: Sect[] = [
   {
     id: "shells", icon: "👻", title: "Shell players",
     points: [
-      { label: "Why they exist", text: "So you can log real history against someone before they've joined Rally themselves — their record isn't lost while they haven't signed up yet." },
-      { label: "Claiming", text: "If that person joins Rally later, they can be offered their existing shell profile to claim as their own — but only with their explicit confirmation. Rally never matches this automatically just because the names look similar." },
+      { label: "Why they exist", text: "So you can log real history against someone before they've joined Southwood themselves — their record isn't lost while they haven't signed up yet." },
+      { label: "Claiming", text: "If that person joins Southwood later, they can be offered their existing shell profile to claim as their own — but only with their explicit confirmation. Southwood never matches this automatically just because the names look similar." },
     ],
   },
   {
     id: "legacy", icon: "🏛️", title: "Legacy",
     points: [
       { label: "What it shows", text: "A player's whole career rather than just current form — total matches, career span, best wins ranked with a reason why, and how they've done against stronger and weaker opponents over time, not just this year." },
-      { label: "Verified vs reported", text: "Career facts are labeled honestly — anything Rally can prove from real matches is \"Rally verified\"; anything a player has stated themselves (like when they actually started playing) is labeled \"player reported\" unless a club has verified it." },
+      { label: "Verified vs reported", text: "Career facts are labeled honestly — anything Southwood can prove from real matches is \"Southwood verified\"; anything a player has stated themselves (like when they actually started playing) is labeled \"player reported\" unless a club has verified it." },
     ],
   },
   {
@@ -122,7 +122,7 @@ export function HelpGuide() {
   return (
     <div>
       <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 14, lineHeight: 1.5 }}>
-        A quick guide to how Rally works. Tap a section to open it.
+        A quick guide to how Southwood works. Tap a section to open it.
       </div>
       <div style={listCard}>
         {SECTIONS.map((s) => (

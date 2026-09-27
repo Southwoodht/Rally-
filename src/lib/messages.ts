@@ -221,13 +221,14 @@ export async function nudgeAboutMatch(matchId: string, otherAuthId: string, text
 // they would if the strings stayed inline at the call sites.
 export const systemMessage = {
   nudge: (name: string): string =>
-    `${name} logged your match and it's waiting on you — confirm or dispute it in Rally.`,
+    `${name} logged your match and it's waiting on you — confirm or dispute it in Southwood.`,
   cancelled: (name: string, when: string | null): string =>
     when ? `${name} cancelled your match on ${when}.` : `${name} cancelled your match.`,
 };
 
 const SYSTEM_SHAPES: RegExp[] = [
-  / logged your match and it's waiting on you — confirm or dispute it in Rally\.$/,
+  // Either name: nudges sent before the app became Southwood still say Rally.
+  / logged your match and it's waiting on you — confirm or dispute it in (?:Rally|Southwood)\.$/,
   / cancelled your match(?: on .+)?\.$/,
 ];
 

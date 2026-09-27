@@ -25,7 +25,7 @@ export interface NewsItem {
 
 export const WHATS_NEW: NewsItem[] = [
   {
-    title: "Rally asks how it went",
+    title: "Southwood asks how it went",
     detail: "Once a booked match should have finished, Home asks for the result — with the buttons right there, so it is one tap rather than a trip to Fixtures.",
   },
   {
@@ -38,7 +38,7 @@ export const WHATS_NEW: NewsItem[] = [
   },
   {
     title: "New avatars",
-    detail: "The avatars are drawn by Rally instead of borrowed from your phone, so everyone sees the same thing whatever they are using.",
+    detail: "The avatars are drawn by Southwood instead of borrowed from your phone, so everyone sees the same thing whatever they are using.",
   },
   {
     title: "Invite by link",
