@@ -61,8 +61,18 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
         {/* The greeting: display font, 30/700, letter-spacing -0.6px. Exactly
             the mockup, and the first place in the app where Bricolage does the
             job the old condensed face was reserved for. */}
-        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, letterSpacing: "-0.6px", color: FEED_TEXT_HI, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {greeting}
+        {/* It WRAPS rather than truncating. Sam, 27 Sep: "Afternoon, Sa..." —
+            the name is the personal part and it was the part being cut off,
+            worst in the serif themes where the display face runs wide. So
+            the greeting takes a second line when it needs one, and it breaks
+            after the comma so the name always lands whole on a line of its
+            own. Icons sit on the last line (flex-end), beside the name. */}
+        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, lineHeight: 1.08, letterSpacing: "-0.6px", color: FEED_TEXT_HI, minWidth: 0, overflowWrap: "anywhere" }}>
+          {(() => {
+            const at = greeting.indexOf(", ");
+            if (at < 0) return greeting;
+            return <>{greeting.slice(0, at + 1)} <span style={{ display: "inline-block" }}>{greeting.slice(at + 2)}</span></>;
+          })()}
         </div>
         {bell && <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>{bell}</div>}
       </div>
