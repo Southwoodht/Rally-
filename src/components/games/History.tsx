@@ -15,7 +15,7 @@ import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches, fixtureLabel, fixtureNoDraw, onOpenDoubles }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches, fixtureLabel, fixtureNoDraw, onOpenDoubles, doublesMode, doublesRoundup }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -25,6 +25,10 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<any>(null);
   const [feedFilter, setFeedFilter] = useState("league");
+  // The doubles Home's feed: doubles results only, and only League / Mine to
+  // choose between. Flipping modes starts from League, so a "Custom" pick of
+  // two singles players cannot follow you into a doubles feed and empty it.
+  React.useEffect(() => { setFeedFilter("league"); }, [doublesMode]);
   const [customSel, setCustomSel] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [asAnnouncement, setAsAnnouncement] = useState(false);
@@ -195,15 +199,17 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               most weeks in most leagues — an empty roundup is worse than no
               roundup. */}
           <div style={{ marginBottom: 14 }}>
-            <WeeklyRoundup players={players} matches={matches} elo={elo} wdl={wdl} meId={meId} leagueId={leagueId} />
+            {doublesMode
+              ? doublesRoundup
+              : <WeeklyRoundup players={players} matches={matches} elo={elo} wdl={wdl} meId={meId} leagueId={leagueId} />}
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
             <Toggle on={feedFilter === "league"} onClick={() => setFeedFilter("league")} label="League" />
             <Toggle on={feedFilter === "mine"} onClick={() => setFeedFilter("mine")} label="Mine" />
-            <Toggle on={feedFilter === "custom"} onClick={() => setFeedFilter("custom")} label="Custom" />
+            {!doublesMode && <Toggle on={feedFilter === "custom"} onClick={() => setFeedFilter("custom")} label="Custom" />}
             {/* Only when there is something to filter to. A chip that always
                 shows an empty feed teaches people the feature is broken. */}
-            {!!(doublesMatches || []).length && (
+            {!doublesMode && !!(doublesMatches || []).length && (
               <Toggle on={feedFilter === "doubles"} onClick={() => setFeedFilter("doubles")} label="Doubles" />
             )}
           </div>
@@ -285,7 +291,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               .filter((d) => d.status === undefined || d.status === "confirmed")
               .filter((d) => feedFilter === "mine" ? [...d.teamA, ...d.teamB].includes(meId) : feedFilter !== "custom")
               .map((d) => ({ kind: "doubles", date: d.playedAt, key: "d-" + d.id, d }));
-            const items = (feedFilter === "doubles" ? doublesItems : [
+            const items = (feedFilter === "doubles" || doublesMode ? doublesItems : [
               ...feedList.map((m) => ({ kind: "result", date: m.date, key: m.id, m })),
               ...events.filter((e) => true).map((e) => ({ kind: "event", date: e.date, key: e.id, e })),
               ...(posts || []).filter((p) => !p.isAnnouncement).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),

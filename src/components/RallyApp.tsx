@@ -39,8 +39,6 @@ import { ModeSwitch } from "@/components/doubles/ModeSwitch";
 import { DoublesStandings } from "@/components/doubles/DoublesStandings";
 import { DoublesEntry } from "@/components/doubles/DoublesEntry";
 import { DoublesProfile } from "@/components/doubles/DoublesProfile";
-import { DoublesRankCard } from "@/components/doubles/DoublesRankCard";
-import { RankCarousel } from "@/components/doubles/RankCarousel";
 import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
 import { Competitions, competitionLabel } from "@/components/competitions/Competitions";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
@@ -64,6 +62,8 @@ import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
+import { DoublesRoundup } from "@/components/doubles/DoublesRoundup";
+import { doublesHome } from "@/core/doubles/home";
 import { LevelRecheck } from "@/components/home/LevelRecheck";
 import { SEED_GROUP_DATA } from "@/data/seed";
 import { FRIENDLY_LEAGUE_ID, isFriendlyLeague } from "@/lib/leagueData";
@@ -1473,7 +1473,64 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} />;
+  // ---------------------------------------------------------- doubles Home
+  //
+  // The twin of homeData, from core/doubles/home.ts, drawn with the same
+  // StandingHero, HomeFocus and roundup card. Everything is doubles-only and
+  // confirmed-only, the doubles rule, so nothing here can disagree with the
+  // doubles table.
+  const homeDoubles = !!doublesEnabled && sport === "doubles" && !personal && tab === "home";
+  const dHome = homeDoubles && meId ? doublesHome(doubles.matches, players, meId, doubles.fixtures as any) : null;
+  const pairFull = (ids: Array<string | null>) =>
+    ids.map((id) => { if (id == null) return "partner"; const p = players.find((x) => x.id === id); return p ? fullNameOf(p) : "?"; }).join(" & ");
+  const firstOf = (id: string | null) => (id == null ? "partner" : (players.find((x) => x.id === id)?.name || "?"));
+  const monthYearOf = (t: number) => { try { return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", month: "long", year: "numeric" }).format(new Date(t)); } catch { return formatMatchDate(t); } };
+  const doublesStanding: any = dHome?.standing ? {
+    rank: dHome.standing.rank ?? 0,
+    rating: dHome.standing.rating,
+    unit: "DOUBLES ELO · ALL TIME",
+    movement: dHome.standing.movement,
+    form: dHome.standing.form,
+    standings: [{
+      scope: (group?.name || leagueName || "League") + " · Doubles",
+      rank: dHome.standing.rank,
+      // Under five doubles the table gives a dash, so the card does too.
+      note: dHome.standing.rank == null ? `${dHome.standing.played} of 5 played` : null,
+      rating: dHome.standing.rating,
+      unit: "DOUBLES ELO · ALL TIME",
+      movement: dHome.standing.movement,
+      form: dHome.standing.form,
+    }],
+  } : null;
+  const doublesFocus: any = dHome ? {
+    daysSince: dHome.daysSince,
+    waiting: Math.max(0, players.filter((p) => !p.inactive && p.id !== meId).length),
+    lastMatch: dHome.lastMatch ? { opponent: pairFull(dHome.lastMatch.opponents), outcome: dHome.lastMatch.outcome, date: dHome.lastMatch.date } : null,
+    week: {
+      range: dHome.periods[0].matches.length ? rangeText(dHome.periods[0].from, dHome.periods[0].from + 6 * 86400000) : "",
+      w: dHome.periods[0].w,
+      l: dHome.periods[0].l,
+      opponents: dHome.periods[0].opponents,
+      results: dHome.periods[0].results,
+    },
+    suggestions: dHome.suggestions.map((sg) => ({
+      player: players.find((p) => p.id === sg.id),
+      reason: sg.reason === "never" ? "You have never shared a court"
+        : sg.reason === "since" ? "Last played " + monthYearOf(sg.lastTs as number)
+        : "Close to you in doubles",
+    })).filter((x) => x.player),
+    nextUp: dHome.nextUp ? {
+      opponent: pairFull(dHome.nextUp.opponents),
+      when: dHome.nextUp.booked,
+      h2h: `With ${firstOf(dHome.nextUp.partner)} · ${dHome.nextUp.winChance}% to win`,
+    } : null,
+    onBook: () => setTab("fixtures"),
+    onOpenPlayer: openProfile,
+  } : null;
+
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId}
+    doublesMode={tab === "home" && homeDoubles}
+    doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
   // Your circle: you, plus everyone you've personally faced. Handed to the
   // ordinary LeagueHome as its player list, which is all it takes to make a
@@ -1583,15 +1640,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
-            doublesCard={!!doublesEnabled && !personal && !doubles.unavailable && meId ? (
-              <DoublesRankCard
-                players={players}
-                matches={doubles.matches}
-                meId={meId}
-                leagueName={group?.name || leagueName || "League"}
-                onLogDoubles={() => { setSport("doubles"); setTab("add"); }}
-              />
-            ) : undefined}
+            // The switch replaces the old "swipe for doubles" carousel: Sam
+            // wanted doubles as a whole second Home, like the other tabs, not
+            // one card tucked behind the singles one.
+            modeSwitch={!!doublesEnabled && !personal ? <ModeSwitch mode={sport} onMode={setSport} /> : undefined}
             header={{
               leagueName: personal ? "Everyone I've played" : (group?.name || "League"),
               greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
@@ -1612,7 +1664,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 </>
               ),
             }}
-            standing={homeData?.standing ? {
+            standing={homeDoubles ? doublesStanding : homeData?.standing ? {
               ...homeData.standing,
               // This league first — it is the one you opened. The rest follow
               // in whatever order they loaded, which is global then the others.
@@ -1621,7 +1673,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 ...otherStandings,
               ],
             } : null}
-            focus={homeData?.focus ? { ...homeData.focus, onBook: () => setTab("fixtures"), onOpenPlayer: openProfile } : null}
+            focus={homeDoubles ? doublesFocus : homeData?.focus ? { ...homeData.focus, onBook: () => setTab("fixtures"), onOpenPlayer: openProfile } : null}
             whatsNew={newsSeen !== undefined && newsSeen !== RELEASE ? <WhatsNew onDismiss={closeWhatsNew} /> : null}
             levelRecheck={newsSeen === RELEASE && levelAsked === false && meId ? (
               <LevelRecheck
@@ -1634,7 +1686,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 onDismiss={closeLevelRecheck}
               />
             ) : null}
-            awaitingResult={homeData?.awaitingResult}
+            awaitingResult={homeDoubles ? undefined : homeData?.awaitingResult}
             onResolveFixture={(fixtureId, winner, score) => {
               const fx = (fixtures || []).find((f) => f.id === fixtureId);
               // No fixture means it has already gone — treat that as a

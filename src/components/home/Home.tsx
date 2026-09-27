@@ -30,6 +30,9 @@ export interface HomeProps {
   standing?: StandingHeroProps | null;
   /** Page 2 of the rank card. Absent = doubles off = no carousel at all. */
   doublesCard?: React.ReactNode;
+  /** The Singles / Doubles switch, under the greeting — the same switch the
+   *  Table, Fixtures and Profile carry, flipping the whole page. */
+  modeSwitch?: React.ReactNode;
   /** The middle block: days-since or this week's record, the summary line,
    *  and either your next match or the person just above you. */
   focus?: HomeFocusProps | null;
@@ -43,13 +46,14 @@ export interface HomeProps {
 }
 
 export function Home({
-  header, standing, doublesCard, focus, awaitingResult, levelRecheck, whatsNew,
+  header, standing, doublesCard, modeSwitch, focus, awaitingResult, levelRecheck, whatsNew,
   onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   let step = 0;
   return (
     <div>
       <HomeHeader {...header} />
+      {modeSwitch && <div style={{ margin: "-6px -16px 14px" }}>{modeSwitch}</div>}
 
       {standing && (
         <Reveal index={step++} style={{ marginBottom: 12 }}>

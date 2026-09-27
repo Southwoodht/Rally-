@@ -45,7 +45,9 @@ export interface RoundupPeriod {
    *  is the key on the position dots. */
   rangeLabel: string;
   record: { w: number; l: number };
-  rank: number;
+  /** Null for somebody not placed yet — a provisional doubles player gets a
+   *  dash, as the doubles table gives them. */
+  rank: number | null;
   /** Null when there's no earlier week to compare against. Null is not
    *  "no change": somebody who has never been measured hasn't held still,
    *  so the line is left off rather than claiming they stayed put. */
@@ -157,8 +159,10 @@ function Period({ p }: { p: RoundupPeriod }) {
           <div style={labelStyle}>Rank</div>
           <div style={{ marginTop: 4 }}>
             <StatNumeral size={32} tone="hi">
-              {rank}
-              <span style={{ fontSize: 15, verticalAlign: "super", marginLeft: 1 }}>{ordinal(rank)}</span>
+              {rank == null ? "–" : <>
+                {rank}
+                <span style={{ fontSize: 15, verticalAlign: "super", marginLeft: 1 }}>{ordinal(rank)}</span>
+              </>}
             </StatNumeral>
           </div>
           {movement && <div style={{ marginTop: 4 }}><MovementIndicator delta={movement.placesGained} size={12} /></div>}
