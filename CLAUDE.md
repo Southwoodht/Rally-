@@ -426,6 +426,18 @@ Built and live:
   an honour against them; a trophy can be worth points, at the admin's
   discretion, and an owner can take down one of their own.
 
+- **Import old results — built 2026-09-27, no migration.** Run your league →
+  Import old results. Paste from a spreadsheet, notes or a group chat;
+  `core/importResults.ts` (tested) reads it, then three steps: names, check,
+  add. **A written name is linked to a player automatically only when nobody
+  else could be meant** — "Charlie Henry" still asks in Seacourt, because
+  another Charlie exists. Results land `confirmed`, like Bulk / history.
+  It replaced a Data-page button that imported `lib/historyImport.ts`'s
+  hard-coded list of Sam's own Seacourt matches into whichever league pressed
+  it. That file is now only used for `normalizePlayerName`; its data is dead.
+  New rows in `syncEntity` are now inserted in batches of 100
+  (`defaultToNull: false`) rather than one request each.
+
 Left partial by the 10 Sep brief (`RALLY_FIX_BRIEF.md`, written up in
 `RALLY_FIX_REPORT.md`):
 

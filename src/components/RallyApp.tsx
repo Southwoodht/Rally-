@@ -80,7 +80,7 @@ import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
 import { FEED_OVERLAY, BALL, CHALK, COURT, MUTED, PANEL, body, display, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
 import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, FEED_TEXT_HI, tabular } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
-import { importHistoricalMatches, normalizePlayerName } from "@/lib/historyImport";
+import { normalizePlayerName } from "@/lib/historyImport";
 import { fetchLeagueData, insertPlayerRow, syncFixtures, syncMatches, syncPlayers, syncPosts, updatePlayerRow } from "@/lib/leagueData";
 
 type LeagueData = {
@@ -593,16 +593,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         flash("Couldn't save — your change was undone");
       }
       return false;
-    }
-  };
-  const importHistoricalResults = async () => {
-    try {
-      const result = await importHistoricalMatches({ players: gdata.players, matches: gdata.matches }, { userName: displayName || me?.name || "Sam" });
-      await saveData({ ...gdata, players: result.data.players, matches: result.data.matches, fixtures: gdata.fixtures, posts: gdata.posts });
-      flash(`${result.imported} historical matches imported${result.skipped ? `, ${result.skipped} already present` : ""}`);
-    } catch (error) {
-      console.error(error);
-      flash("Import failed");
     }
   };
 
@@ -1860,7 +1850,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           <LeagueHub
             group={group} updateGroup={updateGroup} players={players} setPlayers={setPlayers} matches={matches}
             fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture}
-            onRemovePlayer={removePlayer} onClearResults={() => { setMatches([]); flash("Results cleared"); }} onImportHistoricalMatches={importHistoricalResults}
+            onRemovePlayer={removePlayer} onClearResults={() => { setMatches([]); flash("Results cleared"); }}
+            onImportResults={(np: any[], nm: any[]) => saveData({ ...gdata, players: [...gdata.players, ...np], matches: [...nm, ...gdata.matches] })}
             flash={flash} meId={meId} leagueId={gid} displayName={displayName} leagueJoinCode={leagueJoinCode}
             canManage={canManageMatches || isFriendlyLeague(gid)}
             isCreator={!!myAuthId && !!leagueCreatedBy && myAuthId === leagueCreatedBy}

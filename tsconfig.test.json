@@ -49,6 +49,8 @@
     "src/core/social/suggestions.ts",
     "src/core/social/suggestions.test.ts",
     "src/core/doubles/compare.ts",
-    "src/core/doubles/compare.test.ts"
+    "src/core/doubles/compare.test.ts",
+    "src/core/importResults.ts",
+    "src/core/importResults.test.ts"
   ]
 }

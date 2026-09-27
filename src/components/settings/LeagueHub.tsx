@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { Calendar, Check, ChevronLeft, ChevronRight, Database, Link2, Settings2, Shield, Trophy, Users } from "lucide-react";
+import { Calendar, Check, ChevronLeft, ChevronRight, Database, Link2, Settings2, Shield, Trophy, Upload, Users } from "lucide-react";
+import { ImportResults } from "@/components/settings/ImportResults";
 import { AccountCard } from "@/components/settings/AccountCard";
 import { LeagueMembers } from "@/components/settings/LeagueMembers";
 import { PlayerEditSheet } from "@/components/settings/PlayerEditSheet";
@@ -37,7 +38,7 @@ import {
  * account. Nothing on it is a control the database would then refuse them.
  */
 
-type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data";
+type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import";
 
 const lbl: React.CSSProperties = {
   fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
@@ -119,7 +120,13 @@ export function LeagueHub(props: any) {
   if (page === "seasons") return <><>{back("Run your league")}</><SeasonsPage group={group} updateGroup={updateGroup} /></>;
   if (page === "roles") return <><>{back("Run your league")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
   if (page === "settings") return <><>{back("Run your league")}</><SettingsPage {...props} /></>;
-  if (page === "data") return <><>{back("Run your league")}</><DataPage {...props} /></>;
+  if (page === "data") return <><>{back("Run your league")}</><DataPage {...props} onImport={() => setPage("import")} /></>;
+  if (page === "import") return (
+    <ImportResults
+      players={players} matches={matches} meId={meId} leagueName={group?.name}
+      onImport={props.onImportResults} onBack={() => setPage("home")}
+    />
+  );
 
   // --- members' screen ------------------------------------------------------
   if (!canManage && !friendly) {
@@ -199,7 +206,8 @@ export function LeagueHub(props: any) {
           {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
           {!friendly && row(ic(Settings2), "League settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
-          {row(ic(Database), "Data", "Import old results · clear results", "data")}
+          {!friendly && row(ic(Upload), "Import old results", "Paste them from a spreadsheet or notes", "import")}
+          {row(ic(Database), "Data", "Clear results", "data")}
         </div>
       </SurfaceCard>
 
@@ -497,15 +505,18 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
 // Data
 // ---------------------------------------------------------------------------
 
-function DataPage({ matches, onClearResults, onImportHistoricalMatches }: any) {
+function DataPage({ matches, onClearResults, onImport }: any) {
   const [confirmWipe, setConfirmWipe] = useState(false);
   const count = (matches || []).length;
   return (
     <>
+      {/* This button used to import a list of results written into the code
+          — one club's own history, Sam v Cheese and all — into whichever
+          league pressed it. It now opens the real importer. */}
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>Import old results</div>
-        <div style={{ ...note, margin: "4px 0 12px" }}>Adds dated singles results from before the league used Rally, and creates any missing players without duplicating the ones already here.</div>
-        <button onClick={onImportHistoricalMatches} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>Import results</button>
+        <div style={{ ...note, margin: "4px 0 12px" }}>Paste results from before the league used Rally — from a spreadsheet, notes or a group chat. You check every one before it&apos;s added.</div>
+        <button onClick={onImport} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>Import results</button>
       </SurfaceCard>
       {/* Two steps and the number out loud (§3). It sits alone on its own
           page now, rather than one mis-tap from the import button. */}

@@ -359,10 +359,11 @@ async function syncEntity(
   const prevMap = new Map(prev.map((x) => [x.id, x]));
   const nextIds = new Set(next.map((x) => x.id));
   const ops: Promise<any>[] = [];
+  const inserts: any[] = [];
   for (const item of next) {
     const old = prevMap.get(item.id);
     if (!old) {
-      ops.push(run(supabase.from(table).insert(toRow(leagueId, item)), `adding to ${table}`));
+      inserts.push(toRow(leagueId, item));
     } else if (JSON.stringify(old) !== JSON.stringify(item)) {
       const row = toRow(leagueId, item);
       delete (row as any).id;
@@ -370,11 +371,23 @@ async function syncEntity(
       ops.push(updateRow(table, item.id, row, `updating ${table}`));
     }
   }
+  // New rows go in batches, not one request each. An import of a club's
+  // history is hundreds of matches, and hundreds of parallel requests each on
+  // a four-second timeout is how some of them time out and the rest don't.
+  // A batch is one statement, so it lands whole or not at all.
+  // defaultToNull: false, so a key one row omits takes the column default
+  // rather than an explicit null.
+  for (let i = 0; i < inserts.length; i += INSERT_BATCH) {
+    const chunk = inserts.slice(i, i + INSERT_BATCH);
+    ops.push(run(supabase.from(table).insert(chunk.length === 1 ? chunk[0] : chunk, { defaultToNull: false }), `adding to ${table}`));
+  }
   for (const item of prev) {
     if (!nextIds.has(item.id)) ops.push(deleteRow(table, item.id));
   }
   await Promise.all(ops);
 }
+
+const INSERT_BATCH = 100;
 
 export const syncPlayers = (leagueId: string, prev: any[], next: any[]) => syncEntity(leagueId, "players", prev, next, playerToRow);
 export const syncMatches = (leagueId: string, prev: any[], next: any[]) => syncEntity(leagueId, "matches", prev, next, matchToRow);
