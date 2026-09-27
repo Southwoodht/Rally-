@@ -1947,11 +1947,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED }}>Menu</span>
               <button onClick={() => setMenuOpen(false)} style={{ background: PANEL, border: "none", color: MUTED, borderRadius: 14, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
             </div>
+            {/* Pared down on 27 Sep (Sam: "just trying to clean things up").
+                Messages, Compare players and Friends each had a second home
+                and the menu was the duplicate: Messages is the robin in the
+                header on every screen, Compare is Table → Compare, and
+                Friends is the Friends row at the foot of your profile. The
+                screens are untouched — only the extra doors are gone. */}
             <div style={listCard}>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("friends"); }} style={listRow}><Users size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Friends</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setMsgWith(null); setTab("messages"); }} style={listRow}><Robin size={18} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Messages</span>{unreadMsgs > 0 && <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{unreadMsgs}</span>}<span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("h2h"); }} style={listRow}><Swords size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Compare players</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"}</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
