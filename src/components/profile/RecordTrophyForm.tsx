@@ -5,6 +5,15 @@ import { Club, listMyAdminClubs } from "@/lib/clubs";
 import { recordTrophyForPlayer } from "@/lib/trophies";
 import { FEED_OVERLAY, BALL, CLAY, COURT, MUTED, body, input } from "@/lib/theme";
 
+
+// iOS Safari draws a date input at its own intrinsic width, ignoring
+// width: 100%, so it ran off the right of the sheet with its text centred
+// (seen on Sam's phone, 2026-10-14). appearance: none hands the sizing back
+// to the stylesheet; minWidth 0 stops it pushing the flex parent wider.
+const DATE_INPUT: React.CSSProperties = {
+  ...input, boxSizing: "border-box", display: "block", width: "100%", minWidth: 0,
+  WebkitAppearance: "none", appearance: "none", textAlign: "left",
+};
 // The mirror image of ClaimTrophyForm. There, a player claims an honour and
 // waits for an admin. Here the admin is the one filling it in — the admin IS
 // the review, so it goes on straight away. The club list is deliberately
@@ -97,7 +106,7 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
             {/* The day puts it in the match history among the run of results that
                 led to it; the year alone only puts it under the year. Optional,
                 because nobody remembers the date of a 2019 final. */}
-            <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+            <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={DATE_INPUT} /></Field>
             <Field label="Notes (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything worth remembering about it" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
 
             {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}

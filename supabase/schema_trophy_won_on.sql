@@ -20,6 +20,10 @@
 
 alter table public.trophies add column if not exists won_on date;
 
+-- The API caches the table's columns; until it reloads, it rejects won_on as
+-- unknown even though the column is there. This makes it reload now.
+notify pgrst, 'reload schema';
+
 -- Proves the column itself, not the policies around it. Expect: won_on, date, YES.
 select column_name, data_type, is_nullable
   from information_schema.columns

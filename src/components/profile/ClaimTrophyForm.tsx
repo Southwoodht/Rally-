@@ -5,6 +5,12 @@ import { Club, createClub, listMyClubs } from "@/lib/clubs";
 import { submitTrophyClaim } from "@/lib/trophies";
 import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, LINE, MUTED, body, input } from "@/lib/theme";
 
+// Same fix as RecordTrophyForm: iOS sizes a date input itself unless told not to.
+const DATE_INPUT: React.CSSProperties = {
+  ...input, boxSizing: "border-box", display: "block", width: "100%", minWidth: 0,
+  WebkitAppearance: "none", appearance: "none", textAlign: "left",
+};
+
 export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loadingClubs, setLoadingClubs] = useState(true);
@@ -93,7 +99,7 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
         {/* The day puts it in the match history among the run of results that
             led to it; the year alone only puts it under the year. Optional,
             because nobody remembers the date of a 2019 final. */}
-        <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+        <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={DATE_INPUT} /></Field>
         <Field label="Notes (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything that helps them verify it" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
 
         {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}
