@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
+import { YearHeader } from "@/components/ui/YearHeader";
+import { recordsByYear, yearOf, type YearRecord } from "@/core/yearRecord";
 import { FEED_LIME, FEED_LOSS, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
 // Recent matches, as a list you can read down.
@@ -25,6 +27,9 @@ export interface MatchHistoryItem {
   onOpenPlayer?: (playerId: string) => void;
   /** Already formatted — "22 Aug". */
   date: string;
+  /** When it was played. Present, and the list is split into years with a
+   *  record over each; absent, and it is one plain list as before. */
+  ts?: number;
   /** "6-2, 6-4", or null. */
   score?: string | null;
   /** Rating change, already rounded to one place. Absent for pending. */
@@ -43,13 +48,31 @@ const BORDER = OUTCOME_RAIL;
 const PENDING_BORDER = FEED_TEXT_DIM;
 const VERB = { W: "Beat", D: "Drew with", L: "Lost to" };
 
-export function MatchHistoryList({ items }: { items: MatchHistoryItem[] }) {
+export function MatchHistoryList({ items, years }: {
+  items: MatchHistoryItem[];
+  /** Each year's record. Pass the WHOLE history's, so a header over the
+   *  five rows a preview shows still says how the whole year went; left out,
+   *  it is counted from the rows given. */
+  years?: Record<number, YearRecord>;
+}) {
   if (!items || !items.length) return null;
+  const grouped = items.every((m) => typeof m.ts === "number");
+  const recs = years || (grouped ? recordsByYear(items.map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending }))) : {});
   return (
     <SurfaceCard radius={18} pad={0} clip>
-      {items.map((m, i) => (
+      {items.map((m, i) => {
+        const y = grouped ? yearOf(m.ts as number) : null;
+        const newYear = y != null && (i === 0 || yearOf(items[i - 1].ts as number) !== y);
+        return (
+        <React.Fragment key={m.matchId}>
+        {newYear && (
+          <YearHeader
+            year={y!}
+            rec={recs[y!]}
+            style={{ padding: i === 0 ? "12px 16px 8px" : "16px 16px 8px", boxShadow: "inset 0 -0.5px 0 " + FEED_LOSS }}
+          />
+        )}
         <div
-          key={m.matchId}
           onClick={m.onOpen}
           style={{
             display: "flex", alignItems: "center", gap: 12,
@@ -100,7 +123,9 @@ export function MatchHistoryList({ items }: { items: MatchHistoryItem[] }) {
             )
           )}
         </div>
-      ))}
+        </React.Fragment>
+        );
+      })}
     </SurfaceCard>
   );
 }

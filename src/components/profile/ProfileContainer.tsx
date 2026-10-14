@@ -253,6 +253,7 @@ export function ProfileContainer({
         opponentId: o?.id,
         onOpenPlayer: onOpen,
         date: shortDate(m.date),
+        ts: m.date,
         score: m.score || null,
         delta: pending || !d ? null : Math.round(d[pid] * 10) / 10,
         pending,

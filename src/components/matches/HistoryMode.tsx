@@ -5,6 +5,8 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { GRADE_LABEL, TESTING_GRADES, UNGRADED_LABEL, type Grade } from "@/core/matchGrade";
 import { type GradedRow, type MatchQuality } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
+import { YearHeader } from "@/components/ui/YearHeader";
+import { recordsByYear, yearOf } from "@/core/yearRecord";
 import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
 // Every match, graded, newest first.
@@ -206,12 +208,23 @@ export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels }: {
       </SurfaceCard>
     );
   }
+  // A header at the start of each year, with that year's record: the rows say
+  // when, the headers say how it went, and read down the page that is the
+  // pattern.
+  const years = recordsByYear(q.rows);
   return (
     <div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {q.rows.map((row) => (
-          <Row key={row.matchId} row={row} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} />
-        ))}
+        {q.rows.map((row, i) => {
+          const y = yearOf(row.date);
+          const newYear = i === 0 || yearOf(q.rows[i - 1].date) !== y;
+          return (
+            <React.Fragment key={row.matchId}>
+              {newYear && <YearHeader year={y} rec={years[y]} style={{ padding: i === 0 ? "0 4px 2px" : "12px 4px 2px" }} />}
+              <Row row={row} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} />
+            </React.Fragment>
+          );
+        })}
       </div>
       <UngradedBanner ungraded={q.ungraded} total={q.total} onFix={onFixLevels} />
     </div>

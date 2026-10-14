@@ -52,6 +52,8 @@
     "src/core/doubles/compare.test.ts",
     "src/core/importResults.ts",
     "src/core/importResults.test.ts",
-    "src/core/rating.ts"
+    "src/core/rating.ts",
+    "src/core/yearRecord.ts",
+    "src/core/yearRecord.test.ts"
   ]
 }

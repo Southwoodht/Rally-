@@ -4,6 +4,7 @@ import { Achievements, type Achievement } from "@/components/profile/Achievement
 import { BestWins, type BestWin } from "@/components/profile/BestWins";
 import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
+import { recordsByYear } from "@/core/yearRecord";
 import { OpponentRecords, type OpponentRecord } from "@/components/profile/OpponentRecords";
 import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
@@ -92,6 +93,9 @@ export function ProfileView(p: ProfileViewProps) {
   const history = p.history || [];
   const filtered = filter ? history.filter((m) => m.outcome === filter) : [];
   const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
+  // Each year's record over the WHOLE history, so the header above a
+  // five-row preview still says how the whole year went.
+  const years = recordsByYear(history.filter((m) => typeof m.ts === "number").map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending })));
   const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
   // Editing belongs to the owner of the result, wherever the list appears.
   const forViewer = (list: MatchHistoryItem[]) =>
@@ -189,7 +193,7 @@ export function ProfileView(p: ProfileViewProps) {
         >
           {/* Editing is an action on your own result, so it does not travel
               with the list when somebody else is reading it. */}
-          <MatchHistoryList items={forViewer(shownHistory)} />
+          <MatchHistoryList items={forViewer(shownHistory)} years={years} />
           {/* The graded version is a different question — how good were these
               results, not what were they — so it is a separate destination
               rather than what "All 44" now means. */}
