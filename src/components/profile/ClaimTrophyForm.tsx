@@ -14,6 +14,7 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
   const [newClubLocation, setNewClubLocation] = useState("");
   const [competition, setCompetition] = useState("");
   const [season, setSeason] = useState("");
+  const [wonOn, setWonOn] = useState("");
   const [result, setResult] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -45,11 +46,11 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
         useClubId = club.id;
       }
       if (!useClubId) { setError("Pick a club."); setBusy(false); return; }
-      await submitTrophyClaim({ clubId: useClubId, claimantName, competition, season, result, notes });
+      await submitTrophyClaim({ clubId: useClubId, claimantName, competition, season: season.trim() || (wonOn ? wonOn.slice(0, 4) : ""), result, notes, wonOn });
       onSubmitted && onSubmitted();
       onClose();
     } catch (e: any) {
-      setError(e?.message || "Couldn't submit that claim.");
+      setError(/won_on/.test(String(e?.message || "")) ? "Saving a date needs schema_trophy_won_on.sql running in Supabase first. Clear the date to save it without one." : e?.message || "Couldn't submit that claim.");
     }
     setBusy(false);
   };
@@ -89,6 +90,10 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
         <Field label="Competition"><input value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="e.g. Men's Singles" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
         <Field label="Result / position"><input value={result} onChange={(e) => setResult(e.target.value)} placeholder="e.g. Champion, or No. 4" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
         <Field label="Season / year"><input value={season} onChange={(e) => setSeason(e.target.value)} placeholder="e.g. 2019" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+        {/* The day puts it in the match history among the run of results that
+            led to it; the year alone only puts it under the year. Optional,
+            because nobody remembers the date of a 2019 final. */}
+        <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={{ ...input, boxSizing: "border-box" as const }} /></Field>
         <Field label="Notes (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything that helps them verify it" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
 
         {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}

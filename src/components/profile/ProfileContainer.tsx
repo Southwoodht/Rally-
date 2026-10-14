@@ -382,6 +382,7 @@ export function ProfileContainer({
           // Yours to take down: anything on your own profile. Your club's to
           // take down: one an admin recorded. Never somebody's own claim.
           removable: isSelf || (clubAdmin && !t.claimed_by),
+          wonOn: t.won_on ?? null,
         })),
         // Only your own profile offers it. Claiming a trophy on somebody
         // else's behalf is exactly what the club-admin flow exists for, and

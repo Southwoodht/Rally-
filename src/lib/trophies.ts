@@ -19,6 +19,9 @@ export interface Trophy {
   verified_by: string | null;
   verified_at: string | null;
   created_at: string;
+  /** The day it was won, "YYYY-MM-DD" — schema_trophy_won_on.sql. Null for
+   *  most honours, and absent entirely on a database without the column. */
+  won_on?: string | null;
   clubs?: { name: string } | null;
 }
 
@@ -30,6 +33,8 @@ export interface TrophyClaimInput {
   season?: string;
   result?: string;
   notes?: string;
+  /** "YYYY-MM-DD". */
+  wonOn?: string;
 }
 
 export interface RecordTrophyInput {
@@ -40,6 +45,8 @@ export interface RecordTrophyInput {
   season?: string;
   result?: string;
   notes?: string;
+  /** "YYYY-MM-DD". */
+  wonOn?: string;
 }
 
 export interface LegacyFactClaimInput {
@@ -48,6 +55,12 @@ export interface LegacyFactClaimInput {
   factType: string;
   factValue: string;
 }
+
+// The date goes in the insert only when there is one. On a database that has
+// not had schema_trophy_won_on.sql, naming the column at all fails the insert
+// — so a trophy given without a date still saves there, and one given WITH a
+// date fails loudly rather than silently dropping the day somebody typed.
+const wonOnField = (wonOn?: string) => (wonOn && wonOn.trim() ? { won_on: wonOn.trim() } : {});
 
 async function currentUserId(): Promise<string | null> {
   if (!supabase) return null;
@@ -74,6 +87,7 @@ export async function submitTrophyClaim(input: TrophyClaimInput): Promise<Trophy
       season: input.season?.trim() || null,
       result: input.result?.trim() || null,
       notes: input.notes?.trim() || null,
+      ...wonOnField(input.wonOn),
       status: "pending",
     }).select().single(),
     { data: null, error: null } as any,
@@ -150,6 +164,37 @@ export async function listApprovedTrophiesForPlayer(playerId: string, authId?: s
   return (data || []) as Trophy[];
 }
 
+// Every dated, approved trophy belonging to anyone in a league — for the
+// feed, where a title won is news. Read from the trophies themselves rather
+// than written as a post, so taking a trophy down takes its card down with it
+// and the two can never disagree.
+//
+// Each row comes back with the league player it belongs to: the row it was
+// recorded against, or the row whose account claimed it.
+//
+// A database without won_on fails this query on the unknown column; that is
+// returned as an empty list on purpose. Unlike the profile, the feed showing
+// no trophy cards is exactly what that database would show anyway — there are
+// no dates for it to place.
+export async function listDatedTrophiesForPlayers(players: Array<{ id: string; auth_id?: string | null }>): Promise<Array<Trophy & { playerId: string }>> {
+  if (!supabase || !players.length) return [];
+  const ids = players.map((p) => p.id);
+  const auths = players.map((p) => p.auth_id).filter(Boolean) as string[];
+  const owners = ["player_id.in.(" + ids.map((i) => '"' + i + '"').join(",") + ")"];
+  if (auths.length) owners.push("claimed_by.in.(" + auths.join(",") + ")");
+  const { data, error } = await withSupabaseTimeout(
+    supabase.from("trophies").select("*, clubs (name)").or(owners.join(",")).eq("status", "approved").eq("kind", "trophy").not("won_on", "is", null),
+    { data: [], error: null } as any,
+  );
+  if (error) return [];
+  const byAuth: Record<string, string> = {};
+  players.forEach((p) => { if (p.auth_id) byAuth[p.auth_id] = p.id; });
+  const known = new Set(ids);
+  return ((data || []) as Trophy[])
+    .map((t) => ({ ...t, playerId: (t.player_id && known.has(t.player_id) ? t.player_id : t.claimed_by ? byAuth[t.claimed_by] : "") || "" }))
+    .filter((t) => t.playerId);
+}
+
 export async function listPendingClaims(clubId: string): Promise<Trophy[]> {
   if (!supabase) return [];
   const { data, error } = await withSupabaseTimeout(
@@ -208,6 +253,7 @@ export async function recordTrophyForPlayer(input: RecordTrophyInput): Promise<T
       season: input.season?.trim() || null,
       result: input.result?.trim() || null,
       notes: input.notes?.trim() || null,
+      ...wonOnField(input.wonOn),
       status: "approved",
       verified_by: uid,
       verified_at: new Date().toISOString(),

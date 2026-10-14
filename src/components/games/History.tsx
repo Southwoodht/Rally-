@@ -7,9 +7,12 @@ import { buildEvents } from "@/components/games/events";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
-import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, winnerLabel } from "@/lib/format";
+import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, fullNameOf, winnerLabel } from "@/lib/format";
 import { PlayerLink } from "@/components/ui/PlayerLink";
 import { MatchCard } from "@/components/games/MatchCard";
+import { TrophyMoment } from "@/components/ui/TrophyMoment";
+import { trophyDateLabel, trophyTitle, trophyTs } from "@/core/trophyTimeline";
+import { listDatedTrophiesForPlayers, type Trophy } from "@/lib/trophies";
 import { WeeklyRoundup } from "@/components/games/WeeklyRoundup";
 import { feedContexts } from "@/core/feedContext";
 import { orientToWinner, parseSets } from "@/core/sets";
@@ -30,6 +33,20 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   // two singles players cannot follow you into a doubles feed and empty it.
   React.useEffect(() => { setFeedFilter("league"); }, [doublesMode]);
   const [customSel, setCustomSel] = useState<string[]>([]);
+  // Titles won, in the feed at the day they were won (Sam, 2026-10-14). Read
+  // from the trophies, not posted, so removing a trophy removes its card.
+  // Dated ones only — an undated 2019 honour has no place in a stream of days.
+  // Keyed on who is in the league rather than the players array, which is a
+  // new array on every save.
+  const trophyKey = (players || []).map((p: any) => p.id + ":" + (p.auth_id || "")).join(",");
+  const [leagueTrophies, setLeagueTrophies] = useState<Array<Trophy & { playerId: string }>>([]);
+  React.useEffect(() => {
+    let alive = true;
+    if (friendly || mode === "fixtures" || !(players || []).length) { setLeagueTrophies([]); return; }
+    listDatedTrophiesForPlayers(players).then((t) => { if (alive) setLeagueTrophies(t); }).catch(() => {});
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trophyKey, friendly, mode]);
   const [draft, setDraft] = useState("");
   const [asAnnouncement, setAsAnnouncement] = useState(false);
   const announcements = useMemo(() => (posts || []).filter((p) => p.isAnnouncement).sort((a, b) => b.date - a.date), [posts]);
@@ -295,6 +312,11 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               ...feedList.map((m) => ({ kind: "result", date: m.date, key: m.id, m })),
               ...events.filter((e) => true).map((e) => ({ kind: "event", date: e.date, key: e.id, e })),
               ...(posts || []).filter((p) => !p.isAnnouncement).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),
+              // "Custom" is a pick of players to see their matches against
+              // each other; a trophy is nobody's match, so it stays out.
+              ...(feedFilter === "custom" ? [] : leagueTrophies)
+                .filter((t) => feedFilter !== "mine" || t.playerId === meId)
+                .map((t) => ({ kind: "trophy", date: trophyTs(t) as number, key: "t-" + t.id, t })),
             ]).sort((a: any, b: any) => b.date - a.date);
             if (!items.length) return null;
             return <div style={listCard}>{items.map((it) => {
@@ -307,6 +329,25 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   </div>
                 </div>
               );
+              if (it.kind === "trophy") {
+                const who = (players || []).find((p: any) => p.id === it.t.playerId);
+                return (
+                  <div key={it.key} style={{ padding: "6px 0" }}>
+                    <div style={{ background: PANEL, borderRadius: 18, overflow: "hidden" }}>
+                      <TrophyMoment
+                        who={who ? fullNameOf(who) : "A player"}
+                        title={trophyTitle(it.t)}
+                        date={trophyDateLabel(it.t)}
+                        club={it.t.clubs?.name}
+                        onOpen={onOpenProfile && who ? () => onOpenProfile(who.id) : undefined}
+                        // Its own card here, not a row among rows — an edge
+                        // on a rounded card is clipped into a sliver.
+                        edge={false}
+                      />
+                    </div>
+                  </div>
+                );
+              }
               if (it.kind === "doubles") return (
                 // Tapping a doubles result opens it, the way a singles card
                 // opens Match detail.

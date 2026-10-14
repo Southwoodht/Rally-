@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { ChevronRight, Trophy, Users, UserCheck } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
+import { trophyDateLabel } from "@/core/trophyTimeline";
 import { CLAY, FEED_LIME, FEED_LOSS, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
 
 // The short rows at the foot of a profile: trophies, and the settings that
@@ -22,6 +23,8 @@ export interface ProfileTrophy {
   /** The viewer may take this one down: their own, or one their club put on
    *  somebody. RLS decides for real; this only decides whether to offer. */
   removable?: boolean;
+  /** "YYYY-MM-DD" — the day it was won, which places it in match history. */
+  wonOn?: string | null;
 }
 
 /**
@@ -77,7 +80,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
               {t.result ? t.result + " — " + t.competition : t.competition}
             </div>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {[t.clubName || "Club", t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
+              {[t.clubName || "Club", (t.wonOn && trophyDateLabel({ id: t.id, won_on: t.wonOn })) || t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
             </div>
           </div>
           {t.removable && onRemove && (

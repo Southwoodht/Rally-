@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
+import { TrophyMoment } from "@/components/ui/TrophyMoment";
 import { YearHeader } from "@/components/ui/YearHeader";
+import { honoursByYear, trophyDateLabel, trophyTitle, trophyTs, type TrophyLike } from "@/core/trophyTimeline";
 import { recordsByYear, yearOf, type YearRecord } from "@/core/yearRecord";
 import { FEED_LIME, FEED_LOSS, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
@@ -48,30 +50,70 @@ const BORDER = OUTCOME_RAIL;
 const PENDING_BORDER = FEED_TEXT_DIM;
 const VERB = { W: "Beat", D: "Drew with", L: "Lost to" };
 
-export function MatchHistoryList({ items, years }: {
+export type HistoryTrophy = TrophyLike & { clubName?: string | null; onOpen?: () => void };
+
+type Entry = { kind: "match"; ts: number | null; m: MatchHistoryItem } | { kind: "trophy"; ts: number; t: HistoryTrophy };
+
+export function MatchHistoryList({ items, years, trophies }: {
   items: MatchHistoryItem[];
   /** Each year's record. Pass the WHOLE history's, so a header over the
    *  five rows a preview shows still says how the whole year went; left out,
    *  it is counted from the rows given. */
   years?: Record<number, YearRecord>;
+  /** This player's trophies. Dated ones are placed among the matches, but
+   *  only those won since the oldest row shown: under a five-row preview, or
+   *  a season-only view, a 2019 title would otherwise sit at the foot of
+   *  this autumn's matches as if it came straight after them. Every one with
+   *  a year still goes under its year's header (core/trophyTimeline.ts). */
+  trophies?: HistoryTrophy[];
 }) {
   if (!items || !items.length) return null;
   const grouped = items.every((m) => typeof m.ts === "number");
   const recs = years || (grouped ? recordsByYear(items.map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending }))) : {});
+  const honours = honoursByYear(trophies || []);
+
+  // Newest first, like the rows. A trophy on the same day as a match sorts
+  // after it in time (trophyTs is late on the day), so above it in the list.
+  let entries: Entry[] = items.map((m) => ({ kind: "match", ts: grouped ? (m.ts as number) : null, m }));
+  if (grouped && trophies?.length) {
+    const oldest = Math.min(...items.map((m) => m.ts as number));
+    const placed = trophies
+      .map((t) => ({ t, ts: trophyTs(t) }))
+      .filter((x): x is { t: HistoryTrophy; ts: number } => x.ts != null && x.ts >= oldest)
+      .map((x): Entry => ({ kind: "trophy", ts: x.ts, t: x.t }));
+    entries = [...entries, ...placed].sort((a, b) => (b.ts as number) - (a.ts as number));
+  }
+
   return (
     <SurfaceCard radius={18} pad={0} clip>
-      {items.map((m, i) => {
-        const y = grouped ? yearOf(m.ts as number) : null;
-        const newYear = y != null && (i === 0 || yearOf(items[i - 1].ts as number) !== y);
-        return (
-        <React.Fragment key={m.matchId}>
-        {newYear && (
+      {entries.map((e, i) => {
+        const y = grouped ? yearOf(e.ts as number) : null;
+        const newYear = y != null && (i === 0 || yearOf(entries[i - 1].ts as number) !== y);
+        const last = i === entries.length - 1;
+        const header = newYear && (
           <YearHeader
             year={y!}
             rec={recs[y!]}
+            honours={honours[y!]}
             style={{ padding: i === 0 ? "12px 16px 8px" : "16px 16px 8px", boxShadow: "inset 0 -0.5px 0 " + FEED_LOSS }}
           />
-        )}
+        );
+        if (e.kind === "trophy") return (
+          <React.Fragment key={"t-" + e.t.id}>
+            {header}
+            <TrophyMoment
+              title={trophyTitle(e.t)}
+              date={trophyDateLabel(e.t)}
+              club={e.t.clubName}
+              onOpen={e.t.onOpen}
+              style={{ boxShadow: last ? undefined : "inset 0 -0.5px 0 " + FEED_LOSS }}
+            />
+          </React.Fragment>
+        );
+        const m = e.m;
+        return (
+        <React.Fragment key={m.matchId}>
+        {header}
         <div
           onClick={m.onOpen}
           style={{
@@ -82,7 +124,7 @@ export function MatchHistoryList({ items, years }: {
             borderRadius: 0,
             padding: "12px 16px",
             cursor: m.onOpen ? "pointer" : "default",
-            boxShadow: i === items.length - 1 ? undefined : "inset 0 -0.5px 0 " + FEED_LOSS,
+            boxShadow: last ? undefined : "inset 0 -0.5px 0 " + FEED_LOSS,
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>

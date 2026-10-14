@@ -5,7 +5,9 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { GRADE_LABEL, TESTING_GRADES, UNGRADED_LABEL, type Grade } from "@/core/matchGrade";
 import { type GradedRow, type MatchQuality } from "@/core/matchQuality";
 import { fullNameOf } from "@/lib/format";
+import { TrophyMoment } from "@/components/ui/TrophyMoment";
 import { YearHeader } from "@/components/ui/YearHeader";
+import { honoursByYear, trophyDateLabel, trophyTitle, trophyTs, type TrophyLike } from "@/core/trophyTimeline";
 import { recordsByYear, yearOf } from "@/core/yearRecord";
 import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
@@ -192,8 +194,11 @@ export function UngradedBanner({ ungraded, total, onFix }: { ungraded: number; t
   );
 }
 
-export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels }: {
+export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels, trophies }: {
   q: MatchQuality;
+  /** Their trophies: dated ones placed among the matches, every one with a
+   *  year under its header — the same rules as the Profile's match history. */
+  trophies?: Array<TrophyLike & { clubName?: string | null }>;
   onOpenMatch?: (matchId: string) => void;
   onOpenPlayer?: (playerId: string) => void;
   onFixLevels?: () => void;
@@ -212,15 +217,34 @@ export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels }: {
   // when, the headers say how it went, and read down the page that is the
   // pattern.
   const years = recordsByYear(q.rows);
+  const honours = honoursByYear(trophies || []);
+  // Trophies won since their first match, placed by date among the rows —
+  // newest first, and late on the day so a final sits below its trophy.
+  const oldest = Math.min(...q.rows.map((r) => r.date));
+  type Entry = { ts: number; row?: GradedRow; t?: TrophyLike & { clubName?: string | null } };
+  const entries: Entry[] = [
+    ...q.rows.map((row) => ({ ts: row.date, row })),
+    ...(trophies || []).flatMap((t): Entry[] => { const ts = trophyTs(t); return ts != null && ts >= oldest ? [{ ts, t }] : []; }),
+  ].sort((a, b) => b.ts - a.ts);
   return (
     <div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {q.rows.map((row, i) => {
-          const y = yearOf(row.date);
-          const newYear = i === 0 || yearOf(q.rows[i - 1].date) !== y;
+        {entries.map((e, i) => {
+          const y = yearOf(e.ts);
+          const newYear = i === 0 || yearOf(entries[i - 1].ts) !== y;
+          const header = newYear && <YearHeader year={y} rec={years[y]} honours={honours[y]} style={{ padding: i === 0 ? "0 4px 2px" : "12px 4px 2px" }} />;
+          if (e.t) return (
+            <React.Fragment key={"t-" + e.t.id}>
+              {header}
+              <SurfaceCard radius={18} pad={0} clip>
+                <TrophyMoment title={trophyTitle(e.t)} date={trophyDateLabel(e.t)} club={e.t.clubName} />
+              </SurfaceCard>
+            </React.Fragment>
+          );
+          const row = e.row!;
           return (
             <React.Fragment key={row.matchId}>
-              {newYear && <YearHeader year={y} rec={years[y]} style={{ padding: i === 0 ? "0 4px 2px" : "12px 4px 2px" }} />}
+              {header}
               <Row row={row} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} />
             </React.Fragment>
           );

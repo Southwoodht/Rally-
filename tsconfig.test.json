@@ -54,6 +54,8 @@
     "src/core/importResults.test.ts",
     "src/core/rating.ts",
     "src/core/yearRecord.ts",
-    "src/core/yearRecord.test.ts"
+    "src/core/yearRecord.test.ts",
+    "src/core/trophyTimeline.ts",
+    "src/core/trophyTimeline.test.ts"
   ]
 }

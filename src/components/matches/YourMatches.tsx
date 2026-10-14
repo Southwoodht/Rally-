@@ -1,9 +1,10 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { HistoryMode } from "@/components/matches/HistoryMode";
 import { QualityMode } from "@/components/matches/QualityMode";
 import { buildMatchQuality, type Voice } from "@/core/matchQuality";
 import { shortNameOf } from "@/lib/format";
+import { listApprovedTrophiesForPlayer, type Trophy } from "@/lib/trophies";
 import { segmentOption, segmentTrack } from "@/lib/theme";
 
 // One route, two modes.
@@ -40,6 +41,19 @@ export function YourMatches({
     return { self, name: self ? "" : shortNameOf(p) };
   }, [viewerId, meId, players]);
   const q = useMemo(() => buildMatchQuality(viewerId, players, matches, v), [viewerId, players, matches, v]);
+  // Their trophies, for History. The one fetch on this screen: trophies are
+  // not league data, so nothing above holds them. A failed read leaves the
+  // history as it was without them rather than in an error state.
+  const authId = players.find((x: any) => x.id === viewerId)?.auth_id ?? null;
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listApprovedTrophiesForPlayer(viewerId, authId)
+      .then((t) => { if (alive) setTrophies(t.filter((x) => x.kind === "trophy")); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [viewerId, authId]);
+  const historyTrophies = useMemo(() => trophies.map((t) => ({ ...t, clubName: t.clubs?.name ?? null })), [trophies]);
 
   return (
     <div>
@@ -50,7 +64,7 @@ export function YourMatches({
 
       {mode === "quality"
         ? <QualityMode q={q} v={v} onOpenPlayer={onOpenPlayer} />
-        : <HistoryMode q={q} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} onFixLevels={onFixLevels} />}
+        : <HistoryMode q={q} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} onFixLevels={onFixLevels} trophies={historyTrophies} />}
     </div>
   );
 }
