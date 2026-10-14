@@ -801,14 +801,14 @@ Also found the same day: the scoreboard Profile rewrite had dropped
 `VerifiedTrophies` (still in the repo, rendered nowhere), so admins had no
 Record button anywhere. Give/remove now live on `VerifiedTrophiesRow`.
 
-**Waiting to be run: `schema_trophy_won_on.sql`** (2026-10-14). One nullable
+**Run on 2026-10-14, verified (won_on, date, YES): `schema_trophy_won_on.sql`.** One nullable
 `trophies.won_on date`. A dated trophy is placed in match history (Profile
 and Your matches), under its year's header, and as a card in the league feed
 — read from `trophies`, never written as a post, so removing the trophy
 removes the card. Undated honours go under their year (when `season` names
 exactly one) and never into the timeline: 31 December would be an invented
-date. Rules in `core/trophyTimeline.ts`, tested. Until the SQL runs, a trophy
-given WITH a date fails with a message naming the file; without one it saves.
+date. Rules in `core/trophyTimeline.ts`, tested. On a database without the
+column, a trophy given WITH a date fails with a message naming the file.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
