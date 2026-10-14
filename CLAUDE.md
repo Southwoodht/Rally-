@@ -792,6 +792,15 @@ sweep after the two that created or recreated a function. Seacourt has
 from Run your league → League settings, by the league's CREATOR only — the
 leagues UPDATE policy is `created_by = auth.uid()`, not the owner role.
 
+**Waiting to be run: `schema_trophies_award_any.sql`** (2026-10-14). A club
+admin may award a trophy to ANY player in a league they are in, not only
+unclaimed rows, and a player may remove one recorded against their own row —
+that removal is the safeguard that replaced "no account". Until it runs, the
+Give a trophy form says exactly that when used on somebody with an account.
+Also found the same day: the scoreboard Profile rewrite had dropped
+`VerifiedTrophies` (still in the repo, rendered nowhere), so admins had no
+Record button anywhere. Give/remove now live on `VerifiedTrophiesRow`.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.

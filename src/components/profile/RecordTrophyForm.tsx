@@ -6,11 +6,16 @@ import { recordTrophyForPlayer } from "@/lib/trophies";
 import { FEED_OVERLAY, BALL, CLAY, COURT, MUTED, body, input } from "@/lib/theme";
 
 // The mirror image of ClaimTrophyForm. There, a player claims an honour and
-// waits for an admin. Here the admin is the one filling it in, for somebody
-// who has no account to claim anything with — so there's nobody left to
-// review it and it goes on straight away. The club list is deliberately
+// waits for an admin. Here the admin is the one filling it in — the admin IS
+// the review, so it goes on straight away. The club list is deliberately
 // only clubs you administer: the whole authority for this comes from that.
-export function RecordTrophyForm({ playerId, playerName, onClose, onSubmitted }: any) {
+//
+// Since 2026-10-14 (schema_trophies_award_any.sql) that is anybody in a league
+// the admin is in, not only players with no account: Sam was handing Zaach a
+// trophy he had just won and the app made Zaach claim it himself. The player
+// can take an admin-awarded trophy off their own profile, which is the check
+// that replaced "no account".
+export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, onSubmitted }: any) {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loadingClubs, setLoadingClubs] = useState(true);
   const [clubId, setClubId] = useState("");
@@ -42,7 +47,16 @@ export function RecordTrophyForm({ playerId, playerName, onClose, onSubmitted }:
       onSubmitted && onSubmitted();
       onClose();
     } catch (e: any) {
-      setError(e?.message || "Couldn't record that trophy.");
+      // RLS refusing the insert is the one failure with a known cause: the
+      // database hasn't had schema_trophies_award_any.sql, which is what lets
+      // an admin award a player who has an account. Say that, not "violates
+      // row-level security policy".
+      const msg = String(e?.message || "");
+      setError(/row-level security/i.test(msg)
+        ? (hasAccount
+          ? "The database isn't set up to award trophies to players with an account yet — it needs schema_trophies_award_any.sql running in Supabase."
+          : "The database refused that. Check you administer the club and are in this player's league.")
+        : msg || "Couldn't record that trophy.");
     }
     setBusy(false);
   };
@@ -53,11 +67,13 @@ export function RecordTrophyForm({ playerId, playerName, onClose, onSubmitted }:
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED }}>Record a trophy</div>
+          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED }}>Give a trophy</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontSize: 12, cursor: "pointer" }}>Close</button>
         </div>
         <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>
-          {who} hasn't got an account yet, so there's nobody to claim this — you're recording it as the club's administrator and it goes on straight away. It'll be waiting on their profile the day they claim this player.
+          {hasAccount
+            ? <>You're awarding this as the club's administrator, so it goes on {who}'s profile straight away. They can take it off their own profile if it's wrong.</>
+            : <>{who} hasn't got an account yet — you're recording it as the club's administrator and it goes on straight away. It'll be waiting on their profile the day they claim this player.</>}
         </div>
 
         {!loadingClubs && clubs.length === 0 && (
@@ -80,7 +96,7 @@ export function RecordTrophyForm({ playerId, playerName, onClose, onSubmitted }:
 
             {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}
             <div style={{ display: "flex", gap: 8 }}>
-              <BigBtn onClick={submit} disabled={busy} color={BALL}>{busy ? "Recording…" : "Record trophy"}</BigBtn>
+              <BigBtn onClick={submit} disabled={busy} color={BALL}>{busy ? "Saving…" : "Give trophy"}</BigBtn>
             </div>
           </>
         )}

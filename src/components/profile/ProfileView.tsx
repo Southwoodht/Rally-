@@ -48,7 +48,7 @@ export interface ProfileViewProps {
   bestWins?: BestWin[];
   opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[] } | null;
   achievements?: Achievement[];
-  trophies?: { list: ProfileTrophy[]; onClaim?: () => void } | null;
+  trophies?: { list: ProfileTrophy[]; onClaim?: () => void; onGive?: () => void; onRemove?: (id: string) => void } | null;
   history?: MatchHistoryItem[];
   historyTotal?: number;
   settings?: SettingsRow[];
@@ -176,7 +176,7 @@ export function ProfileView(p: ProfileViewProps) {
 
       {p.trophies && (
         <Section title="Verified trophies">
-          <VerifiedTrophiesRow trophies={p.trophies.list} onClaim={isSelf ? p.trophies.onClaim : undefined} />
+          <VerifiedTrophiesRow trophies={p.trophies.list} onClaim={isSelf ? p.trophies.onClaim : undefined} onGive={p.trophies.onGive} onRemove={p.trophies.onRemove} />
         </Section>
       )}
 

@@ -207,6 +207,7 @@ export function PublicProfile({ id }: { id: string }) {
           meId={null}
           group={{ name: them.home || "Southwood" }}
           viewer="other"
+          awardable={false}
           /**
            * Link with the account id when we already hold it. The snapshot
            * carries every player in that league, auth_id included, so an

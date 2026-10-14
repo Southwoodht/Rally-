@@ -92,8 +92,8 @@ export function ClubAdminReview() {
   return (
     <div>
       <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 18 }}>
-        A club is who vouches for a trophy. Its administrator approves what players claim, and can record honours
-        directly for players who haven't got an account — those wait on the player and transfer the day they claim it.
+        A club is who vouches for a trophy. Its administrator approves what players claim, and can give a trophy
+        to anyone in their league: open the winner's profile and tap Give a trophy under Verified trophies.
       </div>
 
       {adminClubs.length === 0 && (
@@ -101,7 +101,7 @@ export function ClubAdminReview() {
           <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: BALL, marginBottom: 8 }}>Set up your club</div>
           <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
             You don't administer a club yet, so there's nobody to verify a trophy. Creating one makes you its
-            administrator — you'll be able to approve claims and record honours for unclaimed players straight away.
+            administrator — you'll be able to approve claims and give trophies straight away.
           </div>
           <Field label="Club name"><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Seacourt" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
           <Field label="Location (optional)"><input value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="e.g. Oxford" style={{ ...input, boxSizing: "border-box" as const }} /></Field>

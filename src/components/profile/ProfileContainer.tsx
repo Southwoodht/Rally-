@@ -2,6 +2,8 @@
 import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
+import { RecordTrophyForm } from "@/components/profile/RecordTrophyForm";
+import { listMyAdminClubs } from "@/lib/clubs";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { RatingLine } from "@/components/profile/RatingLine";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
@@ -13,7 +15,7 @@ import { topRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
 import { PeopleYouMayKnow } from "@/components/social/PeopleYouMayKnow";
 import { TIER_HEIGHTS } from "@/core/stars";
-import { listApprovedTrophiesForPlayer } from "@/lib/trophies";
+import { deleteTrophy, listApprovedTrophiesForPlayer } from "@/lib/trophies";
 import { fullNameOf } from "@/lib/format";
 
 // Everything the profile needs, worked out from the league it belongs to.
@@ -46,6 +48,10 @@ export function ProfileContainer({
   viewer = "self", onOpen, onOpenMatch, onProposeEdit, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
   myAuthId, onMessage, onOpenMatches,
+  // False where the profile was reached from outside your league (search,
+  // a friend's list): the database only lets an admin award inside a league
+  // they are in, so the button would only ever fail there.
+  awardable = true,
 }: any) {
   const pid = player?.id;
   const isSelf = viewer === "self";
@@ -78,6 +84,16 @@ export function ProfileContainer({
   const [trophies, setTrophies] = useState<any[]>([]);
   const [claiming, setClaiming] = useState(false);
   const [reloadTrophies, setReloadTrophies] = useState(0);
+  const [giving, setGiving] = useState(false);
+  // Whether the viewer runs a club, and so may award trophies. Asked once —
+  // it is about the viewer, not the profile — and a failed read means no
+  // button rather than a button that fails.
+  const [clubAdmin, setClubAdmin] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    listMyAdminClubs().then((c) => { if (alive) setClubAdmin(c.length > 0); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -363,11 +379,17 @@ export function ProfileContainer({
           season: t.season,
           clubName: t.clubs?.name,
           recorded: !t.claimed_by,
+          // Yours to take down: anything on your own profile. Your club's to
+          // take down: one an admin recorded. Never somebody's own claim.
+          removable: isSelf || (clubAdmin && !t.claimed_by),
         })),
         // Only your own profile offers it. Claiming a trophy on somebody
         // else's behalf is exactly what the club-admin flow exists for, and
         // it is not this button.
         onClaim: isSelf ? () => setClaiming(true) : undefined,
+        // A club admin awards from the winner's profile.
+        onGive: clubAdmin && !isSelf && awardable ? () => setGiving(true) : undefined,
+        onRemove: (id: string) => { deleteTrophy(id).catch(() => {}).then(() => setReloadTrophies((n) => n + 1)); },
       }}
       history={data.history}
       historyTotal={data.historyTotal}
@@ -380,6 +402,15 @@ export function ProfileContainer({
       onAllHistory={onAllHistory || (onOpenMatches ? () => onOpenMatches(pid, "history") : undefined)}
       onAllOpponents={onAllOpponents}
     />
+    {giving && (
+      <RecordTrophyForm
+        playerId={pid}
+        playerName={fullNameOf(player)}
+        hasAccount={!!player?.auth_id}
+        onClose={() => setGiving(false)}
+        onSubmitted={() => setReloadTrophies((n) => n + 1)}
+      />
+    )}
     {claiming && (
       <ClaimTrophyForm
         claimantName={fullNameOf(player)}

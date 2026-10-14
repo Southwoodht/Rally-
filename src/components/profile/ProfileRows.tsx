@@ -1,8 +1,8 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { ChevronRight, Trophy, Users, UserCheck } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { FEED_LIME, FEED_LOSS, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
+import { CLAY, FEED_LIME, FEED_LOSS, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
 
 // The short rows at the foot of a profile: trophies, and the settings that
 // used to be cards of their own.
@@ -19,6 +19,9 @@ export interface ProfileTrophy {
   /** True when a club admin recorded it against the player row rather than
    *  the player claiming it themselves. */
   recorded?: boolean;
+  /** The viewer may take this one down: their own, or one their club put on
+   *  somebody. RLS decides for real; this only decides whether to offer. */
+  removable?: boolean;
 }
 
 /**
@@ -28,7 +31,17 @@ export interface ProfileTrophy {
  * honour is that it says what it was and who vouched for it. The count only
  * survives as the empty state, where there is nothing to name.
  */
-export function VerifiedTrophiesRow({ trophies = [], onClaim }: { trophies?: ProfileTrophy[]; onClaim?: () => void }) {
+export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }: {
+  trophies?: ProfileTrophy[];
+  onClaim?: () => void;
+  /** A club admin awarding one to this player (2026-10-14). */
+  onGive?: () => void;
+  onRemove?: (id: string) => void;
+}) {
+  // Two taps to remove, the second on the same row — the destructive-things
+  // rule, without a dialog for something this small.
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const action = onGive ? { label: "Give a trophy", run: onGive } : onClaim ? { label: "Claim", run: onClaim } : null;
   if (!trophies.length) {
     return (
       <SurfaceCard radius={18} pad="14px 16px">
@@ -38,9 +51,9 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim }: { trophies?: Pro
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>Verified trophies</div>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>None yet</div>
           </div>
-          {onClaim && (
-            <button onClick={onClaim} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}>
-              Claim
+          {action && (
+            <button onClick={action.run} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}>
+              {action.label}
             </button>
           )}
         </div>
@@ -55,7 +68,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim }: { trophies?: Pro
           key={t.id}
           style={{
             display: "flex", alignItems: "center", gap: 12, padding: "13px 16px",
-            boxShadow: i === trophies.length - 1 && !onClaim ? undefined : RULE,
+            boxShadow: i === trophies.length - 1 && !action ? undefined : RULE,
           }}
         >
           <Trophy size={19} color={FEED_LIME} strokeWidth={1.8} style={{ flexShrink: 0 }} />
@@ -67,14 +80,23 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim }: { trophies?: Pro
               {[t.clubName || "Club", t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
             </div>
           </div>
+          {t.removable && onRemove && (
+            <button
+              onClick={() => { if (confirming === t.id) { setConfirming(null); onRemove(t.id); } else setConfirming(t.id); }}
+              onBlur={() => setConfirming((c) => (c === t.id ? null : c))}
+              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", flexShrink: 0, fontFamily: body, fontWeight: 400, fontSize: 13, color: confirming === t.id ? CLAY : FEED_TEXT_MID }}
+            >
+              {confirming === t.id ? "Remove it?" : "Remove"}
+            </button>
+          )}
         </div>
       ))}
-      {onClaim && (
+      {action && (
         <button
-          onClick={onClaim}
+          onClick={action.run}
           style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "12px 16px", cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, textAlign: "left" }}
         >
-          Claim another
+          {onGive ? "Give another" : "Claim another"}
         </button>
       )}
     </SurfaceCard>
