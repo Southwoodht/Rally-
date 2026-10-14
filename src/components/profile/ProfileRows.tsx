@@ -25,6 +25,8 @@ export interface ProfileTrophy {
   removable?: boolean;
   /** "YYYY-MM-DD" — the day it was won, which places it in match history. */
   wonOn?: string | null;
+  /** "doubles" puts it on the doubles side; anything else, the singles. */
+  format?: string | null;
 }
 
 /**
@@ -80,7 +82,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
               {t.result ? t.result + " — " + t.competition : t.competition}
             </div>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {[t.clubName || "Club", (t.wonOn && trophyDateLabel({ id: t.id, won_on: t.wonOn })) || t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
+              {[t.clubName || "Club", t.format === "doubles" ? "Doubles" : null, (t.wonOn && trophyDateLabel({ id: t.id, won_on: t.wonOn })) || t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
             </div>
           </div>
           {t.removable && onRemove && (

@@ -11,7 +11,7 @@ import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateT
 import { PlayerLink } from "@/components/ui/PlayerLink";
 import { MatchCard } from "@/components/games/MatchCard";
 import { TrophyMoment } from "@/components/ui/TrophyMoment";
-import { trophyDateLabel, trophyTitle, trophyTs } from "@/core/trophyTimeline";
+import { onSide, trophyDateLabel, trophyTitle, trophyTs } from "@/core/trophyTimeline";
 import { listDatedTrophiesForPlayers, type Trophy } from "@/lib/trophies";
 import { WeeklyRoundup } from "@/components/games/WeeklyRoundup";
 import { feedContexts } from "@/core/feedContext";
@@ -304,19 +304,23 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               .filter((d) => d.status === undefined || d.status === "confirmed")
               .filter((d) => feedFilter === "mine" ? [...d.teamA, ...d.teamB].includes(meId) : feedFilter !== "custom")
               .map((d) => ({ kind: "doubles", date: d.playedAt, key: "d-" + d.id, d }));
+            // Honours, each in its own feed: a doubles trophy among the
+            // doubles results, everything else among the singles.
+            const trophyItems = (side: "singles" | "doubles") => (feedFilter === "custom" ? [] : leagueTrophies)
+              .filter((t) => onSide(t, side))
+              .filter((t) => feedFilter !== "mine" || t.playerId === meId)
+              .map((t) => ({ kind: "trophy", date: trophyTs(t) as number, key: "t-" + t.id, t }));
             // Two feeds, not one mixed stream. Since Home got its doubles
             // twin (Singles / Doubles switch), the singles feed is singles
             // only — Sam, 27 Sep: "these doubles are still showing in the
             // singles page". Doubles results live in the doubles feed.
-            const items = (doublesMode ? doublesItems : [
+            const items = (doublesMode ? [...doublesItems, ...trophyItems("doubles")] : [
               ...feedList.map((m) => ({ kind: "result", date: m.date, key: m.id, m })),
               ...events.filter((e) => true).map((e) => ({ kind: "event", date: e.date, key: e.id, e })),
               ...(posts || []).filter((p) => !p.isAnnouncement).map((p) => ({ kind: "post", date: p.date, key: p.id, p })),
               // "Custom" is a pick of players to see their matches against
               // each other; a trophy is nobody's match, so it stays out.
-              ...(feedFilter === "custom" ? [] : leagueTrophies)
-                .filter((t) => feedFilter !== "mine" || t.playerId === meId)
-                .map((t) => ({ kind: "trophy", date: trophyTs(t) as number, key: "t-" + t.id, t })),
+              ...trophyItems("singles"),
             ]).sort((a: any, b: any) => b.date - a.date);
             if (!items.length) return null;
             return <div style={listCard}>{items.map((it) => {

@@ -4,6 +4,7 @@ import { HistoryMode } from "@/components/matches/HistoryMode";
 import { QualityMode } from "@/components/matches/QualityMode";
 import { buildMatchQuality, type Voice } from "@/core/matchQuality";
 import { shortNameOf } from "@/lib/format";
+import { onSide } from "@/core/trophyTimeline";
 import { listApprovedTrophiesForPlayer, type Trophy } from "@/lib/trophies";
 import { segmentOption, segmentTrack } from "@/lib/theme";
 
@@ -53,7 +54,8 @@ export function YourMatches({
       .catch(() => {});
     return () => { alive = false; };
   }, [viewerId, authId]);
-  const historyTrophies = useMemo(() => trophies.map((t) => ({ ...t, clubName: t.clubs?.name ?? null })), [trophies]);
+  // Singles matches, so singles honours.
+  const historyTrophies = useMemo(() => trophies.filter((t) => onSide(t, "singles")).map((t) => ({ ...t, clubName: t.clubs?.name ?? null })), [trophies]);
 
   return (
     <div>

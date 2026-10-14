@@ -1,5 +1,7 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { onSide } from "@/core/trophyTimeline";
+import { listApprovedTrophiesForPlayer, type Trophy } from "@/lib/trophies";
 import { PartnersCard } from "@/components/doubles/PartnersCard";
 import { ordinal } from "@/lib/format";
 import { computeDoubles, DOUBLES_PROVISIONAL_GAMES, type DoublesMatch } from "@/core/doubles/elo";
@@ -62,6 +64,17 @@ export function DoublesProfile({ players, matches, playerId, leagueName, onOpenP
   // match was. See core/doubles/profile.ts.
   const history = useMemo(() => doublesHistory(matches, stats, playerId), [matches, stats, playerId]);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  // Their doubles honours, for the history below. A failed read just leaves
+  // the history without them.
+  const authId = (players.find((p: any) => p.id === playerId) as any)?.auth_id ?? null;
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
+  useEffect(() => {
+    let alive = true;
+    listApprovedTrophiesForPlayer(playerId, authId)
+      .then((t) => { if (alive) setTrophies(t.filter((x) => x.kind === "trophy" && onSide(x, "doubles"))); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [playerId, authId]);
   const provisional = played < DOUBLES_PROVISIONAL_GAMES;
   const streak = stats.currentStreak[playerId] || 0;
 
@@ -190,7 +203,7 @@ export function DoublesProfile({ players, matches, playerId, leagueName, onOpenP
       <PartnersCard players={players} matches={matches} playerId={playerId} overall={overallWinRate(history)} onOpenProfile={onOpenProfile} />
       <DoublesBestWins wins={bestDoublesWins(history)} byId={byId} onOpenProfile={onOpenProfile} onOpenMatch={onOpenMatch ? (r) => onOpenMatch(r.match.id) : undefined} />
       <DoublesRecordAgainst records={opponentRecords(history)} byId={byId} onOpenProfile={onOpenProfile} />
-      <DoublesHistory rows={history} byId={byId} onOpenProfile={onOpenProfile} onOpenMatch={onOpenMatch ? (r) => onOpenMatch(r.match.id) : undefined} />
+      <DoublesHistory rows={history} trophies={trophies} byId={byId} onOpenProfile={onOpenProfile} onOpenMatch={onOpenMatch ? (r) => onOpenMatch(r.match.id) : undefined} />
     </>
   );
 }

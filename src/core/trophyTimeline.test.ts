@@ -1,4 +1,4 @@
-import { honoursByYear, trophyDateLabel, trophyTitle, trophyTs, trophyYear } from "./trophyTimeline";
+import { guessFormat, onSide, honoursByYear, trophyDateLabel, trophyTitle, trophyTs, trophyYear } from "./trophyTimeline";
 import { yearOf } from "./yearRecord";
 
 let passed = 0, total = 0;
@@ -32,6 +32,15 @@ const h = honoursByYear([nye, summer, old, { id: "d", season: "2025/26" }]);
 check("honours grouped by year, in order won", JSON.stringify(h[2026]) === JSON.stringify(["Club Cup", "Champion — Men's Singles"]));
 check("undated honour under its season", h[2019]?.length === 1);
 check("ambiguous season left out", Object.keys(h).length === 2);
+
+// Sides: only an explicit doubles tag leaves the singles side.
+check("doubles trophy on doubles side", onSide({ id: "x", format: "doubles" }, "doubles"));
+check("doubles trophy not on singles side", !onSide({ id: "x", format: "doubles" }, "singles"));
+check("untagged stays on singles side", onSide({ id: "x" }, "singles") && !onSide({ id: "x" }, "doubles"));
+check("guess: Helen's Cup Fun Doubles", guessFormat("Helen’s Cup Fun Doubles") === "doubles");
+check("guess: Mixed pairs", guessFormat("Summer mixed") === "doubles");
+check("guess: Men's Singles", guessFormat("Men's Singles") === "singles");
+check("guess: 'doubled' is not doubles", guessFormat("Prize doubled") === "singles");
 
 if (passed !== total) { console.error(`FAILED — ${passed}/${total} checks (trophy timeline)`); process.exit(1); }
 console.log(`PASSED — ${passed}/${total} checks (trophy timeline)`);

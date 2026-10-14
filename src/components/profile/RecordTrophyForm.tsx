@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { BigBtn, Field } from "@/components/ui/atoms";
 import { Club, listMyAdminClubs } from "@/lib/clubs";
 import { recordTrophyForPlayer } from "@/lib/trophies";
-import { FEED_OVERLAY, BALL, CLAY, COURT, MUTED, body, input } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CLAY, COURT, MUTED, body, input, segmentOption, segmentTrack } from "@/lib/theme";
+import { guessFormat, type TrophySide } from "@/core/trophyTimeline";
 
 
 // iOS Safari draws a date input at its own intrinsic width, ignoring
@@ -31,6 +32,9 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
   const [competition, setCompetition] = useState("");
   const [season, setSeason] = useState("");
   const [wonOn, setWonOn] = useState("");
+  // Guessed from the competition's name until somebody taps one, then theirs.
+  const [format, setFormat] = useState<TrophySide | null>(null);
+  const shownFormat: TrophySide = format ?? guessFormat(competition);
   const [result, setResult] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -53,7 +57,7 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
     if (!clubId) { setError("Pick a club."); return; }
     setBusy(true);
     try {
-      await recordTrophyForPlayer({ clubId, playerId, playerName, competition, season: season.trim() || (wonOn ? wonOn.slice(0, 4) : ""), result, notes, wonOn });
+      await recordTrophyForPlayer({ clubId, playerId, playerName, competition, season: season.trim() || (wonOn ? wonOn.slice(0, 4) : ""), result, notes, wonOn, format: shownFormat });
       onSubmitted && onSubmitted();
       onClose();
     } catch (e: any) {
@@ -101,6 +105,14 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
               </select>
             </Field>
             <Field label="Competition"><input value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="e.g. Men's Singles" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+            {/* Which side of the app it shows on — the doubles feed and profile,
+                or the singles ones. A badge either way: it never counts in a rating. */}
+            <Field label="Singles or doubles">
+              <div style={{ ...segmentTrack, marginBottom: 0 }}>
+                <button type="button" onClick={() => setFormat("singles")} style={segmentOption(shownFormat === "singles")}>Singles</button>
+                <button type="button" onClick={() => setFormat("doubles")} style={segmentOption(shownFormat === "doubles")}>Doubles</button>
+              </div>
+            </Field>
             <Field label="Result / position"><input value={result} onChange={(e) => setResult(e.target.value)} placeholder="e.g. Champion, or No. 4" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
             <Field label="Season / year"><input value={season} onChange={(e) => setSeason(e.target.value)} placeholder="e.g. 2019" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
             {/* The day puts it in the match history among the run of results that

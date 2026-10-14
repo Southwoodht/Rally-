@@ -24,7 +24,25 @@ export interface TrophyLike {
   season?: string | null;
   /** "YYYY-MM-DD", or null. */
   won_on?: string | null;
+  /** "singles" | "doubles", or null for not said (schema_trophy_format.sql). */
+  format?: string | null;
 }
+
+export type TrophySide = "singles" | "doubles";
+
+/**
+ * Which side of the app an honour belongs on. Only an explicit "doubles"
+ * goes to the doubles side; anything else — including every trophy recorded
+ * before the column existed — stays on the singles side, where all of them
+ * always showed. A trophy is never counted in a rating either way (Sam,
+ * 2026-10-14): the matches that won it do that when they are logged.
+ */
+export const onSide = (t: TrophyLike, side: TrophySide): boolean =>
+  side === "doubles" ? t.format === "doubles" : t.format !== "doubles";
+
+/** The form's first guess from the competition's name, until somebody picks. */
+export const guessFormat = (competition: string): TrophySide =>
+  /\b(doubles|pairs|mixed)\b/i.test(competition) ? "doubles" : "singles";
 
 const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 

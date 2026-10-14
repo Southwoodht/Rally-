@@ -22,6 +22,8 @@ export interface Trophy {
   /** The day it was won, "YYYY-MM-DD" — schema_trophy_won_on.sql. Null for
    *  most honours, and absent entirely on a database without the column. */
   won_on?: string | null;
+  /** "singles" | "doubles" | null — schema_trophy_format.sql. */
+  format?: string | null;
   clubs?: { name: string } | null;
 }
 
@@ -35,6 +37,7 @@ export interface TrophyClaimInput {
   notes?: string;
   /** "YYYY-MM-DD". */
   wonOn?: string;
+  format?: "singles" | "doubles";
 }
 
 export interface RecordTrophyInput {
@@ -47,6 +50,7 @@ export interface RecordTrophyInput {
   notes?: string;
   /** "YYYY-MM-DD". */
   wonOn?: string;
+  format?: "singles" | "doubles";
 }
 
 export interface LegacyFactClaimInput {
@@ -62,6 +66,22 @@ export interface LegacyFactClaimInput {
 // date fails loudly rather than silently dropping the day somebody typed.
 const wonOnField = (wonOn?: string) => (wonOn && wonOn.trim() ? { won_on: wonOn.trim() } : {});
 
+// Insert a trophy row, carrying its singles/doubles tag when the database has
+// the column. A database without schema_trophy_format.sql rejects the unknown
+// column; the trophy is then saved without the tag rather than refused,
+// because an honour handed out today matters more than which feed it shows in
+// — untagged shows on the singles side, where every trophy always has.
+async function insertTrophyRow(row: Record<string, any>) {
+  const attempt = (r: Record<string, any>) =>
+    withSupabaseTimeout(supabase!.from("trophies").insert(r).select().single(), { data: null, error: null } as any);
+  let res: any = await attempt(row);
+  if (res.error && "format" in row && /format/.test(String(res.error.message || ""))) {
+    const { format: _dropped, ...rest } = row;
+    res = await attempt(rest);
+  }
+  return res as { data: any; error: any };
+}
+
 async function currentUserId(): Promise<string | null> {
   if (!supabase) return null;
   const { data } = await withSupabaseTimeout(supabase.auth.getUser(), { data: { user: null }, error: null } as any);
@@ -76,22 +96,20 @@ export async function submitTrophyClaim(input: TrophyClaimInput): Promise<Trophy
   if (!supabase) throw new Error("Not connected.");
   const uid = await currentUserId();
   if (!uid) throw new Error("You need to be logged in.");
-  const { data, error } = await withSupabaseTimeout(
-    supabase.from("trophies").insert({
-      kind: "trophy",
-      claimed_by: uid,
-      claimant_name: input.claimantName?.trim() || null,
-      club_id: input.clubId,
-      competition: input.competition.trim(),
-      category: input.category?.trim() || null,
-      season: input.season?.trim() || null,
-      result: input.result?.trim() || null,
-      notes: input.notes?.trim() || null,
-      ...wonOnField(input.wonOn),
-      status: "pending",
-    }).select().single(),
-    { data: null, error: null } as any,
-  );
+  const { data, error } = await insertTrophyRow({
+    kind: "trophy",
+    claimed_by: uid,
+    claimant_name: input.claimantName?.trim() || null,
+    club_id: input.clubId,
+    competition: input.competition.trim(),
+    category: input.category?.trim() || null,
+    season: input.season?.trim() || null,
+    result: input.result?.trim() || null,
+    notes: input.notes?.trim() || null,
+    ...wonOnField(input.wonOn),
+    status: "pending",
+    ...(input.format ? { format: input.format } : {}),
+  });
   if (error) throw error;
   return data as Trophy;
 }
@@ -242,24 +260,22 @@ export async function recordTrophyForPlayer(input: RecordTrophyInput): Promise<T
   if (!supabase) throw new Error("Not connected.");
   const uid = await currentUserId();
   if (!uid) throw new Error("You need to be logged in.");
-  const { data, error } = await withSupabaseTimeout(
-    supabase.from("trophies").insert({
-      kind: "trophy",
-      claimed_by: null,
-      player_id: input.playerId,
-      claimant_name: input.playerName?.trim() || null,
-      club_id: input.clubId,
-      competition: input.competition.trim(),
-      season: input.season?.trim() || null,
-      result: input.result?.trim() || null,
-      notes: input.notes?.trim() || null,
-      ...wonOnField(input.wonOn),
-      status: "approved",
-      verified_by: uid,
-      verified_at: new Date().toISOString(),
-    }).select().single(),
-    { data: null, error: null } as any,
-  );
+  const { data, error } = await insertTrophyRow({
+    kind: "trophy",
+    claimed_by: null,
+    player_id: input.playerId,
+    claimant_name: input.playerName?.trim() || null,
+    club_id: input.clubId,
+    competition: input.competition.trim(),
+    season: input.season?.trim() || null,
+    result: input.result?.trim() || null,
+    notes: input.notes?.trim() || null,
+    ...wonOnField(input.wonOn),
+    status: "approved",
+    verified_by: uid,
+    verified_at: new Date().toISOString(),
+    ...(input.format ? { format: input.format } : {}),
+  });
   if (error) throw error;
   return data as Trophy;
 }

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Achievements, type Achievement } from "@/components/profile/Achievements";
 import { BestWins, type BestWin } from "@/components/profile/BestWins";
 import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps } from "@/components/profile/GapInsight";
+import { onSide } from "@/core/trophyTimeline";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { recordsByYear } from "@/core/yearRecord";
 import { OpponentRecords, type OpponentRecord } from "@/components/profile/OpponentRecords";
@@ -99,9 +100,11 @@ export function ProfileView(p: ProfileViewProps) {
   // The same trophies as the Verified trophies row, in the shape the history
   // places them by. Not in the Wins/Draws/Losses lists above: those answer
   // "which matches", and a trophy is not one.
-  const historyTrophies = (p.trophies?.list || []).map((t) => ({
-    id: t.id, competition: t.competition, result: t.result, season: t.season, won_on: t.wonOn, clubName: t.clubName,
-  }));
+  // This is the singles history, so only the singles side's honours — a
+  // doubles trophy goes in the doubles profile's history instead.
+  const historyTrophies = (p.trophies?.list || [])
+    .map((t) => ({ id: t.id, competition: t.competition, result: t.result, season: t.season, won_on: t.wonOn, format: t.format, clubName: t.clubName }))
+    .filter((t) => onSide(t, "singles"));
   const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
   // Editing belongs to the owner of the result, wherever the list appears.
   const forViewer = (list: MatchHistoryItem[]) =>

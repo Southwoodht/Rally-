@@ -4,6 +4,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { formatMatchDate, fullNameOf } from "@/lib/format";
 import { showDelta, type DoublesSlot } from "@/core/doubles/elo";
 import type { DoublesHistoryRow, OpponentRecord } from "@/core/doubles/profile";
+import { TrophyMoment } from "@/components/ui/TrophyMoment";
+import { trophyDateLabel, trophyTitle, trophyTs, type TrophyLike } from "@/core/trophyTimeline";
 import {
   FEED_BAR, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RADIUS, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_MID, body, display, tabular,
@@ -163,10 +165,22 @@ export function DoublesRecordAgainst({ records, byId, onOpenProfile }: { records
 
 const HISTORY_PREVIEW = 5;
 
-export function DoublesHistory({ rows, byId, onOpenProfile, onOpenMatch }: { rows: DoublesHistoryRow[]; byId: ById } & Open) {
+export function DoublesHistory({ rows, trophies, byId, onOpenProfile, onOpenMatch }: {
+  rows: DoublesHistoryRow[];
+  /** Doubles honours. Dated ones won since the oldest row shown are placed
+   *  among the rows, as on the singles history (core/trophyTimeline.ts). */
+  trophies?: Array<TrophyLike & { clubs?: { name: string } | null }>;
+  byId: ById;
+} & Open) {
   const [all, setAll] = useState(false);
   if (!rows.length) return null;
-  const shown = all ? rows : rows.slice(0, HISTORY_PREVIEW);
+  const shownRows = all ? rows : rows.slice(0, HISTORY_PREVIEW);
+  const oldest = shownRows[shownRows.length - 1].match.playedAt;
+  type Entry = { ts: number; r?: DoublesHistoryRow; t?: TrophyLike & { clubs?: { name: string } | null } };
+  const shown: Entry[] = [
+    ...shownRows.map((r) => ({ ts: r.match.playedAt, r })),
+    ...(trophies || []).flatMap((t): Entry[] => { const ts = trophyTs(t); return ts != null && ts >= oldest ? [{ ts, t }] : []; }),
+  ].sort((a, b) => b.ts - a.ts);
   return (
     <Card
       title="Match history"
@@ -174,7 +188,13 @@ export function DoublesHistory({ rows, byId, onOpenProfile, onOpenMatch }: { row
         ? <button onClick={() => setAll(!all)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontSize: 13 }}>{all ? "Fewer" : `All ${rows.length} ›`}</button>
         : undefined}
     >
-      {shown.map((r, i) => {
+      {shown.map((e, i) => {
+        if (e.t) return (
+          <div key={"t-" + e.t.id} style={{ borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
+            <TrophyMoment title={trophyTitle(e.t)} date={trophyDateLabel(e.t)} club={e.t.clubs?.name} edge={false} style={{ padding: "11px 0" }} />
+          </div>
+        );
+        const r = e.r!;
         const score = scoreText(r);
         return (
           <div key={r.match.id} onClick={() => onOpenMatch?.(r)} style={{ padding: "11px 0", cursor: onOpenMatch ? "pointer" : "default", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
