@@ -141,3 +141,32 @@ export function sealTimeline(periods: any[]): any[] {
     return { ...p, to: monthLabel(startIndex(next.from) - 1) };
   });
 }
+
+/**
+ * A level change, as a timeline: `level` from `fromMonth` ("YYYY-MM") on.
+ *
+ * Winter pilot, brief item 2: "Every level change is logged with the date, so
+ * level_history is filled in properly." Before this a level could change
+ * without its history moving — a dropdown wrote `level` and left the timeline
+ * saying the old thing — so a promotion today graded nothing differently and
+ * an old match could not tell when it happened. Now every change made by an
+ * organiser goes through here: the new period starts this month (or the
+ * month they say), any period already starting that month is replaced rather
+ * than duplicated, and sealTimeline closes the one before it. Earlier periods
+ * are never touched, so a 2019 win keeps the level its opponent had then.
+ *
+ * `level` null clears the claim from that month on by ending the timeline
+ * there; it does not erase the past.
+ */
+export function withLevelChange(history: any[] | null | undefined, level: { cat: string; sub: string } | null, fromMonth: string): any[] {
+  const start = startIndex(fromMonth);
+  const kept = (history || []).filter((p) => startIndex(p.from) !== start);
+  if (!level) {
+    // Close whatever was open at the month before; nothing new starts.
+    const sealed = sealTimeline(kept.filter((p) => startIndex(p.from) < start));
+    if (!sealed.length) return [];
+    const last = sealed[sealed.length - 1];
+    return [...sealed.slice(0, -1), { ...last, to: monthLabel(start - 1) }];
+  }
+  return sealTimeline([...kept, { cat: level.cat, sub: level.sub, from: fromMonth, to: null }]);
+}

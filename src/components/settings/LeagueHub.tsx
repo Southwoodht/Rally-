@@ -39,7 +39,7 @@ import {
  * account. Nothing on it is a control the database would then refuse them.
  */
 
-type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import";
+type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels";
 
 const lbl: React.CSSProperties = {
   fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
@@ -119,6 +119,7 @@ export function LeagueHub(props: any) {
   // Competition ties are managed from their competition, not from here.
   if (page === "singles") return <><>{back("Run your league")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
   if (page === "seasons") return <><>{back("Run your league")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
+  if (page === "levels") return <><>{back("Run your league")}</><LevelRequestsPage players={players} requests={props.levelRequests} onDecide={props.onDecideLevelRequest} flash={flash} /></>;
   if (page === "roles") return <><>{back("Run your league")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
   if (page === "settings") return <><>{back("Run your league")}</><SettingsPage {...props} /></>;
   if (page === "data") return <><>{back("Run your league")}</><DataPage {...props} onImport={() => setPage("import")} /></>;
@@ -205,6 +206,7 @@ export function LeagueHub(props: any) {
         <div style={{ marginTop: -1 }}>
           {!friendly && row(ic(Calendar), "Seasons", group?.season ? `${group.season.name} · ${daysLeftLabel(group.season).toLowerCase()}` : "None running", "seasons")}
           {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
+          {!friendly && props.levelRequests && row(ic(Users), "Level requests", (() => { const n = props.levelRequests.filter((r: any) => r.status === "pending").length; return n ? `${n} waiting` : "None waiting"; })(), "levels")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
           {!friendly && row(ic(Settings2), "League settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
           {!friendly && row(ic(Upload), "Import old results", "Paste them from a spreadsheet or notes", "import")}
@@ -272,7 +274,8 @@ function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSi
 // Players
 // ---------------------------------------------------------------------------
 
-function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash }: any) {
+function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash, leagueId, onSetLevelFor, onSetHistoryFor }: any) {
+  const friendly = isFriendlyLeague(leagueId);
   const [name, setName] = useState("");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
@@ -335,6 +338,13 @@ function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash
           played={playedBy[editingPlayer.id] || 0}
           locked={!!editingPlayer.auth_id && editingPlayer.id !== meId}
           onChange={(patch) => setPlayers(players.map((x: any) => (x.id === editingPlayer.id ? { ...x, ...patch } : x)))}
+          onSetLevel={friendly
+            // Friendlies have no organisers: the old direct edit, as before.
+            ? async (level) => { setPlayers(players.map((x: any) => (x.id === editingPlayer.id ? { ...x, level } : x))); }
+            : onSetLevelFor ? (level) => onSetLevelFor(editingPlayer.id, level).catch(() => {}) : undefined}
+          onSetHistory={friendly
+            ? async (h) => { setPlayers(players.map((x: any) => (x.id === editingPlayer.id ? { ...x, levelHistory: h } : x))); }
+            : onSetHistoryFor ? (h) => onSetHistoryFor(editingPlayer.id, h).catch(() => {}) : undefined}
           onRemove={() => { onRemovePlayer(editingPlayer.id); setEditing(null); flash("Player removed"); }}
           onClose={() => setEditing(null)}
         />
@@ -562,6 +572,60 @@ function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSe
               <div style={{ ...note, fontSize: 12 }}>
                 {formatMatchDate(seasonWindow(p).start)}{p.endsOn ? " to " + formatMatchDate(seasonWindow(p).end) : ""} · final standings {p.endedAt ? "from " + formatMatchDate(p.endedAt) : ""}
               </div>
+            </div>
+          ))}
+        </SurfaceCard>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Level requests (brief item 2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Players asking for a different level. Only organisers set levels now; a
+ * player asks from their profile, and the request waits here. Approving sets
+ * the level from this month, with the dated period in their history, exactly
+ * as setting it by hand does.
+ */
+function LevelRequestsPage({ players, requests, onDecide, flash }: any) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const pending = (requests || []).filter((r: any) => r.status === "pending");
+  const decided = (requests || []).filter((r: any) => r.status !== "pending").slice(-10).reverse();
+  const nameOf = (id: string) => fullNameOf(players.find((p: any) => p.id === id));
+  const levelOf = (id: string) => { const l = levelNow(players.find((p: any) => p.id === id)); return l ? `${l.cat} · ${l.sub}` : "no level"; };
+  const act = async (r: any, ok: boolean) => {
+    setBusy(r.id);
+    try { await onDecide(r, ok); } catch (e: any) { flash?.(e?.message || "Couldn't save that."); }
+    setBusy(null);
+  };
+  return (
+    <>
+      <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 14 }}>
+        <div style={{ ...lbl, marginBottom: 6 }}>Waiting</div>
+        {!pending.length && <div style={note}>Nobody has asked. Players ask from their profile, and you can set anyone's level yourself from Players.</div>}
+        {pending.map((r: any, i: number) => (
+          <div key={r.id} style={{ padding: "10px 0", borderTop: i ? "0.5px solid " + FEED_RAISED : "none" }}>
+            <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_HI }}>{nameOf(r.playerId)}</div>
+            <div style={{ ...note, marginTop: 2 }}>
+              Now {levelOf(r.playerId)} · asks for <span style={{ color: FEED_TEXT_HI }}>{r.level.cat} · {r.level.sub}</span>
+            </div>
+            {r.note && <div style={{ ...note, marginTop: 4, fontStyle: "italic" }}>“{r.note}”</div>}
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button disabled={busy === r.id} onClick={() => act(r, true)} style={btn(FEED_LIME, FEED_LIME_INK)}>Approve</button>
+              <button disabled={busy === r.id} onClick={() => act(r, false)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Decline</button>
+            </div>
+          </div>
+        ))}
+      </SurfaceCard>
+      {decided.length > 0 && (
+        <SurfaceCard radius={18} pad="14px">
+          <div style={{ ...lbl, marginBottom: 6 }}>Recently decided</div>
+          {decided.map((r: any, i: number) => (
+            <div key={r.id} style={{ ...note, padding: "6px 0", borderTop: i ? "0.5px solid " + FEED_RAISED : "none" }}>
+              {nameOf(r.playerId)} · {r.level.cat} · {r.level.sub} · {r.status}
             </div>
           ))}
         </SurfaceCard>

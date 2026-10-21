@@ -5,11 +5,12 @@ import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
 import { readPhotoAsDataUrl } from "@/lib/photo";
 import { updateMyPublicProfile } from "@/lib/profiles";
+import { LevelRequestForm } from "@/components/profile/LevelRequestForm";
 import { BALL, CHALK, MUTED, NICKS, body, card, miniInput } from "@/lib/theme";
 
 const PHOTO_SIZE = 160;
 
-export function MyProfile({ players, meId, setPlayers, flash }: any) {
+export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, pendingRequest, onAskLevel, friendly }: any) {
   const me = players.find((p) => p.id === meId);
   const fileRef = useRef<HTMLInputElement>(null);
   if (!me) return <Empty msg="Pick who you are first." />;
@@ -35,7 +36,15 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
       if (full) updateMyPublicProfile({ display_name: full }).catch((e) => console.warn("Couldn't update the public name", e));
     }
   };
-  const setLevel = (cat, sub) => setPlayers(players.map((p) => p.id === meId ? { ...p, level: cat ? { cat, sub: sub || "Medium" } : null } : p));
+  // Brief item 2: organisers set levels. You pick your own once, while you
+  // have none; an organiser's own goes through the organiser door like
+  // anybody else's; everyone else asks. Friendlies have no organisers.
+  const setLevel = (cat, sub) => {
+    const level = cat ? { cat, sub: sub || "Medium" } : null;
+    if (canSetLevels && onSetLevel) { onSetLevel(meId, level).catch(() => {}); return; }
+    setPlayers(players.map((p) => p.id === meId ? { ...p, level } : p));
+  };
+  const mayPick = friendly || canSetLevels || !me.level;
   const L = ({ children }: any) => <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
   const onPickPhoto = async (file: File) => {
     try {
@@ -77,10 +86,20 @@ export function MyProfile({ players, meId, setPlayers, flash }: any) {
         <input value={me.home || ""} onChange={(e) => setField("home", e.target.value)} placeholder="Home ground" style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }} />
       </div>
       <L>Your level</L>
+      {!mayPick ? (
+        <>
+          <div style={{ fontFamily: body, fontSize: 15, color: CHALK }}>{me.level.cat} · {me.level.sub}</div>
+          {onAskLevel && <LevelRequestForm current={me.level} pending={pendingRequest} onAsk={onAskLevel} />}
+        </>
+      ) : (
       <div style={{ display: "flex", gap: 6 }}>
         <select value={me.level?.cat || ""} onChange={(e) => setLevel(e.target.value, me.level?.sub)} style={{ ...miniInput, flex: 2, boxSizing: "border-box" as const }}><option value="">No level</option>{LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}</select>
         <select value={me.level?.sub || "Medium"} disabled={!me.level} onChange={(e) => setLevel(me.level?.cat, e.target.value)} style={{ ...miniInput, flex: 1, opacity: me.level ? 1 : 0.4, boxSizing: "border-box" as const }}>{SUBS.map((x) => <option key={x} value={x}>{x}</option>)}</select>
       </div>
+      )}
+      {mayPick && !me.level && !canSetLevels && !friendly && (
+        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>Pick carefully: after this, only the organisers can change it.</div>
+      )}
       <L>Rating</L>
       <div style={{ display: "flex", gap: 6 }}>
         <input value={me.initialElo ?? ""} onChange={(e) => setField("initialElo", e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="ELO" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />

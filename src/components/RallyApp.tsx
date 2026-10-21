@@ -66,6 +66,8 @@ import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor,
 import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
 import { dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
+import { sealTimeline, withLevelChange } from "@/core/levels";
+import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, type LevelRequest } from "@/lib/levelAdmin";
 import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
 import { closeSeasonIfDue, createSeason, endSeason, updateSeason } from "@/lib/seasons";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
@@ -207,6 +209,17 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const comps = useCompetitions(leagueId, !!competitionsEnabled);
   const singlesComps = comps.competitions.filter((c) => c.kind === "singles");
   const doublesComps = comps.competitions.filter((c) => c.kind === "doubles");
+  // Requests from players to change their level (brief item 2): for
+  // organisers, the queue to decide; for a player, their own. Null until
+  // loaded, or when schema_levels_organisers.sql has not run.
+  const [levelRequests, setLevelRequests] = useState<LevelRequest[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setLevelRequests(null);
+    if (!gid || isFriendlyLeague(gid) || gid === DEV_LEAGUE_ID) return;
+    loadLevelRequests(gid).then((r) => { if (alive) setLevelRequests(r); }).catch(() => {});
+    return () => { alive = false; };
+  }, [gid]);
   // The club's seasons: the seasons table once schema_seasons.sql has run,
   // the old one in the settings blob until then (useSeasons says which).
   // Not for the dev league or Friendlies, which have no table rows to read.
@@ -1256,6 +1269,54 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         p.id === id ? { ...p, levelEstimate: level, levelEstimateHistory: history } : p),
     }));
   };
+  /**
+   * Levels are the organisers' (brief item 2, schema_levels_organisers.sql).
+   * Every change goes through set_player_level with a dated period added by
+   * withLevelChange, so the level and the history that dates it never part.
+   * Local state is patched directly, like saveLevelEstimate: a setPlayers save
+   * would try to write the row again, and for a signed-up player that write
+   * is (rightly) refused.
+   */
+  const canSetLevels = !!canManageMatches;
+  const thisMonth = () => londonDay().slice(0, 7);
+  const patchPlayerLocal = (id: string, patch: any) =>
+    setGdata((g: any) => ({ ...g, players: (g.players || []).map((p: any) => (p.id === id ? { ...p, ...patch } : p)) }));
+  const setLevelFor = async (id: string, level: { cat: string; sub: string } | null) => {
+    const p = players.find((x) => x.id === id);
+    const history = withLevelChange(p?.levelHistory, level, thisMonth());
+    try {
+      await setPlayerLevel(id, level, history);
+      patchPlayerLocal(id, { level, levelHistory: history });
+      flash("Level saved for " + fullNameOf(p));
+    } catch (e: any) { flash(e?.message || "Couldn't save that level."); throw e; }
+  };
+  const setHistoryFor = async (id: string, periods: any[]) => {
+    const p = players.find((x) => x.id === id);
+    const sealed = sealTimeline(periods);
+    const open = sealed.length && sealed[sealed.length - 1].to == null ? sealed[sealed.length - 1] : null;
+    const level = open ? { cat: open.cat, sub: open.sub } : (p?.level ?? null);
+    try {
+      await setPlayerLevel(id, level, sealed);
+      patchPlayerLocal(id, { level, levelHistory: sealed });
+    } catch (e: any) { flash(e?.message || "Couldn't save that history."); throw e; }
+  };
+  const reloadLevelRequests = () => {
+    if (!gid || isFriendlyLeague(gid) || gid === DEV_LEAGUE_ID) return;
+    loadLevelRequests(gid).then(setLevelRequests).catch(() => {});
+  };
+  const decideRequest = async (r: LevelRequest, approve: boolean) => {
+    if (approve) await setLevelFor(r.playerId, r.level);
+    await decideLevelRequest(r.id, approve ? "approved" : "declined");
+    reloadLevelRequests();
+    if (!approve) flash("Request declined");
+  };
+  const askForLevel = async (level: { cat: string; sub: string }, note: string) => {
+    if (!gid || !meId) return;
+    await requestLevelChange(gid, meId, level, note);
+    reloadLevelRequests();
+    flash("Sent to the organisers");
+  };
+
   const me = players.find((p) => p.id === meId);
   const finishOnboarding = (hist) => {
     if (hist && meId) {
@@ -1793,13 +1854,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             } : null}
             focus={homeDoubles ? doublesFocus : homeData?.focus ? { ...homeData.focus, onBook: () => setTab("fixtures"), onOpenPlayer: openProfile } : null}
             whatsNew={newsSeen !== undefined && newsSeen !== RELEASE ? <WhatsNew onDismiss={closeWhatsNew} /> : null}
-            levelRecheck={newsSeen === RELEASE && levelAsked === false && meId ? (
+            // Re-picking your own level is the organisers' now (brief item 2),
+            // so the card only appears where a pick is still yours to make:
+            // no level yet, or you are an organiser.
+            levelRecheck={newsSeen === RELEASE && levelAsked === false && meId && (canSetLevels || !players.find((p) => p.id === meId)?.level) ? (
               <LevelRecheck
                 current={players.find((p) => p.id === meId)?.level || null}
                 onPick={(cat, sub) => {
-                  setPlayers(players.map((p) => p.id === meId ? { ...p, level: { cat, sub } } : p));
+                  if (canSetLevels) setLevelFor(meId, { cat, sub }).catch(() => {});
+                  else { setPlayers(players.map((p) => p.id === meId ? { ...p, level: { cat, sub } } : p)); flash("Level updated"); }
                   closeLevelRecheck();
-                  flash("Level updated");
                 }}
                 onDismiss={closeLevelRecheck}
               />
@@ -1982,7 +2046,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
-        {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash} />}
+        {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash}
+          canSetLevels={canSetLevels} onSetLevel={setLevelFor} friendly={isFriendlyLeague(gid)}
+          pendingRequest={(levelRequests || []).find((r) => r.playerId === meId && r.status === "pending") || null}
+          onAskLevel={levelRequests ? askForLevel : undefined} />}
         {tab === "settings" && <SubHeader title={canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"} onBack={() => setTab("profile")} />}
         {tab === "settings" && (
           <LeagueHub
@@ -1997,6 +2064,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             doublesEnabled={!!doublesEnabled} competitionsEnabled={!!competitionsEnabled}
             hasCompetition={comps.competitions.length > 0}
             onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
+            levelRequests={canSetLevels ? levelRequests : null}
+            onDecideLevelRequest={decideRequest}
+            onSetLevelFor={canSetLevels ? setLevelFor : undefined}
+            onSetHistoryFor={canSetLevels ? setHistoryFor : undefined}
             onStartDoublesCompetition={() => { setSport("doubles"); setTab("fixtures"); setCompCreateSignal((n) => n + 1); }}
             onStartSinglesCompetition={() => { setSport("singles"); setTab("fixtures"); setSinglesCreateSignal((n) => n + 1); }}
             onLogResult={() => setTab("add")}
@@ -2018,11 +2089,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onMode={setMatchesMode}
             onOpenPlayer={openProfile}
             onOpenMatch={setMatchDetailId}
-            onFixLevels={() => { setLevelsFrom("matches"); setTab("levels"); }}
+            onFixLevels={canSetLevels ? () => { setLevelsFrom("matches"); setTab("levels"); } : undefined}
           />
         )}
         {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab(levelsFrom)} />}
-        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} meId={meId} onEstimate={saveLevelEstimate} />}
+        {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} meId={meId} onEstimate={saveLevelEstimate} onSetHistory={canSetLevels && !isFriendlyLeague(gid) ? setHistoryFor : undefined} />}
         {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
@@ -2091,7 +2162,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             <div style={listCard}>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"}</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>
+              {(canSetLevels || isFriendlyLeague(gid)) && <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>}
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
             </div>

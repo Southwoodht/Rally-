@@ -150,11 +150,18 @@ function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own
   );
 }
 
-export function LevelRepair({ players, setPlayers, meId, onEstimate }: {
+export function LevelRepair({ players, setPlayers, meId, onEstimate, onSetHistory }: {
   players: any[];
   setPlayers: (np: any[]) => void;
   meId?: string | null;
   onEstimate?: (id: string, level: any, history: any[]) => Promise<void>;
+  /**
+   * The organiser door (schema_levels_organisers.sql, brief item 2). When
+   * given, every history saved here is the player's real one, for anybody in
+   * the club — the estimate columns were only ever a workaround for not
+   * being allowed to write it.
+   */
+  onSetHistory?: (id: string, history: any[]) => Promise<void>;
 }) {
   const [showDone, setShowDone] = useState(false);
   // Anyone edited in this sitting stays in the working list even though they
@@ -238,6 +245,11 @@ export function LevelRepair({ players, setPlayers, meId, onEstimate }: {
     const player = players.find((p: any) => p.id === id);
     setTouched((t) => (t.includes(id) ? t : [...t, id]));
     setFailed((f) => (f && f.id === id ? null : f));
+    if (onSetHistory) {
+      try { await onSetHistory(id, periods); }
+      catch (e: any) { setFailed({ id, message: e?.message || "Couldn’t save that history." }); }
+      return;
+    }
     if (player && modeOf(player) === "estimate") {
       // Not through setPlayers. That write is refused by RLS on any row with
       // an auth_id, correctly — an estimate goes to its own columns through

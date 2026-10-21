@@ -8,7 +8,7 @@
 // all. If any of these go red, an admin can reach something that is meant to
 // be the player's alone.
 
-import { levelAt, levelClaimed, levelIsEstimated, levelNow, timelineIsEstimated } from "./levels";
+import { levelAt, levelClaimed, levelIsEstimated, levelNow, timelineIsEstimated, withLevelChange } from "./levels";
 
 let failures = 0;
 let checks = 0;
@@ -83,6 +83,28 @@ eq(timelineIsEstimated({ levelEstimateHistory: est }), true, "estimated timeline
 eq(timelineIsEstimated({ levelHistory: own, levelEstimateHistory: est }), false, "their own timeline is theirs");
 eq(timelineIsEstimated({ levelHistory: [], levelEstimateHistory: est }), true, "empty own timeline still reads the estimate");
 eq(timelineIsEstimated({}), false, "nothing to label");
+
+// ------------------------------------------------- organiser level changes
+{
+  const hist = [
+    { cat: "Beginner", sub: "High", from: 2019, to: null },
+    { cat: "Amateur", sub: "Low", from: "2024-03", to: null },
+  ];
+  const next = withLevelChange(hist, { cat: "Intermediate", sub: "Low" }, "2026-11");
+  eq(next.length, 3, "a promotion adds a period");
+  eq(next[2].from, "2026-11", "starting this month");
+  eq(next[2].to, null, "open-ended");
+  eq(next[1].to, "2026-10", "the previous period closes the month before");
+  eq(next[0].from, 2019, "earlier periods untouched");
+  const again = withLevelChange(next, { cat: "Intermediate", sub: "Medium" }, "2026-11");
+  eq(again.length, 3, "a second change the same month replaces, not duplicates");
+  eq(again[2].sub, "Medium", "with the new sub-level");
+  const first = withLevelChange(null, { cat: "Advanced", sub: "Low" }, "2026-11");
+  eq(first.length === 1 && first[0].from === "2026-11", true, "a first level starts a timeline");
+  const cleared = withLevelChange(next, null, "2026-12");
+  eq(cleared[cleared.length - 1].to, "2026-11", "clearing ends the timeline, keeps the past");
+  eq(levelAt({ levelHistory: next }, Date.UTC(2025, 5, 1))?.cat, "Amateur", "a 2025 match still sees Amateur");
+}
 
 // -------------------------------------------------------------------------
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }

@@ -37,6 +37,14 @@ interface Props {
   onChange: (patch: Record<string, any>) => void;
   onRemove: () => void;
   onClose: () => void;
+  /**
+   * An organiser setting the level (brief item 2): through set_player_level,
+   * for anybody in the club — signed up or not — with a dated period added to
+   * their history. Absent: this sheet cannot change a level at all.
+   */
+  onSetLevel?: (level: { cat: string; sub: string } | null) => Promise<void>;
+  /** An organiser correcting the history itself (adding or removing a period). */
+  onSetHistory?: (history: any[]) => Promise<void>;
 }
 
 const lbl: React.CSSProperties = {
@@ -48,13 +56,50 @@ const fld: React.CSSProperties = {
   padding: "10px 12px", width: "100%", boxSizing: "border-box",
 };
 
-export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose }: Props) {
+export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory }: Props) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [timeline, setTimeline] = useState(false);
   const [guide, setGuide] = useState(false);
 
-  const setLevel = (cat: string, sub?: string) => onChange({ level: cat ? { cat, sub: sub || "Medium" } : null });
+  const setLevel = (cat: string, sub?: string) => { void onSetLevel?.(cat ? { cat, sub: sub || "Medium" } : null); };
   const lvl = levelNow(p);
+
+  // Level and its history, for organisers only — the database refuses anybody
+  // else (schema_levels_organisers.sql). Shown for signed-up players too: an
+  // organiser setting levels is the whole point, and the old rule that their
+  // details are "theirs to change" no longer covers the level.
+  const levelSection = onSetLevel ? (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={lbl}>Level</div>
+        <button onClick={() => setGuide(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>What do the levels mean?</button>
+      </div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+        <select value={p.level?.cat || ""} onChange={(e) => setLevel(e.target.value, p.level?.sub)} style={{ ...fld, flex: 2 }}>
+          <option value="">No level</option>
+          {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+        </select>
+        <select value={p.level?.sub || "Medium"} disabled={!p.level} onChange={(e) => setLevel(p.level?.cat, e.target.value)} style={{ ...fld, flex: 1, opacity: p.level ? 1 : 0.4 }}>
+          {SUBS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 4 }}>
+        A change starts from this month in their level history, so their older matches keep the level they had then.
+      </div>
+      <button onClick={() => setTimeline(!timeline)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: "4px 0 12px" }}>
+        {timeline ? "Hide level history" : `Level history${(p.levelHistory || []).length ? ` (${p.levelHistory.length})` : ""} ›`}
+      </button>
+      {timeline && onSetHistory && (
+        <div style={{ marginBottom: 12 }}>
+          <TimelineEditor
+            player={p}
+            onAdd={(per: any) => { void onSetHistory([...(p.levelHistory || []), per].sort((a: any, b: any) => startIndex(a.from) - startIndex(b.from))); }}
+            onRemove={(i: number) => { void onSetHistory((p.levelHistory || []).filter((_: any, idx: number) => idx !== i)); }}
+          />
+        </div>
+      )}
+    </>
+  ) : null;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
@@ -74,7 +119,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
           <div style={{ background: FEED_CARD, borderRadius: 14, padding: 14, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.55, marginBottom: 14 }}>
             <div style={{ color: FEED_TEXT_HI }}>{[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}</div>
             {lvl && <div>{lvl.cat} · {lvl.sub}{levelIsEstimated(p) ? " — your estimate" : ""}</div>}
-            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change.</div>
+            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their level, which is yours to set" : ""}.</div>
           </div>
         ) : (
           <>
@@ -91,31 +136,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
                 <input value={p.home || ""} onChange={(e) => onChange({ home: e.target.value })} style={fld} /></label>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <div style={lbl}>Level</div>
-              <button onClick={() => setGuide(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>What do the levels mean?</button>
-            </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-              <select value={p.level?.cat || ""} onChange={(e) => setLevel(e.target.value, p.level?.sub)} style={{ ...fld, flex: 2 }}>
-                <option value="">No level</option>
-                {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
-              <select value={p.level?.sub || "Medium"} disabled={!p.level} onChange={(e) => setLevel(p.level?.cat, e.target.value)} style={{ ...fld, flex: 1, opacity: p.level ? 1 : 0.4 }}>
-                {SUBS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <button onClick={() => setTimeline(!timeline)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: "4px 0 12px" }}>
-              {timeline ? "Hide level history" : `Level history${(p.levelHistory || []).length ? ` (${p.levelHistory.length})` : ""} ›`}
-            </button>
-            {timeline && (
-              <div style={{ marginBottom: 12 }}>
-                <TimelineEditor
-                  player={p}
-                  onAdd={(per: any) => onChange({ levelHistory: [...(p.levelHistory || []), per].sort((a: any, b: any) => startIndex(a.from) - startIndex(b.from)) })}
-                  onRemove={(i: number) => onChange({ levelHistory: (p.levelHistory || []).filter((_: any, idx: number) => idx !== i) })}
-                />
-              </div>
-            )}
+            {levelSection}
 
             <div style={lbl}>Nickname</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
@@ -124,6 +145,8 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
             </div>
           </>
         )}
+
+        {locked && levelSection && <div style={{ marginBottom: 6 }}>{levelSection}</div>}
 
         {/* About the league, not about them, so staff can set it on anyone. */}
         <button
