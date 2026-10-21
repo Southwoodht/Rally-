@@ -1,0 +1,44 @@
+"use client";
+import React from "react";
+import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_TEXT_HI, FEED_TEXT_MID, PANEL, body } from "@/lib/theme";
+
+/**
+ * "Count this as a league game?" — asked after Log a result when the two
+ * players still owe each other a competition match (core/leagueGame.ts).
+ *
+ * There is no tap-outside to dismiss: the result is not saved until one of
+ * the buttons is pressed, and a sheet that vanished on a stray tap would lose
+ * it. "No, just a friendly" is the old behaviour exactly.
+ */
+export function LeagueGamePrompt({ who, options, onChoose }: {
+  /** "You and Charlie Henry", or both names when staff log for others. */
+  who: string;
+  options: Array<{ tieId: string; name: string; left: number }>;
+  onChoose: (tieId: string | null) => void;
+}) {
+  const btn: React.CSSProperties = {
+    width: "100%", border: "none", borderRadius: 14, padding: "14px 16px", fontFamily: body, fontSize: 16,
+    cursor: "pointer", marginTop: 10, textAlign: "center",
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
+      <div style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "22px 16px 34px", boxSizing: "border-box" }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_TEXT_HI }}>Count this as a league game?</div>
+        <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>
+          {who} still {options.length === 1
+            ? `have ${options[0].left} ${options[0].left === 1 ? "game" : "games"} to play in ${options[0].name}.`
+            : "have competition games to play."}{" "}
+          If this was one of them, it goes in the table. If not, it&apos;s a friendly and only counts in the ratings.
+        </div>
+        {options.map((o) => (
+          <button key={o.tieId} onClick={() => onChoose(o.tieId)} style={{ ...btn, background: FEED_LIME, color: FEED_LIME_INK }}>
+            Yes, a {o.name} game
+          </button>
+        ))}
+        <button onClick={() => onChoose(null)} style={{ ...btn, background: FEED_CARD, color: FEED_TEXT_HI }}>
+          No, just a friendly
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -24,6 +24,8 @@
     "src/core/ratingTimeline.test.ts",
     "src/core/official.ts",
     "src/core/official.test.ts",
+    "src/core/leagueGame.ts",
+    "src/core/leagueGame.test.ts",
     "src/core/matchGrade.ts",
     "src/core/matchGrade.test.ts",
     "src/core/matchQuality.ts",

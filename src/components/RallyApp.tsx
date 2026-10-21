@@ -10,6 +10,8 @@ import { HelpGuide } from "@/components/help/HelpGuide";
 import { History } from "@/components/games/History";
 import { Home } from "@/components/home/Home";
 import { LogResult } from "@/components/games/LogResult";
+import { LeagueGamePrompt } from "@/components/games/LeagueGamePrompt";
+import { leagueGameOptions, settleTie } from "@/core/leagueGame";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { GroupSheet } from "@/components/layout/GroupSheet";
 import { SubHeader } from "@/components/layout/SubHeader";
@@ -233,6 +235,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [singlesCreateSignal, setSinglesCreateSignal] = useState(0);
   // The doubles result open for viewing or correcting, if any.
   const [editDoublesId, setEditDoublesId] = useState<string | null>(null);
+  // A + result between two players who still owe each other a competition
+  // game waits here until they say whether it was one (core/leagueGame.ts).
+  const [leagueAsk, setLeagueAsk] = useState<null | { match: any; options: Array<{ tie: any; left: number }> }>(null);
   // Which sport the Table, Profile and the entry screen are showing. Not
   // persisted: unlike the theme or the season toggle, this is a thing you
   // flick between within a visit, and remembering it means opening the Table
@@ -832,6 +837,21 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       console.error("Nudge failed", e);
       flash(e?.message || "Couldn't nudge just now");
     }
+  };
+
+  // Log a result's save, with or without a competition tie it settles. With
+  // one, the match and the tie go in the same save, as resolveFixture does.
+  const saveLogged = async (mt: any, tieId: string | null) => {
+    const tie = tieId ? (gdata.fixtures || []).find((f) => f.id === tieId) : null;
+    const pendingNote = isUnconfirmedResult(mt) ? " — awaiting opponent's OK" : "";
+    if (tie) {
+      const ok = await saveData({ ...gdata, matches: [mt, ...gdata.matches], fixtures: (gdata.fixtures || []).map((f) => (f.id === tie.id ? settleTie(f, mt) : f)) });
+      if (ok !== false) flash("Logged as a " + (comps.competitions.find((c) => c.id === tie.competitionId)?.name || "league") + " game" + pendingNote);
+    } else {
+      setMatches([mt, ...matches]);
+      flash("Logged" + pendingNote);
+    }
+    setTab("home");
   };
 
   const resolveFixture = async (fx, winner, score): Promise<boolean> => {
@@ -1824,7 +1844,20 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             }}
           />
         )}
-        {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        {leagueAsk && (
+          <LeagueGamePrompt
+            who={leagueAsk.match.p1 === meId || leagueAsk.match.p2 === meId
+              ? "You and " + fullNameOf(players.find((p) => p.id === (leagueAsk.match.p1 === meId ? leagueAsk.match.p2 : leagueAsk.match.p1)))
+              : fullNameOf(players.find((p) => p.id === leagueAsk.match.p1)) + " and " + fullNameOf(players.find((p) => p.id === leagueAsk.match.p2))}
+            options={leagueAsk.options.map((o) => ({ tieId: o.tie.id, left: o.left, name: comps.competitions.find((c) => c.id === o.tie.competitionId)?.name || "league" }))}
+            onChoose={(tieId) => { const mt = leagueAsk.match; setLeagueAsk(null); void saveLogged(mt, tieId); }}
+          />
+        )}
+        {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => {
+          const options = leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
+          if (options.length) setLeagueAsk({ match: mt, options });
+          else saveLogged(mt, null);
+        }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
             seasonBanner={!personal && group?.season ? <SeasonBanner season={group.season} onOpen={() => setTab("ladder")} /> : undefined}
