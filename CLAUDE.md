@@ -909,6 +909,28 @@ every Seacourt match logged that day — all 30 were the test, nothing else)
 and approved the delete: those 30 match ids and the competition, whose
 fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
 
+**Winter Phase 2, on winter-pilot (2026-10-21), Sam's rulings:**
+- **"Count this as a league game?"** (built FIRST, Sam: "players will log with
+  + out of habit"). Log a result asks when the two still have an open
+  competition tie; nothing attaches without a yes. `core/leagueGame.ts`.
+- **48 hours to confirm** (`CONFIRM_WINDOW_MS` in `core/matchStatus.ts`), was 24.
+- **A dispute never deletes.** Status `disputed`: counts for nothing, waits in
+  Run your club → Disputed results for an organiser to keep or remove. "Cancel"
+  on your OWN unconfirmed result still deletes — it was only your claim.
+  Removing a result reopens the competition tie it settled.
+- **Short / unfinished match**: status `short`. Feed and head-to-head show it,
+  labelled; `countsAsPlayed` is false, so no rating, table or competition. The
+  global SQL counts only `confirmed`, so it needed no SQL. Neither new status
+  needed a migration — `matches.status` has no check constraint.
+- **Feed headlines**: 75% of games "dominates", 90% "demolishes", six games
+  minimum (`core/domination.ts`); "First meeting" per pair (`feedContext.ts`).
+- **Head-to-head counted every row between two players**, bookings and
+  disputes included. Now `countsAsPlayed` like everything else. Found in passing.
+- **Booked matches last 1 hour by default** (was 2), with 1 / 1½ / 2 hours at
+  booking. **Needs `schema_fixture_duration.sql`** for a non-default length to
+  save; the default writes nothing new, so bookings work either way.
+- Emails (item 6) wait for Sam's own domain, then Resend.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.

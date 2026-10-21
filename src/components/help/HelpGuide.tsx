@@ -89,8 +89,9 @@ const SECTIONS: Sect[] = [
   {
     id: "confirmation", icon: "🔒", title: "Data / confirmation",
     points: [
-      { label: "Why it exists", text: "So one player can never unilaterally rewrite a match involving someone else. A shell opponent (no account) confirms automatically since there's nobody to check with. A real account gets 24 hours to agree or dispute before it's confirmed automatically." },
-      { label: "If it's disputed", text: "The match is removed rather than forced through — nothing incorrect becomes official just because one side logged it first." },
+      { label: "Why it exists", text: "So one player can never unilaterally rewrite a match involving someone else. A shell opponent (no account) confirms automatically since there's nobody to check with. A real account gets 48 hours to agree or dispute before it's confirmed automatically." },
+      { label: "If it's disputed", text: "It goes to the club's organisers, who keep it or remove it. Until they decide it counts for nothing — so nothing incorrect becomes official just because one side logged it first, and nobody can wipe a match they lost by disputing it." },
+      { label: "Short matches", text: "A quick game that wasn't a full set can be logged as a short match. It shows in the feed and head-to-head, labelled, and counts towards nothing — no rating, no table, no competition." },
     ],
   },
 ];

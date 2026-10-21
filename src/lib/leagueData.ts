@@ -201,6 +201,8 @@ const fixtureToRow = (leagueId: string, f: any) => ({
   // writes the null), and one from before it never does.
   ...("playBy" in f ? { play_by: f.playBy ?? null } : {}),
   ...("outcome" in f ? { outcome: f.outcome ?? null } : {}),
+  // How long it was booked for (schema_fixture_duration.sql); same rule.
+  ...("durationMinutes" in f ? { duration_minutes: f.durationMinutes ?? null } : {}),
 });
 
 const rowToFixture = (r: any) => ({
@@ -217,6 +219,7 @@ const rowToFixture = (r: any) => ({
   // whether it may write them back.
   ...(r.play_by !== undefined ? { playBy: r.play_by } : {}),
   ...(r.outcome !== undefined ? { outcome: r.outcome } : {}),
+  ...(r.duration_minutes !== undefined ? { durationMinutes: r.duration_minutes } : {}),
 });
 
 const postToRow = (leagueId: string, p: any) => ({

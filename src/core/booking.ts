@@ -113,8 +113,12 @@ function categoryIndex(level: any): number | null {
 
 // --------------------------------------------------------- how did it go
 
-/** Two hours, unless the booking says otherwise. */
-export const DEFAULT_DURATION_MINUTES = 120;
+/**
+ * One hour, unless the booking says otherwise (winter brief item 5; it was
+ * two). The choices offered when booking are DURATION_CHOICES.
+ */
+export const DEFAULT_DURATION_MINUTES = 60;
+export const DURATION_CHOICES = [60, 90, 120];
 
 /** A booking nobody resolves is given up on after a week — but stays editable. */
 export const AUTO_CANCEL_DAYS = 7;

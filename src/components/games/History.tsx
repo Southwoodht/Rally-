@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isAgreed, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isAgreed, isDisputed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import { Glyph } from "@/components/ui/Glyph";
 import React, { useState, useMemo } from "react";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
@@ -54,7 +54,8 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   const pending = useMemo(() => matches.filter((m) => isUnconfirmedResult(m)).sort((a, b) => b.date - a.date), [matches]);
   const pendingEdits = useMemo(() => matches.filter((m) => m.pendingEdit).sort((a, b) => (b.pendingEdit?.proposedAt || 0) - (a.pendingEdit?.proposedAt || 0)), [matches]);
   const pendingDeletes = useMemo(() => matches.filter((m) => m.deleteRequestedBy).sort((a, b) => (b.deleteRequestedAt || 0) - (a.deleteRequestedAt || 0)), [matches]);
-  const confirmed = useMemo(() => matches.filter((m) => isAgreed(m)).sort((a, b) => b.date - a.date), [matches]);
+  // Short matches join the feed (labelled) though they count for nothing.
+  const confirmed = useMemo(() => matches.filter((m) => isAgreed(m) || isShortMatch(m)).sort((a, b) => b.date - a.date), [matches]);
   const events = useMemo(() => buildEvents(players, matches, null), [players, matches]);
   const feedList = useMemo(() => {
     if (feedFilter === "mine") return confirmed.filter((m) => m.p1 === meId || m.p2 === meId);
@@ -99,8 +100,23 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
     setEditingMatchId(null);
     setEditDraft(null);
   };
+  // Disputed results involving me: they count for nothing until an organiser
+  // decides, and saying so here is what stops it looking like a lost match.
+  const myDisputed = matches.filter((m: any) => isDisputed(m) && (m.p1 === meId || m.p2 === meId));
   return (
     <div>
+      {myDisputed.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: CLAY, marginBottom: 10 }}>Disputed</div>
+          {myDisputed.map((m: any) => (
+            <div key={m.id} style={{ background: PANEL, border: "1px solid " + CLAY, borderRadius: 14, padding: 12, marginBottom: 8 }}>
+              <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><strong>{winnerLabel(m, nameOf)}</strong></div>
+              <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8 }}>The organisers will decide. It doesn&apos;t count for anything until they do.</div>
+            </div>
+          ))}
+        </div>
+      )}
       {(pending.length > 0 || pendingEdits.length > 0 || pendingDeletes.length > 0) && (
         <div style={{ marginBottom: 22 }}>
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 10 }}>Awaiting confirmation</div>
@@ -127,7 +143,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   </>
                 ) : iReported ? (
                   <>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onDispute(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onDelete(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
                     {/* The nudge lives here now that Home's copy of this row
                         is gone. Same rule as before: the button says what
                         happened rather than going grey, because "Nudged 2h
@@ -376,8 +392,8 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   <MatchCard
                     dateLabel={fmtDate(m.date)}
                     {...sidesOf(m)}
-                    context={contexts[m.id]}
-                    headline={dominationHeadline(m, (id: string) => shortNameOf(who(id)))}
+                    context={isShortMatch(m) ? "Short match" : contexts[m.id]}
+                    headline={isShortMatch(m) ? null : dominationHeadline(m, (id: string) => shortNameOf(who(id)))}
                     onOpenProfile={onOpenProfile}
                     onOpenMatch={onOpenMatch ? () => onOpenMatch(m.id) : undefined}
                   />

@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed } from "@/core/matchStatus";
+import { countsAsPlayed, isShortMatch } from "@/core/matchStatus";
 import React, { useState, useMemo } from "react";
 import { AlertCircle, ArrowLeftRight, Info } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
@@ -55,7 +55,13 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => countsAsPlayed(m)).map((m) => new Date(m.date).getFullYear()))).sort((x: any, y: any) => y - x), [matches]);
   const scoped = useMemo(() => yr === "all" ? matches : matches.filter((m) => new Date(m.date).getFullYear() === Number(yr)), [matches, yr]);
   const nm = (id) => byId[id] ? byId[id].name + (byId[id].last ? " " + byId[id].last : "") : nameOf(id);
-  const games = useMemo(() => { if (!a || !b) return []; return scoped.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a)).sort((x, y) => y.date - x.date); }, [a, b, scoped]);
+  // The record counts what everything else counts (countsAsPlayed): before,
+  // this took every row between the two, so a booking or a disputed result
+  // added to somebody's head-to-head. The list below it also shows short
+  // matches, labelled, because the brief wants them visible and not counted.
+  const between = useMemo(() => { if (!a || !b) return []; return scoped.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a)).sort((x, y) => y.date - x.date); }, [a, b, scoped]);
+  const games = useMemo(() => between.filter((m) => countsAsPlayed(m)), [between]);
+  const listed = useMemo(() => between.filter((m) => countsAsPlayed(m) || isShortMatch(m)), [between]);
   const rivalry = useMemo(() => (a && b ? computeRivalry(a, b, scoped) : null), [a, b, scoped]);
   let aw = 0, bw = 0, d = 0;
   games.forEach((m) => { if (m.winner === "draw") d++; else if ((m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a)) aw++; else bw++; });
@@ -348,7 +354,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             })}
           </div>
           <div style={{ ...sectionLabel, margin: "22px 0 8px" }}>Their matches</div>
-          {games.length ? games.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI }}><span style={{ ...tabular, color: FEED_TEXT_MID, flexShrink: 0 }}>{fmtDate(m.date)}</span><span style={{ textAlign: "right" }}>{winnerLabel(m, nameOf)}{m.score ? <span style={{ ...tabular, color: FEED_TEXT_MID }}> · {m.score}</span> : null}</span></div>) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
+          {listed.length ? listed.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI }}><span style={{ ...tabular, color: FEED_TEXT_MID, flexShrink: 0 }}>{fmtDate(m.date)}</span><span style={{ textAlign: "right" }}>{winnerLabel(m, nameOf)}{m.score ? <span style={{ ...tabular, color: FEED_TEXT_MID }}> · {m.score}</span> : null}{isShortMatch(m) ? <span style={{ color: FEED_TEXT_MID }}> · short match</span> : null}</span></div>) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
         </>
       ) : <Empty msg="Pick two players to compare." />}
     </div>

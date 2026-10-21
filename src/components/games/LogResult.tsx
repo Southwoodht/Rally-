@@ -6,7 +6,7 @@ import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { predictProb } from "@/core/predict";
 import { uid } from "@/lib/format";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, body, card, display, input } from "@/lib/theme";
-import { FEED_CARD, FEED_LIME, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, tabular } from "@/lib/theme";
+import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, tabular } from "@/lib/theme";
 
 // Small actions that add a field: lime, sentence case, body font. They were
 // uppercase mono, and in this app the numbers font means a number — a word
@@ -49,6 +49,9 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   // start because that's the common case; more on request.
   const [sets, setSets] = useState<Array<{ a: string; b: string }>>([{ a: "", b: "" }, { a: "", b: "" }, { a: "", b: "" }]);
   const [err, setErr] = useState("");
+  // A quick 3-0 that wasn't a full set (winter brief item 9). Logged as
+  // status "short": shown and labelled, counted in nothing (core/matchStatus).
+  const [short, setShort] = useState(false);
   const setCell = (i: number, side: "a" | "b", v: string) =>
     setSets(sets.map((s, j) => (j === i ? { ...s, [side]: v.replace(/[^0-9]/g, "").slice(0, 3) } : s)));
   // Only sets where both sides were filled in count — a half-entered set is
@@ -77,7 +80,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     if (elo) {
       try { const pctP1 = Math.round(predictProb(p1, p2, matches, elo, players) * 100); prediction = { p1Pct: pctP1 }; } catch {}
     }
-    onSave({ id: uid(), date: when, p1, p2, score: scoreStr, winner, status: needsConfirm ? "pending" : "confirmed", reportedBy: meId, loggedAt: Date.now(), notes: notes.trim() || undefined, venue: venue.trim() || undefined, category: category.trim() || undefined, prediction });
+    onSave({ id: uid(), date: when, p1, p2, score: scoreStr, winner, status: short ? "short" : needsConfirm ? "pending" : "confirmed", reportedBy: meId, loggedAt: Date.now(), notes: notes.trim() || undefined, venue: venue.trim() || undefined, category: category.trim() || undefined, prediction });
   };
   const submitBulk = () => {
     if (!p1 || !p2) return setErr("Pick both players.");
@@ -149,6 +152,18 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
           ) : (
             <button onClick={() => setShowMore(true)} style={{ ...addLink, padding: 0, marginBottom: 16 }}>Add a note or venue</button>
           )}
+          <button
+            onClick={() => setShort(!short)}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: FEED_RAISED, border: "none", borderRadius: 14, padding: "12px 14px", cursor: "pointer", marginBottom: 14, textAlign: "left" }}
+          >
+            <span>
+              <span style={{ display: "block", fontFamily: body, fontSize: 15, color: FEED_TEXT_HI }}>Short or unfinished match</span>
+              <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>A quick game that wasn&apos;t a full set. Shown in the feed, never counted.</span>
+            </span>
+            <span style={{ width: 44, height: 26, borderRadius: 13, background: short ? BALL : FEED_CARD, position: "relative", flexShrink: 0, marginLeft: 10 }}>
+              <span style={{ position: "absolute", top: 3, left: short ? 21 : 3, width: 20, height: 20, borderRadius: 10, background: short ? FEED_LIME_INK : FEED_TEXT_MID }} />
+            </span>
+          </button>
           {err && <div style={{ color: CLAY, fontFamily: body, fontSize: 13, marginBottom: 10 }}>{err}</div>}
           <div style={{ ...sectionLabel, margin: "8px 0 9px" }}>Who won?</div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -157,7 +172,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submit("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
-            {needsConfirm ? "Your opponent has 24 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Southwood account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
+            {short ? "Short matches show in the feed and head-to-head, labelled, and count towards nothing — no rating, no table." : needsConfirm ? "Your opponent has 48 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Southwood account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
           </div>
         </>
       ) : (

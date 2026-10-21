@@ -8,6 +8,7 @@ import { PlayerEditSheet } from "@/components/settings/PlayerEditSheet";
 import { Avatar } from "@/components/ui/Avatar";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { levelNow } from "@/core/levels";
+import { isDisputed } from "@/core/matchStatus";
 import { inviteUrl } from "@/lib/invite";
 import { isFriendlyLeague } from "@/lib/leagueData";
 import { fmtDate, formatMatchDate, fullNameOf, uid } from "@/lib/format";
@@ -39,7 +40,7 @@ import {
  * account. Nothing on it is a control the database would then refuse them.
  */
 
-type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels";
+type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels" | "disputes";
 
 const lbl: React.CSSProperties = {
   fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
@@ -119,6 +120,7 @@ export function LeagueHub(props: any) {
   // Competition ties are managed from their competition, not from here.
   if (page === "singles") return <><>{back("Run your club")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
   if (page === "seasons") return <><>{back("Run your club")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
+  if (page === "disputes") return <><>{back("Run your club")}</><DisputesPage players={players} matches={matches} onKeep={props.onKeepDisputed} onRemove={props.onRemoveDisputed} /></>;
   if (page === "levels") return <><>{back("Run your club")}</><LevelRequestsPage players={players} requests={props.levelRequests} onDecide={props.onDecideLevelRequest} flash={flash} /></>;
   if (page === "roles") return <><>{back("Run your club")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
   if (page === "settings") return <><>{back("Run your club")}</><SettingsPage {...props} /></>;
@@ -206,6 +208,7 @@ export function LeagueHub(props: any) {
         <div style={{ marginTop: -1 }}>
           {!friendly && row(ic(Calendar), "Seasons", group?.season ? `${group.season.name} · ${daysLeftLabel(group.season).toLowerCase()}` : "None running", "seasons")}
           {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
+          {!friendly && props.onKeepDisputed && row(ic(Shield), "Disputed results", (() => { const n = (matches || []).filter((m: any) => isDisputed(m)).length; return n ? `${n} to decide` : "None"; })(), "disputes")}
           {!friendly && props.levelRequests && row(ic(Users), "Level requests", (() => { const n = props.levelRequests.filter((r: any) => r.status === "pending").length; return n ? `${n} waiting` : "None waiting"; })(), "levels")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
           {!friendly && row(ic(Settings2), "Club settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
@@ -580,6 +583,52 @@ function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSe
         </SurfaceCard>
       )}
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Disputed results (winter Phase 2, Sam 2026-10-21)
+// ---------------------------------------------------------------------------
+//
+// A dispute used to delete the match, which let one person wipe a result they
+// lost. Now it waits here, counting for nothing, until an organiser keeps it
+// (it counts, as logged) or removes it. Two taps each, because either way
+// somebody is told they were wrong.
+
+function DisputesPage({ players, matches, onKeep, onRemove }: any) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [sure, setSure] = useState<string | null>(null);
+  const list = (matches || []).filter((m: any) => isDisputed(m)).sort((a: any, b: any) => b.date - a.date);
+  const nameOf = (id: string) => fullNameOf(players.find((p: any) => p.id === id)) || "Someone";
+  const act = async (id: string, fn: (id: string) => any) => {
+    setBusy(id);
+    try { await fn(id); } finally { setBusy(null); setSure(null); }
+  };
+  return (
+    <SurfaceCard radius={18} pad="14px">
+      <div style={{ ...lbl, marginBottom: 6 }}>To decide</div>
+      {!list.length && <div style={note}>Nothing disputed. When a player disputes a result it comes here, and it doesn&apos;t count until you decide.</div>}
+      {list.map((m: any, i: number) => {
+        const result = m.winner === "draw" ? `${nameOf(m.p1)} drew with ${nameOf(m.p2)}` : `${nameOf(m.winner === "p1" ? m.p1 : m.p2)} beat ${nameOf(m.winner === "p1" ? m.p2 : m.p1)}`;
+        return (
+          <div key={m.id} style={{ padding: "10px 0", borderTop: i ? "0.5px solid " + FEED_RAISED : "none" }}>
+            <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_HI }}>{result}{m.score ? " · " + m.score : ""}</div>
+            <div style={{ ...note, marginTop: 2 }}>{fmtDate(m.date)} · {m.reportedBy && players.some((p: any) => p.id === m.reportedBy) ? `logged by ${nameOf(m.reportedBy)}, disputed by the other side` : "disputed"}</div>
+            {sure === m.id ? (
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button disabled={busy === m.id} onClick={() => act(m.id, onRemove)} style={btn(DOT_LOSS, FEED_LIME_INK)}>Remove it for good</button>
+                <button onClick={() => setSure(null)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Back</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button disabled={busy === m.id} onClick={() => act(m.id, onKeep)} style={btn(FEED_LIME, FEED_LIME_INK)}>Keep the result</button>
+                <button onClick={() => setSure(m.id)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Remove it…</button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </SurfaceCard>
   );
 }
 

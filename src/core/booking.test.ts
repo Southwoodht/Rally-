@@ -55,7 +55,8 @@ eq(isNearMyLevel(lvl("Intermediate"), { cat: "Nonsense" }), false, "an unknown c
 const HOUR = 3600000, DAY = 86400000;
 const booked = (date: number, status = "scheduled", durationMinutes?: number) => ({ date, status, durationMinutes });
 const T = 1_800_000_000_000;
-eq(endsAt(booked(T)), T + DEFAULT_DURATION_MINUTES * 60000, "two hours by default");
+eq(endsAt(booked(T)), T + DEFAULT_DURATION_MINUTES * 60000, "one hour by default");
+eq(DEFAULT_DURATION_MINUTES, 60, "and one hour is 60 minutes");
 eq(endsAt(booked(T, "scheduled", 45)), T + 45 * 60000, "or whatever the booking says");
 eq(needsResultPrompt(booked(T), T + HOUR), false, "not while it is still being played");
 eq(needsResultPrompt(booked(T), T + 3 * HOUR), true, "once it is over, ask");

@@ -51,6 +51,28 @@ const NOT_PLAYED = new Set([
  */
 const UNCONFIRMED = new Set(["pending", "reported"]);
 
+/**
+ * How long a result waits for the opponent before it confirms itself. 48
+ * hours since 2026-10-21 (Sam: "24 is too tight for people who check the app
+ * twice a week"); it was 24.
+ */
+export const CONFIRM_WINDOW_MS = 48 * 3600 * 1000;
+
+/**
+ * A result the opponent disputed. It counts for nothing until an organiser
+ * keeps it or removes it — the dispute used to delete the match outright,
+ * which let one person wipe a match they lost (Sam, 2026-10-21).
+ */
+const DISPUTED = "disputed";
+
+/**
+ * A short or unfinished match (winter brief item 9): a quick 3-0 that wasn't
+ * a full set. Shown in the feed and head-to-head, labelled, and counted in
+ * nothing — no rating, no table, no competition — so nobody can farm points
+ * with them. Never asks the opponent to agree: there is nothing to agree to.
+ */
+const SHORT = "short";
+
 const warned = new Set<string>();
 
 /**
@@ -78,6 +100,7 @@ const warned = new Set<string>();
 export function countsAsPlayed(m: any): boolean {
   const s = m?.status;
   if (NOT_PLAYED.has(s)) return false;
+  if (s === DISPUTED || s === SHORT) return false;
   if (UNCONFIRMED.has(s)) return true;
   if (s === "confirmed") return true;
   // Unknown. Behave exactly as the old denylist did rather than silently
@@ -134,4 +157,14 @@ export function isBooking(m: any): boolean {
  */
 export function isClaimed(player: any): boolean {
   return !!player?.auth_id;
+}
+
+/** Disputed by the opponent, waiting for an organiser. Counts for nothing. */
+export function isDisputed(m: any): boolean {
+  return m?.status === DISPUTED;
+}
+
+/** A short or unfinished match: shown, labelled, never counted. */
+export function isShortMatch(m: any): boolean {
+  return m?.status === SHORT;
 }

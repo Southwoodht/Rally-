@@ -1,4 +1,4 @@
-import { countsAsPlayed, hasResult, isAgreed, isBooking, isUnconfirmedResult } from "./matchStatus";
+import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isShortMatch, isUnconfirmedResult } from "./matchStatus";
 
 let pass = 0, fail = 0;
 const eq = (got: any, want: any, msg: string) => {
@@ -46,6 +46,15 @@ eq(countsAsPlayed(m("something_new")), true, "unknown status counts, as the old 
 eq(countsAsPlayed(m(undefined)), true, "a match with no status counts");
 eq(isBooking(m(undefined)), false, "a match with no status is not a booking");
 eq(countsAsPlayed(undefined), true, "a missing match does not throw");
+
+// Winter Phase 2 (2026-10-21).
+eq(countsAsPlayed(m("disputed")), false, "a disputed result counts for nothing until an organiser decides");
+eq(isDisputed(m("disputed")), true, "and says it is disputed");
+eq(isUnconfirmedResult(m("disputed")), false, "and is not swept up by the auto-confirm");
+eq(countsAsPlayed(m("short")), false, "a short match is never counted");
+eq(isShortMatch(m("short")), true, "and is recognised as one");
+eq(hasResult(m("short")), false, "nor listed with the results a number counts");
+eq(CONFIRM_WINDOW_MS, 48 * 3600 * 1000, "results wait 48 hours for the opponent");
 
 console.log(fail ? `\nFAILED — ${fail} of ${pass + fail} checks` : `\nPASSED — ${pass}/${pass} checks`);
 if (fail) process.exit(1);

@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isClaimed, isUnconfirmedResult } from "@/core/matchStatus";
+import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useState, useEffect, useMemo } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
@@ -750,7 +750,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
-  const addFixture = (p1, p2, booked = null) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked }] });
+  const addFixture = (p1, p2, booked = null, mins?: number) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked, ...(mins ? { durationMinutes: mins } : {}) }] });
   /**
    * Call off an arranged match, and say so.
    *
@@ -813,7 +813,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
     flash(missed.length ? "Match cancelled — couldn't message " + missed.join(", ") : "Match cancelled");
   };
-  const bookFixture = (id, when) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null } : f) });
+  // `mins` is how long it was booked for. Only written when given, so a
+  // database without schema_fixture_duration.sql keeps saving bookings.
+  const bookFixture = (id, when, mins?: number) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null, ...(mins ? { durationMinutes: mins } : {}) } : f) });
   /**
    * Chase a result you logged.
    *
@@ -849,7 +851,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       if (ok !== false) flash("Logged as a " + (comps.competitions.find((c) => c.id === tie.competitionId)?.name || "league") + " game" + pendingNote);
     } else {
       setMatches([mt, ...matches]);
-      flash("Logged" + pendingNote);
+      flash(isShortMatch(mt) ? "Logged as a short match" : "Logged" + pendingNote);
     }
     setTab("home");
   };
@@ -1026,9 +1028,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // matches logged after this existed (`loggedAt`), so we never mass-confirm
   // an old backlog someone hasn't dealt with yet.
   useEffect(() => {
-    const DAY = 24 * 3600 * 1000;
     const now = Date.now();
-    const stale = matches.filter((m) => isUnconfirmedResult(m) && m.loggedAt && now - m.loggedAt > DAY);
+    const stale = matches.filter((m) => isUnconfirmedResult(m) && m.loggedAt && now - m.loggedAt > CONFIRM_WINDOW_MS);
     if (stale.length) {
       const ids = new Set(stale.map((m) => m.id));
       setMatches(matches.map((m) => (ids.has(m.id) ? { ...m, status: "confirmed" } : m)));
@@ -1046,7 +1047,30 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
   }, [matches]);
   const confirmMatch = (id) => setMatches(matches.map((m) => m.id === id ? { ...m, status: "confirmed" } : m));
-  const disputeMatch = (id) => setMatches(matches.filter((m) => m.id !== id));
+  // Disputing no longer deletes (Sam, 2026-10-21: "deleting the result means
+  // one person can wipe a match they lost"). The result is marked disputed,
+  // counts for nothing, and waits for an organiser in Run your club.
+  const disputeMatch = (id) => {
+    setMatches(matches.map((m) => (m.id === id ? { ...m, status: "disputed" } : m)));
+    flash("Disputed — the organisers will decide");
+  };
+  // Taking back a result you logged yourself, before anyone agreed it: still a
+  // delete, because it was only ever your claim. Also what an organiser's
+  // "Remove it" does to a disputed result. A competition tie it settled opens
+  // again, so the game can be played or re-entered.
+  const removeResult = (id) => saveData({
+    ...gdata,
+    matches: gdata.matches.filter((m) => m.id !== id),
+    fixtures: (gdata.fixtures || []).map((f) => (f.matchId === id ? { ...f, done: false, winner: undefined, matchId: undefined } : f)),
+  });
+  const keepDisputed = (id) => {
+    setMatches(matches.map((m) => (m.id === id ? { ...m, status: "confirmed" } : m)));
+    flash("Result kept");
+  };
+  const removeDisputed = async (id) => {
+    const ok = await removeResult(id);
+    if (ok !== false) flash("Result removed");
+  };
   const updateGroup = (id, patch) => saveGroups(groups.map((g) => g.id === id ? { ...g, ...patch } : g));
   const removePlayer = (id) => saveData({ ...gdata, players: gdata.players.filter((p) => p.id !== id), matches: gdata.matches.filter((m) => m.p1 !== id && m.p2 !== id) });
   const ranked = useMemo(() => {
@@ -1403,7 +1427,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       .filter((m) => isUnconfirmedResult(m) && m.reportedBy === meId)
       .map((m) => {
         const them = first(m.p1 === meId ? m.p2 : m.p1);
-        const remaining = m.loggedAt ? m.loggedAt + 24 * 3600 * 1000 - Date.now() : null;
+        const remaining = m.loggedAt ? m.loggedAt + CONFIRM_WINDOW_MS - Date.now() : null;
         return {
           matchId: m.id,
           headline: m.winner === "draw" ? "You drew with " + them
@@ -1446,7 +1470,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const nowMs = Date.now();
     const awaitingResult = (fixtures || [])
       .filter((f) => !f.done && !f.outcome && f.booked && (f.p1 === meId || f.p2 === meId))
-      .map((f) => ({ f, ends: new Date(f.booked).getTime() + DEFAULT_DURATION_MINUTES * 60000 }))
+      .map((f) => ({ f, ends: new Date(f.booked).getTime() + (f.durationMinutes || DEFAULT_DURATION_MINUTES) * 60000 }))
       .filter((x) => !isNaN(x.ends) && nowMs > x.ends && nowMs < x.ends + AUTO_CANCEL_DAYS * 86400000)
       .sort((a, b) => a.ends - b.ends)
       .map(({ f }) => {
@@ -1727,7 +1751,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     onOpenPlayer: openProfile,
   } : null;
 
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={disputeMatch} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId}
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId}
     doublesMode={tab === "home" && homeDoubles}
     doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
@@ -1854,7 +1878,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           />
         )}
         {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => {
-          const options = leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
+          // A short match never counts, so it is never offered to a table.
+          const options = isShortMatch(mt) ? [] : leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
           if (options.length) setLeagueAsk({ match: mt, options });
           else saveLogged(mt, null);
         }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
@@ -2109,6 +2134,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             isOwner={leagueRole === "owner"}
             levelRequests={canSetLevels ? levelRequests : null}
             onDecideLevelRequest={decideRequest}
+            onKeepDisputed={canManageMatches ? keepDisputed : undefined}
+            onRemoveDisputed={removeDisputed}
             onSetLevelFor={canSetLevels ? setLevelFor : undefined}
             onSetHistoryFor={canSetLevels ? setHistoryFor : undefined}
             onSetStartFor={canSetLevels ? setStartFor : undefined}

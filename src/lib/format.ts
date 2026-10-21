@@ -1,3 +1,4 @@
+import { CONFIRM_WINDOW_MS } from "@/core/matchStatus";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -102,10 +103,10 @@ export const winnerLabel = (m, nameOf) => m.winner === "draw" ? nameOf(m.p1) + "
 // implying it. loggedAt is sourced from the match row's own created_at.
 export const autoConfirmNote = (loggedAt: number | undefined | null) => {
   if (!loggedAt) return null;
-  const remaining = loggedAt + 24 * 3600 * 1000 - Date.now();
+  const remaining = loggedAt + CONFIRM_WINDOW_MS - Date.now();
   if (remaining <= 0) return "confirming automatically now…";
   const hrs = Math.ceil(remaining / 3600000);
-  return hrs <= 1 ? "auto-confirms within the hour" : hrs < 24 ? `auto-confirms in ~${hrs}h` : "auto-confirms in ~1 day";
+  return hrs <= 1 ? "auto-confirms within the hour" : hrs < 24 ? `auto-confirms in ~${hrs}h` : `auto-confirms in ~${Math.round(hrs / 24)} ${Math.round(hrs / 24) === 1 ? "day" : "days"}`;
 };
 
 // Same shape as autoConfirmNote, for a pending delete request instead of a

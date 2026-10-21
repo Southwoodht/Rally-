@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { DEFAULT_DURATION_MINUTES, DURATION_CHOICES } from "@/core/booking";
 import { Calendar, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
@@ -68,6 +69,20 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
   const [open, setOpen] = useState<string | null>(null);
   const [whenText, setWhenText] = useState("");
+  // How long the booking is for. "How did it go?" is asked after it ends.
+  // Saved only when it isn't the default (or the booking already had one),
+  // so the default keeps working on a database without
+  // schema_fixture_duration.sql.
+  const [mins, setMins] = useState(DEFAULT_DURATION_MINUTES);
+  const lengthPicker = (
+    <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+      {DURATION_CHOICES.map((m) => (
+        <button key={m} onClick={() => setMins(m)} style={{ ...actionBtn(mins === m ? FEED_LIME : FEED_RAISED, mins === m ? FEED_LIME_INK : FEED_TEXT_MID), flex: 1, padding: "8px 6px" }}>
+          {m === 60 ? "1 hour" : m === 90 ? "1½ hours" : m / 60 + " hours"}
+        </button>
+      ))}
+    </div>
+  );
   const [scoreText, setScoreText] = useState("");
   const [search, setSearch] = useState("");
   const [booking, setBooking] = useState(false);
@@ -111,7 +126,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   // one keeps it. Both halves matter: a score typed against Zaach must not
   // reappear under Hugh, and closing a row by accident should not throw away
   // what you had just typed into it.
-  const openRow = (f: any) => { if (open !== f.id) setScoreText(""); setSaveError(null); setOpen(open === f.id ? null : f.id); setWhenText(toInputValue(f.booked)); setScoreText(""); };
+  const openRow = (f: any) => { if (open !== f.id) setScoreText(""); setSaveError(null); setOpen(open === f.id ? null : f.id); setWhenText(toInputValue(f.booked)); setMins(f.durationMinutes || DEFAULT_DURATION_MINUTES); setScoreText(""); };
 
   // Soonest booking first, then everything unbooked, then what's been played.
   // A list of arranged games is a diary, and a diary that isn't in order is
@@ -139,8 +154,8 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
 
   const bookNew = () => {
     if (!newOpp) return;
-    onAddFixture(meId, newOpp, newWhen ? new Date(newWhen).toISOString() : null);
-    setNewOpp(""); setNewWhen(""); setBooking(false);
+    onAddFixture(meId, newOpp, newWhen ? new Date(newWhen).toISOString() : null, newWhen && mins !== DEFAULT_DURATION_MINUTES ? mins : undefined);
+    setNewOpp(""); setNewWhen(""); setBooking(false); setMins(DEFAULT_DURATION_MINUTES);
   };
 
   const bookPanel = canBookNew && (
@@ -173,6 +188,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
             onChange={(e) => setNewWhen(e.target.value)}
             style={{ ...field, width: "100%", marginBottom: 12 }}
           />
+          {newWhen && <><div style={{ ...label, marginBottom: 7 }}>How long</div>{lengthPicker}</>}
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={bookNew} disabled={!newOpp} style={{ ...actionBtn(newOpp ? FEED_LIME : FEED_RAISED, newOpp ? FEED_LIME_INK : FEED_TEXT_LOW), cursor: newOpp ? "pointer" : "default" }}>Book it</button>
@@ -301,12 +317,13 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                       style={{ ...field, flex: 1 }}
                     />
                     <button
-                      onClick={() => onBook(f.id, whenText ? new Date(whenText).toISOString() : null)}
+                      onClick={() => onBook(f.id, whenText ? new Date(whenText).toISOString() : null, whenText && (mins !== DEFAULT_DURATION_MINUTES || f.durationMinutes) ? mins : undefined)}
                       style={{ ...actionBtn(FEED_LIME, FEED_LIME_INK), flex: "0 0 auto", padding: "10px 16px" }}
                     >
                       Book
                     </button>
                   </div>
+                  {whenText && lengthPicker}
                   {f.booked && (
                     <button
                       onClick={() => onBook(f.id, null)}
