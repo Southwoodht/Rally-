@@ -60,6 +60,8 @@
     "src/core/seasons.ts",
     "src/core/seasons.test.ts",
     "src/core/seasonStandings.ts",
-    "src/core/seasonStandings.test.ts"
+    "src/core/seasonStandings.test.ts",
+    "src/core/fairness.ts",
+    "src/core/fairness.test.ts"
   ]
 }
