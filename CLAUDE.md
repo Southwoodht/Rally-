@@ -819,6 +819,26 @@ decides which side shows it — doubles feed, doubles profile history — with
 untagged on the singles side as always. On a database without the column the
 forms still save; the tag is dropped and retried without (`insertTrophyRow`).
 
+**Run on 2026-10-21, verified (4, 0, true): `schema_security_winter_a.sql`** (branch
+`winter-pilot`, but it needs no code and is live). The audit that day, asked
+of the live database through `diagnose_security.sql`, found:
+- `schema_shared_storage_rls.sql` HAD been run, so other clubs could not touch
+  a club's settings — but any member could rewrite the season, and its key
+  parser did not know `league:<id>:rankSnapshots`, so **weekly movement had not
+  been saving for anyone**. Part A fixes both: members read and write their
+  own club's settings and snapshots, owner/organisers only for `groups_`.
+- **`join a league as yourself` checked `user_id` but not `role`**, and
+  `leagues` is readable by anyone (`using (true)`, anon included) — so any
+  account could make itself owner of any club. Closed by Part A; checked the
+  same day that every owner/editor row is the club's own creator, so it was
+  never used.
+- `is_league_staff(uuid)` was added there. It is a policy predicate like
+  `is_league_member`: **never revoke it from anon**.
+**Waiting, and ONLY after winter-pilot is on master: `schema_security_winter_b.sql`**
+— drops the `using (true)` read on `leagues` in favour of
+`find_league_by_code()`. The pre-winter app reads `leagues` directly to join;
+run early, nobody can join by code. `joinLeague` tries the function first.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.
