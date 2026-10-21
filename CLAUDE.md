@@ -839,6 +839,18 @@ of the live database through `diagnose_security.sql`, found:
 `find_league_by_code()`. The pre-winter app reads `leagues` directly to join;
 run early, nobody can join by code. `joinLeague` tries the function first.
 
+**Run on 2026-10-21, verified (true, 1, true, true, 2): `schema_seasons.sql`.**
+Seasons are rows now (`seasons`, one active per club by unique index,
+organisers write), `close_season_if_due()` closes one the day after its last
+UK day, competitions carry `season_id`, and fixtures / doubles_fixtures carry
+`play_by` and `outcome` (walkover / void). `guard_competition_fixture()` makes
+CHANGING those organiser-only and stops a player deleting a competition tie;
+drawing a new tie stays open to members. The one data write copied Seacourt's
+"Test League" season out of the settings blob (the blob is untouched and is
+now only the fallback `useSeasons` reads when the table is missing). A
+season's standings "freeze" by rule, not storage: matches dated in it and
+logged before `ended_at` (`core/seasonStandings.ts`).
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.
