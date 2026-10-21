@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -929,6 +929,13 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
 - **Booked matches last 1 hour by default** (was 2), with 1 / 1½ / 2 hours at
   booking. **Needs `schema_fixture_duration.sql`** for a non-default length to
   save; the default writes nothing new, so bookings work either way.
+- **Merged to master 2026-10-22**, with two more of Sam's rulings: match history
+  shows a word (`gradeAgainstHistory`) instead of the per-match Elo change —
+  the Elo number swung −0.9 to −17 for the same loss because of the level-gap
+  scaling (option D, fixing Elo, is deferred until Sam sees numbers); and a
+  score that disagrees with the winner is refused (`scoreProblem` in
+  `core/sets.ts`). Sam is fixing Charlie Henry's level history (stops at
+  2026-09) and the two bad scores (14 Sep 6-6, 20 Mar Will v George) by hand.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
