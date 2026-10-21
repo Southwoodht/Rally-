@@ -49,6 +49,9 @@ begin
     'public.level_val(jsonb)',
     'public.start_thread(uuid)',
     'public.unread_message_count()',
+    -- Club lookup by join code (schema_security_winter_b.sql). An entry point,
+    -- so closed to anon like the rest; skipped until that file has run.
+    'public.find_league_by_code(text)',
     -- The doubles sanity trigger's function (schema_doubles.sql). Not an
     -- entry point — nothing calls it but the trigger — and the migration
     -- revokes it itself. It is listed anyway because `create or replace`
@@ -91,6 +94,7 @@ select f.proname                                 as function,
      'public_player_card', 'search_player_accounts', 'public_league_snapshot',
      'set_player_level_estimate', 'global_standings', 'global_edges',
      'nudge_match', 'level_val', 'start_thread', 'unread_message_count',
+     'find_league_by_code',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )

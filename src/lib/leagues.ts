@@ -147,11 +147,25 @@ export async function joinLeague(code: string): Promise<League> {
   const uid = userData.user?.id;
   if (!uid) throw new Error("You need to be logged in.");
 
-  const { data: league, error } = await withSupabaseTimeout(
-    supabase.from("leagues").select("id, name, location, join_code, created_by").eq("join_code", clean).maybeSingle(),
-    { data: null, error: null } as any,
+  // Through find_league_by_code() when it exists (schema_security_winter_b.sql):
+  // that file stops `leagues` being readable by anyone, which is what made
+  // every club's join code public. Until it is run the function is missing,
+  // and the direct read — still allowed then — answers the same question.
+  let league: any = null;
+  const viaRpc: any = await withSupabaseTimeout(
+    supabase.rpc("find_league_by_code", { p_code: clean }),
+    { data: null, error: { message: "timed out" } } as any,
   );
-  if (error) throw error;
+  if (!viaRpc.error) {
+    league = Array.isArray(viaRpc.data) ? viaRpc.data[0] ?? null : viaRpc.data ?? null;
+  } else {
+    const { data, error } = await withSupabaseTimeout(
+      supabase.from("leagues").select("id, name, location, join_code, created_by").eq("join_code", clean).maybeSingle(),
+      { data: null, error: null } as any,
+    );
+    if (error) throw error;
+    league = data;
+  }
   if (!league) throw new Error("No league found with that code.");
 
   const { error: joinError } = await withSupabaseTimeout(
