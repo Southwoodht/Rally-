@@ -2064,6 +2064,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             doublesEnabled={!!doublesEnabled} competitionsEnabled={!!competitionsEnabled}
             hasCompetition={comps.competitions.length > 0}
             onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
+            isOwner={leagueRole === "owner"}
             levelRequests={canSetLevels ? levelRequests : null}
             onDecideLevelRequest={decideRequest}
             onSetLevelFor={canSetLevels ? setLevelFor : undefined}

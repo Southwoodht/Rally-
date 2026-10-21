@@ -122,7 +122,7 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
         </span>
         <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, ...tabular }}>
           {r.won}–{r.lost}
-          {r.played < DOUBLES_PROVISIONAL_GAMES && ` · ${r.played} of ${DOUBLES_PROVISIONAL_GAMES} played`}
+          {r.played < DOUBLES_PROVISIONAL_GAMES && ` · ${DOUBLES_PROVISIONAL_GAMES - r.played} more ${DOUBLES_PROVISIONAL_GAMES - r.played === 1 ? "match" : "matches"} to rank`}
         </span>
       </span>
       <span style={{ fontFamily: display, fontWeight: 700, fontSize: 19, ...tabular, color: mine ? FEED_LIME : (r.played < DOUBLES_PROVISIONAL_GAMES ? FEED_TEXT_MID : FEED_TEXT_HI) }}>

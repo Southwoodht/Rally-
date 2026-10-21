@@ -682,9 +682,17 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
 // Data
 // ---------------------------------------------------------------------------
 
-function DataPage({ matches, onClearResults, onImport }: any) {
+function DataPage({ matches, onClearResults, onImport, isOwner, group, leagueId }: any) {
   const [confirmWipe, setConfirmWipe] = useState(false);
+  const [typed, setTyped] = useState("");
   const count = (matches || []).length;
+  // Brief item 4: owner only, and the owner types the club's name. Two taps
+  // was the rule (§3), and two taps is still one thumb resting in the wrong
+  // place twice; a name has to be meant. Friendlies have no owner to ask, so
+  // there it stays as it was, behind the same typed confirmation.
+  const friendly = isFriendlyLeague(leagueId);
+  const clubName = String(group?.name || "").trim();
+  const typedOk = typed.trim().toLowerCase() === clubName.toLowerCase() && clubName.length > 0;
   return (
     <>
       {/* This button used to import a list of results written into the code
@@ -700,12 +708,18 @@ function DataPage({ matches, onClearResults, onImport }: any) {
       <SurfaceCard radius={18} pad="16px 14px">
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: DOT_LOSS }}>Clear all results</div>
         <div style={{ ...note, margin: "4px 0 12px" }}>Deletes every singles result in this league and keeps the players. For starting completely fresh — it cannot be undone.</div>
-        {confirmWipe ? (
+        {!isOwner && !friendly ? (
+          <div style={note}>Only the club's owner can clear results.</div>
+        ) : confirmWipe ? (
           <>
-            <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>Delete all {count} results in this league? Players are kept. This cannot be undone.</div>
+            <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>
+              Delete all {count} results in {clubName || "this club"}? Players are kept. This cannot be undone.
+            </div>
+            <div style={{ ...lbl, marginBottom: 6 }}>Type the club's name to confirm</div>
+            <input value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={clubName} autoComplete="off" style={{ ...fld, marginBottom: 10 }} />
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { setConfirmWipe(false); onClearResults(); }} style={btn(DOT_LOSS, FEED_LIME_INK)}>Delete {count}</button>
-              <button onClick={() => setConfirmWipe(false)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Cancel</button>
+              <button disabled={!typedOk} onClick={() => { setConfirmWipe(false); setTyped(""); onClearResults(); }} style={{ ...btn(typedOk ? DOT_LOSS : FEED_RAISED, typedOk ? FEED_LIME_INK : FEED_TEXT_LOW), cursor: typedOk ? "pointer" : "default" }}>Delete {count}</button>
+              <button onClick={() => { setConfirmWipe(false); setTyped(""); }} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Cancel</button>
             </div>
           </>
         ) : (

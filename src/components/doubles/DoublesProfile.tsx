@@ -194,7 +194,11 @@ export function DoublesProfile({ players, matches, playerId, leagueName, onOpenP
 
         {row(
           `Doubles · ${leagueName}`,
-          provisional ? `${played} of ${DOUBLES_PROVISIONAL_GAMES} played` : `${ordinal(place)} of ${ranked.length}`,
+          // "1st of 1" is a place in a table of one: true, and says nothing
+          // (brief item 4). A place shows once there is somebody to be above.
+          provisional
+            ? `${DOUBLES_PROVISIONAL_GAMES - played} more ${DOUBLES_PROVISIONAL_GAMES - played === 1 ? "match" : "matches"} to rank`
+            : ranked.length < 2 ? "The only one ranked so far" : `${ordinal(place)} of ${ranked.length}`,
           true,
         )}
         {row("Doubles Elo", Math.round(stats.elo[playerId] ?? 0).toLocaleString())}

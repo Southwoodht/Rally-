@@ -122,7 +122,7 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
         <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {provisional
-            ? `${played} of ${DOUBLES_PROVISIONAL_GAMES} played`
+            ? `${DOUBLES_PROVISIONAL_GAMES - played} more ${DOUBLES_PROVISIONAL_GAMES - played === 1 ? "match" : "matches"} to rank`
             : partnerId ? `${best ? "Best" : "Most"} with ${fullNameOf(byId.get(partnerId))}` : "No partners yet"}
         </span>
         <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>

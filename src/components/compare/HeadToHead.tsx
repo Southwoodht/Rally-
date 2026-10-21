@@ -10,7 +10,7 @@ import { computeStats } from "@/core/elo";
 import { levelAt, levelNow, levelVal } from "@/core/levels";
 import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/core/predict";
 import { computeRivalry } from "@/core/rivalries";
-import { D, fmtDate, winPct, winnerLabel } from "@/lib/format";
+import { D, fmtDate, winPct, winnerLabel, distinctFirstName } from "@/lib/format";
 import { FEED_OVERLAY, BALL, CHALK, CLAY, FEED_HERO, FEED_ON_HERO, LINE, MUTED, PANEL2, body, card, display, miniInput } from "@/lib/theme";
 import { FEED_THEY_LEAD } from "@/lib/theme";
 import {
@@ -136,7 +136,9 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
       if (!id) return;
       const r = wdlS[id];
       const gp = r?.gp ?? 0;
-      if (gp < PROVISIONAL_GAMES) out.push({ name: nm(id), gp });
+      // "Charlie E", not "Charlie": the sentence names two people and must
+      // not name them the same (brief item 4).
+      if (gp < PROVISIONAL_GAMES) out.push({ name: distinctFirstName(players.find((p: any) => p.id === id), players) || nm(id), gp });
     });
     return out;
   }, [a, b, wdlS]);

@@ -16,7 +16,9 @@ import { computeRatings, type Edge } from "@/core/rating";
 import { shareForPlayer } from "@/core/sets";
 import { MARGIN_WEIGHT } from "@/core/constants";
 import { WEEK, currentStreakOf } from "@/core/rank";
-import { winPct } from "@/lib/format";
+import { fullNameOf, winPct } from "@/lib/format";
+import { PROVISIONAL_GAMES } from "@/lib/globalTable";
+import { SurfaceCard } from "@/components/ui/Surfaces";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, segmentOption, segmentTrack } from "@/lib/theme";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
 import { SeasonPodium } from "@/components/seasons/SeasonPodium";
@@ -263,6 +265,13 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // In a season, only the people who have played in it. Everyone else would
   // be listed "1=" with "no games yet" — a table of ties nobody earned.
   const seasonal = inSeason ? searched.filter((pl: any) => (wdl[pl.id]?.gp || 0) > 0) : searched;
+  // A place is a claim about where somebody stands, and fewer than
+  // PROVISIONAL_GAMES matches cannot back one (brief item 4; the Global table
+  // has drawn this line since 2026-09-06). Below it you are listed underneath
+  // with how many more you need — "Dan T · 2 more matches to rank" — rather
+  // than shown as "1st of 1". Counted on what this view counts, so a season
+  // asks for five matches IN the season.
+  const isRanked = (id: string) => (wdl[id]?.gp || 0) >= PROVISIONAL_GAMES;
   const standingsPlayers: StandingsPlayer[] = seasonal.map((pl: any) => {
     const r = wdl[pl.id] || { w: 0, d: 0, l: 0, gp: 0 };
     return {
@@ -275,6 +284,9 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     };
   });
 
+  const rankedRows = standingsPlayers.filter((sp: any) => isRanked(sp.player.id));
+  const unrankedRows = standingsPlayers.filter((sp: any) => !isRanked(sp.player.id))
+    .sort((x: any, y: any) => (wdl[y.player.id]?.gp || 0) - (wdl[x.player.id]?.gp || 0));
   const current: TableDefault = { metric: metricValue, who: view === "legacy" ? "legacy" : activeScope, when: periodValue };
   const pinned = !!savedDefault && savedDefault.metric === current.metric && savedDefault.who === current.who && savedDefault.when === current.when;
   const togglePin = () => {
@@ -313,13 +325,35 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
           {players.length > 0 && standingsPlayers.length === 0 ? (
             <Empty msg={q ? "Nobody here by that name." : inSeason ? `No results yet in ${season.name}. The table fills in as matches are logged.` : activeScope === "active" ? "No one has played in the last 12 months. Try Legacy for career history." : activeScope === "nonactive" ? "Everyone has played in the last 12 months." : "No players yet."} />
           ) : (
-            <StandingsList
-              players={standingsPlayers}
+            <>
+            {rankedRows.length === 0 && (
+              <Empty msg={`Nobody has played ${PROVISIONAL_GAMES} matches${inSeason ? " this season" : ""} yet, so nobody is ranked. Everyone so far is listed below.`} />
+            )}
+            {rankedRows.length > 0 && <StandingsList
+              players={rankedRows}
               matches={filtered}
               meId={meId}
               unit={unit}
               onOpen={(id: string) => onOpen(id, tableYr)}
-            />
+            />}
+            {unrankedRows.length > 0 && (
+              <SurfaceCard radius={18} pad="12px 14px" style={{ marginTop: 14 }}>
+                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Not ranked yet</div>
+                {unrankedRows.map((sp: any, i: number) => {
+                  const gp = wdl[sp.player.id]?.gp || 0;
+                  const left = PROVISIONAL_GAMES - gp;
+                  const pl = sp.player;
+                  const short = (pl.name || "").trim() + (pl.last ? " " + String(pl.last).trim()[0].toUpperCase() : "");
+                  return (
+                    <div key={pl.id} onClick={() => onOpen(pl.id, tableYr)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderTop: i ? "0.5px solid " + PANEL2 : "none", cursor: "pointer" }}>
+                      <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, color: pl.id === meId ? BALL : CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{short || fullNameOf(pl)}</span>
+                      <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{left === 1 ? "1 more match to rank" : `${left} more matches to rank`}</span>
+                    </div>
+                  );
+                })}
+              </SurfaceCard>
+            )}
+            </>
           )}
 
           {/* The prediction and the recap sit below the table: worth reading,

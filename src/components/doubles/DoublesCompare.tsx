@@ -7,7 +7,7 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { compareTeams, type Pair, type WDL } from "@/core/doubles/compare";
 import { showDelta, type DoublesMatch } from "@/core/doubles/elo";
-import { formatMatchDate, fullNameOf } from "@/lib/format";
+import { formatMatchDate, fullNameOf, distinctFirstName } from "@/lib/format";
 import {
   FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LOSS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body, tabular,
 } from "@/lib/theme";
@@ -46,7 +46,8 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
   const set = (i: number) => (v: string) => setIds((cur) => { const n = [...cur] as typeof cur; n[i] = v; return n; });
 
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
-  const first = (id: string) => ((byId.get(id)?.name || "").trim() || fullNameOf(byId.get(id)) || "?");
+  // First names, told apart when two share one ("Charlie E" / "Charlie H").
+  const first = (id: string) => (byId.get(id) ? distinctFirstName(byId.get(id), players) : "?");
   const pairName = (p: Pair) => `${first(p[0])} & ${first(p[1])}`;
   // Nobody twice: each picker offers everybody not already on court.
   const eligible = (i: number) => players.filter((p) => !p.inactive && !ids.some((x, j) => j !== i && x === p.id));

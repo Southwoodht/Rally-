@@ -65,6 +65,27 @@ export const initialsOf = (who: any): string => {
 
 export const shortNameOf = (p: any): string => (p?.name || p?.nick || "Someone");
 
+/**
+ * A first name that cannot be confused: "Charlie" — unless somebody else in
+ * `among` is also a Charlie, then "Charlie H" and "Charlie E" (brief item 4:
+ * Compare said "Charlie has played 1 … Charlie has played 1"). Two people
+ * sharing a first name AND a surname initial get the whole surname. With no
+ * surname to go on, the full name is the honest answer. Never the nick
+ * (§10: the nick field is a joke field).
+ */
+export const distinctFirstName = (p: any, among: any[]): string => {
+  if (!p) return "Someone";
+  const first = String(p.name || "").trim();
+  if (!first) return fullNameOf(p);
+  const key = (x: any) => String(x?.name || "").trim().toLowerCase();
+  const clash = (among || []).filter((x) => x && x.id !== p.id && key(x) === first.toLowerCase());
+  if (!clash.length) return first;
+  const last = String(p.last || "").trim();
+  if (!last) return fullNameOf(p);
+  const initialTaken = clash.some((x) => String(x.last || "").trim()[0]?.toLowerCase() === last[0].toLowerCase());
+  return initialTaken ? first + " " + last : first + " " + last[0].toUpperCase();
+};
+
 export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);
 
 export const winPct = (r) => (r && r.gp ? (r.w + r.d * 0.5) / r.gp : 0);
