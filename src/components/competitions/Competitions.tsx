@@ -8,7 +8,8 @@ import {
   type Competition, type CompetitionFormat, type CompetitionKind, type CompetitionPair,
   type CompetitionResult, type KnockoutFixture, type Tie,
 } from "@/core/doubles/competition";
-import { fullNameOf } from "@/lib/format";
+import { formatMatchDate, fullNameOf } from "@/lib/format";
+import { addDays, dayNumber, londonDay, londonDayStart, roundDeadlines, tieState, type Season } from "@/core/seasons";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
@@ -37,6 +38,22 @@ import {
 
 export interface CompetitionCounts { unplayed: number; played: number }
 
+/** What the create form hands back. */
+export interface NewCompetition {
+  name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number;
+  /** The season it belongs to, whose dates it takes; null for none. */
+  seasonId: string | null;
+}
+
+/** One tie as the deadlines section sees it, whichever kind it is. */
+export interface TieRow {
+  id: string; round: number | null; pairA: string | null; pairB: string | null;
+  done: boolean; playBy: string | null; outcome: string | null;
+  /** The walkover values for side A and side B: singles "walkover_p1/p2",
+   *  doubles "walkover_a/b". */
+  woA: string; woB: string;
+}
+
 interface Props {
   kind: CompetitionKind;
   players: any[];
@@ -47,8 +64,17 @@ interface Props {
   canManage: boolean;
   unavailable: boolean;
   onCreatePlayer?: (p: any) => void;
-  onCreate: (c: { name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number }, entries: Array<{ p1: string; p2: string | null }>) => Promise<string>;
+  onCreate: (c: NewCompetition, entries: Array<{ p1: string; p2: string | null }>) => Promise<string>;
   onDraw: (c: Competition, ties: Tie[]) => Promise<void>;
+  /** The club's seasons, for the create form's picker; active first. */
+  seasons?: Season[];
+  /** Every tie of a competition, decided or not, with its deadline — the
+   *  deadlines section reads these. */
+  tieRowsOf?: (c: Competition) => TieRow[];
+  /** "Left" per entry, for the league table. */
+  remainingOf?: (c: Competition) => Record<string, number>;
+  /** An organiser changing one tie: its play-by day, a walkover, a void. */
+  onSetTie?: (c: Competition, tieId: string, patch: { playBy?: string | null; outcome?: string | null }) => Promise<void>;
   onDelete: (c: Competition) => Promise<void>;
   onFinish: (c: Competition, finished: boolean) => Promise<void>;
   /** Each tie with its winner ('A'/'B' by entry side), for the bracket. */
@@ -129,6 +155,7 @@ export function Competitions(props: Props) {
         players={players}
         onCreatePlayer={props.onCreatePlayer}
         onCancel={() => setCreating(false)}
+        seasons={props.seasons || []}
         onCreate={async (c, es) => { const id = await props.onCreate(c, es); setCreating(false); setOpenId(id); }}
       />
     );
@@ -207,7 +234,10 @@ function Detail(props: Props & {
     setBusy(false);
   };
 
-  const cols = "22px 1fr 26px 26px 26px 26px 34px 34px";
+  const left = props.remainingOf ? props.remainingOf(c) : null;
+  // P, Left, W, D, L, Sets, Pts. "Left" is brief item 1's "played and
+  // remaining for each player"; it only appears where it can be counted.
+  const cols = left ? "20px 1fr 22px 26px 22px 22px 22px 32px 30px" : "22px 1fr 26px 26px 26px 26px 34px 34px";
   return (
     <div>
       <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "0 0 10px" }}>
@@ -233,7 +263,7 @@ function Detail(props: Props & {
         {c.format === "league" && (
           <div style={{ marginTop: 14 }}>
             <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
-              <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span><span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
+              <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span>{left && <span style={{ textAlign: "right" }}>Left</span>}<span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
             </div>
             {table.map((r) => {
               const isMine = cEntries.some((p) => p.id === r.pairId && (p.p1 === meId || p.p2 === meId));
@@ -243,6 +273,7 @@ function Detail(props: Props & {
                   <span style={{ color: isMine ? FEED_LIME : FEED_TEXT_MID }}>{r.place}</span>
                   <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{entryName(r.pairId)}</span>
                   <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
+                  {left && <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{left[r.pairId] || 0}</span>}
                   <span style={{ textAlign: "right" }}>{r.won}</span>
                   <span style={{ textAlign: "right" }}>{r.drawn}</span>
                   <span style={{ textAlign: "right" }}>{r.lost}</span>
@@ -286,6 +317,17 @@ function Detail(props: Props & {
         {err && <div style={{ fontFamily: body, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{err}</div>}
       </SurfaceCard>
 
+      {props.tieRowsOf && (
+        <Deadlines
+          c={c}
+          rows={props.tieRowsOf(c)}
+          entryName={entryName}
+          canManage={canManage}
+          roundLabel={(round) => competitionLabel(c, n, round).replace(c.name + " · ", "")}
+          onSetTie={props.onSetTie}
+        />
+      )}
+
       <div style={{ ...label, marginBottom: 8 }}>Matches to play</div>
       {props.renderFixtures(
         c,
@@ -323,14 +365,149 @@ function Detail(props: Props & {
 }
 
 // ---------------------------------------------------------------------------
+// Deadlines
+// ---------------------------------------------------------------------------
+
+/**
+ * Play-by days, round by round, and what to do about a tie nobody played.
+ *
+ * Brief item 1, with Sam's addition: rounds are spread evenly, and an
+ * organiser can move ANY round's date — "winter weather will need
+ * flexibility". Moving a round moves every unplayed tie in it; a single tie
+ * can be extended on its own from the overdue list.
+ *
+ * Everybody sees the dates and the overdue flags. Only organisers see the
+ * buttons, and the database (schema_seasons.sql's fixture guard) refuses
+ * anyone else regardless.
+ *
+ * A walkover gives the points to the side that turned up and counts nowhere
+ * else — there was no match, so no rating moves. A void takes the tie out of
+ * the competition entirely.
+ */
+function Deadlines({ c, rows, entryName, canManage, roundLabel, onSetTie }: {
+  c: Competition;
+  rows: TieRow[];
+  entryName: (id: string | null | undefined, short?: boolean) => string;
+  canManage: boolean;
+  roundLabel: (round: number) => string;
+  onSetTie?: (c: Competition, tieId: string, patch: { playBy?: string | null; outcome?: string | null }) => Promise<void>;
+}) {
+  const [editRound, setEditRound] = useState<number | null>(null);
+  const [day, setDay] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const dated = rows.filter((r) => r.playBy);
+  if (!dated.length) return null;
+
+  const act = async (fn: () => Promise<void>) => {
+    if (busy || !onSetTie) return;
+    setBusy(true); setErr(null);
+    try { await fn(); } catch (e: any) { setErr(e?.message || "Couldn't save that."); }
+    setBusy(false);
+  };
+
+  // One line per round: its date (the latest of its ties', so an extended
+  // tie does not make the round look earlier than it is), and how many are
+  // still to play.
+  const rounds = Array.from(new Set(dated.map((r) => r.round ?? 0))).sort((a, b) => a - b);
+  const roundDay = (round: number) => dated.filter((r) => (r.round ?? 0) === round).map((r) => r.playBy as string).sort().slice(-1)[0];
+  const openIn = (round: number) => rows.filter((r) => (r.round ?? 0) === round && tieState(r) !== "played" && tieState(r) !== "walkover" && tieState(r) !== "void");
+  const overdue = rows.filter((r) => tieState(r) === "overdue");
+  const decided = rows.filter((r) => r.outcome);
+  const date = (d: string) => formatMatchDate(londonDayStart(d));
+  const small: React.CSSProperties = { background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 9, padding: "7px 10px", fontFamily: body, fontSize: 12.5, cursor: "pointer" };
+
+  return (
+    <SurfaceCard radius={16} pad="14px" style={{ marginBottom: 14 }}>
+      <div style={{ ...label, marginBottom: 6 }}>Play by</div>
+      {rounds.map((round, i) => {
+        const open = openIn(round);
+        const d = roundDay(round);
+        const late = open.some((r) => tieState(r) === "overdue");
+        return (
+          <div key={round} style={{ padding: "8px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: body, fontSize: 14, ...tabular }}>
+              <span style={{ flex: 1, minWidth: 0, color: FEED_TEXT_HI }}>{roundLabel(round)}</span>
+              <span style={{ color: late ? DOT_LOSS : FEED_TEXT_MID }}>{date(d)}</span>
+              <span style={{ width: 54, textAlign: "right", color: FEED_TEXT_MID, fontSize: 12.5 }}>{open.length ? `${open.length} left` : "done"}</span>
+              {canManage && onSetTie && open.length > 0 && (
+                <button onClick={() => { setEditRound(editRound === round ? null : round); setDay(d); }} style={{ ...small, padding: "5px 9px" }}>Move</button>
+              )}
+            </div>
+            {editRound === round && (
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <input type="date" value={day} onChange={(e) => setDay(e.target.value)} style={{ ...field, flex: 1, minWidth: 0, WebkitAppearance: "none", appearance: "none", colorScheme: "dark" } as React.CSSProperties} />
+                <button
+                  disabled={busy || !day}
+                  onClick={() => act(async () => { for (const r of open) await onSetTie!(c, r.id, { playBy: day }); setEditRound(null); })}
+                  style={{ ...small, background: FEED_LIME, color: FEED_LIME_INK }}
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {overdue.length > 0 && (
+        <>
+          <div style={{ ...label, color: DOT_LOSS, margin: "12px 0 4px" }}>Overdue</div>
+          {overdue.map((r) => (
+            <div key={r.id} style={{ padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
+              <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI }}>{entryName(r.pairA)} v {entryName(r.pairB)}</div>
+              <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>Was due {date(r.playBy as string)}</div>
+              {canManage && onSetTie && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                  <button disabled={busy} onClick={() => act(() => onSetTie(c, r.id, { playBy: addDays(londonDay(), 14) }))} style={small}>Extend 2 weeks</button>
+                  <button disabled={busy} onClick={() => act(() => onSetTie(c, r.id, { outcome: r.woA }))} style={small}>Walkover to {entryName(r.pairA)}</button>
+                  <button disabled={busy} onClick={() => act(() => onSetTie(c, r.id, { outcome: r.woB }))} style={small}>Walkover to {entryName(r.pairB)}</button>
+                  <button disabled={busy} onClick={() => act(() => onSetTie(c, r.id, { outcome: "void" }))} style={{ ...small, color: DOT_LOSS }}>Void</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+
+      {decided.length > 0 && (
+        <>
+          <div style={{ ...label, margin: "12px 0 4px" }}>Decided by the organisers</div>
+          {decided.map((r) => (
+            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 13.5 }}>
+              <span style={{ flex: 1, minWidth: 0, color: FEED_TEXT_HI }}>
+                {entryName(r.pairA)} v {entryName(r.pairB)}
+                <span style={{ color: FEED_TEXT_MID }}> · {r.outcome === "void" ? "void" : `walkover to ${entryName(r.outcome === r.woA ? r.pairA : r.pairB)}`}</span>
+              </span>
+              {canManage && onSetTie && (
+                <button disabled={busy} onClick={() => act(() => onSetTie(c, r.id, { outcome: null }))} style={small}>Undo</button>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+      {err && <div style={{ fontFamily: body, fontSize: 13, color: DOT_LOSS, marginTop: 8 }}>{err}</div>}
+    </SurfaceCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Setting one up
 // ---------------------------------------------------------------------------
 
-function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate }: {
+function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons }: {
   kind: CompetitionKind; players: any[]; onCreatePlayer?: (p: any) => void;
   onCancel: () => void;
-  onCreate: (c: { name: string; format: CompetitionFormat; legs: number; pointsWin: number; pointsDraw: number }, entries: Array<{ p1: string; p2: string | null }>) => Promise<void>;
+  onCreate: (c: NewCompetition, entries: Array<{ p1: string; p2: string | null }>) => Promise<void>;
+  seasons: Season[];
 }) {
+  // Brief item 1: a competition lives inside a season and takes its dates.
+  // Only a running season with an end date can hold one — deadlines are
+  // spread up to that end. Defaults to the running season; "No season" keeps
+  // the old shape (no dates) for a quick one-off.
+  const usable = seasons.filter((x) => x.status === "active" && !!x.endsOn);
+  const [seasonId, setSeasonId] = useState<string>(usable[0]?.id ?? "");
+  const season = usable.find((x) => x.id === seasonId) || null;
   const doubles = kind === "doubles";
   const blank = () => ({ p1: "", p2: "" });
   const [name, setName] = useState("");
@@ -361,6 +538,12 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate }: {
     setEntries(active.map((p) => ({ p1: p.id, p2: "" })));
   };
 
+  const rounds = n >= 2 ? (format === "league"
+    ? roundRobin(complete.map((_, i) => String(i)), legs).reduce((m, t) => Math.max(m, t.round), 0)
+    : Math.round(Math.log2(bracketSize(n)))) : 0;
+  const from = season ? (dayNumber(londonDay()) > dayNumber(season.startsOn) ? londonDay() : season.startsOn) : null;
+  const deadlines = season && from && rounds ? roundDeadlines(from, season.endsOn as string, rounds) : [];
+  const every = deadlines.length > 1 ? Math.round((dayNumber(deadlines[deadlines.length - 1]) - dayNumber(from as string)) / deadlines.length) : 0;
   const summary = n < 2 ? `Add at least two ${unit(kind, 2)}.`
     : format === "league" ? `${n} ${unit(kind, n)} · ${roundRobin(complete.map((_, i) => String(i)), legs).length} matches`
     : (() => { const size = bracketSize(n); const byes = size - n; return `${n} ${unit(kind, n)} · ${byes ? `${byes} ${byes === 1 ? "bye" : "byes"} for the top seed${byes === 1 ? "" : "s"}` : "no byes"}`; })();
@@ -370,7 +553,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate }: {
     setBusy(true); setErr(null);
     try {
       await onCreate(
-        { name: name.trim(), format, legs: format === "league" ? legs : 1, pointsWin: format === "league" ? pw : 3, pointsDraw: format === "league" ? pd : 1 },
+        { name: name.trim(), format, legs: format === "league" ? legs : 1, pointsWin: format === "league" ? pw : 3, pointsDraw: format === "league" ? pd : 1, seasonId: season?.id ?? null },
         complete.map((e) => ({ p1: e.p1, p2: doubles ? e.p2 : null })),
       );
     } catch (e: any) {
@@ -389,6 +572,25 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate }: {
       <div style={{ ...label, marginBottom: 6 }}>Name</div>
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder={doubles ? "e.g. Winter Doubles 2026" : "e.g. Club Championship 2026"} style={{ ...field, marginBottom: 14 }} />
 
+      <div style={{ ...label, marginBottom: 6 }}>Season</div>
+      {usable.length ? (
+        <select value={seasonId} onChange={(e) => setSeasonId(e.target.value)} style={{ ...field, marginBottom: 6 }}>
+          {usable.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+          <option value="">No season — no deadlines</option>
+        </select>
+      ) : (
+        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 6 }}>
+          No season with an end date is running, so this one has no deadlines. Start a season in Run your league to give matches play-by dates.
+        </div>
+      )}
+      {season && (
+        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14, ...tabular }}>
+          {formatMatchDate(londonDayStart(season.startsOn))} to {formatMatchDate(londonDayStart(season.endsOn as string))}.
+          {rounds ? ` ${rounds} ${rounds === 1 ? "round" : "rounds"}${every ? `, one about every ${every} days` : ""} — the last due ${formatMatchDate(londonDayStart(deadlines[deadlines.length - 1]))}. Any round's date can be moved later.` : ""}
+        </div>
+      )}
+      {!season && usable.length > 0 && <div style={{ marginBottom: 14 }} />}
+
       <div style={{ ...label, marginBottom: 6 }}>Format</div>
       <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
         <button onClick={() => setFormat("league")} style={segment(format === "league")}>League</button>
@@ -406,6 +608,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate }: {
           <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
             <button onClick={() => setLegs(1)} style={segment(legs === 1)}>Once</button>
             <button onClick={() => setLegs(2)} style={segment(legs === 2)}>Twice</button>
+            <button onClick={() => setLegs(3)} style={segment(legs === 3)}>Three times</button>
           </div>
           <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
             <label style={{ flex: 1 }}>

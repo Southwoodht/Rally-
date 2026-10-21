@@ -119,7 +119,7 @@ export function doublesHome(
 
   // --- next booking -------------------------------------------------------------
   const next = fixtures
-    .filter((f) => !f.done && f.booked != null && f.booked > now && [...f.teamA, ...f.teamB].includes(meId))
+    .filter((f) => !f.done && !(f as any).outcome && f.booked != null && f.booked > now && [...f.teamA, ...f.teamB].includes(meId))
     .sort((a, b) => (a.booked as number) - (b.booked as number))[0];
   const nextUp = next ? (() => {
     const onA = next.teamA.includes(meId);

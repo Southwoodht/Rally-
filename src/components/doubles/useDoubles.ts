@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   deleteDoubles, deleteDoublesFixture, insertDoubles, updateDoubles, insertDoublesFixture, loadDoublesFixturesSafe,
   loadDoublesSafe, updateDoublesFixture, type DoublesFixture, type DoublesRow,
+  updateDoublesTie,
 } from "@/lib/doublesData";
 import { computeDoubles, type DoublesStats } from "@/core/doubles/elo";
 
@@ -55,6 +56,8 @@ export interface UseDoubles {
   addFixtures: (list: DoublesFixture[]) => void;
   /** A deleted competition's fixtures went with it (cascade). */
   dropCompetitionFixtures: (competitionId: string) => void;
+  /** An organiser moving a tie's deadline, or awarding a walkover / void. */
+  setTie: (id: string, patch: { playBy?: string | null; outcome?: string | null }) => Promise<void>;
 }
 
 const EMPTY: DoublesStats = {
@@ -161,5 +164,11 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
 
   const stats = useMemo(() => (enabled ? computeDoubles(matches) : EMPTY), [enabled, matches]);
 
-  return { matches, stats, loading, unavailable, reload, add, fixtures, fixturesUnavailable, book, reschedule, cancel, complete, edit, remove, addFixtures, dropCompetitionFixtures };
+  /** A tie's deadline or an organiser's walkover/void, saved then shown. */
+  const setTie = useCallback(async (id: string, patch: { playBy?: string | null; outcome?: string | null }) => {
+    await updateDoublesTie(id, patch);
+    setFixtures((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  }, []);
+
+  return { matches, stats, loading, unavailable, reload, add, fixtures, fixturesUnavailable, book, reschedule, cancel, complete, edit, remove, addFixtures, dropCompetitionFixtures, setTie };
 }

@@ -6,6 +6,8 @@
  * anywhere to go stale — the same principle as the ratings themselves.
  */
 
+import { roundDeadlines } from "../seasons";
+
 export type CompetitionFormat = "league" | "knockout";
 /** Singles competitions use exactly the same schedule, draw and table. */
 export type CompetitionKind = "doubles" | "singles";
@@ -23,6 +25,8 @@ export interface Competition {
   status: "running" | "finished";
   createdBy: string | null;
   createdAt: number;
+  /** The season it belongs to (schema_seasons.sql), whose dates it takes. */
+  seasonId?: string | null;
 }
 
 export interface CompetitionPair {
@@ -35,8 +39,30 @@ export interface CompetitionPair {
   seed: number;
 }
 
-/** A tie to create: pairs by id, and the round it belongs to. */
-export interface Tie { round: number; pairA: string; pairB: string }
+/** A tie to create: pairs by id, the round it belongs to, and — inside a
+ *  season — the day it must be played by. */
+export interface Tie { round: number; pairA: string; pairB: string; playBy?: string }
+
+/**
+ * How many rounds a competition will have in all: a league's full schedule,
+ * or a knockout's bracket. Deadlines are spread over this many, so a knockout
+ * drawn one round at a time still lands its final on the season's last day.
+ */
+export function totalRounds(format: CompetitionFormat, entryCount: number, legs = 1): number {
+  if (entryCount < 2) return 0;
+  if (format === "knockout") return Math.round(Math.log2(bracketSize(entryCount)));
+  return roundRobin(Array.from({ length: entryCount }, (_, i) => String(i)), legs).reduce((m, t) => Math.max(m, t.round), 0);
+}
+
+/**
+ * Give each tie its round's play-by day: rounds spread evenly from `from` to
+ * the season's last day (core/seasons.ts roundDeadlines). Ties already
+ * carrying a day keep it.
+ */
+export function withDeadlines(ties: Tie[], rounds: number, from: string, endsOn: string): Tie[] {
+  const days = roundDeadlines(from, endsOn, rounds);
+  return ties.map((t) => (t.playBy ? t : { ...t, playBy: days[t.round - 1] ?? days[days.length - 1] }));
+}
 
 // ---------------------------------------------------------------------------
 // League: round robin
@@ -202,6 +228,8 @@ export function roundName(round: number, totalRounds: number): string {
 // ---------------------------------------------------------------------------
 
 export interface CompetitionResult {
+  /** An organiser's walkover: the points, no sets, no games, no rating. */
+  walkover?: boolean;
   /** Pair ids as stored on the match: team A's pair and team B's. */
   pairA: string;
   pairB: string;

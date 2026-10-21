@@ -205,6 +205,10 @@ export interface DoublesFixture {
   round: number | null;
   pairA: string | null;
   pairB: string | null;
+  /** "YYYY-MM-DD" a competition tie must be played by (schema_seasons.sql). */
+  playBy?: string | null;
+  /** An organiser's walkover_a / walkover_b / void. */
+  outcome?: string | null;
 }
 
 export const rowToDoublesFixture = (r: any): DoublesFixture => ({
@@ -220,7 +224,24 @@ export const rowToDoublesFixture = (r: any): DoublesFixture => ({
   round: r.round ?? null,
   pairA: r.pair_a ?? null,
   pairB: r.pair_b ?? null,
+  playBy: r.play_by ?? null,
+  outcome: r.outcome ?? null,
 });
+
+/**
+ * An organiser moving a tie's deadline, awarding a walkover or voiding it.
+ * The fixture guard (schema_seasons.sql) refuses anyone else with a sentence,
+ * which is passed through. An UPDATE that matches nothing is asked about
+ * rather than trusted (§6).
+ */
+export async function updateDoublesTie(id: string, patch: { playBy?: string | null; outcome?: string | null }): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const row: any = {};
+  if (patch.playBy !== undefined) row.play_by = patch.playBy;
+  if (patch.outcome !== undefined) row.outcome = patch.outcome;
+  const data = await run(supabase.from("doubles_fixtures").update(row).eq("id", id).select("id"), "saving the match");
+  if (!data || !data.length) throw new Error("That change was refused.");
+}
 
 /**
  * Null on failure, never [] — see loadDoublesSafe. This one matters more than
@@ -309,6 +330,7 @@ const rowToCompetition = (r: any): Competition => ({
   status: r.status,
   createdBy: r.created_by ?? null,
   createdAt: new Date(r.created_at).getTime(),
+  seasonId: r.season_id ?? null,
 });
 
 const rowToPair = (r: any): CompetitionPair => ({
@@ -350,6 +372,9 @@ const tieRow = (leagueId: string, competitionId: string, t: Tie, byId: Map<strin
     pair_a: a.id, pair_b: b.id,
     team_a_p1: a.p1, team_a_p2: a.p2, team_b_p1: b.p1, team_b_p2: b.p2,
     created_by: createdBy,
+    // Only inside a season, so a competition outside one keeps saving on a
+    // database without schema_seasons.sql.
+    ...(t.playBy ? { play_by: t.playBy } : {}),
   };
 };
 
@@ -363,7 +388,7 @@ const tieRow = (leagueId: string, competitionId: string, t: Tie, byId: Map<strin
  */
 export async function createCompetition(
   leagueId: string,
-  c: { name: string; kind: Competition["kind"]; format: Competition["format"]; legs: number; pointsWin: number; pointsDraw: number; createdBy: string | null },
+  c: { name: string; kind: Competition["kind"]; format: Competition["format"]; legs: number; pointsWin: number; pointsDraw: number; createdBy: string | null; seasonId?: string | null },
   pairs: Array<{ p1: string; p2: string | null }>,
   schedule: (pairs: CompetitionPair[]) => Tie[],
 ): Promise<{ competition: Competition; pairs: CompetitionPair[]; fixtures: DoublesFixture[]; ties: Tie[] }> {
@@ -376,6 +401,8 @@ export async function createCompetition(
       // working on a database where schema_singles_competitions.sql has not
       // been run yet (the column would not exist).
       ...(c.kind === "singles" ? { kind: "singles" } : {}),
+      // Likewise only when there is a season to name (schema_seasons.sql).
+      ...(c.seasonId ? { season_id: c.seasonId } : {}),
     }).select().single(),
     "creating the competition",
   ));

@@ -253,7 +253,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           {(() => {
             const s = new Set(customSel);
             const up = (fixtures || [])
-              .filter((f) => !f.done && f.booked)
+              .filter((f) => !f.done && !f.outcome && f.booked)
               .filter((f) => feedFilter === "mine" ? (f.p1 === meId || f.p2 === meId) : feedFilter === "custom" ? (s.has(f.p1) && s.has(f.p2)) : true)
               // Soonest first. "Coming up" in stored order is not coming up.
               .sort((a, b) => new Date(a.booked).getTime() - new Date(b.booked).getTime());

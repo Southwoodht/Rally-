@@ -119,7 +119,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const ordered = useMemo(() => {
     const rank = (f: any) => (timeOf(f.booked) != null ? 0 : 1);
     return fixtures
-      .filter((f: any) => !f.done)
+      .filter((f: any) => !f.done && !f.outcome)
       .sort((a: any, b: any) => {
         const ra = rank(a), rb = rank(b);
         if (ra !== rb) return ra - rb;

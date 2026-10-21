@@ -195,6 +195,12 @@ const fixtureToRow = (leagueId: string, f: any) => ({
   // always has — and keeps saving on a database where that file has not been
   // run, where naming a missing column would fail every fixture save.
   ...(f.competitionId ? { competition_id: f.competitionId, round: f.round ?? null } : {}),
+  // Deadlines and organisers' decisions (schema_seasons.sql). Written only
+  // when the fixture carries the field at all — a row read from a database
+  // with the columns always does (null included, so undoing a walkover
+  // writes the null), and one from before it never does.
+  ...("playBy" in f ? { play_by: f.playBy ?? null } : {}),
+  ...("outcome" in f ? { outcome: f.outcome ?? null } : {}),
 });
 
 const rowToFixture = (r: any) => ({
@@ -207,6 +213,10 @@ const rowToFixture = (r: any) => ({
   booked: r.booked ?? undefined,
   competitionId: r.competition_id ?? undefined,
   round: r.round ?? undefined,
+  // Present as keys only when the columns exist, so fixtureToRow knows
+  // whether it may write them back.
+  ...(r.play_by !== undefined ? { playBy: r.play_by } : {}),
+  ...(r.outcome !== undefined ? { outcome: r.outcome } : {}),
 });
 
 const postToRow = (leagueId: string, p: any) => ({

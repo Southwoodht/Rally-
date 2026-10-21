@@ -4,7 +4,7 @@
  * wrong way round would hand one player the other's games.
  */
 import { singlesCompetitionView, doublesCompetitionView } from "./competitionAdapters";
-import { leagueTable, knockoutBracket, type CompetitionPair } from "./competition";
+import { leagueTable, knockoutBracket, roundRobin, totalRounds, withDeadlines, type CompetitionPair } from "./competition";
 
 let checks = 0;
 const ok = (cond: boolean, what: string) => {
@@ -88,6 +88,42 @@ const entries: CompetitionPair[] = [
   ok(v.ties[0].winner === "A", "confirmed doubles result advances");
   ok(v.ties[2].winner === null, "a pending doubles result does not — doubles counts confirmed only");
   ok(v.results.length === 2 && v.counts.unplayed === 1 && v.counts.played === 2, "results and counts");
+}
+
+// ------------------------------------------- walkovers, voids, deadlines
+{
+  const es: CompetitionPair[] = [
+    { id: "e1", competitionId: "w", p1: "a", p2: null, seed: 1 },
+    { id: "e2", competitionId: "w", p1: "b", p2: null, seed: 2 },
+    { id: "e3", competitionId: "w", p1: "c", p2: null, seed: 3 },
+  ];
+  const v = singlesCompetitionView("w", es, [
+    { id: "w1", p1: "a", p2: "b", competitionId: "w", round: 1, outcome: "walkover_p2" },
+    { id: "w2", p1: "a", p2: "c", competitionId: "w", round: 2, outcome: "void" },
+    { id: "w3", p1: "b", p2: "c", competitionId: "w", round: 3 },
+  ], []);
+  ok(v.results.length === 1 && v.results[0].winner === "B" && v.results[0].walkover === true, "a walkover is a result for B, flagged");
+  ok(v.results[0].sets.length === 0, "a walkover carries no sets or games");
+  ok(v.unplayed.length === 1 && v.unplayed[0].id === "w3", "walkovers and voids leave the to-play list");
+  ok(v.remaining["e2"] === 1 && v.remaining["e3"] === 1 && !v.remaining["e1"], "left: one each for b and c, none for a");
+  const t = leagueTable(es, v.results, 3, 1);
+  ok(t.find((r) => r.pairId === "e2")!.points === 3, "the walkover is worth a win's points");
+  ok(t.find((r) => r.pairId === "e1")!.lost === 1, "and a loss to the side that did not turn up");
+
+  const dv = doublesCompetitionView("dw",
+    [{ id: "x", done: false, matchId: null, competitionId: "dw", round: 1, pairA: "A1", pairB: "B1", outcome: "walkover_a" }], []);
+  ok(dv.results.length === 1 && dv.results[0].winner === "A" && dv.ties[0].winner === "A", "doubles walkover counts and advances");
+}
+{
+  // Deadlines: a 6-player single round robin is 5 rounds; a 5-player one is 5
+  // too (a rest each round); 8 in a knockout is 3.
+  ok(totalRounds("league", 6, 1) === 5 && totalRounds("league", 5, 1) === 5, "round robin rounds");
+  ok(totalRounds("league", 6, 3) === 15, "three times round: fifteen rounds");
+  ok(totalRounds("knockout", 8) === 3 && totalRounds("knockout", 5) === 3, "knockout rounds");
+  const ties = withDeadlines(roundRobin(["a", "b", "c", "d", "e", "f"], 1), 5, "2026-11-01", "2027-03-31");
+  ok(ties.every((x) => !!x.playBy), "every tie has a play-by day");
+  ok(ties.filter((x) => x.round === 5).every((x) => x.playBy === "2027-03-31"), "the last round is due on the season's last day");
+  ok(ties.filter((x) => x.round === 1).every((x) => x.playBy === "2026-12-01"), "round 1 about a month in");
 }
 
 console.log(`PASSED — ${checks}/${checks} checks (competition adapters)`);

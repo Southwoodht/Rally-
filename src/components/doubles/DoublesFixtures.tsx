@@ -157,7 +157,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
   // Soonest first, then unscheduled. Played ones are results now and live in
   // the feed and on the table, not in the diary.
   const upcoming = useMemo(() => fixtures
-    .filter((f) => !f.done)
+    .filter((f) => !f.done && !(f as any).outcome)
     .sort((a, b) => {
       if ((a.booked == null) !== (b.booked == null)) return a.booked == null ? 1 : -1;
       return (a.booked ?? 0) - (b.booked ?? 0);

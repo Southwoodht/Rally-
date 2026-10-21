@@ -21,8 +21,8 @@
 --
 -- Who may do what:
 --   * any member reads seasons; owner and organisers create, edit, end them;
---   * play-by days, walkovers, voids, and which competition/round a fixture
---     belongs to are organiser-only — enforced by a trigger, because the
+--   * CHANGING a play-by day, a walkover, a void, or which competition/round
+--     a fixture belongs to is organiser-only — enforced by a trigger, because the
 --     fixtures UPDATE policy lets any member update (they must, to record the
 --     result of their own match) and RLS cannot narrow it column by column;
 --   * a competition fixture can only be DELETED by an organiser, so a
@@ -137,9 +137,12 @@ begin
 
   lid := new.league_id;
   if tg_op = 'INSERT' then
-    if (new.competition_id is not null or new.play_by is not null or new.outcome is not null)
-       and not public.is_league_staff(lid) then
-      raise exception 'Only an organiser can add competition matches or deadlines.';
+    -- Any member may DRAW a tie the bracket already implies (the next
+    -- knockout round, with the deadline the app works out for it) — that has
+    -- always been open, and the unique index makes a double draw harmless.
+    -- A walkover or void on a brand-new row is never a draw; organisers only.
+    if new.outcome is not null and not public.is_league_staff(lid) then
+      raise exception 'Only an organiser can record a walkover or void.';
     end if;
     return new;
   end if;

@@ -354,7 +354,7 @@ function SinglesFixturesPage({ players, fixtures, onGenerate, onClearFixtures, o
   const active = players.filter((p: any) => !p.inactive);
   const pairs = (active.length * (active.length - 1)) / 2;
   const n = (id: string) => { const p = players.find((x: any) => x.id === id); return p ? fullNameOf(p) : "?"; };
-  const open = (fixtures || []).filter((f: any) => !f.done);
+  const open = (fixtures || []).filter((f: any) => !f.done && !f.outcome);
   const opts = players.slice().sort((x: any, y: any) => fullNameOf(x).localeCompare(fullNameOf(y)));
 
   return (

@@ -47,7 +47,7 @@ import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/c
 import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
 import { createCompetition, deleteCompetition, drawTies, finishCompetition } from "@/lib/doublesData";
-import { knockoutBracket, roundRobin, tiesReadyToDraw } from "@/core/doubles/competition";
+import { knockoutBracket, roundRobin, tiesReadyToDraw, totalRounds, withDeadlines, type Tie } from "@/core/doubles/competition";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
 import { GlobalTable } from "@/components/table/GlobalTable";
@@ -65,7 +65,7 @@ import { computeOfficial } from "@/core/official";
 import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
-import { isDueToClose } from "@/core/seasons";
+import { dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
 import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
 import { closeSeasonIfDue, createSeason, endSeason, updateSeason } from "@/lib/seasons";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
@@ -703,11 +703,32 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
    * league's own save like every other booking. A tie is two ENTRIES, and a
    * singles entry is one player, so the fixture's p1/p2 are the entries' p1.
    */
-  const addSinglesTies = (competitionId: string, ties: Array<{ round: number; pairA: string; pairB: string }>, entries: Array<{ id: string; p1: string }>) => {
+  const addSinglesTies = (competitionId: string, ties: Tie[], entries: Array<{ id: string; p1: string }>) => {
     const p1Of = new Map(entries.map((e) => [e.id, e.p1]));
-    const fresh = ties.map((t) => ({ id: uid(), p1: p1Of.get(t.pairA), p2: p1Of.get(t.pairB), done: false, booked: null, competitionId, round: t.round }));
+    const fresh = ties.map((t) => ({ id: uid(), p1: p1Of.get(t.pairA), p2: p1Of.get(t.pairB), done: false, booked: null, competitionId, round: t.round, ...(t.playBy ? { playBy: t.playBy } : {}) }));
     return saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), ...fresh] });
   };
+  /**
+   * Play-by days for a competition's ties, if it belongs to a season with an
+   * end date: its rounds spread evenly from the later of the season's start
+   * and the day the competition was made, to the season's last day. A
+   * knockout's later rounds use the same spread, so its final is still due on
+   * the last day however late the earlier rounds ran.
+   */
+  const withSeasonDeadlines = (c: { format: any; legs: number; seasonId?: string | null; createdAt?: number }, entryCount: number) => (ties: Tie[]): Tie[] => {
+    const s = seasonsState.seasons.find((x) => x.id === c.seasonId && x.endsOn);
+    if (!s || !s.endsOn) return ties;
+    const made = londonDay(c.createdAt ?? Date.now());
+    const from = dayNumber(made) > dayNumber(s.startsOn) ? made : s.startsOn;
+    return withDeadlines(ties, totalRounds(c.format, entryCount, c.legs), from, s.endsOn);
+  };
+  /** A singles tie's deadline or an organiser's walkover/void, through the league save. */
+  const setSinglesTie = async (tieId: string, patch: { playBy?: string | null; outcome?: string | null }) => {
+    const ok = await saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f: any) => (f.id === tieId ? { ...f, ...patch } : f)) });
+    if (ok === false) throw new Error("That change was refused — only an organiser can do it.");
+  };
+  /** "· play by 1 Dec 2026" on a competition tie that has one. */
+  const playByNote = (f: any) => (f?.playBy ? " · play by " + formatMatchDate(londonDayStart(f.playBy)) : "");
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
@@ -1315,7 +1336,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     // sat below it — the tile was answering a different question to the one
     // its label asks.
     const bookedNext = (fixtures || [])
-      .filter((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId))
+      .filter((f) => !f.done && !f.outcome && f.booked && (f.p1 === meId || f.p2 === meId))
       .map((f) => ({ f, t: new Date(f.booked).getTime() }))
       .filter((x) => !isNaN(x.t))
       .sort((a, b) => a.t - b.t)[0]?.f;
@@ -1334,7 +1355,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     // not the same as deciding it never happened.
     const nowMs = Date.now();
     const awaitingResult = (fixtures || [])
-      .filter((f) => !f.done && f.booked && (f.p1 === meId || f.p2 === meId))
+      .filter((f) => !f.done && !f.outcome && f.booked && (f.p1 === meId || f.p2 === meId))
       .map((f) => ({ f, ends: new Date(f.booked).getTime() + DEFAULT_DURATION_MINUTES * 60000 }))
       .filter((x) => !isNaN(x.ends) && nowMs > x.ends && nowMs < x.ends + AUTO_CANCEL_DAYS * 86400000)
       .sort((a, b) => a.ends - b.ends)
@@ -1807,16 +1828,27 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               unavailable={comps.unavailable || !competitionsEnabled}
               createSignal={singlesCreateSignal}
               onCreatePlayer={addPlayer}
+              seasons={seasonsState.seasons}
+              tieRowsOf={(c) => {
+                const entryOf = new Map(comps.pairs.filter((p) => p.competitionId === c.id).map((p) => [p.p1, p.id]));
+                return fixtures.filter((f: any) => f.competitionId === c.id).map((f: any) => ({
+                  id: f.id, round: f.round ?? null, pairA: entryOf.get(f.p1) ?? null, pairB: entryOf.get(f.p2) ?? null,
+                  done: !!f.done, playBy: f.playBy ?? null, outcome: f.outcome ?? null, woA: "walkover_p1", woB: "walkover_p2",
+                }));
+              }}
+              remainingOf={(c) => singlesCompetitionView(c.id, comps.pairs, fixtures, matches).remaining}
+              onSetTie={(_c, id, patch) => setSinglesTie(id, patch)}
               onCreate={async (c, entries) => {
                 const r = await createCompetition(leagueId, { ...c, kind: "singles", createdBy: meId || null }, entries,
-                  (es) => c.format === "league" ? roundRobin(es.map((e) => e.id), c.legs) : tiesReadyToDraw(knockoutBracket(es, [])));
+                  (es) => withSeasonDeadlines(c, es.length)(c.format === "league" ? roundRobin(es.map((e) => e.id), c.legs) : tiesReadyToDraw(knockoutBracket(es, []))));
                 comps.added(r.competition, r.pairs);
                 const ok = await addSinglesTies(r.competition.id, r.ties, r.pairs);
                 flash(ok ? r.ties.length + " matches drawn" : "Created, but the matches didn't save — open it and press Draw");
                 return r.competition.id;
               }}
               onDraw={async (c, ties) => {
-                const ok = await addSinglesTies(c.id, ties, comps.pairs.filter((p) => p.competitionId === c.id));
+                const es = comps.pairs.filter((p) => p.competitionId === c.id);
+                const ok = await addSinglesTies(c.id, withSeasonDeadlines(c, es.length)(ties), es);
                 // A refused save re-reads the league (saveData), so if someone
                 // else drew it a moment ago, what is really there now shows.
                 if (!ok) throw new Error("Couldn't draw that — it may already have been drawn.");
@@ -1842,7 +1874,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId}
                   onResolve={resolveFixture} onBook={bookFixture} onRemoveFixture={removeFixture}
                   canManage={canManageMatches} hideBooking emptyText={emptyText}
-                  labelFor={(f: any) => label(f.round ?? null)} noDraw={() => knockout}
+                  labelFor={(f: any) => label(f.round ?? null) + playByNote(f)} noDraw={() => knockout}
                 />
               )}
             >
@@ -1862,11 +1894,18 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               unavailable={comps.unavailable || !competitionsEnabled}
               createSignal={compCreateSignal}
               onCreatePlayer={addPlayer}
+              seasons={seasonsState.seasons}
+              tieRowsOf={(c) => doubles.fixtures.filter((f) => f.competitionId === c.id).map((f) => ({
+                id: f.id, round: f.round, pairA: f.pairA, pairB: f.pairB, done: f.done,
+                playBy: f.playBy ?? null, outcome: f.outcome ?? null, woA: "walkover_a", woB: "walkover_b",
+              }))}
+              remainingOf={(c) => doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).remaining}
+              onSetTie={(_c, id, patch) => doubles.setTie(id, patch)}
               onCreate={async (c, entries) => {
                 // League: the whole schedule now. Knockout: whatever the seeding
                 // makes playable now; later rounds are drawn from results.
                 const r = await createCompetition(leagueId, { ...c, kind: "doubles", createdBy: meId || null }, entries,
-                  (ps) => c.format === "league" ? roundRobin(ps.map((p) => p.id), c.legs) : tiesReadyToDraw(knockoutBracket(ps, [])));
+                  (ps) => withSeasonDeadlines(c, ps.length)(c.format === "league" ? roundRobin(ps.map((p) => p.id), c.legs) : tiesReadyToDraw(knockoutBracket(ps, []))));
                 comps.added(r.competition, r.pairs);
                 doubles.addFixtures(r.fixtures);
                 flash(r.fixtures.length + " matches drawn");
@@ -1874,7 +1913,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               }}
               onDraw={async (c, ties) => {
                 try {
-                  doubles.addFixtures(await drawTies(leagueId, c.id, ties, comps.pairs.filter((p) => p.competitionId === c.id), meId || null));
+                  const es = comps.pairs.filter((p) => p.competitionId === c.id);
+                  doubles.addFixtures(await drawTies(leagueId, c.id, withSeasonDeadlines(c, es.length)(ties), es, meId || null));
                   flash(ties.length === 1 ? "Match drawn" : ties.length + " matches drawn");
                 } catch (e) {
                   // Most likely somebody else drew it a moment ago (the unique
@@ -1898,7 +1938,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   unavailable={false}
                   hideBooking
                   emptyText={emptyText}
-                  labelFor={(f) => label(f.round)}
+                  labelFor={(f) => label(f.round) + playByNote(f)}
                   noDraw={() => knockout}
                   onCreatePlayer={addPlayer}
                   onBook={async () => { /* hidden inside a competition */ }}
