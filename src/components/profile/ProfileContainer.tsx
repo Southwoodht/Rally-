@@ -10,6 +10,7 @@ import type { Achievement, AchievementIcon } from "@/components/profile/Achievem
 import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
+import { GRADE_LABEL, gradeAgainstHistory } from "@/core/matchGrade";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
@@ -260,7 +261,6 @@ export function ProfileContainer({
 
     const history = [...mine].reverse().map((m: any) => {
       const o = byId[m.p1 === pid ? m.p2 : m.p1];
-      const d = deltas?.[m.id];
       const pending = isUnconfirmedResult(m);
       return {
         matchId: m.id,
@@ -271,7 +271,13 @@ export function ProfileContainer({
         date: shortDate(m.date),
         ts: m.date,
         score: m.score || null,
-        delta: pending || !d ? null : Math.round(d[pid] * 10) / 10,
+        // A word, not the per-match Elo change (Sam, 2026-10-22). That number
+        // swung from −0.9 to −17 for the same loss because Elo scales by the
+        // level gap unevenly and a missing level switches the scaling off; a
+        // grade by category — the one Your matches already uses — says what
+        // the result meant and cannot look inconsistent. Fixing Elo is
+        // separate and needs numbers first.
+        grade: pending ? null : (() => { const g = gradeAgainstHistory(outcome(m), byId[pid] || player, o, m.date).then; return g ? GRADE_LABEL[g] : null; })(),
         pending,
         onOpen: onOpenMatch ? () => onOpenMatch(m.id) : undefined,
         onEdit: pending && onProposeEdit ? () => onOpenMatch && onOpenMatch(m.id) : undefined,

@@ -34,8 +34,9 @@ export interface MatchHistoryItem {
   ts?: number;
   /** "6-2, 6-4", or null. */
   score?: string | null;
-  /** Rating change, already rounded to one place. Absent for pending. */
-  delta?: number | null;
+  /** How good a result it was, in words ("Statement win"). Absent when
+   *  pending or when either level is unknown on the day. */
+  grade?: string | null;
   /** Nobody has agreed to it yet, so it counts for nothing. */
   pending?: boolean;
   onEdit?: () => void;
@@ -158,9 +159,9 @@ export function MatchHistoryList({ items, years, trophies }: {
               </button>
             )
           ) : (
-            m.delta !== null && m.delta !== undefined && (
-              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 15, color: m.delta >= 0 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0 }}>
-                {m.delta >= 0 ? "+" : "−"}{Math.abs(m.delta).toFixed(1)}
+            m.grade && (
+              <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: m.grade === "Statement win" ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, textAlign: "right" }}>
+                {m.grade}
               </span>
             )
           )}
