@@ -810,14 +810,14 @@ exactly one) and never into the timeline: 31 December would be an invented
 date. Rules in `core/trophyTimeline.ts`, tested. On a database without the
 column, a trophy given WITH a date fails with a message naming the file.
 
-**Waiting to be run: `schema_trophy_format.sql`** (2026-10-14). Nullable
+**Run on 2026-10-21, verified (format, YES, 1 — Zaach's tagged): `schema_trophy_format.sql`.** Nullable
 `trophies.format` ('singles' | 'doubles'), and it tags existing trophies whose
 competition says "doubles" — that one data change was flagged to Sam. **A
 trophy never counts in any rating** (Sam's ruling, same day): the matches that
 won it do that when logged, and a bonus would count them twice. The tag only
 decides which side shows it — doubles feed, doubles profile history — with
-untagged on the singles side as always. Until the SQL runs, the forms still
-save; the tag is dropped and retried without (`insertTrophyRow`).
+untagged on the singles side as always. On a database without the column the
+forms still save; the tag is dropped and retried without (`insertTrophyRow`).
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
