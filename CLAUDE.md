@@ -902,6 +902,13 @@ in a row to the best player never raise you; the real-export report reads
 0 of 115 and 0 of 59. Sam's ask for the merge: a feed announcement ("losses
 no longer add points") so the overnight drop doesn't read as a bug.
 
+**Data change, run 2026-10-21, verified (0, 0): `delete_test_comp.sql`.** Sam
+tested the competition screens inside the real Seacourt club and entered 30
+results into a "Test comp". He saw the list first (`diagnose_test_comp.sql`,
+every Seacourt match logged that day — all 30 were the test, nothing else)
+and approved the delete: those 30 match ids and the competition, whose
+fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.
