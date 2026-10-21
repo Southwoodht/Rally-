@@ -42,6 +42,8 @@ export interface MatchCardProps {
    *  "First win vs Charlie". Left off entirely when there's nothing to say,
    *  because a bar with a lonely label on one end looks broken. */
   context?: string;
+  /** Replaces "X won" on the bar for a one-sided result (core/domination.ts). */
+  headline?: string | null;
   onOpenProfile?: (playerId: string) => void;
   onOpenMatch?: () => void;
 }
@@ -65,9 +67,11 @@ function Sets({ sets, dim }: { sets?: number[]; dim: boolean }) {
   );
 }
 
-export function MatchCard({ sport, dateLabel, format, winner, loser, drawn, context, onOpenProfile, onOpenMatch }: MatchCardProps) {
+export function MatchCard({ sport, dateLabel, format, winner, loser, drawn, context, headline, onOpenProfile, onOpenMatch }: MatchCardProps) {
   const meta = [sport, dateLabel].filter(Boolean).join(" · ");
-  const barText = drawn ? "Drew" : shortNameOf(winner.player) + " won";
+  // "Zaach dominates Sam · 10–2" when the score was one-sided
+  // (core/domination.ts); otherwise the plain "Zaach won".
+  const barText = drawn ? "Drew" : headline || shortNameOf(winner.player) + " won";
   const metaStyle: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
 
   return (

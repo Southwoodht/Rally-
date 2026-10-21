@@ -29,6 +29,11 @@ export function feedContexts(matches: any[], nameOf: (id: string) => string): Re
   const pair = (a: string, b: string) => a + "|" + b;
 
   for (const m of [...matches].filter((x) => countsAsPlayed(x)).sort((a, b) => a.date - b.date)) {
+    // The first time two people ever play (winter brief item 8). It outranks
+    // a streak: there is only ever one first meeting per pair, and a run of
+    // wins says something every week.
+    const firstMeeting = !met.has(pair(m.p1, m.p2));
+    if (firstMeeting) out[m.id] = "First meeting";
     if (m.winner === "draw") {
       streak[m.p1] = 0;
       streak[m.p2] = 0;
@@ -47,7 +52,9 @@ export function feedContexts(matches: any[], nameOf: (id: string) => string): Re
     // not "first win vs" — it's just a win, and labelling it that way would
     // put the phrase on half the cards in a young league.
     const firstOverThem = !beaten.has(pair(win, lose)) && met.has(pair(win, lose));
-    if (firstOverThem) {
+    if (firstMeeting) {
+      // already said
+    } else if (firstOverThem) {
       out[m.id] = "First win vs " + nameOf(lose);
     } else if (streak[win] >= 3) {
       out[m.id] = ordinal(streak[win]) + " straight";

@@ -7,7 +7,7 @@ import { buildEvents } from "@/components/games/events";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
 import { BigBtn, Empty, Toggle } from "@/components/ui/atoms";
 import { predictProb } from "@/core/predict";
-import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, fullNameOf, winnerLabel } from "@/lib/format";
+import { agoLabel, autoConfirmNote, deleteTimeoutNote, fmtDate, formatMatchDateTime, fullNameOf, shortNameOf, winnerLabel } from "@/lib/format";
 import { PlayerLink } from "@/components/ui/PlayerLink";
 import { MatchCard } from "@/components/games/MatchCard";
 import { TrophyMoment } from "@/components/ui/TrophyMoment";
@@ -15,6 +15,7 @@ import { onSide, trophyDateLabel, trophyTitle, trophyTs } from "@/core/trophyTim
 import { listDatedTrophiesForPlayers, type Trophy } from "@/lib/trophies";
 import { WeeklyRoundup } from "@/components/games/WeeklyRoundup";
 import { feedContexts } from "@/core/feedContext";
+import { dominationHeadline } from "@/core/domination";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, tabular, wrap } from "@/lib/theme";
 
@@ -376,6 +377,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                     dateLabel={fmtDate(m.date)}
                     {...sidesOf(m)}
                     context={contexts[m.id]}
+                    headline={dominationHeadline(m, (id: string) => shortNameOf(who(id)))}
                     onOpenProfile={onOpenProfile}
                     onOpenMatch={onOpenMatch ? () => onOpenMatch(m.id) : undefined}
                   />

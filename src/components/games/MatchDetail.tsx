@@ -1,11 +1,12 @@
 "use client";
 import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { dominationHeadline } from "@/core/domination";
 import React, { useRef, useState } from "react";
 import { MatchCard } from "@/components/games/MatchCard";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { predictProb } from "@/core/predict";
 import { matchContext } from "@/core/rank";
-import { autoConfirmNote, deleteTimeoutNote, fmtDate } from "@/lib/format";
+import { autoConfirmNote, deleteTimeoutNote, fmtDate, shortNameOf } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
 import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, MUTED, PANEL2, body, miniInput, tabular } from "@/lib/theme";
 
@@ -187,6 +188,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
           winner={{ player: winnerSide.player, sets: winnerSide.sets }}
           loser={{ player: loserSide.player, sets: loserSide.sets }}
           drawn={isDraw}
+          headline={dominationHeadline(match, (id: string) => shortNameOf(players.find((p: any) => p.id === id) || null))}
           onOpenProfile={onOpenProfile}
         />
 
