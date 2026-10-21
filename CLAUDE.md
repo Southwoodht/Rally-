@@ -839,10 +839,10 @@ of the live database through `diagnose_security.sql`, found:
   never used.
 - `is_league_staff(uuid)` was added there. It is a policy predicate like
   `is_league_member`: **never revoke it from anon**.
-**winter-pilot merged to master 2026-10-21 (976f4eb, fast-forward).** So `schema_security_winter_b.sql` may now be run:
+**winter-pilot merged to master 2026-10-21 (976f4eb, fast-forward). Run the same day, verified (0, true, false): `schema_security_winter_b.sql`**
 — drops the `using (true)` read on `leagues` in favour of
-`find_league_by_code()`. The pre-winter app reads `leagues` directly to join;
-run early, nobody can join by code. `joinLeague` tries the function first.
+`find_league_by_code()`. Members still read their own clubs through "read
+leagues you belong to". Nothing reads another club's row directly any more.
 
 **Run on 2026-10-21, verified (true, 1, true, true, 2): `schema_seasons.sql`.**
 Seasons are rows now (`seasons`, one active per club by unique index,
