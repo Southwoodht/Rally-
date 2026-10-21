@@ -17,32 +17,37 @@ import { shareForPlayer } from "@/core/sets";
 import { MARGIN_WEIGHT } from "@/core/constants";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { winPct } from "@/lib/format";
-import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput } from "@/lib/theme";
+import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, segmentOption, segmentTrack } from "@/lib/theme";
+import { SeasonBanner } from "@/components/seasons/SeasonBanner";
+import { SeasonPodium } from "@/components/seasons/SeasonPodium";
+import { seasonMatches, seasonPodium } from "@/core/seasonStandings";
 
 const ACTIVE_WINDOW_MS = 365 * 86400000;
 
 export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, onCompare, requireSetup, nameOf, meId, movement, onGoGlobal }: any) {
   const [view, setView] = useState<"active" | "legacy">("active");
-  const season = group?.season;
-  // This used to reset to "season" on every page load, which meant the table
-  // quietly went back to season-only records after each deploy — and a career
-  // record of 32-0-12 showing as 4-0 reads as lost data, not as a filter.
-  // Remembered per league instead.
-  const scopeKey = "rally.scope." + (group?.id || "none");
-  const [scope, setScope] = useState<string>(() => {
-    if (typeof window === "undefined") return "season";
-    try { return window.localStorage.getItem("rally.scope." + (group?.id || "none")) || "season"; } catch { return "season"; }
-  });
-  useEffect(() => {
-    try { setScope(window.localStorage.getItem(scopeKey) || "season"); } catch {}
-  }, [scopeKey]);
-  useEffect(() => {
-    try { window.localStorage.setItem(scopeKey, scope); } catch {}
-  }, [scopeKey, scope]);
+  // The running season, or — between seasons — the one that just ended, so
+  // its final table and podium stay one tap away.
+  const season = group?.season || group?.lastSeason;
+  const seasonEnded = season?.status === "ended";
+  // Brief item 1: "Default to This season while one is active." This used to
+  // remember the last choice per league, because the season view was a quiet
+  // filter and a career of 32-0-12 showing as 4-0 read as lost data. Now the
+  // switch sits on the screen saying which it is, so opening on the season is
+  // no longer a surprise. A pinned default (FilterChips' pin) still wins.
+  const [scope, setScope] = useState<string>(group?.season ? "season" : "all");
+  useEffect(() => { setScope(group?.season ? "season" : "all"); }, [group?.id, group?.season?.id]);
   const inSeason = !!(season && scope === "season");
   const [tableYr, setTableYr] = useState<"all" | number>("all");
   const years = useMemo(() => Array.from(new Set(matches.filter((m) => countsAsPlayed(m)).map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
-  const seasonFiltered = useMemo(() => inSeason ? matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end)) : matches, [matches, inSeason, season]);
+  // An ended season shows its FROZEN results (seasonMatches): dated in it and
+  // logged before it closed. A running one, everything dated in it so far.
+  const seasonFiltered = useMemo(() => {
+    if (!inSeason) return matches;
+    if (seasonEnded) return seasonMatches(matches, season);
+    return matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end));
+  }, [matches, inSeason, season, seasonEnded]);
+  const podium = useMemo(() => (inSeason && seasonEnded ? seasonPodium(players, matches, season) : []), [inSeason, seasonEnded, players, matches, season]);
   const filtered = useMemo(() => tableYr === "all" ? seasonFiltered : seasonFiltered.filter((m) => new Date(m.date).getFullYear() === tableYr), [seasonFiltered, tableYr]);
   const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, filtered), [players, filtered]);
   const officialMap = useMemo(() => computeOfficial(players, filtered, wdl), [players, filtered, wdl]);
@@ -186,7 +191,6 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     return out;
   }, [players, filtered]);
 
-  const daysIn = season ? Math.max(1, Math.round((Date.now() - season.start) / 86400000)) : 0;
 
   // Every control that used to stack down the screen, as one scrolling row
   // of chips. The stack ran to roughly 1400px of chrome before rank 1
@@ -225,7 +229,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       key: "period", label: "When",
       value: periodValue,
       options: [
-        ...(season ? [{ value: "season", label: season.name || "This season" }] : []),
+        ...(season ? [{ value: "season", label: (season.name || "This season") + (seasonEnded ? " (final)" : "") }] : []),
         { value: "all", label: "All time" },
         ...years.map((y: number) => ({ value: String(y), label: String(y) })),
       ],
@@ -282,6 +286,15 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
 
   return (
     <div>
+      {group?.season && <SeasonBanner season={group.season} />}
+      {season && view !== "legacy" && (
+        <div style={{ ...segmentTrack, marginBottom: 12 }}>
+          <button onClick={() => { setScope("season"); setTableYr("all"); }} style={segmentOption(inSeason && tableYr === "all")}>
+            {seasonEnded ? season.name : "This season"}
+          </button>
+          <button onClick={() => { setScope("all"); setTableYr("all"); }} style={segmentOption(!inSeason && tableYr === "all")}>All time</button>
+        </div>
+      )}
       <FilterChips
         filters={filters}
         pin={{ on: pinned, onToggle: togglePin }}
@@ -293,6 +306,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
         <LegacyTable players={players} matches={matches} onOpen={onOpenLegacy} />
       ) : (
         <>
+          {podium.length > 0 && <SeasonPodium season={season} podium={podium} players={players} onOpen={(id: string) => onOpen(id, tableYr)} />}
           {players.length > 0 && standingsPlayers.length === 0 ? (
             <Empty msg={q ? "Nobody here by that name." : activeScope === "active" ? "No one has played in the last 12 months. Try Legacy for career history." : activeScope === "nonactive" ? "Everyone has played in the last 12 months." : "No players yet."} />
           ) : (
@@ -305,32 +319,11 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
             />
           )}
 
-          {/* Season progress, the prediction and the recap moved below the
-              table. All three are worth reading and none of them is worth
-              reading before you can see who is top, which is what somebody
-              opened this screen for. */}
-          {inSeason && season && (
-            <div style={{ marginTop: 22 }}>
-              {!season.end ? (
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED }}>Season live · day {daysIn} · ongoing</div>
-              ) : (() => {
-                const total = Math.max(1, Math.round((season.end - season.start) / 86400000));
-                const left = Math.max(0, Math.round((season.end - Date.now()) / 86400000));
-                const pctDone = Math.max(0, Math.min(100, Math.round(((total - left) / total) * 100)));
-                return (
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-                      <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{season.name}</span>
-                      <span style={{ fontFamily: body, fontSize: 12, color: left <= 30 ? CLAY : BALL }}>{left > 0 ? left + " days left" : "Season over"}</span>
-                    </div>
-                    <div style={{ height: 6, background: PANEL2, borderRadius: 3, overflow: "hidden" }}><div style={{ width: pctDone + "%", height: "100%", background: BALL }} /></div>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-          {inSeason && prediction.length > 0 && <div style={{ marginTop: 18 }}><PredictionCard prediction={prediction} /></div>}
-          {inSeason && recap && <div style={{ marginTop: 18 }}><RecapCard recap={recap} nameOf={nameOf} leagueName={group.name} /></div>}
+          {/* The prediction and the recap sit below the table: worth reading,
+              but not before you can see who is top. The season countdown that
+              used to live here is the banner at the top now. */}
+          {inSeason && !seasonEnded && prediction.length > 0 && <div style={{ marginTop: 18 }}><PredictionCard prediction={prediction} /></div>}
+          {inSeason && !seasonEnded && recap && <div style={{ marginTop: 18 }}><RecapCard recap={recap} nameOf={nameOf} leagueName={group.name} /></div>}
         </>
       )}
     </div>

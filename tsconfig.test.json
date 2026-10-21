@@ -56,6 +56,10 @@
     "src/core/yearRecord.ts",
     "src/core/yearRecord.test.ts",
     "src/core/trophyTimeline.ts",
-    "src/core/trophyTimeline.test.ts"
+    "src/core/trophyTimeline.test.ts",
+    "src/core/seasons.ts",
+    "src/core/seasons.test.ts",
+    "src/core/seasonStandings.ts",
+    "src/core/seasonStandings.test.ts"
   ]
 }

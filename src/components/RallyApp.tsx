@@ -44,6 +44,7 @@ import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
 import { Competitions, competitionLabel } from "@/components/competitions/Competitions";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/competitionAdapters";
+import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
 import { createCompetition, deleteCompetition, drawTies, finishCompetition } from "@/lib/doublesData";
 import { knockoutBracket, roundRobin, tiesReadyToDraw } from "@/core/doubles/competition";
@@ -62,6 +63,11 @@ import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots"
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
 import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
+import { SeasonBanner } from "@/components/seasons/SeasonBanner";
+import { isDueToClose } from "@/core/seasons";
+import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
+import { closeSeasonIfDue, createSeason, endSeason, updateSeason } from "@/lib/seasons";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
 import { DoublesRoundup } from "@/components/doubles/DoublesRoundup";
 import { doublesHome } from "@/core/doubles/home";
@@ -201,6 +207,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const comps = useCompetitions(leagueId, !!competitionsEnabled);
   const singlesComps = comps.competitions.filter((c) => c.kind === "singles");
   const doublesComps = comps.competitions.filter((c) => c.kind === "doubles");
+  // The club's seasons: the seasons table once schema_seasons.sql has run,
+  // the old one in the settings blob until then (useSeasons says which).
+  // Not for the dev league or Friendlies, which have no table rows to read.
+  const seasonsState = useSeasons(
+    gid,
+    (groups.find((g) => g.id === gid) as any)?.season,
+    !!gid && gid !== DEV_LEAGUE_ID && !isFriendlyLeague(gid),
+  );
   // "Start a competition" in Run your league opens the doubles create form.
   const [compCreateSignal, setCompCreateSignal] = useState(0);
   const [singlesCreateSignal, setSinglesCreateSignal] = useState(0);
@@ -929,6 +943,31 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     return () => { alive = false; };
   }, [gid]);
 
+  /**
+   * A season closes itself on the day after its last day (brief item 1).
+   *
+   * There is no server clock to do it, so whoever opens the app first does —
+   * close_season_if_due() checks the date itself and returns true to that
+   * one caller only, so exactly one app posts the winners however many open
+   * at once. The podium is the frozen one: matches dated in the season and
+   * logged before now (core/seasonStandings.ts).
+   */
+  const closingSeason = seasonsState.current;
+  useEffect(() => {
+    const s = closingSeason;
+    const ps = gdata.players || [];
+    if (!s || !seasonsState.installed || !isDueToClose(s) || !ps.length) return;
+    let alive = true;
+    (async () => {
+      const closed = await closeSeasonIfDue(s.id);
+      if (!alive) return;
+      if (closed) postSeasonWinners(s);
+      void seasonsState.reload();
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closingSeason?.id, seasonsState.installed, (gdata.players || []).length]);
+
   // A pending result waits for the opponent to agree it — but only ever for
   // matches logged after this existed (`loggedAt`), so we never mass-confirm
   // an old backlog someone hasn't dealt with yet.
@@ -1099,7 +1138,65 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     );
   }
 
-  const group = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null, requireSetup: undefined, season: undefined };
+  const groupStored = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null, requireSetup: undefined, season: undefined };
+  // `season` is the running season from useSeasons, in the shape every older
+  // screen reads ({ name, start, end } in ms) plus the new fields; the old
+  // blob's own copy is only the fallback inside useSeasons. `lastSeason` is
+  // the most recent ended one, for its frozen standings and podium.
+  const group: any = { ...groupStored, season: seasonForScreens(seasonsState.current), lastSeason: seasonForScreens(seasonsState.lastEnded) };
+
+  /** The announcement for a season that has just closed — by date or by hand. */
+  const postSeasonWinners = (s: any) => {
+    const ps = gdata.players || [];
+    const pod = seasonPodium(ps, gdata.matches || [], { ...s, endedAt: Date.now() });
+    const nameOfId = (id: string) => fullNameOf(ps.find((p: any) => p.id === id));
+    addPost(seasonClosedPost(s.name, pod.map((p) => ({ name: nameOfId(p.playerId), place: p.place })), seasonCompetitionWinners(s.id)), true);
+  };
+  const startSeason = async (v: { name: string; startsOn: string; endsOn: string | null }) => {
+    if (!gid) return;
+    await createSeason(gid, v);
+    await seasonsState.reload();
+    flash(v.name + " started");
+  };
+  const editSeason = async (id: string, patch: { name?: string; endsOn?: string | null }) => {
+    await updateSeason(id, patch);
+    await seasonsState.reload();
+    flash("Season saved");
+  };
+  const endSeasonNow = async (s: any) => {
+    await endSeason(s.id);
+    postSeasonWinners(s);
+    await seasonsState.reload();
+    flash(s.name + " has ended");
+  };
+
+  /** Who tops a league-format competition: names, or several joined if level. */
+  const competitionLeader = (c: any): string | null => {
+    const entries = comps.pairs.filter((p) => p.competitionId === c.id);
+    const results = c.kind === "singles"
+      ? singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results
+      : doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).results;
+    if (!results.length) return null;
+    const rows = leagueTable(entries, results, c.pointsWin, c.pointsDraw).filter((r) => r.place === 1 && r.played > 0);
+    const nameOfEntry = (id: string) => {
+      const e = entries.find((x) => x.id === id);
+      if (!e) return "";
+      const one = (pid: string | null) => fullNameOf(players.find((p: any) => p.id === pid));
+      return e.p2 ? one(e.p1) + " & " + one(e.p2) : one(e.p1);
+    };
+    return rows.length ? rows.map((r) => nameOfEntry(r.pairId)).join(" and ") : null;
+  };
+
+  /** Each league-format competition in a season, and who topped it. */
+  const seasonCompetitionWinners = (seasonId: string): Array<{ competition: string; name: string }> => {
+    const out: Array<{ competition: string; name: string }> = [];
+    for (const c of comps.competitions) {
+      if ((c as any).seasonId !== seasonId || c.format !== "league") continue;
+      const top = competitionLeader(c);
+      if (top) out.push({ competition: c.name, name: top });
+    }
+    return out;
+  };
   const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
 
 
@@ -1639,6 +1736,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => { setMatches([mt, ...matches]); flash(isUnconfirmedResult(mt) ? "Logged — awaiting opponent's OK" : "Logged"); setTab("home"); }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
+            seasonBanner={!personal && group?.season ? <SeasonBanner season={group.season} onOpen={() => setTab("ladder")} /> : undefined}
             // The switch replaces the old "swipe for doubles" carousel: Sam
             // wanted doubles as a whole second Home, like the other tabs, not
             // one card tucked behind the singles one.
@@ -1849,6 +1947,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "settings" && (
           <LeagueHub
             group={group} updateGroup={updateGroup} players={players} setPlayers={setPlayers} matches={matches}
+            seasonsState={seasonsState} onStartSeason={startSeason} onEditSeason={editSeason} onEndSeason={endSeasonNow}
             fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onAddFixture={addFixture} onRemoveFixture={removeFixture}
             onRemovePlayer={removePlayer} onClearResults={() => { setMatches([]); flash("Results cleared"); }}
             onImportResults={(np: any[], nm: any[]) => saveData({ ...gdata, players: [...gdata.players, ...np], matches: [...nm, ...gdata.matches] })}

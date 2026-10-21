@@ -41,12 +41,15 @@ export interface HomeProps {
   onCancelFixture?: (fixtureId: string) => void;
   levelRecheck?: React.ReactNode;
   whatsNew?: React.ReactNode;
+  /** "Winter 2026/27 · 132 days left" — brief item 1. First thing under the
+   *  greeting while a season runs. */
+  seasonBanner?: React.ReactNode;
   /** The newsfeed. */
   children?: React.ReactNode;
 }
 
 export function Home({
-  header, standing, doublesCard, modeSwitch, focus, awaitingResult, levelRecheck, whatsNew,
+  header, standing, doublesCard, modeSwitch, focus, awaitingResult, levelRecheck, whatsNew, seasonBanner,
   onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   let step = 0;
@@ -54,6 +57,7 @@ export function Home({
     <div>
       <HomeHeader {...header} />
       {modeSwitch && <div style={{ margin: "-6px -16px 14px" }}>{modeSwitch}</div>}
+      {seasonBanner}
 
       {standing && (
         <Reveal index={step++} style={{ marginBottom: 12 }}>

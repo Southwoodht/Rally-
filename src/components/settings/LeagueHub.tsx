@@ -10,7 +10,8 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { levelNow } from "@/core/levels";
 import { inviteUrl } from "@/lib/invite";
 import { isFriendlyLeague } from "@/lib/leagueData";
-import { fmtDate, fullNameOf, uid } from "@/lib/format";
+import { fmtDate, formatMatchDate, fullNameOf, uid } from "@/lib/format";
+import { daysLeftLabel, londonDay, seasonWindow } from "@/core/seasons";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
@@ -117,7 +118,7 @@ export function LeagueHub(props: any) {
   if (page === "players") return <><>{back("Run your league")}</><PlayersPage {...props} /></>;
   // Competition ties are managed from their competition, not from here.
   if (page === "singles") return <><>{back("Run your league")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
-  if (page === "seasons") return <><>{back("Run your league")}</><SeasonsPage group={group} updateGroup={updateGroup} /></>;
+  if (page === "seasons") return <><>{back("Run your league")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
   if (page === "roles") return <><>{back("Run your league")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
   if (page === "settings") return <><>{back("Run your league")}</><SettingsPage {...props} /></>;
   if (page === "data") return <><>{back("Run your league")}</><DataPage {...props} onImport={() => setPage("import")} /></>;
@@ -202,7 +203,7 @@ export function LeagueHub(props: any) {
 
       <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 14 }}>
         <div style={{ marginTop: -1 }}>
-          {!friendly && row(ic(Calendar), "Seasons", group?.season ? `${group.season.name} · running` : "None running", "seasons")}
+          {!friendly && row(ic(Calendar), "Seasons", group?.season ? `${group.season.name} · ${daysLeftLabel(group.season).toLowerCase()}` : "None running", "seasons")}
           {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
           {!friendly && row(ic(Settings2), "League settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
@@ -412,48 +413,160 @@ function SinglesFixturesPage({ players, fixtures, onGenerate, onClearFixtures, o
 // Seasons
 // ---------------------------------------------------------------------------
 
-function SeasonsPage({ group, updateGroup }: any) {
+// The date box that does not run off the card. iOS Safari draws a date input
+// at its own width, ignoring width: 100%, so two of them side by side pushed
+// "Ends" past the right edge of the card (brief item 4). Stacked, with
+// appearance off so the stylesheet decides the width.
+const dateFld: React.CSSProperties = {
+  ...fld, display: "block", width: "100%", minWidth: 0, boxSizing: "border-box",
+  WebkitAppearance: "none", appearance: "none", textAlign: "left", colorScheme: "dark",
+};
+
+function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSeason, onEndSeason, flash }: any) {
   const [name, setName] = useState("");
-  const [start, setStart] = useState("");
+  const [start, setStart] = useState(londonDay());
   const [end, setEnd] = useState("");
+  const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
-  const s = group?.season;
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEnd, setEditEnd] = useState("");
+  const installed = !!seasonsState?.installed;
+  const current = seasonsState?.current || null;
+  const past = (seasonsState?.seasons || []).filter((x: any) => x.status === "ended");
+
+  const act = async (fn: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(true);
+    try { await fn(); } catch (e: any) { flash?.(e?.message || "Couldn't save that."); }
+    setBusy(false);
+  };
+
+  // ---- before schema_seasons.sql: the old one-season blob, as it was, with
+  // the date boxes fixed. Ending one here still deletes it — which is the
+  // reason the table exists — so the page says so.
+  if (!installed) {
+    const s = group?.season;
+    return (
+      <SurfaceCard radius={18} pad="16px 14px">
+        {s ? (
+          <>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{s.name}</div>
+            <div style={{ ...note, marginTop: 4 }}>{fmtDate(s.start)}{s.end ? " to " + fmtDate(s.end) : " · no end date"}</div>
+            <div style={{ ...note, marginTop: 10 }}>Ending a season here removes it. Once supabase/schema_seasons.sql has been run, finished seasons are kept with their final standings.</div>
+            <div style={{ marginTop: 14 }}>
+              {confirmEnd ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => { updateGroup(group.id, { season: null }); setConfirmEnd(false); }} style={btn(DOT_LOSS, FEED_LIME_INK)}>End {s.name}</button>
+                  <button onClick={() => setConfirmEnd(false)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Keep it</button>
+                </div>
+              ) : (
+                <button onClick={() => setConfirmEnd(true)} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>End this season</button>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 4 }}>Start a season</div>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. Winter 2026/27" style={{ ...fld, marginBottom: 10 }} />
+            <div style={{ ...lbl, marginBottom: 6 }}>Starts</div>
+            <input type="date" value={start} onChange={(e) => setStart(e.target.value)} style={{ ...dateFld, marginBottom: 10 }} />
+            <div style={{ ...lbl, marginBottom: 6 }}>Ends (optional)</div>
+            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} style={{ ...dateFld, marginBottom: 12 }} />
+            <button
+              onClick={() => updateGroup(group.id, { season: { name: name.trim() || "Season", start: start ? new Date(start).getTime() : Date.now(), end: end ? new Date(end).getTime() : null } })}
+              style={{ ...btn(FEED_LIME, FEED_LIME_INK), width: "100%" }}
+            >
+              Start season
+            </button>
+          </>
+        )}
+      </SurfaceCard>
+    );
+  }
+
+  // ---- the seasons table.
   return (
-    <SurfaceCard radius={18} pad="16px 14px">
-      {s ? (
-        <>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{s.name}</div>
-          <div style={{ ...note, marginTop: 4 }}>{fmtDate(s.start)}{s.end ? " to " + fmtDate(s.end) : " · no end date"}</div>
-          <div style={{ ...note, marginTop: 10 }}>The table can show this season or all time. Matches between the dates count towards the season.</div>
-          <div style={{ marginTop: 14 }}>
-            {confirmEnd ? (
+    <>
+      {current ? (
+        <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{current.name}</div>
+          <div style={{ ...note, marginTop: 4 }}>
+            {formatMatchDate(seasonWindow(current).start)}{current.endsOn ? " to " + formatMatchDate(seasonWindow(current).end) : " · no end date"} · {daysLeftLabel(current)}
+          </div>
+          <div style={{ ...note, marginTop: 10 }}>
+            The table opens on this season. It closes by itself the day after it ends: the standings freeze, the podium shows, and the winners are posted to the feed.
+          </div>
+          {editing ? (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ ...lbl, marginBottom: 6 }}>Name</div>
+              <input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ ...fld, marginBottom: 10 }} />
+              <div style={{ ...lbl, marginBottom: 6 }}>Ends</div>
+              <input type="date" value={editEnd} min={current.startsOn} onChange={(e) => setEditEnd(e.target.value)} style={{ ...dateFld, marginBottom: 12 }} />
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => { updateGroup(group.id, { season: null }); setConfirmEnd(false); }} style={btn(DOT_LOSS, FEED_LIME_INK)}>End {s.name}</button>
+                <button disabled={busy} onClick={() => act(async () => { await onEditSeason(current.id, { name: editName.trim() || current.name, endsOn: editEnd || null }); setEditing(false); })} style={btn(FEED_LIME, FEED_LIME_INK)}>Save</button>
+                <button onClick={() => setEditing(false)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              <button onClick={() => { setEditName(current.name); setEditEnd(current.endsOn || ""); setEditing(true); setConfirmEnd(false); }} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), flex: 1 }}>Edit</button>
+              {!confirmEnd && <button onClick={() => setConfirmEnd(true)} style={{ ...btn(FEED_RAISED, DOT_LOSS), flex: 1 }}>End now…</button>}
+            </div>
+          )}
+          {confirmEnd && !editing && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>
+                End {current.name} today? Its standings freeze now and the winners are posted to the feed. The season is kept.
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button disabled={busy} onClick={() => act(async () => { await onEndSeason(current); setConfirmEnd(false); })} style={btn(DOT_LOSS, FEED_LIME_INK)}>End {current.name}</button>
                 <button onClick={() => setConfirmEnd(false)} style={btn(FEED_RAISED, FEED_TEXT_HI)}>Keep it</button>
               </div>
-            ) : (
-              <button onClick={() => setConfirmEnd(true)} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>End this season</button>
-            )}
-          </div>
-        </>
+            </div>
+          )}
+        </SurfaceCard>
       ) : (
-        <>
+        <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 4 }}>Start a season</div>
-          <div style={{ ...note, marginBottom: 12 }}>Gives the table a “this season” view alongside all time. Give it an end date and the table counts down to it. No results are touched.</div>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. Summer 2026" style={{ ...fld, marginBottom: 10 }} />
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <label style={{ flex: 1 }}><div style={{ ...lbl, marginBottom: 6 }}>Starts</div><input type="date" value={start} onChange={(e) => setStart(e.target.value)} style={{ ...fld, colorScheme: "dark" }} /></label>
-            <label style={{ flex: 1 }}><div style={{ ...lbl, marginBottom: 6 }}>Ends (optional)</div><input type="date" value={end} onChange={(e) => setEnd(e.target.value)} style={{ ...fld, colorScheme: "dark" }} /></label>
+          <div style={{ ...note, marginBottom: 12 }}>
+            Gives the table a This season view and a countdown on Home. Competitions can be added to it, and take its dates. No results are touched.
           </div>
+          <div style={{ ...lbl, marginBottom: 6 }}>Name</div>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Winter 2026/27" style={{ ...fld, marginBottom: 10 }} />
+          <div style={{ ...lbl, marginBottom: 6 }}>Starts</div>
+          <input type="date" value={start} onChange={(e) => setStart(e.target.value)} style={{ ...dateFld, marginBottom: 10 }} />
+          <div style={{ ...lbl, marginBottom: 6 }}>Ends</div>
+          <input type="date" value={end} min={start || undefined} onChange={(e) => setEnd(e.target.value)} style={{ ...dateFld, marginBottom: 6 }} />
+          <div style={{ ...note, marginBottom: 12 }}>Needed for competitions and the countdown. Leave it empty for a season with no end.</div>
           <button
-            onClick={() => updateGroup(group.id, { season: { name: name.trim() || "Season", start: start ? new Date(start).getTime() : Date.now(), end: end ? new Date(end).getTime() : null } })}
+            disabled={busy || !start}
+            onClick={() => act(async () => {
+              if (end && end < start) throw new Error("The end date is before the start.");
+              await onStartSeason({ name: name.trim() || "Season", startsOn: start, endsOn: end || null });
+              setName(""); setEnd("");
+            })}
             style={{ ...btn(FEED_LIME, FEED_LIME_INK), width: "100%" }}
           >
-            Start season
+            {busy ? "Starting…" : "Start season"}
           </button>
-        </>
+        </SurfaceCard>
       )}
-    </SurfaceCard>
+
+      {past.length > 0 && (
+        <SurfaceCard radius={18} pad="14px">
+          <div style={{ ...lbl, marginBottom: 8 }}>Past seasons</div>
+          {past.map((p: any, i: number) => (
+            <div key={p.id} style={{ padding: "8px 0", borderTop: i ? "0.5px solid " + FEED_RAISED : "none" }}>
+              <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_HI }}>{p.name}</div>
+              <div style={{ ...note, fontSize: 12 }}>
+                {formatMatchDate(seasonWindow(p).start)}{p.endsOn ? " to " + formatMatchDate(seasonWindow(p).end) : ""} · final standings {p.endedAt ? "from " + formatMatchDate(p.endedAt) : ""}
+              </div>
+            </div>
+          ))}
+        </SurfaceCard>
+      )}
+    </>
   );
 }
 

@@ -52,6 +52,10 @@ begin
     -- Club lookup by join code (schema_security_winter_b.sql). An entry point,
     -- so closed to anon like the rest; skipped until that file has run.
     'public.find_league_by_code(text)',
+    -- Seasons (schema_seasons.sql): closing a season is an entry point; the
+    -- fixture guard is a trigger function, revocable like the doubles ones.
+    'public.close_season_if_due(uuid)',
+    'public.guard_competition_fixture()',
     -- The doubles sanity trigger's function (schema_doubles.sql). Not an
     -- entry point — nothing calls it but the trigger — and the migration
     -- revokes it itself. It is listed anyway because `create or replace`
@@ -95,6 +99,7 @@ select f.proname                                 as function,
      'set_player_level_estimate', 'global_standings', 'global_edges',
      'nudge_match', 'level_val', 'start_thread', 'unread_message_count',
      'find_league_by_code',
+     'close_season_if_due', 'guard_competition_fixture',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )
