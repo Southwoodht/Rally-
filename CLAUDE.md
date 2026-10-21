@@ -929,7 +929,7 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
 - **Booked matches last 1 hour by default** (was 2), with 1 / 1½ / 2 hours at
   booking. **Needs `schema_fixture_duration.sql`** for a non-default length to
   save; the default writes nothing new, so bookings work either way.
-- Emails (item 6) wait for Sam's own domain, then Resend.
+- Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
