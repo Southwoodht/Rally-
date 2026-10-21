@@ -46,9 +46,13 @@ export function seasonPodium(players: any[], matches: any[], season: Pick<Season
     .map((p) => ({ playerId: p.id, points: off[p.id] ?? 0, played: stats.wdl[p.id]?.gp || 0 }))
     .filter((r) => r.played >= minGames)
     .sort((a, b) => b.points - a.points);
+  // The place is carried in its own variable rather than read back off
+  // `out`: once the podium is full `out` stops growing while `i` does not,
+  // and the fifth row would read a sixth entry that is not there.
   const out: PodiumPlace[] = [];
+  let place = 0;
   rows.forEach((r, i) => {
-    const place = i > 0 && Math.abs(rows[i - 1].points - r.points) < 1e-9 ? out[i - 1].place : i + 1;
+    if (i === 0 || Math.abs(rows[i - 1].points - r.points) >= 1e-9) place = i + 1;
     if (place <= 3) out.push({ ...r, place });
   });
   return out;

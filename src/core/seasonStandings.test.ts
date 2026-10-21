@@ -37,6 +37,10 @@ check("A, unbeaten, is champion", pod[0].playerId === "a" && pod[0].place === 1)
 const clean = [m("a", "b", "p1", "2026-11-10T18:00:00Z"), m("a", "c", "p1", "2026-11-11T18:00:00Z"), m("b", "c", "p1", "2026-11-12T18:00:00Z"), m("a", "d", "p1", "2026-11-13T18:00:00Z"), m("b", "d", "p1", "2026-11-14T18:00:00Z"), m("c", "d", "p1", "2026-11-15T18:00:00Z")];
 const cleanPod = seasonPodium(players, clean, season);
 check("clean order: A, B, C", cleanPod.map((p) => p.playerId + p.place).join() === "a1,b2,c3");
+const six = [...["a", "b", "c", "d", "e", "f"]].map((id) => ({ id, name: id }));
+const many: any[] = [];
+["a", "b", "c", "d", "e", "f"].forEach((x, i, arr) => arr.slice(i + 1).forEach((y) => many.push(m(x, y, "p1", "2026-12-01T18:00:00Z"))));
+check("six players: podium of three, no crash", seasonPodium(six, many, season).map((p) => p.playerId).join() === "a,b,c");
 check("cut-off keeps people off", seasonPodium(players, matches, season, 4).length === 0);
 
 const post = seasonClosedPost("Winter 2026/27", [{ name: "Zaach Rodriguez", place: 1 }, { name: "Sam Henry", place: 2 }], [{ competition: "Group A", name: "Zaach Rodriguez" }]);

@@ -260,7 +260,10 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     ? scopedRanked.filter((pl: any) => ((pl.name || "") + " " + (pl.last || "") + " " + (pl.nick || "")).toLowerCase().includes(q))
     : scopedRanked;
 
-  const standingsPlayers: StandingsPlayer[] = searched.map((pl: any) => {
+  // In a season, only the people who have played in it. Everyone else would
+  // be listed "1=" with "no games yet" — a table of ties nobody earned.
+  const seasonal = inSeason ? searched.filter((pl: any) => (wdl[pl.id]?.gp || 0) > 0) : searched;
+  const standingsPlayers: StandingsPlayer[] = seasonal.map((pl: any) => {
     const r = wdl[pl.id] || { w: 0, d: 0, l: 0, gp: 0 };
     return {
       player: pl,
@@ -308,7 +311,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
         <>
           {podium.length > 0 && <SeasonPodium season={season} podium={podium} players={players} onOpen={(id: string) => onOpen(id, tableYr)} />}
           {players.length > 0 && standingsPlayers.length === 0 ? (
-            <Empty msg={q ? "Nobody here by that name." : activeScope === "active" ? "No one has played in the last 12 months. Try Legacy for career history." : activeScope === "nonactive" ? "Everyone has played in the last 12 months." : "No players yet."} />
+            <Empty msg={q ? "Nobody here by that name." : inSeason ? `No results yet in ${season.name}. The table fills in as matches are logged.` : activeScope === "active" ? "No one has played in the last 12 months. Try Legacy for career history." : activeScope === "nonactive" ? "Everyone has played in the last 12 months." : "No players yet."} />
           ) : (
             <StandingsList
               players={standingsPlayers}
