@@ -202,15 +202,29 @@ export async function listLeagueMembers(leagueId: string): Promise<LeagueMember[
   if (!supabase) return [];
   const me = (await withSupabaseTimeout(supabase.auth.getUser(), { data: { user: null } } as any) as any)?.data?.user?.id ?? null;
   const { data, error } = await withSupabaseTimeout(
-    supabase.from("league_members").select("user_id, role, joined_at, profiles (display_name)").eq("league_id", leagueId),
+    supabase.from("league_members").select("user_id, role, joined_at").eq("league_id", leagueId),
     { data: [], error: null } as any,
   );
   if (error) throw error;
+  // Names in a second read, not an embed. league_members.user_id references
+  // auth.users, not profiles, so PostgREST has no relationship to follow and
+  // "profiles (display_name)" failed outright — "Could not find a
+  // relationship between 'league_members' and 'profiles'" — which is what the
+  // Roles screen showed instead of anybody's name.
+  const ids = [...new Set((data || []).map((r: any) => r.user_id).filter(Boolean))];
+  const names: Record<string, string> = {};
+  if (ids.length) {
+    const res: any = await withSupabaseTimeout(
+      supabase.from("profiles").select("id, display_name").in("id", ids),
+      { data: [], error: null } as any,
+    );
+    (res?.data || []).forEach((p: any) => { if (p.display_name) names[p.id] = p.display_name; });
+  }
   const rank: Record<string, number> = { owner: 0, editor: 1, member: 2 };
   return (data || [])
     .map((r: any) => ({
       userId: r.user_id,
-      name: r.profiles?.display_name || "Someone",
+      name: names[r.user_id] || "Someone",
       role: r.role || "member",
       joinedAt: r.joined_at ?? null,
       isMe: r.user_id === me,
