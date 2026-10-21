@@ -36,7 +36,9 @@ import { shareForPlayer } from "./sets";
  *   a loss   costs clamp(2 - q, 0.4, 1.6)           (losing to Zaach is cheap)
  *   a draw   half of each
  *
- *   points   = (earned + 1) / (earned + cost + 2) x games/(games+10) x 100
+ *   points   = (earned + 1) / (earned + cost + 2) x n/(n+10) x 100
+ *
+ * where n is wins plus draws: a loss is not activity (2026-10-21, below).
  *
  * so a win over somebody good is worth more, a loss to somebody good costs
  * less, and playing the best player in the club PAYS rather than costs: on
@@ -118,7 +120,17 @@ export function computeOfficial(players: any[], matches: any[], wdl: Record<stri
     // real results pull you away from the middle, harder the better they are.
     const e = earned[p.id] + extraW + 0.5 * extraD + 1;
     const c = cost[p.id] + extraL + 0.5 * extraD + 1;
-    const activity = r.gp / (r.gp + 10);
+    // Activity counts what you got something from — wins and draws, carried-in
+    // ones included. Not losses: a loss to somebody strong costs as little as
+    // 0.4, and while it also added a game of activity, 7 of Seacourt's 115
+    // losses RAISED the loser's points (Jamie gained from losing to Sam three
+    // times). Sam's ruling, 2026-10-21: "a loss can never raise your Official
+    // points". A loss now only ever adds to cost. Measured on the real export
+    // first: 0 of 115 such losses after, the 2026 order unchanged, two swaps
+    // at the foot of the all-time table, and everyone with losses a little
+    // lower (Charlie 40.5 → 32.2, Zaach 64.4 → 60.3).
+    const counted = r.w + r.d;
+    const activity = counted / (counted + 10);
     // Losses only, and nothing to set against them: zero, as before.
     score[p.id] = earned[p.id] + extraW + extraD > 0 ? (e / (e + c)) * activity * 100 : 0;
   });

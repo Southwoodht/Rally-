@@ -24,9 +24,11 @@ check("every Z opponent reported", rep.rows.length === 4);
 check("every decided match checked as a loss", rep.lossesChecked === ms.length);
 
 // The constructed case from the 2026-10-21 investigation: 3 wins and 2
-// losses, then one more loss to the best player. Official's activity term
-// grows with every match played, and a loss to a much stronger player costs
-// at least 0.4 of a loss, so this loss should RAISE Official.
+// losses, then one more loss to the best player. Before that day's fix the
+// activity term grew with every match played and a loss to a much stronger
+// player cost only 0.4, so this loss RAISED Official. Losses are no longer
+// activity (Sam's ruling), so it must now lower it, and the report must say
+// so by not listing it.
 {
   const ps = ["x", "top", "p", "q"].map((id) => ({ id, name: id }));
   n = 0;
@@ -34,9 +36,9 @@ check("every decided match checked as a loss", rep.lossesChecked === ms.length);
   for (let i = 0; i < 6; i++) base.push(m("top", i % 2 ? "p" : "q", "p1"));
   const before = ratingsFor(ps, base).official.x;
   const after = ratingsFor(ps, [...base, m("top", "x", "p1")]).official.x;
-  check(`a loss to the best player raised Official (${before.toFixed(1)} → ${after.toFixed(1)})`, after > before);
+  check(`a loss to the best player lowers Official (${before.toFixed(1)} → ${after.toFixed(1)})`, after < before);
   const r = fairnessReport(ps, [...base, m("top", "x", "p1")]);
-  check("and the report lists it", r.lossesThatRaisedOfficial.some((l) => l.playerId === "x" && l.opponentId === "top"));
+  check("and the report finds no loss that raised anybody", r.lossesThatRaisedOfficial.length === 0);
 }
 
 if (passed !== total) { console.error(`FAILED — ${passed}/${total} checks (fairness)`); process.exit(1); }

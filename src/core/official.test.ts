@@ -196,9 +196,31 @@ const SEACOURT_2026: string[][] = [
   // Shown to Sam as 59.9 / 51.5 / 43.3 / 34.6; the +1/+2 regularisation
   // (unbeaten records) moved each by under two points, same order, and he
   // was told before it shipped.
-  const want: Record<string, number> = { zaach: 58.3, samuel: 50.0, charlie: 42.8, adrian: 32.4 };
+  // 2026-10-21: losses stopped counting as activity ("a loss can never raise
+  // your Official points"), shown to Sam on the real export and approved —
+  // 58.3 / 50.0 / 42.8 / 32.4 before, same order after.
+  const want: Record<string, number> = { zaach: 52.5, samuel: 45.1, charlie: 33.6, adrian: 19.6 };
   for (const id of Object.keys(want)) ok(close(s[id], want[id], 0.05), `Seacourt 2026: ${id} ${s[id].toFixed(1)}, approved ${want[id]}`);
   ok(s.zaach > s.samuel && s.samuel > s.charlie && s.charlie > s.adrian, "nobody changed place");
+}
+
+{
+  // The rule itself: adding a loss never raises the loser's points, whoever
+  // it is to. A small club where "top" beats everybody, and "me" has a
+  // decent record before losing to "top" again and again.
+  const players = [P("me"), P("top"), P("a"), P("b")];
+  const ms: any[] = [];
+  for (let i = 0; i < 8; i++) ms.push(M("top", "a", "p1"), M("top", "b", "p1"), M("a", "b", "p1"));
+  ms.push(M("me", "a", "p1"), M("me", "b", "p1"), M("me", "a", "p1"), M("b", "me", "p1"));
+  let prev = off(players, ms).me;
+  let rose = false;
+  for (let i = 0; i < 6; i++) {
+    ms.push(M("top", "me", "p1"));
+    const now = off(players, ms).me;
+    if (now > prev + 1e-9) rose = true;
+    prev = now;
+  }
+  ok(!rose, "six losses in a row to the best player: not one of them raises your points");
 }
 
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }

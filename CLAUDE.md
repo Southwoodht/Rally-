@@ -887,7 +887,7 @@ anyone; a player's own only while both are empty, i.e. onboarding), and adds
 `core/seasons.ts`). Competition/group tables: none — they rank on points.
 New league-format competitions default to play each other twice.
 
-**Proposed, NOT applied: "a loss can never raise your Official points".** Sam
+**APPLIED 2026-10-21 (winter-pilot): "a loss can never raise your Official points".** Sam
 wants it ("I lost and my points went up" breaks trust, even at 7 in 115). The
 cause is the activity term, `gp / (gp + 10)`: a loss to a strong player costs
 as little as 0.4 but still adds a game of activity. The proposal is one line —
@@ -895,8 +895,12 @@ activity counts wins and draws only, `(w + d) / (w + d + 10)`. On Seacourt's
 real export it takes the cases from 7/115 to 0/115 (all time) and 5/59 to
 0/59 (2026), keeps Charlie gaining from playing Zaach (+1.9), and lowers
 everyone with losses (Adrian 35.2 → 23.3, Charlie 40.5 → 32.2). Order changes
-only at the foot of the all-time table. Waiting on Sam's approval; then
-`official.test.ts`'s pinned Seacourt numbers have to move with it.
+only at the foot of the all-time table. Sam approved it the same day.
+`official.test.ts` now pins Seacourt 2026 at Zaach 52.5, Sam 45.1, Charlie
+33.6, Adrian 19.6 (was 58.3 / 50.0 / 42.8 / 32.4) and checks that six losses
+in a row to the best player never raise you; the real-export report reads
+0 of 115 and 0 of 59. Sam's ask for the merge: a feed announcement ("losses
+no longer add points") so the overnight drop doesn't read as a bug.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
