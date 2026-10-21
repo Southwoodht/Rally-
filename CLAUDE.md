@@ -4,6 +4,11 @@ Head-to-head rankings for racket sports. Real app, real users, real data:
 Sam's club (Seacourt) plus a few others are live in it. Treat production
 data as sacred — see **The Charlie incident** in §3 for why.
 
+**On screen the top level is a "club" since winter-pilot (2026-10-21)** — "Run
+your club", "Club settings". UI text only: the tables, `leagueId`,
+`?league=friendly` and every key still say league, and "League" is still the
+competition FORMAT (vs knockout). The trophy screen is "Trophies & honours".
+
 **The app is called SOUTHWOOD since 2026-09-27** (Sam's company is
 Southwood HT Ltd). "Rally" was taken several times over — the LTA's own
 booking service among them. Every user-facing string, the manifest, the
@@ -850,6 +855,14 @@ drawing a new tie stays open to members. The one data write copied Seacourt's
 now only the fallback `useSeasons` reads when the table is missing). A
 season's standings "freeze" by rule, not storage: matches dated in it and
 logged before `ended_at` (`core/seasonStandings.ts`).
+
+**Waiting to be run: `schema_levels_organisers.sql`** (winter-pilot, 2026-10-21).
+A trigger on players lets only owner/organisers change `level` /
+`level_history` (or the player's own first pick while they have none);
+`set_player_level()` is the organiser door that also reaches signed-up
+players; `level_changes` logs every change by trigger; `level_requests` holds
+players' asks. Until it runs, organiser level edits fail with a message naming
+the file, and players can still change their own level as before.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
