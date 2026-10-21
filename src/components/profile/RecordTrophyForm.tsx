@@ -70,7 +70,7 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
         : /row-level security/i.test(msg)
         ? (hasAccount
           ? "The database isn't set up to award trophies to players with an account yet — it needs schema_trophies_award_any.sql running in Supabase."
-          : "The database refused that. Check you administer the club and are in this player's league.")
+          : "The database refused that. Check you administer the club and are in this player's club.")
         : msg || "Couldn't record that trophy.");
     }
     setBusy(false);

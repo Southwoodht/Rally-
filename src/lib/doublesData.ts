@@ -156,7 +156,7 @@ export async function updateDoubles(id: string, patch: Partial<DoublesRow>, _lea
   // Ask for the row back: an UPDATE that RLS refuses matches nothing and
   // reports success, the same trap as a refused DELETE (§6).
   const data = await run(supabase.from("doubles_matches").update(row).eq("id", id).select("id"), "updating the doubles match");
-  if (!data || !data.length) throw new Error("That change was refused — only the four players or league staff can edit a doubles result.");
+  if (!data || !data.length) throw new Error("That change was refused — only the four players or club organisers can edit a doubles result.");
 }
 
 /**
@@ -178,7 +178,7 @@ export async function deleteDoubles(id: string): Promise<void> {
     FETCH_FAILED as any,
   );
   if (still !== (FETCH_FAILED as any) && !still.error && still.data) {
-    throw new Error("That delete was refused — only league staff can delete a doubles match.");
+    throw new Error("That delete was refused — only club organisers can delete a doubles match.");
   }
 }
 
@@ -307,7 +307,7 @@ export async function deleteDoublesFixture(id: string): Promise<void> {
     FETCH_FAILED as any,
   );
   if (still !== (FETCH_FAILED as any) && !still.error && still.data) {
-    throw new Error("That cancel was refused — only the four players or league staff can cancel it.");
+    throw new Error("That cancel was refused — only the four players or club organisers can cancel it.");
   }
 }
 
@@ -451,5 +451,5 @@ export async function deleteCompetition(id: string): Promise<void> {
     "deleting the competition",
   );
   if (gone && gone.length) return;
-  throw new Error("That delete was refused — only league staff can delete a competition.");
+  throw new Error("That delete was refused — only club organisers can delete a competition.");
 }

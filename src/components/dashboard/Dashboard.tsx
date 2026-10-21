@@ -68,7 +68,7 @@ export default function Dashboard({ session }: { session: Session }) {
       else if (mine.length > 1) setView("picker");
       else setView("empty");
     } catch (e: any) {
-      setError(e.message || "Couldn't load your leagues.");
+      setError(e.message || "Couldn't load your clubs.");
       setView("empty");
     }
   };
@@ -94,14 +94,14 @@ export default function Dashboard({ session }: { session: Session }) {
 
   const doCreate = async () => {
     setError("");
-    if (!name.trim()) { setError("Give the league a name."); return; }
+    if (!name.trim()) { setError("Give the club a name."); return; }
     setBusy(true);
     try {
       const l = await createLeague(name, location);
       setName(""); setLocation("");
       setLeagues((prev) => [...prev, l]);
       setActive(l); setView("app");
-    } catch (e: any) { setError(e.message || "Couldn't create the league."); }
+    } catch (e: any) { setError(e.message || "Couldn't create the club."); }
     setBusy(false);
   };
 
@@ -113,7 +113,7 @@ export default function Dashboard({ session }: { session: Session }) {
       setCode("");
       setLeagues((prev) => prev.some((x) => x.id === l.id) ? prev : [...prev, l]);
       setActive(l); setView("app");
-    } catch (e: any) { setError(e.message || "Couldn't join that league."); }
+    } catch (e: any) { setError(e.message || "Couldn't join that club."); }
     setBusy(false);
   };
 
@@ -204,31 +204,31 @@ export default function Dashboard({ session }: { session: Session }) {
     </div>
   );
 
-  if (view === "loading") return <LoadingScreen label="Getting your leagues" />;
+  if (view === "loading") return <LoadingScreen label="Getting your clubs" />;
 
   if (view === "create") return shell(
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Create a league</div>
-      <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="League name, e.g. Seacourt Ladder" />
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Create a club</div>
+      <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Club name, e.g. Seacourt Ladder" />
       <input style={field} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location (optional)" />
-      <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>{busy ? "Creating…" : "Create league"}</button>
+      <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>{busy ? "Creating…" : "Create club"}</button>
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
     </div>
   );
 
   if (view === "join") return shell(
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Join a league</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Join a club</div>
       <input style={{ ...field, fontFamily: body, letterSpacing: 3, textTransform: "uppercase" }} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC123" maxLength={8} />
-      <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? "Joining…" : "Join league"}</button>
-      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Ask whoever set the league up for the code — it&apos;s shown at the top of their screen.</div>
+      <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? "Joining…" : "Join club"}</button>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Ask whoever set the club up for the code — it&apos;s shown at the top of their screen.</div>
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
     </div>
   );
 
   if (view === "picker") return shell(
     <div>
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 10 }}>Your leagues</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 10 }}>Your clubs</div>
       {/* Several leagues can end up with the same name — created once each
           time somebody tapped Create while setting things up. The counts are
           what tell them apart, so they're shown before there's any chance to
@@ -259,7 +259,7 @@ export default function Dashboard({ session }: { session: Session }) {
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setConfirmLeave(l.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, background: "transparent", border: "none", padding: "8px 0 0", cursor: "pointer" }}>Leave this league</button>
+                <button onClick={() => setConfirmLeave(l.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, background: "transparent", border: "none", padding: "8px 0 0", cursor: "pointer" }}>Leave this club</button>
               )
             )}
           </div>
@@ -270,7 +270,7 @@ export default function Dashboard({ session }: { session: Session }) {
         style={{ ...tile, width: "100%", marginBottom: 8, display: "block", boxSizing: "border-box" as const, textAlign: "left" }}
       >
         <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>Friendlies</div>
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>Matches outside any league</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>Matches outside any club</div>
       </button>
 
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
@@ -300,13 +300,13 @@ export default function Dashboard({ session }: { session: Session }) {
         onClick={() => { setError(""); setView("join"); }}
         style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16, marginBottom: 10 }}
       >
-        Join a league
+        Join a club
       </button>
       <button
         onClick={() => { setError(""); setView("create"); }}
         style={{ width: "100%", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 20, padding: "15px 18px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 16, marginBottom: 18 }}
       >
-        Create a league
+        Create a club
       </button>
 
       {/* The third answer, and for some people the only one they want. A
@@ -314,7 +314,7 @@ export default function Dashboard({ session }: { session: Session }) {
           who play on a Tuesday need none of it, and making them set one up
           first is asking them to run a club before they can record a game. */}
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
-        Or skip the league entirely — just log matches against your mates.
+        Or skip the club entirely — just log matches against your mates.
       </div>
       <button
         onClick={() => { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); }}

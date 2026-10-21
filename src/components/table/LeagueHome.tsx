@@ -216,9 +216,9 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       options: [
         { value: "active", label: "Active", note: "Played in the last 12 months." },
         { value: "nonactive", label: "Not active", note: "Everyone who has not." },
-        { value: "all", label: "Everyone in this league" },
+        { value: "all", label: "Everyone in this club" },
         { value: "legacy", label: "Legacy", note: "Career impact, including people who have stopped playing." },
-        ...(onGoGlobal ? [{ value: "global", label: "Global table", note: "Everyone you have crossed paths with, across every league." }] : []),
+        ...(onGoGlobal ? [{ value: "global", label: "Global table", note: "Everyone you have crossed paths with, across every club." }] : []),
       ],
       onChange: (v: string) => {
         if (v === "global") return onGoGlobal && onGoGlobal();

@@ -220,7 +220,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
     const found = parsed.rows.length + parsed.records.reduce((acc, r) => acc + r.leftWins + r.draws + r.rightWins, 0);
     return (
       <>
-        {back("Run your league", onBack)}
+        {back("Run your club", onBack)}
         {stepLabel(1, "Paste your old results")}
         <div style={{ ...note, marginBottom: 12 }}>
           From a spreadsheet, a notes app or a group chat — one result per line. Southwood reads dates, scores and who beat whom, and you check everything before it&apos;s added.
@@ -273,7 +273,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
                 )}
                 {p.kind === "new" && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
-                    <span style={{ flex: 1, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID }}>New player — added to {leagueName || "the league"}</span>
+                    <span style={{ flex: 1, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID }}>New player — added to {leagueName || "the club"}</span>
                     <button onClick={() => set({ kind: "unset" })} style={{ ...chip(false), padding: "5px 10px", fontSize: 12.5 }}>Change</button>
                   </div>
                 )}
@@ -287,7 +287,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
                       <button onClick={() => set({ kind: "new" })} style={chip(false)}>New player</button>
                     </div>
                     <div style={{ marginTop: 8 }}>
-                      <PlayerPicker players={players} value="" onChange={(id: string) => set({ kind: "player", id })} triggerLabel="Someone else in the league…" />
+                      <PlayerPicker players={players} value="" onChange={(id: string) => set({ kind: "player", id })} triggerLabel="Someone else in the club…" />
                     </div>
                   </div>
                 )}
@@ -443,7 +443,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       {confirming ? (
         <SurfaceCard radius={18} pad="16px 14px">
           <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12, ...tabular }}>
-            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this league"}? They count straight away — nobody is asked to confirm results from before the league used Southwood.
+            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this club"}? They count straight away — nobody is asked to confirm results from before the club used Southwood.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button disabled={saving} onClick={save} style={{ ...btn(FEED_LIME, FEED_LIME_INK, saving), flex: 1 }}>{saving ? "Adding…" : `Add ${total}`}</button>

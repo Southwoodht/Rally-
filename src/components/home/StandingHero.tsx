@@ -214,7 +214,7 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
         render={slide}
         labelColor={FEED_LIME_INK_2}
         dotColor={FEED_ON_HERO}
-        ariaLabel="Where you stand, by league"
+        ariaLabel="Where you stand, by club"
       />
     </div>
   );

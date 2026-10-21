@@ -299,7 +299,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       // found nobody. Since search only ever returns people from leagues we
       // are in, landing here means they are in a DIFFERENT one of ours.
       else if (!IS_UUID.test(pendingIntent.authId)) {
-        flash("They're in another of your leagues — switch to it to see their profile.");
+        flash("They're in another of your clubs — switch to it to see their profile.");
       }
       else if (typeof window !== "undefined") { window.location.replace("/players/" + encodeURIComponent(pendingIntent.authId)); return; }
     } else if (pendingIntent.kind === "message") {
@@ -309,7 +309,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       setChallengeWith(target.id);
       setTab("fixtures");
     } else {
-      flash("You'll need a league in common before you can book a match.");
+      flash("You'll need a club in common before you can book a match.");
     }
     setPendingIntent(null);
   }, [pendingIntent, loading, gdata.players]);
@@ -480,7 +480,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
       // One real league, from Supabase. No demo data — a new league starts empty.
       const cur = leagueId;
-      const gs = [{ id: leagueId, name: leagueName || "League", ownerId: null }];
+      const gs = [{ id: leagueId, name: leagueName || "Club", ownerId: null }];
       let st: any = null;
       try { const r = await storage.get("settings_" + leagueId, true); st = r ? JSON.parse(r.value) : null; } catch {}
 
@@ -494,7 +494,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const fetched = await fetchLeagueData(cur);
         data = { ...fetched, me: null };
       } catch (e) {
-        console.error("Failed to load league data — refusing to seed a fresh league over it.", e);
+        console.error("Failed to load club data — refusing to seed a fresh club over it.", e);
         setLoadError(true);
         setLoading(false);
         return;
@@ -879,8 +879,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       // A failed read must never look like an empty league — same rule as
       // boot(). Leave what is on screen rather than seeding over real data
       // we simply could not reach.
-      console.error("Failed to load league to switch to — leaving current league in place.", e);
-      flash("Couldn't load that league — try again");
+      console.error("Failed to load club to switch to — leaving current club in place.", e);
+      flash("Couldn't load that club — try again");
       return;
     }
     // Link the account to its player the one permitted way: auth_id, never
@@ -898,7 +898,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   };
   const renameGroup = (id, name) => saveGroups(groups.map((g) => g.id === id ? { ...g, name } : g));
   const deleteGroup = async (id) => {
-    if (groups.length <= 1) return flash("Keep at least one league");
+    if (groups.length <= 1) return flash("Keep at least one club");
     const next = groups.filter((g) => g.id !== id);
     await saveGroups(next);
     if (gid === id) switchGroup(next[0].id);
@@ -1096,7 +1096,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             rating: place.rating,
             footer: place.provisional
               ? "Ranked at " + PROVISIONAL_GAMES + " matches"
-              : "of " + place.of + " ranked across every league",
+              : "of " + place.of + " ranked across every club",
           });
         }
       } catch {}
@@ -1120,13 +1120,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: MUTED, marginTop: 10, lineHeight: 1.55 }}>
           Matches outside a league need one database update that hasn&apos;t been
           run — <span style={{ color: CHALK }}>supabase/schema_friendly_players.sql</span>.
-          Nothing is broken, and your leagues are unaffected.
+          Nothing is broken, and your clubs are unaffected.
         </div>
         <button
           onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}
           style={{ width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 16, padding: "13px 14px", marginTop: 18, cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 15 }}
         >
-          Back to your leagues
+          Back to your clubs
         </button>
       </div>
     </div>
@@ -1135,7 +1135,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   if (loadError) return (
     <div style={{ ...wrap, display: "grid", placeItems: "center", minHeight: "100vh" }}>
       <div style={{ textAlign: "center", maxWidth: 300 }}>
-        <div style={{ color: CHALK, fontFamily: body, fontSize: 15, marginBottom: 6 }}>Couldn&apos;t load this league</div>
+        <div style={{ color: CHALK, fontFamily: body, fontSize: 15, marginBottom: 6 }}>Couldn&apos;t load this club</div>
         <div style={{ color: MUTED, fontFamily: body, fontSize: 13, marginBottom: 16 }}>Your data is safe — this was just a connection problem. Nothing was changed.</div>
         <button onClick={() => boot()} style={{ background: BALL, color: COURT, border: "none", borderRadius: 12, padding: "11px 20px", fontFamily: body, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Try again</button>
       </div>
@@ -1172,7 +1172,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     );
   }
 
-  const groupStored = groups.find((g) => g.id === gid) || { id: gid, name: "League", ownerId: null, requireSetup: undefined, season: undefined };
+  const groupStored = groups.find((g) => g.id === gid) || { id: gid, name: "Club", ownerId: null, requireSetup: undefined, season: undefined };
   // `season` is the running season from useSeasons, in the shape every older
   // screen reads ({ name, start, end } in ms) plus the new fields; the old
   // blob's own copy is only the fallback inside useSeasons. `lastSeason` is
@@ -1662,7 +1662,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     movement: dHome.standing.movement,
     form: dHome.standing.form,
     standings: [{
-      scope: (group?.name || leagueName || "League") + " · Doubles",
+      scope: (group?.name || leagueName || "Club") + " · Doubles",
       rank: dHome.standing.rank,
       // Under five doubles the table gives a dash, so the card does too.
       note: dHome.standing.rank == null ? `${dHome.standing.played} of 5 played` : null,
@@ -1731,7 +1731,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                 <RallyMark title="Southwood" />
                 <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
-                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "League")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
+                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "Club")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
                 </button>
               </div>
               <ThemePicker />
@@ -1824,7 +1824,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             // one card tucked behind the singles one.
             modeSwitch={!!doublesEnabled && !personal ? <ModeSwitch mode={sport} onMode={setSport} /> : undefined}
             header={{
-              leagueName: personal ? "Everyone I've played" : (group?.name || "League"),
+              leagueName: personal ? "Everyone I've played" : (group?.name || "Club"),
               greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
               onPickLeague: () => setGroupSheet(true),
               bell: (
@@ -2041,7 +2041,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 Couldn&apos;t load doubles for this league just now.
               </div>
             : meId
-              ? <DoublesProfile players={players} matches={doubles.matches} playerId={meId} leagueName={group?.name || leagueName || "League"} onOpenProfile={openProfile} onOpenMatch={setEditDoublesId} />
+              ? <DoublesProfile players={players} matches={doubles.matches} playerId={meId} leagueName={group?.name || leagueName || "Club"} onOpenProfile={openProfile} onOpenMatch={setEditDoublesId} />
               : null
         )}
         {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
@@ -2050,7 +2050,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           canSetLevels={canSetLevels} onSetLevel={setLevelFor} friendly={isFriendlyLeague(gid)}
           pendingRequest={(levelRequests || []).find((r) => r.playerId === meId && r.status === "pending") || null}
           onAskLevel={levelRequests ? askForLevel : undefined} />}
-        {tab === "settings" && <SubHeader title={canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"} onBack={() => setTab("profile")} />}
+        {tab === "settings" && <SubHeader title={canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"} onBack={() => setTab("profile")} />}
         {tab === "settings" && (
           <LeagueHub
             group={group} updateGroup={updateGroup} players={players} setPlayers={setPlayers} matches={matches}
@@ -2095,7 +2095,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "levels" && <SubHeader title="Level history" onBack={() => setTab(levelsFrom)} />}
         {tab === "levels" && <LevelRepair players={players} setPlayers={setPlayers} meId={meId} onEstimate={saveLevelEstimate} onSetHistory={canSetLevels && !isFriendlyLeague(gid) ? setHistoryFor : undefined} />}
-        {tab === "clubadmin" && <SubHeader title="Club admin" onBack={() => setTab("profile")} />}
+        {tab === "clubadmin" && <SubHeader title="Trophies & honours" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
         {tab === "help" && <HelpGuide />}
@@ -2140,7 +2140,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               ) : (
                 <div style={{ margin: "12px 16px 0", padding: 16, borderRadius: 20, background: PANEL }}>
                   <DoublesScoreline match={m} players={players} meId={meId} when={fmtDate(m.playedAt)} />
-                  <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 8 }}>Only the four players or league staff can change this result.</div>
+                  <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 8 }}>Only the four players or club organisers can change this result.</div>
                 </div>
               )}
             </div>
@@ -2162,9 +2162,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 screens are untouched — only the extra doors are gone. */}
             <div style={listCard}>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
-              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your league" : "League"}</span><span style={{ color: MUTED }}>›</span></button>
+              <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"}</span><span style={{ color: MUTED }}>›</span></button>
               {(canSetLevels || isFriendlyLeague(gid)) && <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>}
-              {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Club admin</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
+              {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Trophies &amp; honours</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
             </div>
           </div>
@@ -2176,7 +2176,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           sport={sport} onSport={setSport}
           doubles={!!doublesEnabled && !personal && !doubles.unavailable ? {
             matches: doubles.matches,
-            leagueName: group?.name || leagueName || "League",
+            leagueName: group?.name || leagueName || "Club",
             onOpenMatch: setEditDoublesId,
           } : undefined}
         />

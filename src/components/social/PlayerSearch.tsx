@@ -90,7 +90,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
       if (acc.status === "fulfilled") setRows(acc.value);
       else { console.error("Account search failed", acc.reason); setRows([]); }
       if (lg.status === "fulfilled") setMates(lg.value);
-      else { console.error("League search failed", lg.reason); setMates([]); }
+      else { console.error("Club search failed", lg.reason); setMates([]); }
       setSearching(false);
     }, 200);
     return () => { live = false; clearTimeout(t); };
@@ -221,7 +221,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
           row(
             p.id,
             p.display_name || "Player",
-            friendIds.has(p.id) ? "Friend" : leagueAuthIds.includes(p.id) ? "In your league" : null,
+            friendIds.has(p.id) ? "Friend" : leagueAuthIds.includes(p.id) ? "In your club" : null,
             p.avatar_url,
             () => open(p),
           )
@@ -235,7 +235,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
         {!!alsoInYourLeagues?.length && (
           <>
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, margin: "18px 0 8px" }}>
-              In your leagues
+              In your clubs
             </div>
             {alsoInYourLeagues.map((m) =>
               row(

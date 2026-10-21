@@ -34,7 +34,7 @@ export async function loadSnapshots(leagueId: string): Promise<RankSnapshot[]> {
   } catch {
     // Unparseable is not empty either: something is in there and we can't
     // read it, so refuse rather than overwrite it on the next write.
-    throw new Error("Rank snapshots for this league are stored in a form this app can't read.");
+    throw new Error("Rank snapshots for this club are stored in a form this app can't read.");
   }
 }
 

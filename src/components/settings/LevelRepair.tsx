@@ -141,7 +141,7 @@ function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own
       </div>
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: error ? "FEED_THEY_LEAD" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
         {failure || error || (mode === "estimate"
-          ? "Your estimate, because they have an account and have set no level. It counts in this league only, never on the global table, and it stops counting the moment they set their own."
+          ? "Your estimate, because they have an account and have set no level. It counts in this club only, never on the global table, and it stops counting the moment they set their own."
           : "Effective from — it runs until the next entry starts.")}
       </div>
       </>
@@ -308,7 +308,7 @@ export function LevelRepair({ players, setPlayers, meId, onEstimate, onSetHistor
           <div style={{ ...label, marginBottom: 8 }}>Your estimates</div>
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginBottom: 10 }}>
             Levels you filled in for people who have an account but have not set
-            one. They count in this league, and stop counting the moment that
+            one. They count in this club, and stop counting the moment that
             person sets their own.
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
@@ -340,8 +340,8 @@ export function LevelRepair({ players, setPlayers, meId, onEstimate, onSetHistor
       <div style={{ height: 20 }} />
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, background: FEED_CARD, borderRadius: 12, padding: 12 }}>
         Only active players are listed. Anyone with an account who has never
-        set a level, a league owner or editor can estimate for — they can
-        overwrite it any time, it counts in this league only, and it never
+        set a level, a club owner or organiser can estimate for — they can
+        overwrite it any time, it counts in this club only, and it never
         reaches the global table.
       </div>
     </div>

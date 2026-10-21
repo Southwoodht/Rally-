@@ -63,7 +63,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
         );
       })}
       <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.45, marginTop: 9, borderTop: "0.5px solid " + FEED_HAIRLINE, paddingTop: 8 }}>
-        Places shown are in {groupName || "this league"}. Global places aren&apos;t here — they&apos;re worked out across every league at once, so they can&apos;t be rewound to what they were on the day.
+        Places shown are in {groupName || "this club"}. Global places aren&apos;t here — they&apos;re worked out across every club at once, so they can&apos;t be rewound to what they were on the day.
       </div>
     </div>
   );

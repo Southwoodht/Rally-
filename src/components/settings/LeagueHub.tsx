@@ -80,8 +80,8 @@ export function LeagueHub(props: any) {
   // if both refuse — the code still works typed in.
   const invite = async () => {
     const link = inviteUrl(leagueJoinCode || "");
-    if (!link) { flash("This league has no invite code."); return; }
-    const text = `Join ${group?.name || "our league"} on Southwood`;
+    if (!link) { flash("This club has no invite code."); return; }
+    const text = `Join ${group?.name || "our club"} on Southwood`;
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {
         await (navigator as any).share({ title: text, text, url: link });
@@ -91,7 +91,7 @@ export function LeagueHub(props: any) {
       if (e?.name === "AbortError") return; // they closed the sheet
     }
     try { await navigator.clipboard.writeText(link); flash("Invite link copied — paste it into your group chat"); }
-    catch { flash("League code: " + leagueJoinCode); }
+    catch { flash("Club code: " + leagueJoinCode); }
   };
 
   // --- first-time checklist ----------------------------------------------
@@ -115,14 +115,14 @@ export function LeagueHub(props: any) {
     </button>
   );
 
-  if (page === "players") return <><>{back("Run your league")}</><PlayersPage {...props} /></>;
+  if (page === "players") return <><>{back("Run your club")}</><PlayersPage {...props} /></>;
   // Competition ties are managed from their competition, not from here.
-  if (page === "singles") return <><>{back("Run your league")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
-  if (page === "seasons") return <><>{back("Run your league")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
-  if (page === "levels") return <><>{back("Run your league")}</><LevelRequestsPage players={players} requests={props.levelRequests} onDecide={props.onDecideLevelRequest} flash={flash} /></>;
-  if (page === "roles") return <><>{back("Run your league")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
-  if (page === "settings") return <><>{back("Run your league")}</><SettingsPage {...props} /></>;
-  if (page === "data") return <><>{back("Run your league")}</><DataPage {...props} onImport={() => setPage("import")} /></>;
+  if (page === "singles") return <><>{back("Run your club")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
+  if (page === "seasons") return <><>{back("Run your club")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
+  if (page === "levels") return <><>{back("Run your club")}</><LevelRequestsPage players={players} requests={props.levelRequests} onDecide={props.onDecideLevelRequest} flash={flash} /></>;
+  if (page === "roles") return <><>{back("Run your club")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
+  if (page === "settings") return <><>{back("Run your club")}</><SettingsPage {...props} /></>;
+  if (page === "data") return <><>{back("Run your club")}</><DataPage {...props} onImport={() => setPage("import")} /></>;
   if (page === "import") return (
     <ImportResults
       players={players} matches={matches} meId={meId} leagueName={group?.name}
@@ -135,14 +135,14 @@ export function LeagueHub(props: any) {
     return (
       <div>
         <SurfaceCard radius={18} pad="18px 16px" style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{group?.name || "Your league"}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{group?.name || "Your club"}</div>
           <div style={{ ...note, marginTop: 4 }}>{active} players{doublesEnabled ? " · singles and doubles" : ""}</div>
           {leagueJoinCode && (
             <button onClick={invite} style={{ ...btn(FEED_LIME, FEED_LIME_INK), width: "100%", marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Link2 size={17} strokeWidth={2.2} />Invite someone
             </button>
           )}
-          <div style={{ ...note, marginTop: 12 }}>The league&apos;s organisers look after players, competitions and settings.</div>
+          <div style={{ ...note, marginTop: 12 }}>The club&apos;s organisers look after players, competitions and settings.</div>
         </SurfaceCard>
         <AccountCard displayName={displayName} />
       </div>
@@ -208,7 +208,7 @@ export function LeagueHub(props: any) {
           {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
           {!friendly && props.levelRequests && row(ic(Users), "Level requests", (() => { const n = props.levelRequests.filter((r: any) => r.status === "pending").length; return n ? `${n} waiting` : "None waiting"; })(), "levels")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
-          {!friendly && row(ic(Settings2), "League settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
+          {!friendly && row(ic(Settings2), "Club settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
           {!friendly && row(ic(Upload), "Import old results", "Paste them from a spreadsheet or notes", "import")}
           {row(ic(Database), "Data", "Clear results", "data")}
         </div>
@@ -251,7 +251,7 @@ function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSi
       {what} switched off for this league.{" "}
       {isCreator
         ? <button onClick={() => onTurnOn(patch)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>Switch on</button>
-        : "The person who created the league can switch it on."}
+        : "The person who created the club can switch it on."}
     </div>
   );
   return (
@@ -659,7 +659,7 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
   return (
     <>
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
-        <div style={{ ...lbl, marginBottom: 6 }}>League name</div>
+        <div style={{ ...lbl, marginBottom: 6 }}>Club name</div>
         <input value={group?.name || ""} onChange={(e) => updateGroup(group.id, { name: e.target.value })} style={fld} />
       </SurfaceCard>
 
@@ -670,10 +670,10 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
           () => flip({ competitions_enabled: !competitionsEnabled }, competitionsEnabled ? "Competitions switched off" : "Competitions switched on"), !!isCreator)}
         {/* Was "Fair play: Open / Setup required", which named neither what
             it does nor who it affects. */}
-        {toggle("Players need a level to be ranked", "On: anyone without a level stays greyed out and unranked until they set one — fairer for a serious league. Off: everyone is ranked straight away.",
+        {toggle("Players need a level to be ranked", "On: anyone without a level stays greyed out and unranked until they set one — fairer for a serious club. Off: everyone is ranked straight away.",
           !!group?.requireSetup, () => updateGroup(group.id, { requireSetup: !group?.requireSetup }))}
       </SurfaceCard>
-      {!isCreator && <div style={{ ...note, padding: "0 4px" }}>Only the person who created the league can switch doubles and competitions on or off.</div>}
+      {!isCreator && <div style={{ ...note, padding: "0 4px" }}>Only the person who created the club can switch doubles and competitions on or off.</div>}
     </>
   );
 }
@@ -700,14 +700,14 @@ function DataPage({ matches, onClearResults, onImport, isOwner, group, leagueId 
           league pressed it. It now opens the real importer. */}
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>Import old results</div>
-        <div style={{ ...note, margin: "4px 0 12px" }}>Paste results from before the league used Southwood — from a spreadsheet, notes or a group chat. You check every one before it&apos;s added.</div>
+        <div style={{ ...note, margin: "4px 0 12px" }}>Paste results from before the club used Southwood — from a spreadsheet, notes or a group chat. You check every one before it&apos;s added.</div>
         <button onClick={onImport} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>Import results</button>
       </SurfaceCard>
       {/* Two steps and the number out loud (§3). It sits alone on its own
           page now, rather than one mis-tap from the import button. */}
       <SurfaceCard radius={18} pad="16px 14px">
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: DOT_LOSS }}>Clear all results</div>
-        <div style={{ ...note, margin: "4px 0 12px" }}>Deletes every singles result in this league and keeps the players. For starting completely fresh — it cannot be undone.</div>
+        <div style={{ ...note, margin: "4px 0 12px" }}>Deletes every singles result in this club and keeps the players. For starting completely fresh — it cannot be undone.</div>
         {!isOwner && !friendly ? (
           <div style={note}>Only the club's owner can clear results.</div>
         ) : confirmWipe ? (

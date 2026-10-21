@@ -110,7 +110,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
         <input value={(me.initialRecord?.d ?? "") || ""} onChange={(e) => setField("initialRecord", { ...(me.initialRecord || {}), d: Number(e.target.value.replace(/[^0-9]/g, "")) })} inputMode="numeric" placeholder="Draws" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
         <input value={(me.initialRecord?.l ?? "") || ""} onChange={(e) => setField("initialRecord", { ...(me.initialRecord || {}), l: Number(e.target.value.replace(/[^0-9]/g, "")) })} inputMode="numeric" placeholder="Losses" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
       </div>
-      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only league owners can edit other players or league settings.</div>
+      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only club owners can edit other players or club settings.</div>
     </div>
   );
 }

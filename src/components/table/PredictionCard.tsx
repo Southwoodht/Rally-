@@ -7,7 +7,7 @@ export function PredictionCard({ prediction }: any) {
   const top = prediction.slice(0, 4);
   return (
     <div style={{ background: PANEL, border: "none", borderRadius: 12, padding: 16, marginBottom: 14 }}>
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 2 }}>League prediction</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 2 }}>Club prediction</div>
       <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>Chance to top the season — a model from ELO &amp; form, not a promise. Shifts with every result.</div>
       {top.map((x, i) => (
         <div key={x.p.id} style={{ marginBottom: 11 }}>

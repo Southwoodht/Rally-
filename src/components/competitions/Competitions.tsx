@@ -580,7 +580,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
         </select>
       ) : (
         <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 6 }}>
-          No season with an end date is running, so this one has no deadlines. Start a season in Run your league to give matches play-by dates.
+          No season with an end date is running, so this one has no deadlines. Start a season in Run your club to give matches play-by dates.
         </div>
       )}
       {season && (

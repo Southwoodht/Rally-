@@ -22,7 +22,7 @@ import {
 
 const ROLES: Array<{ value: "owner" | "editor" | "member"; label: string; note: string }> = [
   { value: "owner", label: "Owner", note: "Everything, including who else is an owner or editor." },
-  { value: "editor", label: "Editor", note: "Run the league — results, fixtures, announcements, levels. Not roles." },
+  { value: "editor", label: "Editor", note: "Run the club — results, fixtures, announcements, levels. Not roles." },
   { value: "member", label: "Member", note: "Play, log your own results, read everything." },
 ];
 
@@ -127,7 +127,7 @@ export function LeagueMembers({ leagueId, leagueName }: { leagueId: string; leag
 
       <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
         {iAmOwner
-          ? "A league always needs an owner, so you cannot step down until somebody else is one. Make them an owner first, then change yourself to editor or member."
+          ? "A club always needs an owner, so you cannot step down until somebody else is one. Make them an owner first, then change yourself to editor or member."
           : "Only an owner can change these."}
       </div>
     </SurfaceCard>

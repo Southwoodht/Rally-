@@ -69,7 +69,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
   // of them asks the other person to find the join screen and type WDZDTQ
   // without getting a character wrong.
   const inviteToLeague = async (row: FriendWithProfile) => {
-    if (!leagueJoinCode) { flash && flash("No league code available"); return; }
+    if (!leagueJoinCode) { flash && flash("No club code available"); return; }
     const link = inviteUrl(leagueJoinCode);
     try {
       await navigator.clipboard.writeText(link || leagueJoinCode);
@@ -77,7 +77,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
     } catch {
       // Clipboard refused, which it does on some browsers without a gesture
       // it recognises. The code still works typed in, so say it.
-      flash && flash(`League code: ${leagueJoinCode}`);
+      flash && flash(`Club code: ${leagueJoinCode}`);
     }
   };
 
@@ -184,7 +184,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
                 <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {onMessage && actionBtn("Message", () => onMessage(row.profile.id), PANEL2, CHALK)}
-                  {leagueJoinCode && actionBtn("Invite to league", () => inviteToLeague(row), PANEL2, CHALK)}
+                  {leagueJoinCode && actionBtn("Invite to club", () => inviteToLeague(row), PANEL2, CHALK)}
                   {actionBtn("Remove", () => remove(row), "transparent", CLAY)}
                 </div>
               </div>

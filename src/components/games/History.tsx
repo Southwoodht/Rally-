@@ -221,7 +221,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               : <WeeklyRoundup players={players} matches={matches} elo={elo} wdl={wdl} meId={meId} leagueId={leagueId} />}
           </div>
           <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-            <Toggle on={feedFilter === "league"} onClick={() => setFeedFilter("league")} label="League" />
+            <Toggle on={feedFilter === "league"} onClick={() => setFeedFilter("league")} label="Club" />
             <Toggle on={feedFilter === "mine"} onClick={() => setFeedFilter("mine")} label="Mine" />
             {!doublesMode && <Toggle on={feedFilter === "custom"} onClick={() => setFeedFilter("custom")} label="Custom" />}
 

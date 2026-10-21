@@ -85,7 +85,7 @@ const CSS = `
   }
 `;
 
-export function LoadingScreen({ label = "Loading your league" }: { label?: string }) {
+export function LoadingScreen({ label = "Loading your club" }: { label?: string }) {
   const root = useRef<HTMLDivElement>(null);
   // Decided once per mount, before paint: only the first screen of a page
   // load fades in; the ones that follow it are already there.

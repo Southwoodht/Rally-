@@ -38,7 +38,7 @@ const SECTIONS: Sect[] = [
   {
     id: "recording", icon: "🎾", title: "Recording a match",
     points: [
-      { label: "Existing player", text: "Pick from anyone already in your league." },
+      { label: "Existing player", text: "Pick from anyone already in your club." },
       { label: "Creating a new player", text: "If they're not in Southwood yet, add them on the spot from the same screen." },
       { label: "Real account vs shell", text: "A \"shell\" player doesn't have their own Southwood login yet — you're keeping their record on their behalf. A \"real account\" player has signed up themselves." },
       { label: "Winner, score, date", text: "Pick who won (or draw), and optionally add the score and the date it was actually played." },
@@ -60,16 +60,16 @@ const SECTIONS: Sect[] = [
     id: "achievements", icon: "🏆", title: "Achievements vs Trophies",
     points: [
       { label: "Achievements", text: "Automatically earned Southwood milestones — first win, win streaks, matches played. Southwood computes these itself from your real results; nobody has to approve them, and nobody can invent one that didn't happen." },
-      { label: "Trophies", text: "Official competitive honours — verified or awarded by a club or league administrator. A player can submit a claim (e.g. \"2019 — Club Champion\") but it only becomes a trophy on their profile once an administrator approves it. A player can never award one to themselves." },
+      { label: "Trophies", text: "Official competitive honours — verified or awarded by a club administrator. A player can submit a claim (e.g. \"2019 — Club Champion\") but it only becomes a trophy on their profile once an administrator approves it. A player can never award one to themselves." },
     ],
   },
   {
-    id: "club", icon: "🏛️", title: "Club / League",
+    id: "club", icon: "🏛️", title: "Your club",
     points: [
-      { label: "What a league is", text: "A group of players tracking results together, joined with a code — anything from a couple of mates to a full club." },
-      { label: "Friends vs League", text: "The same system works for a casual friend group or a more formal club — nothing changes structurally, just how many people are in it." },
+      { label: "What a club is", text: "A group of players tracking results together, joined with a code — anything from a couple of mates to a full club." },
+      { label: "Friends vs Club", text: "The same system works for a casual friend group or a more formal club — nothing changes structurally, just how many people are in it." },
       { label: "Club administrator", text: "Manages the club and reviews trophy claims — a separate role from being a player, and not something every member has." },
-      { label: "Official rankings", text: "Computed the same way regardless of league size — see the Rankings section above." },
+      { label: "Official rankings", text: "Computed the same way regardless of club size — see the Rankings section above." },
     ],
   },
   {

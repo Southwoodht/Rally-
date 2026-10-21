@@ -46,7 +46,7 @@ async function selectAll(table: string, leagueId: string): Promise<any[]> {
     query,
     FETCH_FAILED as any,
   );
-  if (result === (FETCH_FAILED as any)) throw new Error(`Timed out loading "${table}" for league ${leagueId}.`);
+  if (result === (FETCH_FAILED as any)) throw new Error(`Timed out loading "${table}" for club ${leagueId}.`);
   const { data, error } = result;
   if (error) throw error;
   return data || [];

@@ -150,7 +150,7 @@ export function ProfileContainer({
     const ranks = rankMaps(players, matches, elo, wdl);
     const field = Object.keys(ranks.off).length;
     const rankings = [
-      { label: group?.name || "League", value: ranks.off[pid] ? ordinal(ranks.off[pid]) + " of " + field : "unranked", emphasis: true },
+      { label: group?.name || "Club", value: ranks.off[pid] ? ordinal(ranks.off[pid]) + " of " + field : "unranked", emphasis: true },
       { label: "Elo", value: ranks.el[pid] ? ordinal(ranks.el[pid]) + " of " + field : "unranked" },
       { label: "Record", value: ranks.rec[pid] ? ordinal(ranks.rec[pid]) + " of " + field : "unranked" },
     ];
@@ -327,7 +327,7 @@ export function ProfileContainer({
       }}
       viewer={viewer}
       header={{
-        leagueName: group?.name || "League",
+        leagueName: group?.name || "Club",
         player,
         meta: data.meta || undefined,
         levelLabel: (() => { const lv = levelNow(player); return lv ? lv.cat + " · " + lv.sub : "No level set"; })(),

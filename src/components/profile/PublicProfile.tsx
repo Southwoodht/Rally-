@@ -170,11 +170,11 @@ export function PublicProfile({ id }: { id: string }) {
 
   if (state === "loading") return shell(<div style={{ fontFamily: body, color: FEED_TEXT_MID, padding: 30, textAlign: "center" }}>Loading…</div>);
   if (state === "signedOut") return note("Sign in to see profiles", "Southwood profiles are for people with an account.", true);
-  if (state === "unclaimed") return note("Not on Southwood yet", "This player has a record in a league but no account, so there is no profile to open. Their results still count wherever they have played.");
+  if (state === "unclaimed") return note("Not on Southwood yet", "This player has a record in a club but no account, so there is no profile to open. Their results still count wherever they have played.");
   // Deliberately not "no account". We do not know that: the row is in a league
   // this account cannot read, and the only thing that could tell us apart from
   // a shell is auth_id_for_player(), which is not installed.
-  if (state === "unresolved") return note("Can't open this one", "They play in a league this account can't see, so Southwood can't tell which profile to open. Nothing is wrong with their record.");
+  if (state === "unresolved") return note("Can't open this one", "They play in a club this account can't see, so Southwood can't tell which profile to open. Nothing is wrong with their record.");
   if (state === "missing" || !card) return note("No such player", "That profile does not exist, or it is not shared with you.");
 
   /**
@@ -237,9 +237,9 @@ export function PublicProfile({ id }: { id: string }) {
    * about a screen that shows you nothing.
    */
   const summaryNote = snapReason === "not-installed" || card.cardStale
-    ? "Southwood can't load their league on this account yet, so this is a summary rather than their full profile — and older results may be missing their opponent links."
+    ? "Southwood can't load their club on this account yet, so this is a summary rather than their full profile — and older results may be missing their opponent links."
     : snapReason === "failed"
-      ? "Their league didn't load, so this is a summary. Pull down to try again."
+      ? "Their club didn't load, so this is a summary. Pull down to try again."
       : null;
 
   const isMe = !!meId && meId === authId;

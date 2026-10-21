@@ -62,7 +62,7 @@ const nameOf = (r: GlobalRow) => r.name + (r.last ? " " + r.last : "");
  */
 const statusOf = (r: GlobalRow) => {
   const lv = r.level?.cat || "No level";
-  const claim = !r.claimed ? "unclaimed" : r.leagues > 1 ? r.leagues + " leagues" : "1 league";
+  const claim = !r.claimed ? "unclaimed" : r.leagues > 1 ? r.leagues + " clubs" : "1 club";
   return lv + " · " + claim;
 };
 

@@ -98,7 +98,7 @@ export function ClubAdminReview() {
 
       {adminClubs.length === 0 && (
         <div style={{ background: PANEL, borderRadius: 14, padding: "14px", marginBottom: 20 }}>
-          <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: BALL, marginBottom: 8 }}>Set up your club</div>
+          <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: BALL, marginBottom: 8 }}>Set up trophies for your club</div>
           <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
             You don't administer a club yet, so there's nobody to verify a trophy. Creating one makes you its
             administrator — you'll be able to approve claims and give trophies straight away.
@@ -111,7 +111,7 @@ export function ClubAdminReview() {
 
       {clubs.length > 0 && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Your clubs</div>
+          <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Clubs giving trophies</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[...adminClubs, ...memberClubs].map((c) => (
               <div key={c.id} style={{ background: PANEL, borderRadius: 14, padding: "12px 14px" }}>
@@ -126,7 +126,7 @@ export function ClubAdminReview() {
                 </div>
                 {c.role === "admin" && (
                   <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid " + LINE, display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Anyone joining this club types</span>
+                    <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Anyone adding these trophies types</span>
                     <span style={{ fontFamily: body, fontSize: 14, fontWeight: 700, color: CHALK, letterSpacing: 2 }}>{c.join_code}</span>
                   </div>
                 )}
@@ -137,7 +137,7 @@ export function ClubAdminReview() {
       )}
 
       <div style={{ background: PANEL, borderRadius: 14, padding: "14px", marginBottom: 20 }}>
-        <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Join a club by code</div>
+        <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Join another club’s trophies by code</div>
         <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
           <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="e.g. K7P2Q9" maxLength={12} style={{ ...input, boxSizing: "border-box" as const, flex: 1, fontFamily: body, letterSpacing: 2 }} />
           <BigBtn onClick={join} disabled={busy} color={BALL} grow={false}>Join</BigBtn>

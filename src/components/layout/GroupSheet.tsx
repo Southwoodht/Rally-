@@ -18,7 +18,7 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
               <span style={{ width: 22, height: 22, borderRadius: 10, display: "grid", placeItems: "center", background: personal ? BALL : PANEL2, border: "none" }}>{personal && <Check size={14} color={COURT} strokeWidth={3} />}</span>
               <span>
                 <span style={{ display: "block", fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Everyone I&apos;ve played</span>
-                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>No league, no season — just the people you&apos;ve faced</span>
+                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>No club, no season — just the people you&apos;ve faced</span>
               </span>
             </button>
           </div>
@@ -37,13 +37,13 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
               <span style={{ width: 22, height: 22, borderRadius: 10, display: "grid", placeItems: "center", background: friendly ? BALL : "transparent", border: friendly ? "none" : "1.5px solid " + MUTED }} />
               <span>
                 <span style={{ display: "block", fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Just me and my mates</span>
-                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>Matches outside any league</span>
+                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>Matches outside any club</span>
               </span>
             </button>
           </div>
         </div>
 
-        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Your leagues</div>
+        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Your clubs</div>
         <div style={listCard}>
           {groups.map((g) => {
             const on = !personal && g.id === currentId;
@@ -59,7 +59,7 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
           })}
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New league name…" onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} style={{ ...input, marginBottom: 0, boxSizing: "border-box" as const }} />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New club name…" onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} style={{ ...input, marginBottom: 0, boxSizing: "border-box" as const }} />
           <BigBtn onClick={() => { if (name.trim()) { onAdd(name.trim()); setName(""); } }} color={BALL} grow={false}>Create</BigBtn>
         </div>
         {friendly && (
@@ -67,7 +67,7 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
             onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}
             style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15 }}
           >
-            Back to your leagues
+            Back to your clubs
           </button>
         )}
         {/* The one thing this sheet could not do, and the only reason the
@@ -83,11 +83,11 @@ export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClo
             onClick={onManageLeagues}
             style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15, textAlign: "left" }}
           >
-            Join or leave a league
+            Join or leave a club
             <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: MUTED, marginTop: 2 }}>Enter a code, see your join codes, or leave one</span>
           </button>
         )}
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Each league keeps its own players, results and rankings — your mates and your work crew stay totally separate.</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Each club keeps its own players, results and rankings — your mates and your work crew stay totally separate.</div>
       </div>
     </div>
   );

@@ -104,7 +104,7 @@ export async function leaveLeague(id: string): Promise<void> {
   if (!uid) throw new Error("You need to be logged in.");
   const { error }: any = await withSupabaseTimeout(
     supabase.from("league_members").delete().eq("league_id", id).eq("user_id", uid),
-    { error: { message: "Timed out leaving the league." } } as any,
+    { error: { message: "Timed out leaving the club." } } as any,
   );
   if (error) throw error;
 }
@@ -127,7 +127,7 @@ export async function createLeague(name: string, location: string): Promise<Leag
     lastError = error;
     if (error.code !== "23505") break;   // 23505 = duplicate code, worth retrying
   }
-  if (!league) throw lastError || new Error("Couldn't create the league.");
+  if (!league) throw lastError || new Error("Couldn't create the club.");
 
   const { error: memberError } = await withSupabaseTimeout(
     supabase.from("league_members").insert({ league_id: league.id, user_id: uid, role: "owner" }),
@@ -166,7 +166,7 @@ export async function joinLeague(code: string): Promise<League> {
     if (error) throw error;
     league = data;
   }
-  if (!league) throw new Error("No league found with that code.");
+  if (!league) throw new Error("No club found with that code.");
 
   const { error: joinError } = await withSupabaseTimeout(
     supabase.from("league_members").insert({ league_id: league.id, user_id: uid, role: "member" }),
@@ -271,6 +271,6 @@ export async function setLeagueFlags(
   );
   if (res.error) throw res.error;
   if (!res.data || !res.data.length) {
-    throw new Error("Only the person who created this league can change that.");
+    throw new Error("Only the person who created this club can change that.");
   }
 }

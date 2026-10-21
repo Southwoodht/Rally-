@@ -175,7 +175,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
             </div>
           ) : (
             <button onClick={() => setConfirmRemove(true)} style={{ width: "100%", background: "none", border: "none", color: DOT_LOSS, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "10px 0" }}>
-              Remove from the league
+              Remove from the club
             </button>
           )
         )}
