@@ -102,3 +102,37 @@ export function shareForPlayer(match: any, playerId: string): number | null {
   if (match.p2 === playerId) return gamesShare(oriented, false);
   return null;
 }
+
+/**
+ * What's wrong with this score for this result, in words — or null if
+ * nothing is (Sam, 2026-10-22, after "Lost to Zaach 6-6" was saved: the app
+ * had never checked that a score and the winner agree).
+ *
+ * Sets decide a match, so sets are read first; games only when the sets are
+ * level (one each and an unfinished third, a single unfinished set). A score
+ * that is level on both can only be a draw.
+ *
+ * `oriented` is true where the score is known to be written p1-first — Log a
+ * result's grid is. A free-text box has no such convention (see parseSets),
+ * so there only a contradiction that holds either way round is reported: a
+ * level score with a winner, a decisive score called a draw.
+ *
+ * No score is never a problem: the box is optional.
+ */
+export function scoreProblem(score: string | null | undefined, winner: "p1" | "p2" | "draw", oriented: boolean): string | null {
+  if (!score || !score.trim()) return null;
+  const sets = parseSets(score);
+  if (!sets) return "That score can't be read. Write it like 6-4, 3-6, 7-5.";
+  let setsA = 0, setsB = 0;
+  for (const s of sets) { if (s.a > s.b) setsA++; else if (s.b > s.a) setsB++; }
+  const t = gameTotals(sets);
+  const lead = setsA !== setsB ? (setsA > setsB ? "a" : "b") : t.a !== t.b ? (t.a > t.b ? "a" : "b") : null;
+  if (!lead) {
+    return winner === "draw" ? null : "That score is level, so nobody won it. If there was a tie-break, add it (e.g. 7-6). Otherwise choose Draw.";
+  }
+  if (winner === "draw") return "That score has a winner, so it can't be a draw. Check the score or pick who won.";
+  if (oriented && ((lead === "a") !== (winner === "p1"))) {
+    return "The score says the other player won. Check the score or pick who won.";
+  }
+  return null;
+}

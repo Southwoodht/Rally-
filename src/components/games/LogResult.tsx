@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { scoreProblem } from "@/core/sets";
 import { buildBulk } from "@/components/games/bulk";
 import { BigBtn, Empty, Field, Toggle } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
@@ -72,6 +73,9 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   const submit = (winner) => {
     if (!p1 || !p2) return setErr("Pick both players.");
     if (p1 === p2) return setErr("Pick two different players.");
+    // The grid is written Player 1 first, so the check knows direction.
+    const problem = scoreProblem(scoreStr, winner, true);
+    if (problem) return setErr(problem);
     setErr("");
     const when = dateStr ? new Date(dateStr).getTime() : Date.now();
     // Snapshot Rally's prediction using the state as it stood right before

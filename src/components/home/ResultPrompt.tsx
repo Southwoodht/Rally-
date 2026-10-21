@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { scoreProblem } from "@/core/sets";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { formatMatchDateTime } from "@/lib/format";
 import {
@@ -51,6 +52,8 @@ export function ResultPrompt({ items, onResolve, onCancel }: {
   if (!items.length) return null;
 
   const submit = async (it: AwaitingResult, winner: "p1" | "p2" | "draw") => {
+    const problem = scoreProblem(score, winner, false);
+    if (problem) { setError(problem); return; }
     setSaving(true); setError(null);
     let ok = false;
     try {

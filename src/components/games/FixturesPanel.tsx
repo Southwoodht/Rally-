@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { scoreProblem } from "@/core/sets";
 import { DEFAULT_DURATION_MINUTES, DURATION_CHOICES } from "@/core/booking";
 import { Calendar, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
@@ -96,6 +97,10 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const [saving, setSaving] = useState(false);
 
   const submit = async (f: any, winner: "p1" | "p2" | "draw") => {
+    // Free text has no "who first" rule, so only what's wrong either way
+    // round is refused (core/sets.ts scoreProblem).
+    const problem = scoreProblem(scoreText, winner, false);
+    if (problem) { setSaveError(problem); return; }
     setSaving(true); setSaveError(null);
     let ok = false;
     try {

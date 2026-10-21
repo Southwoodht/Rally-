@@ -28,6 +28,7 @@
     "src/core/leagueGame.test.ts",
     "src/core/domination.ts",
     "src/core/domination.test.ts",
+    "src/core/scoreCheck.test.ts",
     "src/core/feedContext.ts",
     "src/core/matchGrade.ts",
     "src/core/matchGrade.test.ts",
