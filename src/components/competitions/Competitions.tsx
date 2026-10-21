@@ -512,7 +512,10 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
   const blank = () => ({ p1: "", p2: "" });
   const [name, setName] = useState("");
   const [format, setFormat] = useState<CompetitionFormat>("league");
-  const [legs, setLegs] = useState(1);
+  // Twice by default (Sam, 2026-10-21): a group of five playing each other
+  // twice is eight matches each over a winter, roughly one a fortnight — and
+  // enough for the season table, which ranks at three.
+  const [legs, setLegs] = useState(2);
   const [pointsWin, setPointsWin] = useState("3");
   const [pointsDraw, setPointsDraw] = useState("1");
   const [entries, setEntries] = useState<Array<{ p1: string; p2: string }>>([blank(), blank()]);

@@ -18,6 +18,7 @@ import { MARGIN_WEIGHT } from "@/core/constants";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { fullNameOf, winPct } from "@/lib/format";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
+import { SEASON_RANK_GAMES } from "@/core/seasons";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, segmentOption, segmentTrack } from "@/lib/theme";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
@@ -49,7 +50,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     if (seasonEnded) return seasonMatches(matches, season);
     return matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end));
   }, [matches, inSeason, season, seasonEnded]);
-  const podium = useMemo(() => (inSeason && seasonEnded ? seasonPodium(players, matches, season) : []), [inSeason, seasonEnded, players, matches, season]);
+  const podium = useMemo(() => (inSeason && seasonEnded ? seasonPodium(players, matches, season, SEASON_RANK_GAMES) : []), [inSeason, seasonEnded, players, matches, season]);
   const filtered = useMemo(() => tableYr === "all" ? seasonFiltered : seasonFiltered.filter((m) => new Date(m.date).getFullYear() === tableYr), [seasonFiltered, tableYr]);
   const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, filtered), [players, filtered]);
   const officialMap = useMemo(() => computeOfficial(players, filtered, wdl), [players, filtered, wdl]);
@@ -265,13 +266,14 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // In a season, only the people who have played in it. Everyone else would
   // be listed "1=" with "no games yet" — a table of ties nobody earned.
   const seasonal = inSeason ? searched.filter((pl: any) => (wdl[pl.id]?.gp || 0) > 0) : searched;
-  // A place is a claim about where somebody stands, and fewer than
-  // PROVISIONAL_GAMES matches cannot back one (brief item 4; the Global table
-  // has drawn this line since 2026-09-06). Below it you are listed underneath
-  // with how many more you need — "Dan T · 2 more matches to rank" — rather
-  // than shown as "1st of 1". Counted on what this view counts, so a season
-  // asks for five matches IN the season.
-  const isRanked = (id: string) => (wdl[id]?.gp || 0) >= PROVISIONAL_GAMES;
+  // A place is a claim about where somebody stands, and too few matches
+  // cannot back one (brief item 4; the Global table has drawn this line since
+  // 2026-09-06). Below it you are listed underneath with how many more you
+  // need — "Dan T · 2 more matches to rank" — rather than shown as "1st of 1".
+  // Counted on what this view counts: all time asks for PROVISIONAL_GAMES (5),
+  // a season for SEASON_RANK_GAMES (3) played IN the season.
+  const minGames = inSeason ? SEASON_RANK_GAMES : PROVISIONAL_GAMES;
+  const isRanked = (id: string) => (wdl[id]?.gp || 0) >= minGames;
   const standingsPlayers: StandingsPlayer[] = seasonal.map((pl: any) => {
     const r = wdl[pl.id] || { w: 0, d: 0, l: 0, gp: 0 };
     return {
@@ -327,7 +329,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
           ) : (
             <>
             {rankedRows.length === 0 && (
-              <Empty msg={`Nobody has played ${PROVISIONAL_GAMES} matches${inSeason ? " this season" : ""} yet, so nobody is ranked. Everyone so far is listed below.`} />
+              <Empty msg={`Nobody has played ${minGames} matches${inSeason ? " this season" : ""} yet, so nobody is ranked. Everyone so far is listed below.`} />
             )}
             {rankedRows.length > 0 && <StandingsList
               players={rankedRows}
@@ -341,7 +343,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
                 <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Not ranked yet</div>
                 {unrankedRows.map((sp: any, i: number) => {
                   const gp = wdl[sp.player.id]?.gp || 0;
-                  const left = PROVISIONAL_GAMES - gp;
+                  const left = minGames - gp;
                   const pl = sp.player;
                   const short = (pl.name || "").trim() + (pl.last ? " " + String(pl.last).trim()[0].toUpperCase() : "");
                   return (

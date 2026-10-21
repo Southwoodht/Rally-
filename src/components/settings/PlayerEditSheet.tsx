@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { StartRecordEditor } from "@/components/settings/StartRecordEditor";
 import { Avatar } from "@/components/ui/Avatar";
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { TimelineEditor } from "@/components/settings/TimelineEditor";
@@ -45,6 +46,8 @@ interface Props {
   onSetLevel?: (level: { cat: string; sub: string } | null) => Promise<void>;
   /** An organiser correcting the history itself (adding or removing a period). */
   onSetHistory?: (history: any[]) => Promise<void>;
+  /** An organiser setting the starting rating and carried-in record. Absent: not shown. */
+  onSetStart?: (elo: number | null, record: { w: number; d: number; l: number } | null) => Promise<void>;
 }
 
 const lbl: React.CSSProperties = {
@@ -56,7 +59,7 @@ const fld: React.CSSProperties = {
   padding: "10px 12px", width: "100%", boxSizing: "border-box",
 };
 
-export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory }: Props) {
+export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory, onSetStart }: Props) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [timeline, setTimeline] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -119,7 +122,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
           <div style={{ background: FEED_CARD, borderRadius: 14, padding: 14, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.55, marginBottom: 14 }}>
             <div style={{ color: FEED_TEXT_HI }}>{[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}</div>
             {lvl && <div>{lvl.cat} · {lvl.sub}{levelIsEstimated(p) ? " — your estimate" : ""}</div>}
-            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their level, which is yours to set" : ""}.</div>
+            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their level and starting record, which are yours to set" : ""}.</div>
           </div>
         ) : (
           <>
@@ -147,6 +150,13 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
         )}
 
         {locked && levelSection && <div style={{ marginBottom: 6 }}>{levelSection}</div>}
+
+        {onSetStart && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={lbl}>Starting rating &amp; record</div>
+            <StartRecordEditor key={p.id} player={p} fieldStyle={fld} onSave={onSetStart} />
+          </div>
+        )}
 
         {/* About the league, not about them, so staff can set it on anyone. */}
         <button

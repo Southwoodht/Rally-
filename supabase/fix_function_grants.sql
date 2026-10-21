@@ -61,6 +61,8 @@ begin
     'public.set_player_level(text, jsonb, jsonb)',
     'public.guard_player_level()',
     'public.log_player_level()',
+    -- Starting rating and record (schema_starting_record_organisers.sql).
+    'public.set_player_start(text, numeric, jsonb)',
     -- The doubles sanity trigger's function (schema_doubles.sql). Not an
     -- entry point — nothing calls it but the trigger — and the migration
     -- revokes it itself. It is listed anyway because `create or replace`
@@ -105,7 +107,7 @@ select f.proname                                 as function,
      'nudge_match', 'level_val', 'start_thread', 'unread_message_count',
      'find_league_by_code',
      'close_season_if_due', 'guard_competition_fixture',
-     'set_player_level', 'guard_player_level', 'log_player_level',
+     'set_player_level', 'guard_player_level', 'log_player_level', 'set_player_start',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )

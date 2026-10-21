@@ -33,6 +33,16 @@ const DAY_MS = 86400000;
 const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /** Today's date in the UK, "YYYY-MM-DD". */
+/**
+ * Matches in a season before somebody is given a place on its table. Lower
+ * than the all-time PROVISIONAL_GAMES (5) on purpose — Sam's ruling,
+ * 2026-10-21: a winter season is five months and a group of five playing
+ * twice is eight matches each, so five would leave most of a club "not
+ * ranked yet" until spring. Competition tables have no cut-off at all: they
+ * rank on points, like any league.
+ */
+export const SEASON_RANK_GAMES = 3;
+
 export function londonDay(ts: number = Date.now()): string {
   // en-CA formats as YYYY-MM-DD.
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ts));

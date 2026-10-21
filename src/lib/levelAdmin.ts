@@ -71,6 +71,25 @@ export async function setPlayerLevel(playerId: string, level: { cat: string; sub
   }
 }
 
+/**
+ * An organiser setting somebody's starting rating and carried-in record —
+ * the same door as the level, for the same reason (Sam, 2026-10-21: "the
+ * same loophole as levels, just through a different door").
+ * schema_starting_record_organisers.sql.
+ */
+export async function setPlayerStart(playerId: string, elo: number | null, record: { w: number; d: number; l: number } | null): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const result: any = await withSupabaseTimeout(
+    supabase.rpc("set_player_start", { p_player_id: playerId, p_elo: elo, p_record: record }),
+    { error: { message: "timed out" } } as any,
+  );
+  if (result?.error) {
+    throw new Error(missingFn(result.error, "set_player_start")
+      ? "Organiser starting records aren't switched on yet — supabase/schema_starting_record_organisers.sql hasn't been run."
+      : String(result.error.message || "Couldn't save that."));
+  }
+}
+
 export interface LevelRequest {
   id: string;
   leagueId: string;

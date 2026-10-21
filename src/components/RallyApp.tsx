@@ -65,9 +65,9 @@ import { computeOfficial } from "@/core/official";
 import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
-import { dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
+import { SEASON_RANK_GAMES, dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
 import { sealTimeline, withLevelChange } from "@/core/levels";
-import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, type LevelRequest } from "@/lib/levelAdmin";
+import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, setPlayerStart, type LevelRequest } from "@/lib/levelAdmin";
 import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
 import { closeSeasonIfDue, createSeason, endSeason, updateSeason } from "@/lib/seasons";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
@@ -1182,7 +1182,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   /** The announcement for a season that has just closed — by date or by hand. */
   const postSeasonWinners = (s: any) => {
     const ps = gdata.players || [];
-    const pod = seasonPodium(ps, gdata.matches || [], { ...s, endedAt: Date.now() });
+    const pod = seasonPodium(ps, gdata.matches || [], { ...s, endedAt: Date.now() }, SEASON_RANK_GAMES);
     const nameOfId = (id: string) => fullNameOf(ps.find((p: any) => p.id === id));
     addPost(seasonClosedPost(s.name, pod.map((p) => ({ name: nameOfId(p.playerId), place: p.place })), seasonCompetitionWinners(s.id)), true);
   };
@@ -1299,6 +1299,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       await setPlayerLevel(id, level, sealed);
       patchPlayerLocal(id, { level, levelHistory: sealed });
     } catch (e: any) { flash(e?.message || "Couldn't save that history."); throw e; }
+  };
+  // Starting rating and record: the same organiser door (Sam, 2026-10-21).
+  const setStartFor = async (id: string, elo: number | null, record: { w: number; d: number; l: number } | null) => {
+    const p = players.find((x) => x.id === id);
+    try {
+      await setPlayerStart(id, elo, record);
+      patchPlayerLocal(id, { initialElo: elo ?? undefined, initialRecord: record ?? undefined });
+      flash("Starting record saved for " + fullNameOf(p));
+    } catch (e: any) { flash(e?.message || "Couldn't save that."); throw e; }
   };
   const reloadLevelRequests = () => {
     if (!gid || isFriendlyLeague(gid) || gid === DEV_LEAGUE_ID) return;
@@ -2047,7 +2056,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash}
-          canSetLevels={canSetLevels} onSetLevel={setLevelFor} friendly={isFriendlyLeague(gid)}
+          canSetLevels={canSetLevels} onSetLevel={setLevelFor} onSetStart={canSetLevels ? setStartFor : undefined} friendly={isFriendlyLeague(gid)}
           pendingRequest={(levelRequests || []).find((r) => r.playerId === meId && r.status === "pending") || null}
           onAskLevel={levelRequests ? askForLevel : undefined} />}
         {tab === "settings" && <SubHeader title={canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"} onBack={() => setTab("profile")} />}
@@ -2069,6 +2078,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onDecideLevelRequest={decideRequest}
             onSetLevelFor={canSetLevels ? setLevelFor : undefined}
             onSetHistoryFor={canSetLevels ? setHistoryFor : undefined}
+            onSetStartFor={canSetLevels ? setStartFor : undefined}
             onStartDoublesCompetition={() => { setSport("doubles"); setTab("fixtures"); setCompCreateSignal((n) => n + 1); }}
             onStartSinglesCompetition={() => { setSport("singles"); setTab("fixtures"); setSinglesCreateSignal((n) => n + 1); }}
             onLogResult={() => setTab("add")}

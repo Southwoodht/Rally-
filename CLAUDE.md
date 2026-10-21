@@ -874,6 +874,30 @@ loser's Official points (largest +3.8, Mike losing to Hugh): the activity term
 plus the cheap cost of a loss to a stronger player. A −1000000 in that report
 is the no-games sentinel, not a score.
 
+**Waiting to be run: `schema_starting_record_organisers.sql`** (winter-pilot,
+2026-10-21). Sam: the starting rating/record is "the same loophole as levels,
+just through a different door". It replaces `guard_player_level()` so
+`initial_elo` / `initial_record` follow the level rule exactly (organisers for
+anyone; a player's own only while both are empty, i.e. onboarding), and adds
+`set_player_start()`. Until it runs, the organiser's Save says which file is
+missing; players already see the fields read-only, because the app hides them.
+
+**Ranking cut-offs, Sam's ruling 2026-10-21.** All-time table: 5
+(`PROVISIONAL_GAMES`). Season table and its podium: 3 (`SEASON_RANK_GAMES` in
+`core/seasons.ts`). Competition/group tables: none — they rank on points.
+New league-format competitions default to play each other twice.
+
+**Proposed, NOT applied: "a loss can never raise your Official points".** Sam
+wants it ("I lost and my points went up" breaks trust, even at 7 in 115). The
+cause is the activity term, `gp / (gp + 10)`: a loss to a strong player costs
+as little as 0.4 but still adds a game of activity. The proposal is one line —
+activity counts wins and draws only, `(w + d) / (w + d + 10)`. On Seacourt's
+real export it takes the cases from 7/115 to 0/115 (all time) and 5/59 to
+0/59 (2026), keeps Charlie gaining from playing Zaach (+1.9), and lowers
+everyone with losses (Adrian 35.2 → 23.3, Charlie 40.5 → 32.2). Order changes
+only at the foot of the all-time table. Waiting on Sam's approval; then
+`official.test.ts`'s pinned Seacourt numbers have to move with it.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.

@@ -6,11 +6,21 @@ import { LEVELS, SUBS } from "@/core/constants";
 import { readPhotoAsDataUrl } from "@/lib/photo";
 import { updateMyPublicProfile } from "@/lib/profiles";
 import { LevelRequestForm } from "@/components/profile/LevelRequestForm";
+import { StartRecordEditor } from "@/components/settings/StartRecordEditor";
 import { BALL, CHALK, MUTED, NICKS, body, card, miniInput } from "@/lib/theme";
 
 const PHOTO_SIZE = 160;
 
-export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, pendingRequest, onAskLevel, friendly }: any) {
+/** "Rating 1200 · record 4-0-2", or null when nothing was carried in. */
+const startSummary = (p: any): string | null => {
+  const r = p.initialRecord;
+  const rec = r && (r.w || r.d || r.l) ? `record ${r.w || 0}-${r.d || 0}-${r.l || 0}` : null;
+  const elo = p.initialElo != null && p.initialElo !== "" && Number(p.initialElo) !== 0 ? `rating ${p.initialElo}` : null;
+  const parts = [elo, rec].filter(Boolean) as string[];
+  return parts.length ? parts.join(" · ").replace(/^./, (c) => c.toUpperCase()) : null;
+};
+
+export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, onSetStart, pendingRequest, onAskLevel, friendly }: any) {
   const me = players.find((p) => p.id === meId);
   const fileRef = useRef<HTMLInputElement>(null);
   if (!me) return <Empty msg="Pick who you are first." />;
@@ -100,16 +110,20 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
       {mayPick && !me.level && !canSetLevels && !friendly && (
         <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>Pick carefully: after this, only the organisers can change it.</div>
       )}
-      <L>Rating</L>
-      <div style={{ display: "flex", gap: 6 }}>
-        <input value={me.initialElo ?? ""} onChange={(e) => setField("initialElo", e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="ELO" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
-      </div>
-      <L>Existing record</L>
-      <div style={{ display: "flex", gap: 6 }}>
-        <input value={(me.initialRecord?.w ?? "") || ""} onChange={(e) => setField("initialRecord", { ...(me.initialRecord || {}), w: Number(e.target.value.replace(/[^0-9]/g, "")) })} inputMode="numeric" placeholder="Wins" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
-        <input value={(me.initialRecord?.d ?? "") || ""} onChange={(e) => setField("initialRecord", { ...(me.initialRecord || {}), d: Number(e.target.value.replace(/[^0-9]/g, "")) })} inputMode="numeric" placeholder="Draws" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
-        <input value={(me.initialRecord?.l ?? "") || ""} onChange={(e) => setField("initialRecord", { ...(me.initialRecord || {}), l: Number(e.target.value.replace(/[^0-9]/g, "")) })} inputMode="numeric" placeholder="Losses" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
-      </div>
+      <L>Starting rating &amp; record</L>
+      {friendly || onSetStart ? (
+        <StartRecordEditor player={me} fieldStyle={{ ...miniInput, boxSizing: "border-box" as const }}
+          onSave={friendly
+            ? async (elo, record) => { setPlayers(players.map((p) => p.id === meId ? { ...p, initialElo: elo ?? undefined, initialRecord: record ?? undefined } : p)); }
+            : (elo, record) => onSetStart(meId, elo, record)} />
+      ) : (
+        // Locked like the level (Sam, 2026-10-21): it counts in the ratings,
+        // so it is the organisers' to set. Shown, so nobody wonders where it went.
+        <div style={{ fontFamily: body, fontSize: 15, color: CHALK, lineHeight: 1.5 }}>
+          {startSummary(me) || "None carried in."}
+          <div style={{ fontSize: 12.5, color: MUTED }}>Set by the organisers. Ask one if it&apos;s wrong.</div>
+        </div>
+      )}
       <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only club owners can edit other players or club settings.</div>
     </div>
   );

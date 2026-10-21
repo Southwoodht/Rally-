@@ -274,7 +274,7 @@ function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSi
 // Players
 // ---------------------------------------------------------------------------
 
-function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash, leagueId, onSetLevelFor, onSetHistoryFor }: any) {
+function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash, leagueId, onSetLevelFor, onSetHistoryFor, onSetStartFor }: any) {
   const friendly = isFriendlyLeague(leagueId);
   const [name, setName] = useState("");
   const [q, setQ] = useState("");
@@ -345,6 +345,9 @@ function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash
           onSetHistory={friendly
             ? async (h) => { setPlayers(players.map((x: any) => (x.id === editingPlayer.id ? { ...x, levelHistory: h } : x))); }
             : onSetHistoryFor ? (h) => onSetHistoryFor(editingPlayer.id, h).catch(() => {}) : undefined}
+          onSetStart={friendly
+            ? async (elo, record) => { setPlayers(players.map((x: any) => (x.id === editingPlayer.id ? { ...x, initialElo: elo ?? undefined, initialRecord: record ?? undefined } : x))); }
+            : onSetStartFor ? (elo, record) => onSetStartFor(editingPlayer.id, elo, record) : undefined}
           onRemove={() => { onRemovePlayer(editingPlayer.id); setEditing(null); flash("Player removed"); }}
           onClose={() => setEditing(null)}
         />
