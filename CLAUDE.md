@@ -856,13 +856,23 @@ now only the fallback `useSeasons` reads when the table is missing). A
 season's standings "freeze" by rule, not storage: matches dated in it and
 logged before `ended_at` (`core/seasonStandings.ts`).
 
-**Waiting to be run: `schema_levels_organisers.sql`** (winter-pilot, 2026-10-21).
+**Run on 2026-10-21, verified (true, true, 2, true, false): `schema_levels_organisers.sql`** (winter-pilot). Live on the real database, so master's app is already bound by it: a player who has a level can no longer change it themselves, even before winter-pilot merges.
 A trigger on players lets only owner/organisers change `level` /
 `level_history` (or the player's own first pick while they have none);
 `set_player_level()` is the organiser door that also reaches signed-up
 players; `level_changes` logs every change by trigger; `level_requests` holds
-players' asks. Until it runs, organiser level edits fail with a message naming
-the file, and players can still change their own level as before.
+players' asks.
+
+**Fairness check, 2026-10-21 (brief item 3), on Sam's real Seacourt export —
+no formula changed.** `scripts/fairness-report.mjs` reruns every rating with
+and without one player's matches against the top player. Charlie Henry's 35
+matches against Zaach (9-0-26): Official 40.5 with them, 36.5 without; Strength
+709 against 684; Elo 80 against 41. So Official and Strength reward playing
+the best and Elo punishes it — Elo is the one with the problem, and it is the
+§9 level-multiplier asymmetry again. 7 of 115 losses all-time raised the
+loser's Official points (largest +3.8, Mike losing to Hugh): the activity term
+plus the cheap cost of a loss to a stronger player. A −1000000 in that report
+is the no-games sentinel, not a score.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
