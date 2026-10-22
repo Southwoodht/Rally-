@@ -219,9 +219,9 @@ export default function Dashboard({ session }: { session: Session }) {
   if (view === "join") return shell(
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
       <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Join a club</div>
-      <input style={{ ...field, fontFamily: body, letterSpacing: 3, textTransform: "uppercase" }} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="ABC123" maxLength={8} />
+      <input style={{ ...field, fontFamily: body, letterSpacing: 3, textTransform: "uppercase" }} value={code} onChange={(e) => { const v = e.target.value; const m = /join=([A-Za-z0-9]+)/i.exec(v); setCode((m ? m[1] : v).toUpperCase().slice(0, 8)); }} placeholder="ABC123" />
       <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? "Joining…" : "Join club"}</button>
-      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Ask whoever set the club up for the code — it&apos;s shown at the top of their screen.</div>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Type the club code, or paste the invite link. Organisers find both in Run your club.</div>
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
     </div>
   );

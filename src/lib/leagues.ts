@@ -140,7 +140,11 @@ export async function createLeague(name: string, location: string): Promise<Leag
 
 export async function joinLeague(code: string): Promise<League> {
   if (!supabase) throw new Error("Not connected.");
-  const clean = code.trim().toUpperCase();
+  // A pasted invite link works as well as the code: Run your club's "Copy
+  // link" puts the whole link on the clipboard, and that is what people paste
+  // (Sam, 2026-10-22). Take the code out of `?join=` if it's there.
+  const fromLink = /[?&]join=([A-Za-z0-9]+)/i.exec(code);
+  const clean = (fromLink ? fromLink[1] : code).trim().toUpperCase();
   if (!clean) throw new Error("Enter a code.");
 
   const { data: userData } = await withSupabaseTimeout(supabase.auth.getUser(), { data: { user: null }, error: null } as any);
