@@ -231,6 +231,12 @@ export function Competitions(props: Props) {
  * points. One component for the competition's own screen and for the
  * Divisions view on the Table tab, so the two can never show different
  * tables for the same division.
+ *
+ * Tapping a row opens that player's matches underneath — who, the result,
+ * the score and the points it earned, plus what is left to play. Sam,
+ * 2026-10-22: "is there a way to click on a profile or wins to see where it
+ * all come from?" The points come from the same pointsWin / pointsDraw the
+ * table adds up, so the list always sums to the Pts column.
  */
 export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, left, meId, entryName, onOpenEntry }: {
   kind: CompetitionKind; entries: CompetitionPair[]; results: CompetitionResult[];
@@ -240,6 +246,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
   onOpenEntry?: (entry: CompetitionPair) => void;
 }) {
   const table = leagueTable(entries, results, pointsWin, pointsDraw);
+  const [open, setOpen] = useState<string | null>(null);
   // P, Left, W, D, L, Sets, Pts. "Left" is brief item 1's "played and
   // remaining for each player"; it only appears where it can be counted.
   const cols = left ? "20px 1fr 22px 26px 22px 22px 22px 32px 30px" : "22px 1fr 26px 26px 26px 26px 34px 34px";
@@ -253,7 +260,8 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
         const isMine = !!entry && (entry.p1 === meId || entry.p2 === meId);
         const sd = r.setsFor - r.setsAgainst;
         return (
-          <div key={r.pairId} onClick={onOpenEntry && entry ? () => onOpenEntry(entry) : undefined} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: onOpenEntry ? "pointer" : "default", ...tabular }}>
+          <React.Fragment key={r.pairId}>
+          <div onClick={() => setOpen(open === r.pairId ? null : r.pairId)} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", ...tabular }}>
             <span style={{ color: isMine ? FEED_LIME : FEED_TEXT_MID }}>{r.place}</span>
             <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{entryName(r.pairId)}</span>
             <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
@@ -264,8 +272,52 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
             <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{sd > 0 ? "+" + sd : sd}</span>
             <span style={{ textAlign: "right", fontWeight: 600 }}>{r.points}</span>
           </div>
+          {open === r.pairId && (
+            <RowMatches
+              pairId={r.pairId} results={results} pointsWin={pointsWin} pointsDraw={pointsDraw}
+              left={left ? left[r.pairId] || 0 : null} entryName={entryName}
+              onOpen={onOpenEntry && entry ? () => onOpenEntry(entry) : undefined}
+            />
+          )}
+          </React.Fragment>
         );
       })}
+    </div>
+  );
+}
+
+/** One entry's results in a league table, each with the points it earned. */
+function RowMatches({ pairId, results, pointsWin, pointsDraw, left, entryName, onOpen }: {
+  pairId: string; results: CompetitionResult[]; pointsWin: number; pointsDraw: number; left: number | null;
+  entryName: (id: string | null | undefined, short?: boolean) => string; onOpen?: () => void;
+}) {
+  // The same filter leagueTable counts with, so the rows sum to Pts.
+  const mine = results.filter((r) => (r.status === undefined || r.status === "confirmed") && (r.pairA === pairId || r.pairB === pairId));
+  const small: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID };
+  return (
+    <div style={{ background: FEED_RAISED, borderRadius: 10, padding: "8px 12px", margin: "0 0 8px" }}>
+      {mine.map((r, i) => {
+        const asA = r.pairA === pairId;
+        const opp = asA ? r.pairB : r.pairA;
+        const outcome = r.winner === "draw" ? "D" : (r.winner === "A") === asA ? "W" : "L";
+        const pts = outcome === "W" ? pointsWin : outcome === "D" ? pointsDraw : 0;
+        const score = r.walkover ? "walkover" : (r.sets || []).map((x) => asA ? `${x.a}-${x.b}` : `${x.b}-${x.a}`).join(", ");
+        return (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
+            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, width: 14, flexShrink: 0, color: outcome === "W" ? FEED_LIME : outcome === "L" ? DOT_LOSS : FEED_TEXT_HI }}>{outcome}</span>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {outcome === "W" ? "Beat " : outcome === "L" ? "Lost to " : "Drew with "}{entryName(opp)}
+            </span>
+            {score && <span style={{ ...small, ...tabular, flexShrink: 0 }}>{score}</span>}
+            <span style={{ fontFamily: body, fontSize: 13, color: pts ? FEED_TEXT_HI : FEED_TEXT_LOW, width: 34, textAlign: "right", flexShrink: 0, ...tabular }}>+{pts}</span>
+          </div>
+        );
+      })}
+      {!mine.length && <div style={{ ...small, padding: "4px 0" }}>No results yet.</div>}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+        {left !== null && <span style={{ ...small, flex: 1 }}>{left ? `${left} left to play` : "All played"}</span>}
+        {onOpen && <button onClick={onOpen} style={{ marginLeft: "auto", background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>Open profile</button>}
+      </div>
     </div>
   );
 }

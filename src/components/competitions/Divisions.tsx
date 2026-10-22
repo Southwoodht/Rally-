@@ -76,17 +76,12 @@ function ManagePanel({ c, entries, players, manage, nameOf }: { c: Competition; 
 }
 
 /**
- * Which tier a division is, from its place in the order — Sam, 2026-10-22:
- * "top tier, middle tier, bottom tier, so the app knows which way". Nothing
- * to set: Division 1 is the top because the order is the number in the name.
- * Two divisions are top and bottom; three add a middle; beyond that the
- * middle ones are numbered.
+ * The one tier label worth printing — Sam, 2026-10-22, after seeing "Top /
+ * Middle / Bottom tier" on every card: "you didn't actually need bottom
+ * tier". Division 1 says it is the top; the numbers say the rest.
  */
 export function tierLabel(index: number, count: number): string | null {
-  if (count < 2) return null;
-  if (index === 0) return "Top tier";
-  if (index === count - 1) return "Bottom tier";
-  return count === 3 ? "Middle tier" : `Tier ${index + 1}`;
+  return count > 1 && index === 0 ? "Top tier" : null;
 }
 
 /**
@@ -97,7 +92,7 @@ export function tierLabel(index: number, count: number): string | null {
  * one screen each, and "I just want this super easy and simple". Same
  * LeagueTable as the competition's own screen, so the two cannot disagree.
  * Ordered by name with numbers read as numbers, so Division 10 follows 9.
- * Tapping a row opens the player (singles) or the first of the pair.
+ * Tapping a row lists that player's matches, with a link to their profile.
  */
 export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, onOpenPlayer, onAdd, onPlanNext, manage }: {
   kind: CompetitionKind;
@@ -139,7 +134,7 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, flex: 1, minWidth: 0 }}>{c.name}</span>
               {manage && <button onClick={() => setManaging(managing === c.id ? null : c.id)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0, flexShrink: 0 }}>{managing === c.id ? "Done" : "Settings"}</button>}
-              {tier && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, background: i === 0 ? FEED_LIME : FEED_RAISED, color: i === 0 ? FEED_LIME_INK : FEED_TEXT_MID, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{tier}</span>}
+              {tier && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{tier}</span>}
             </div>
             <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
               {mine.length} {kind === "doubles" ? "pairs" : "players"} · play each {c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · {c.pointsWin} for a win
