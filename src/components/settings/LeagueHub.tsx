@@ -181,6 +181,30 @@ export function LeagueHub(props: any) {
         {tile(<Users size={20} color={FEED_LIME} strokeWidth={2} />, `Players · ${active}`, () => setPage("players"))}
       </div>
 
+      {/* The code itself, on screen (Sam, 2026-10-22: "can't even see a code
+          to give to people"). The share sheet carries it inside a link, and
+          iOS's Copy can take the title instead — so it is also here to read
+          out in the clubhouse or type into Join a club, with the link one tap
+          away. */}
+      {!friendly && leagueJoinCode && (
+        <SurfaceCard radius={18} pad="12px 14px" style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>Club code — anyone can join with it</div>
+            <div style={{ fontFamily: body, fontSize: 24, fontWeight: 500, letterSpacing: 3, color: FEED_TEXT_HI, ...tabular }}>{leagueJoinCode}</div>
+          </div>
+          <button
+            onClick={async () => {
+              const link = inviteUrl(leagueJoinCode);
+              try { await navigator.clipboard.writeText(link || leagueJoinCode); flash("Link copied"); }
+              catch { flash("Club code: " + leagueJoinCode); }
+            }}
+            style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), flex: "0 0 auto", padding: "10px 14px" }}
+          >
+            Copy link
+          </button>
+        </SurfaceCard>
+      )}
+
       {showChecklist && (
         <SurfaceCard radius={18} pad="16px 14px 8px" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
