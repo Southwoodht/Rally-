@@ -199,7 +199,11 @@ const SEACOURT_2026: string[][] = [
   // 2026-10-21: losses stopped counting as activity ("a loss can never raise
   // your Official points"), shown to Sam on the real export and approved —
   // 58.3 / 50.0 / 42.8 / 32.4 before, same order after.
-  const want: Record<string, number> = { zaach: 52.5, samuel: 45.1, charlie: 33.6, adrian: 19.6 };
+  // 2026-10-22: ratings stopped reading the score (Sam: win/draw/loss only,
+  // scores feed predictions). Opponent strength is now built on plain
+  // results: 52.5 / 45.1 / 33.6 / 19.6 before, same order after. On the
+  // preview branch, not yet approved for master.
+  const want: Record<string, number> = { zaach: 53.0, samuel: 45.8, charlie: 34.3, adrian: 20.0 };
   for (const id of Object.keys(want)) ok(close(s[id], want[id], 0.05), `Seacourt 2026: ${id} ${s[id].toFixed(1)}, approved ${want[id]}`);
   ok(s.zaach > s.samuel && s.samuel > s.charlie && s.charlie > s.adrian, "nobody changed place");
 }

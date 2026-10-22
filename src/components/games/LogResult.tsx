@@ -144,7 +144,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                 phone it pushed "Who won?", the only thing you MUST answer,
                 below the fold. */}
             <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>
-              Optional — but it tells both tables how close it was.
+              Optional — but it makes the predictions sharper.
             </div>
           </Field>
           {showMore ? (

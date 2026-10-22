@@ -1,8 +1,7 @@
 import { countsAsPlayed } from "./matchStatus";
-import { MARGIN_WEIGHT, OFFICIAL_LEVEL_TRUST, OFFICIAL_LOSS_MAX, OFFICIAL_LOSS_MIN } from "./constants";
+import { OFFICIAL_LEVEL_TRUST, OFFICIAL_LOSS_MAX, OFFICIAL_LOSS_MIN } from "./constants";
 import { levelAt, levelVal } from "./levels";
 import { computeRatings, type Edge } from "./rating";
-import { shareForPlayer } from "./sets";
 
 /**
  * The league's Official points: every result judged by how strong the
@@ -64,13 +63,12 @@ export function computeOfficial(players: any[], matches: any[], wdl: Record<stri
   const counted = matches.filter((m) => countsAsPlayed(m) && m.winner && byId[m.p1] && byId[m.p2]);
 
   // Strength from results — built exactly as the Strength table builds it,
-  // margin and all, so the two can never disagree about who is good.
+  // so the two can never disagree about who is good. Win, draw or loss only:
+  // scores feed predictions, never ratings (Sam, 2026-10-22).
   const edges: Edge[] = [];
   const played: Record<string, number> = {};
   for (const m of counted) {
-    const base = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
-    const share = shareForPlayer(m, m.p1);
-    const r1 = share === null ? base : (1 - MARGIN_WEIGHT) * base + MARGIN_WEIGHT * share;
+    const r1 = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
     edges.push({ key: m.p1, opp: m.p2, result: r1 });
     edges.push({ key: m.p2, opp: m.p1, result: 1 - r1 });
     played[m.p1] = (played[m.p1] || 0) + 1;

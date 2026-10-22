@@ -161,6 +161,14 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     if (eloDiff >= 8) reasons.push({ text: `a ${eloDiff}-point ELO edge`, weight: eloDiff });
     const favH2H = favored === "A" ? f.h2h.aw : f.h2h.bw, othH2H = favored === "A" ? f.h2h.bw : f.h2h.aw;
     if (f.h2h.n > 0 && favH2H !== othH2H) reasons.push({ text: `a ${favH2H}-${othH2H}${f.h2h.d ? "-" + f.h2h.d : ""} head-to-head lead`, weight: (favH2H - othH2H) * 20 });
+    // Games between them, where the scores can be read. A lead in matches
+    // built on 7-6s is a close rivalry, and the percentage above already
+    // knows it (predictionResult); this says so in words.
+    const g = f.h2h.games;
+    if (g) {
+      const favG = favored === "A" ? g.a : g.b, othG = favored === "A" ? g.b : g.a;
+      if (favG > othG) reasons.push({ text: `${favG}-${othG} in games between them`, weight: ((favG - othG) / (favG + othG)) * 100 });
+    }
     const favForm = favored === "A" ? f.formA : f.formB, othForm = favored === "A" ? f.formB : f.formA;
     const favNet = favForm.w - favForm.l, othNet = othForm.w - othForm.l;
     if (favForm.n > 0 && favNet > othNet) reasons.push({ text: `better recent form (${favForm.w}-${favForm.l} in their last ${favForm.n})`, weight: (favNet - othNet) * 10 });

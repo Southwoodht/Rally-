@@ -13,8 +13,6 @@ import { ratingForMatch } from "@/core/difficulty";
 import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
 import { computeRatings, type Edge } from "@/core/rating";
-import { shareForPlayer } from "@/core/sets";
-import { MARGIN_WEIGHT } from "@/core/constants";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { fullNameOf, winPct } from "@/lib/format";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
@@ -69,16 +67,13 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
    * of every league's, and nothing else changes — same function, same
    * constants, same spread.
    *
-   * Margin is blended in the way globalTable does it, so a 6-0 and a 7-6
-   * separate two players by different amounts. A match with no score, or one
-   * whose score cannot be reconciled with its result, keeps the plain 1/0.5/0.
+   * Win, draw or loss only (Sam, 2026-10-22): the score feeds predictions,
+   * never a rating. It used to blend in the margin.
    */
   const networkMap = useMemo(() => {
     const edges: Edge[] = [];
     filtered.filter((m: any) => countsAsPlayed(m) && m.winner).forEach((m: any) => {
-      const base = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
-      const share = shareForPlayer(m, m.p1);
-      const r1 = share === null ? base : (1 - MARGIN_WEIGHT) * base + MARGIN_WEIGHT * share;
+      const r1 = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
       edges.push({ key: m.p1, opp: m.p2, result: r1 });
       edges.push({ key: m.p2, opp: m.p1, result: 1 - r1 });
     });

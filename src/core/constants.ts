@@ -54,11 +54,12 @@ export const OFFICIAL_LEVEL_TRUST = 6;
 export const OFFICIAL_LOSS_MIN = 0.40, OFFICIAL_LOSS_MAX = 1.60;
 
 // How much of a scored result is the margin rather than the bare win or
-// loss: worth `(1 - W) * result + W * share`. Lived in globalTable.ts until
-// two different ratings needed it, and a weight copied into two files is a
-// weight that will disagree with itself. Still in the app and never in the
-// SQL — the database reports what happened, the app decides what it's worth,
-// so tuning this needs no migration.
+// loss: worth `(1 - W) * result + W * share`.
+//
+// PREDICTIONS ONLY since 2026-10-22. Sam: ratings use win/draw/loss, and the
+// score feeds predictions, Compare and the favourite — closer scores mean a
+// closer prediction. Until then Elo, Official, Strength and the Global table
+// all blended it in; none of them reads a score now. core/predict.ts does.
 //
 // A share of games rather than a difference, because Rally covers several
 // racket sports: 6-0 tennis, 11-0 squash and 21-0 badminton all have to mean

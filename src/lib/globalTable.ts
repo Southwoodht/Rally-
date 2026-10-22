@@ -1,6 +1,4 @@
 import { levelVal } from "@/core/levels";
-import { MARGIN_WEIGHT } from "@/core/constants";
-import { shareForResult } from "@/core/sets";
 import { computeRatings, type Edge } from "@/core/rating";
 import { supabase, withSupabaseTimeout } from "@/lib/supabase";
 
@@ -44,8 +42,8 @@ export interface GlobalRow {
    * Margin, over the scored quality matches only. `qShareSum` is the sum of
    * how much of each match they took (6-0,6-0,6-0 is 1.0, a 6-7,5-7 loss is
    * 0.44); `qResSum` is the sum of the plain 1/0.5/0 results for those same
-   * matches. Both come from global_standings(); both are 0 when the
-   * migration hasn't been run, which is exactly the no-op case.
+   * matches. Both come from global_standings(). Read but unused since
+   * 2026-10-22, when ratings stopped looking at the score.
    */
   qShareSum: number;
   qResSum: number;
@@ -60,26 +58,6 @@ export interface GlobalRow {
   /** Too few games to place them honestly — see globalScore. */
   provisional: boolean;
 }
-
-/**
- * How far margin is allowed to move a quality result, 0 to 1.
- *
- * At 0 this is the old binary: a win is a win however close. At 1 the result
- * stops mattering and only games count, so a 7-6 7-6 win and a 6-7 6-7 loss
- * land within a whisker of each other, which is plainly wrong — winning is
- * the main thing that happened.
- *
- * 0.35 keeps a win clearly a win (a 7-6 7-6 win scores 0.83 against a
- * perfect 1.0) while giving a close loss to a good opponent something rather
- * than nothing (6-7 5-7 scores 0.15 against a bagelling's 0.0). Losing 6-5
- * to someone at your own level should cost less than losing 0-6 0-6 0-6, and
- * this is the number that decides how much less.
- *
- * It lives here rather than in the SQL on purpose: the function reports
- * facts, the app decides what they are worth, and tuning this needs no
- * migration.
- */
-export { MARGIN_WEIGHT } from "@/core/constants";
 
 /**
  * What a bad loss costs, in the same currency as everything else — points,
@@ -136,25 +114,15 @@ export const PROVISIONAL_GAMES = 5;
 const NEUTRAL = 6 * 100;
 
 /**
- * The quality record as a rate, with margin folded in where a score exists.
- *
- * With no scores anywhere this is exactly the old win rate,
- * (qw + qd/2) / qgp. Where a scored quality match exists, its plain result is
- * swapped for a blend of the result and the share of games taken:
- *
- *     value = (1 - W) * result + W * share
- *     total = resultSumAll + W * (shareSumScored - resultSumScored)
- *
- * which is the same thing rearranged so it needs only the two sums the SQL
- * hands back rather than a row per match. Unscored matches keep contributing
- * their plain result untouched, so leaving the score box empty costs nothing.
+ * The quality record as a rate: (qw + qd/2) / qgp. Win, draw or loss only —
+ * a rating says who won, and the score feeds predictions instead (Sam,
+ * 2026-10-22). It used to fold in the share of games taken; the SQL still
+ * returns qshare_sum / qres_sum and nothing reads them now.
  */
 export function qualityRate(r: { qw: number; qd: number; ql: number; qShareSum: number; qResSum: number }): number {
   const qgp = r.qw + r.qd + r.ql;
   if (!qgp) return 0.5;
-  const resultSumAll = r.qw + r.qd * 0.5;
-  const total = resultSumAll + MARGIN_WEIGHT * (r.qShareSum - r.qResSum);
-  return total / qgp;
+  return (r.qw + r.qd * 0.5) / qgp;
 }
 
 /**
@@ -363,10 +331,8 @@ export async function loadGlobalStandings(): Promise<GlobalRow[]> {
       qw: r.qw || 0,
       qd: r.qd || 0,
       ql: r.ql || 0,
-      // Absent until schema_global_standings_margin.sql has been run. Both
-      // at 0 makes qualityRate() collapse back to the plain win rate, so an
-      // app deployed ahead of the migration behaves exactly as it did
-      // before rather than mis-scoring anybody.
+      // Margin sums from global_standings(). Kept on the row, unused by the
+      // rating since 2026-10-22.
       qShareSum: Number(r.qshare_sum ?? 0),
       qResSum: Number(r.qres_sum ?? 0),
       // Absent until schema_global_standings_badloss.sql has been run; at 0
@@ -411,19 +377,15 @@ async function withNetworkRating(rows: GlobalRow[]): Promise<GlobalRow[]> {
   if (error || !Array.isArray(data) || !data.length) return rows;
 
   const edges: Edge[] = data.map((e: any) => {
-    const result = Number(e.result);
-    // Margin, when the match has a score we can read. Without this a 6-5 and
-    // a 6-0 are the same loss, which is the whole of what a score is for.
-    // e.score is absent until schema_global_edges_score.sql has been run, and
-    // an unreadable one yields null, so either way the plain result stands.
-    const share = shareForResult(e.score, result);
+    // 1 / 0.5 / 0 as the SQL reports it. e.score comes back too and is
+    // deliberately unread: ratings use the result only (Sam, 2026-10-22).
     return {
       key: e.key,
       // Opponents the viewer can't see come back as an opaque token instead of
       // a real key. Either way they're a node, so the graph stays connected and
       // a record doesn't shrink just because half of it is out of view.
       opp: e.opp ?? e.opp_anon,
-      result: share === null ? result : (1 - MARGIN_WEIGHT) * result + MARGIN_WEIGHT * share,
+      result: Number(e.result),
     };
   }).filter((e: Edge) => e.key && e.opp && Number.isFinite(e.result));
   if (!edges.length) return rows;

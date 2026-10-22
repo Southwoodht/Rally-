@@ -19,12 +19,10 @@
  *
  * Pure: no React, no Supabase.
  */
-import { MARGIN_WEIGHT } from "./constants";
 import { computeStats } from "./elo";
 import { countsAsPlayed } from "./matchStatus";
 import { computeOfficial } from "./official";
 import { computeRatings, type Edge } from "./rating";
-import { shareForPlayer } from "./sets";
 
 export interface Ratings { official: Record<string, number>; elo: Record<string, number>; strength: Record<string, number> }
 
@@ -36,9 +34,7 @@ export function ratingsFor(players: any[], matches: any[]): Ratings {
   const edges: Edge[] = [];
   for (const m of counted) {
     if (!m.winner) continue;
-    const base = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
-    const share = shareForPlayer(m, m.p1);
-    const r1 = share === null ? base : (1 - MARGIN_WEIGHT) * base + MARGIN_WEIGHT * share;
+    const r1 = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
     edges.push({ key: m.p1, opp: m.p2, result: r1 });
     edges.push({ key: m.p2, opp: m.p1, result: 1 - r1 });
   }
