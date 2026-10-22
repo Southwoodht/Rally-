@@ -1,6 +1,6 @@
 "use client";
 import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
@@ -244,6 +244,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // "Start a competition" in Run your league opens the doubles create form.
   const [compCreateSignal, setCompCreateSignal] = useState(0);
   const [singlesCreateSignal, setSinglesCreateSignal] = useState(0);
+  // "Create a division" from the Table: the competition form, named and
+  // titled for a division, and back to the Divisions table once it is made.
+  const [divisionPreset, setDivisionPreset] = useState<{ title: string; name: string } | null>(null);
+  const divisionMade = useRef(false);
   // The doubles result open for viewing or correcting, if any.
   const [editDoublesId, setEditDoublesId] = useState<string | null>(null);
   // A + result between two players who still owe each other a competition
@@ -1918,7 +1922,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               table, like the football. Put them in a season to give the matches play-by dates.
             </div>
             <button
-              onClick={() => { setTab("fixtures"); if (showDoubles) setCompCreateSignal((n) => n + 1); else setSinglesCreateSignal((n) => n + 1); }}
+              onClick={() => {
+                divisionMade.current = false;
+                setDivisionPreset({ title: "New division", name: "Division " + (divisionComps.length + 1) });
+                setTab("fixtures");
+                if (showDoubles) setCompCreateSignal((n) => n + 1); else setSinglesCreateSignal((n) => n + 1);
+              }}
               style={{ marginTop: 12, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}
             >
               Create a division
@@ -2056,7 +2065,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "fixtures" && !showDoubles && (personal ? feed : (
           <div style={{ marginTop: 14 }}>
-            {competitionsEnabled && !comps.unavailable && (() => {
+            {competitionsEnabled && !comps.unavailable && !divisionPreset && (() => {
               // The singles ladder (core/ladder.ts). Its challenges are this
               // competition's fixtures, challenger as p1; the order is replayed
               // from them on every render, never stored.
@@ -2147,6 +2156,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               canManage={!!canManageMatches}
               unavailable={comps.unavailable || !competitionsEnabled}
               createSignal={singlesCreateSignal}
+              createPreset={divisionPreset}
+              onCreateClosed={() => { if (divisionPreset) { setDivisionPreset(null); if (divisionMade.current) { divisionMade.current = false; setTab("ladder"); setTableMode("divisions"); } } }}
               onCreatePlayer={addPlayer}
               seasons={seasonsState.seasons}
               tieRowsOf={(c) => {
@@ -2161,7 +2172,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               onCreate={async (c, entries) => {
                 const r = await createCompetition(leagueId, { ...c, kind: "singles", createdBy: meId || null }, entries,
                   (es) => withSeasonDeadlines(c, es.length)(c.format === "league" ? roundRobin(es.map((e) => e.id), c.legs) : tiesReadyToDraw(knockoutBracket(es, []))));
-                comps.added(r.competition, r.pairs);
+                comps.added(r.competition, r.pairs); divisionMade.current = true;
                 const ok = await addSinglesTies(r.competition.id, r.ties, r.pairs);
                 flash(ok ? r.ties.length + " matches drawn" : "Created, but the matches didn't save — open it and press Draw");
                 return r.competition.id;
@@ -2213,6 +2224,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               canManage={!!canManageMatches}
               unavailable={comps.unavailable || !competitionsEnabled}
               createSignal={compCreateSignal}
+              createPreset={divisionPreset}
+              onCreateClosed={() => { if (divisionPreset) { setDivisionPreset(null); if (divisionMade.current) { divisionMade.current = false; setTab("ladder"); setTableMode("divisions"); } } }}
               onCreatePlayer={addPlayer}
               seasons={seasonsState.seasons}
               tieRowsOf={(c) => doubles.fixtures.filter((f) => f.competitionId === c.id).map((f) => ({
@@ -2226,7 +2239,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 // makes playable now; later rounds are drawn from results.
                 const r = await createCompetition(leagueId, { ...c, kind: "doubles", createdBy: meId || null }, entries,
                   (ps) => withSeasonDeadlines(c, ps.length)(c.format === "league" ? roundRobin(ps.map((p) => p.id), c.legs) : tiesReadyToDraw(knockoutBracket(ps, []))));
-                comps.added(r.competition, r.pairs);
+                comps.added(r.competition, r.pairs); divisionMade.current = true;
                 doubles.addFixtures(r.fixtures);
                 flash(r.fixtures.length + " matches drawn");
                 return r.competition.id;

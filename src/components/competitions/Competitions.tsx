@@ -88,6 +88,11 @@ interface Props {
   children?: React.ReactNode;
   /** Bumped by "Start a competition" in Run your league: open the create form. */
   createSignal?: number;
+  /** Opened from the Table's "Create a division": the form says "New
+   *  division", is named for the next one and is a league — no format to pick. */
+  createPreset?: { title: string; name: string } | null;
+  /** The create form closed, created or cancelled. */
+  onCreateClosed?: () => void;
 }
 
 /** "Winter Doubles · Semi-finals" — how a competition tie labels itself anywhere. */
@@ -165,9 +170,10 @@ export function Competitions(props: Props) {
         kind={kind}
         players={players}
         onCreatePlayer={props.onCreatePlayer}
-        onCancel={() => setCreating(false)}
+        onCancel={() => { setCreating(false); props.onCreateClosed?.(); }}
         seasons={props.seasons || []}
-        onCreate={async (c, es) => { const id = await props.onCreate(c, es); setCreating(false); setOpenId(id); }}
+        preset={props.createPreset || null}
+        onCreate={async (c, es) => { const id = await props.onCreate(c, es); setCreating(false); setOpenId(id); props.onCreateClosed?.(); }}
       />
     );
   }
@@ -525,8 +531,9 @@ function Deadlines({ c, rows, entryName, canManage, roundLabel, onSetTie }: {
 // Setting one up
 // ---------------------------------------------------------------------------
 
-function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons }: {
+function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons, preset }: {
   kind: CompetitionKind; players: any[]; onCreatePlayer?: (p: any) => void;
+  preset?: { title: string; name: string } | null;
   onCancel: () => void;
   onCreate: (c: NewCompetition, entries: Array<{ p1: string; p2: string | null }>) => Promise<void>;
   seasons: Season[];
@@ -540,7 +547,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
   const season = usable.find((x) => x.id === seasonId) || null;
   const doubles = kind === "doubles";
   const blank = () => ({ p1: "", p2: "" });
-  const [name, setName] = useState("");
+  const [name, setName] = useState(preset?.name || "");
   const [format, setFormat] = useState<CompetitionFormat>("league");
   // Twice by default (Sam, 2026-10-21): a group of five playing each other
   // twice is eight matches each over a winter, roughly one a fortnight — and
@@ -600,7 +607,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
 
   return (
     <SurfaceCard radius={16} pad="16px 14px">
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 14 }}>New {kind} competition</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 14 }}>{preset ? preset.title : `New ${kind} competition`}</div>
 
       <div style={{ ...label, marginBottom: 6 }}>Name</div>
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder={doubles ? "e.g. Winter Doubles 2026" : "e.g. Club Championship 2026"} style={{ ...field, marginBottom: 14 }} />
@@ -624,11 +631,13 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
       )}
       {!season && usable.length > 0 && <div style={{ marginBottom: 14 }} />}
 
+      {!preset && <>
       <div style={{ ...label, marginBottom: 6 }}>Format</div>
       <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
         <button onClick={() => setFormat("league")} style={segment(format === "league")}>League</button>
         <button onClick={() => setFormat("knockout")} style={segment(format === "knockout")}>Knockout</button>
       </div>
+      </>}
       <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14 }}>
         {format === "league"
           ? `Every ${doubles ? "pair" : "player"} plays every other. A table on points, then sets, then games.`
