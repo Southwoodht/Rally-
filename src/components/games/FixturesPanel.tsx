@@ -229,15 +229,19 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
     <div>
       {bookPanel}
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, background: FEED_CARD, borderRadius: 12, padding: "0 12px", marginBottom: 14 }}>
+      {/* Only worth a search box once there are enough to search; a box over
+          one challenge or three played fixtures was most of what showed. */}
+      {fixtures.length > 5 && <div style={{ display: "flex", alignItems: "center", gap: 8, background: FEED_CARD, borderRadius: 12, padding: "0 12px", marginBottom: 14 }}>
         <Search size={15} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search a player or matchup"
-          style={{ ...miniInput, fontFamily: body, fontSize: 14, background: "transparent", flex: 1, padding: "11px 0", color: FEED_TEXT_HI }}
+          // No border: miniInput's own outline drew a second box inside the
+          // card's, which is the "search bar looks off" Sam saw.
+          style={{ ...miniInput, fontFamily: body, fontSize: 14, background: "transparent", border: "none", outline: "none", boxShadow: "none", flex: 1, padding: "11px 0", color: FEED_TEXT_HI }}
         />
-      </div>
+      </div>}
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={label}>{done} of {total} played</span>
