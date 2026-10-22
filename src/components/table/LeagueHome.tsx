@@ -1,6 +1,7 @@
 "use client";
 import { countsAsPlayed } from "@/core/matchStatus";
 import React, { useState, useMemo, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
 import { LegacyTable } from "@/components/table/LegacyTable";
 import { PredictionCard } from "@/components/table/PredictionCard";
 import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
@@ -26,7 +27,15 @@ import { seasonMatches, seasonPodium } from "@/core/seasonStandings";
 
 const ACTIVE_WINDOW_MS = 365 * 86400000;
 
-export function LeagueHome({ players, matches, group, fixtures, mode, onMode, onOpen, onOpenLegacy, onCompare, requireSetup, nameOf, meId, movement, onGoGlobal }: any) {
+export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLegacy, onCompare, requireSetup, nameOf, meId, onGoGlobal }: any) {
+  // ONE ranking: Glicko (Sam, 2026-10-22 — "members want one table"). The
+  // Ranked-by switcher and the year chips are gone from this screen; Official,
+  // Elo and Strength are still computed below because the prediction card,
+  // the recap and other screens read them. `mode` stays a variable so the
+  // machinery that served six modes is untouched and one line brings them back.
+  // Weekly movement arrows are off: the snapshots record Official places, and
+  // an arrow measured on a different ranking would point the wrong way.
+  const mode: string = "glicko";
   const [view, setView] = useState<"active" | "legacy">("active");
   // The running season, or — between seasons — the one that just ended, so
   // its final table and podium stay one tap away.
@@ -40,8 +49,6 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   const [scope, setScope] = useState<string>(group?.season ? "season" : "all");
   useEffect(() => { setScope(group?.season ? "season" : "all"); }, [group?.id, group?.season?.id]);
   const inSeason = !!(season && scope === "season");
-  const [tableYr, setTableYr] = useState<"all" | number>("all");
-  const years = useMemo(() => Array.from(new Set(matches.filter((m) => countsAsPlayed(m)).map((m) => new Date(m.date).getFullYear()))).sort((a: number, b: number) => b - a), [matches]);
   // An ended season shows its FROZEN results (seasonMatches): dated in it and
   // logged before it closed. A running one, everything dated in it so far.
   const seasonFiltered = useMemo(() => {
@@ -50,7 +57,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     return matches.filter((m) => m.date >= season.start && (season.end == null || m.date <= season.end));
   }, [matches, inSeason, season, seasonEnded]);
   const podium = useMemo(() => (inSeason && seasonEnded ? seasonPodium(players, matches, season, SEASON_RANK_GAMES) : []), [inSeason, seasonEnded, players, matches, season]);
-  const filtered = useMemo(() => tableYr === "all" ? seasonFiltered : seasonFiltered.filter((m) => new Date(m.date).getFullYear() === tableYr), [seasonFiltered, tableYr]);
+  const filtered = seasonFiltered;
   const { elo, wdl, form, deltas } = useMemo(() => computeStats(players, filtered), [players, filtered]);
   const officialMap = useMemo(() => computeOfficial(players, filtered, wdl), [players, filtered, wdl]);
 
@@ -144,15 +151,15 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     // Applied once, when the table opens for this league. After that the
     // chips are yours to change for the visit; the pin just shows it is no
     // longer the default view.
-    if (d.metric && onMode && d.metric !== (!mode || mode === "overall" ? "official" : mode)) onMode(d.metric);
     if (d.who === "legacy") setView("legacy");
     else if (d.who === "active" || d.who === "nonactive" || d.who === "all") { setView("active"); setActiveScope(d.who); }
-    if (d.when === "season") { setScope("season"); setTableYr("all"); }
-    else if (d.when === "all") { setScope("all"); setTableYr("all"); }
-    else if (/^\d{4}$/.test(d.when)) { setScope("all"); setTableYr(Number(d.when)); }
+    // A pin saved with a year (the year chips are gone) opens on all time.
+    if (d.when === "season") setScope("season");
+    else if (d.when) setScope("all");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultKey]);
   const [query, setQuery] = useState("");
+  const [showUnranked, setShowUnranked] = useState(false);
   const scopedRanked = activeScope === "active" ? activeRanked : activeScope === "nonactive" ? nonActiveRanked : ranked;
 
   const prediction = useMemo(() => {
@@ -199,20 +206,9 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // Every control that used to stack down the screen, as one scrolling row
   // of chips. The stack ran to roughly 1400px of chrome before rank 1
   // appeared, which is more table than table.
-  const METRICS = [
-    { value: "official", label: "Official", note: "Every result judged by how strong the opponent really is, times how regularly you play." },
-    { value: "glicko", label: "Glicko", note: "A rating with a ± for how sure it is. Starts from your level, then only results move it. A big ± is marked provisional." },
-    { value: "elo", label: "Elo", note: "Moves every match, by how surprising the result was." },
-    { value: "network", label: "Strength", note: "Built from who beat whom, so it counts who you played and not just how many you won." },
-    { value: "record", label: "Record", note: "Win rate, weighted by opposition and how much you have played." },
-    { value: "winpct", label: "Win %", note: "The plain share of games won. A draw counts as half." },
-    { value: "form", label: "Form", note: "The last five results and nothing else." },
-  ];
-  const periodValue = tableYr !== "all" ? String(tableYr) : (inSeason ? "season" : "all");
-  // "overall" is what the stored setting has always called Official.
-  const metricValue = !mode || mode === "overall" ? "official" : mode;
+  const periodValue = inSeason ? "season" : "all";
+  const metricValue = mode;
   const filters: FilterDef[] = [
-    { key: "metric", label: "Ranked by", value: metricValue, options: METRICS, onChange: (v: string) => onMode && onMode(v) },
     {
       key: "scope", label: "Who is included",
       value: view === "legacy" ? "legacy" : activeScope,
@@ -230,20 +226,6 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
         setActiveScope(v as any);
       },
     },
-    {
-      key: "period", label: "When",
-      value: periodValue,
-      options: [
-        ...(season ? [{ value: "season", label: (season.name || "This season") + (seasonEnded ? " (final)" : "") }] : []),
-        { value: "all", label: "All time" },
-        ...years.map((y: number) => ({ value: String(y), label: String(y) })),
-      ],
-      onChange: (v: string) => {
-        if (v === "season") { setScope("season"); setTableYr("all"); return; }
-        setScope("all");
-        setTableYr(v === "all" ? "all" : Number(v));
-      },
-    },
   ];
 
   // What the big number on a row is, and what it is called. Record keeps its
@@ -259,7 +241,9 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     if (mode === "record") return r.gp ? winPct(r) * 100 : 0;
     return officialMap[id] ?? 0;
   };
-  const unit = mode === "glicko" ? "glicko" : mode === "network" ? "strength" : mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
+  // "rating", not "glicko": with one table there is nothing to tell it apart
+  // from, and the name means nothing to a member. How the ranking works says.
+  const unit = mode === "glicko" ? "rating" : mode === "network" ? "strength" : mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
 
   const q = query.trim().toLowerCase();
   const searched = q
@@ -287,15 +271,21 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       provisional: mode === "glicko" ? !!glicko.provisional[pl.id] : undefined,
       w: r.w, d: r.d, l: r.l,
       form: (form[pl.id] || []).slice(-5) as any,
-      movement: movement ? movement[pl.id] : undefined,
+      movement: undefined,
     };
   });
 
-  const rankedRows = standingsPlayers.filter((sp: any) => isRanked(sp.player.id));
+  // Enough matches to be listed, then split on the ±: established players
+  // hold the places, provisional ones follow underneath without a place —
+  // Sam, 2026-10-22: provisional players listed below established ones.
+  const rankedRows = standingsPlayers.filter((sp: any) => isRanked(sp.player.id) && !sp.provisional);
+  const provisionalRows = standingsPlayers.filter((sp: any) => isRanked(sp.player.id) && sp.provisional);
   const unrankedRows = standingsPlayers.filter((sp: any) => !isRanked(sp.player.id))
     .sort((x: any, y: any) => (wdl[y.player.id]?.gp || 0) - (wdl[x.player.id]?.gp || 0));
   const current: TableDefault = { metric: metricValue, who: view === "legacy" ? "legacy" : activeScope, when: periodValue };
-  const pinned = !!savedDefault && savedDefault.metric === current.metric && savedDefault.who === current.who && savedDefault.when === current.when;
+  // Metric is not compared: there is only one now, and a pin saved under
+  // Official before the change should still read as pinned.
+  const pinned = !!savedDefault && savedDefault.who === current.who && savedDefault.when === current.when;
   const togglePin = () => {
     if (pinned) {
       try { window.localStorage.removeItem(defaultKey); } catch { /* nothing saved to remove */ }
@@ -311,10 +301,10 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       {group?.season && <SeasonBanner season={group.season} />}
       {season && view !== "legacy" && (
         <div style={{ ...segmentTrack, marginBottom: 12 }}>
-          <button onClick={() => { setScope("season"); setTableYr("all"); }} style={segmentOption(inSeason && tableYr === "all")}>
+          <button onClick={() => setScope("season")} style={segmentOption(inSeason)}>
             {seasonEnded ? season.name : "This season"}
           </button>
-          <button onClick={() => { setScope("all"); setTableYr("all"); }} style={segmentOption(!inSeason && tableYr === "all")}>All time</button>
+          <button onClick={() => setScope("all")} style={segmentOption(!inSeason)}>All time</button>
         </div>
       )}
       <FilterChips
@@ -328,36 +318,67 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
         <LegacyTable players={players} matches={matches} onOpen={onOpenLegacy} />
       ) : (
         <>
-          {podium.length > 0 && <SeasonPodium season={season} podium={podium} players={players} onOpen={(id: string) => onOpen(id, tableYr)} />}
+          {podium.length > 0 && <SeasonPodium season={season} podium={podium} players={players} onOpen={(id: string) => onOpen(id, "all")} />}
           {players.length > 0 && standingsPlayers.length === 0 ? (
             <Empty msg={q ? "Nobody here by that name." : inSeason ? `No results yet in ${season.name}. The table fills in as matches are logged.` : activeScope === "active" ? "No one has played in the last 12 months. Try Legacy for career history." : activeScope === "nonactive" ? "Everyone has played in the last 12 months." : "No players yet."} />
           ) : (
             <>
             {rankedRows.length === 0 && (
-              <Empty msg={`Nobody has played ${minGames} matches${inSeason ? " this season" : ""} yet, so nobody is ranked. Everyone so far is listed below.`} />
+              <Empty msg={provisionalRows.length
+                ? "Nobody has an established rating yet. Everyone so far is provisional, listed below."
+                : `Nobody has played ${minGames} matches${inSeason ? " this season" : ""} yet, so nobody is ranked.`} />
             )}
             {rankedRows.length > 0 && <StandingsList
               players={rankedRows}
               matches={filtered}
               meId={meId}
               unit={unit}
-              onOpen={(id: string) => onOpen(id, tableYr)}
+              onOpen={(id: string) => onOpen(id, "all")}
             />}
+            {provisionalRows.length > 0 && (
+              <div style={{ marginTop: 18 }}>
+                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, padding: "0 4px 2px" }}>Provisional</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.45, padding: "0 4px 8px" }}>
+                  Rated, but the ± is still wide — a few more results and they take a place.
+                </div>
+                <StandingsList
+                  players={provisionalRows}
+                  matches={filtered}
+                  meId={meId}
+                  unit={unit}
+                  placeless
+                  onOpen={(id: string) => onOpen(id, "all")}
+                />
+              </div>
+            )}
             {unrankedRows.length > 0 && (
-              <SurfaceCard radius={18} pad="12px 14px" style={{ marginTop: 14 }}>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Not ranked yet</div>
-                {unrankedRows.map((sp: any, i: number) => {
+              <SurfaceCard radius={18} pad="0 14px" style={{ marginTop: 14 }}>
+                {/* One line until tapped: a list of everybody who has played
+                    once or twice was half the screen, under the table it was
+                    meant to be a footnote to. */}
+                <button
+                  onClick={() => setShowUnranked(!showUnranked)}
+                  aria-expanded={showUnranked}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", padding: "14px 0", cursor: "pointer", textAlign: "left" }}
+                >
+                  <span style={{ flex: 1, fontFamily: body, fontSize: 14.5, color: CHALK }}>
+                    {unrankedRows.length === 1 ? "1 player needs a few more matches" : `${unrankedRows.length} players need a few more matches`}
+                  </span>
+                  <ChevronDown size={16} color={MUTED} style={{ transform: showUnranked ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
+                </button>
+                {showUnranked && unrankedRows.map((sp: any) => {
                   const gp = wdl[sp.player.id]?.gp || 0;
                   const left = minGames - gp;
                   const pl = sp.player;
                   const short = (pl.name || "").trim() + (pl.last ? " " + String(pl.last).trim()[0].toUpperCase() : "");
                   return (
-                    <div key={pl.id} onClick={() => onOpen(pl.id, tableYr)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderTop: i ? "0.5px solid " + PANEL2 : "none", cursor: "pointer" }}>
+                    <div key={pl.id} onClick={() => onOpen(pl.id, "all")} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderTop: "0.5px solid " + PANEL2, cursor: "pointer" }}>
                       <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, color: pl.id === meId ? BALL : CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{short || fullNameOf(pl)}</span>
-                      <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{left === 1 ? "1 more match to rank" : `${left} more matches to rank`}</span>
+                      <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{left === 1 ? "1 more match" : `${left} more matches`}</span>
                     </div>
                   );
                 })}
+                {showUnranked && <div style={{ height: 6 }} />}
               </SurfaceCard>
             )}
             </>

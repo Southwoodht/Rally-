@@ -47,6 +47,9 @@ export interface StandingsListProps {
   onOpen?: (playerId: string) => void;
   /** What the number means — "rating", "points", "Elo". */
   unit?: string;
+  /** Listed in order but given no place: a dash where the rank goes and no
+   *  leader card. The provisional group under the table. */
+  placeless?: boolean;
 }
 
 const recordOf = (p: StandingsPlayer) => `${p.w}–${p.d}–${p.l}`;
@@ -66,9 +69,10 @@ const statLineOf = (p: StandingsPlayer) => {
   if (!gamesOf(p)) return "no games yet";
   const pct = winPctOf(p);
   const lv = levelNow(p.player);
-  // "provisional" first: the line truncates at the right, and it was the
-  // word that went — "advanced · pr…" — on exactly the rows it describes.
-  return [p.provisional ? "provisional" : null, recordOf(p), pct === null ? null : pct + "%", lv?.cat ? String(lv.cat).toLowerCase() : null]
+  // No "provisional" here since the one-table change: provisional players
+  // sit in their own section under that heading, so the word on every row
+  // said it a second time and pushed the level off the end.
+  return [recordOf(p), pct === null ? null : pct + "%", lv?.cat ? String(lv.cat).toLowerCase() : null]
     .filter(Boolean).join(" · ");
 };
 
@@ -202,7 +206,7 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
   );
 }
 
-export function StandingsList({ players, matches, meId, onOpen, unit = "rating" }: StandingsListProps) {
+export function StandingsList({ players, matches, meId, onOpen, unit = "rating", placeless = false }: StandingsListProps) {
   const rows = useMemo(() => {
     const candidates: RankCandidate[] = players.map((p) => ({
       id: p.player.id,
@@ -244,7 +248,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
   // of the club's table. They keep first place in the list, marked
   // provisional; only the card is withheld.
   const leaders = rows.filter((r) => r.rank === 1);
-  const crowned = leaders.length === 1 && !leaders[0].p.provisional ? leaders[0] : null;
+  const crowned = !placeless && leaders.length === 1 && !leaders[0].p.provisional ? leaders[0] : null;
   const rest = crowned ? rows.slice(1) : rows;
 
   return (
@@ -258,7 +262,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
           belongs to, rather than repeated on thirteen rows: the word is the
           same on every one of them, and thirteen copies of it is a pattern,
           not a label. */}
-      {rest.length > 0 && (
+      {rest.length > 0 && !placeless && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "2px 14px 0" }}>
           <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_LOW, textTransform: "uppercase", letterSpacing: 0.6 }}>
             {unit}
@@ -270,8 +274,8 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
         <PlayerRow
           key={r.id}
           p={r.p}
-          rank={r.rank}
-          tied={r.tied}
+          rank={placeless ? "–" : r.rank}
+          tied={placeless ? false : r.tied}
           display={r.display}
           fraction={r.fraction}
           isMe={!!meId && r.id === meId}

@@ -15,14 +15,15 @@ import { BALL, CHALK, body } from "@/lib/theme";
 // one is embedded, so it draws none.
 
 export function RankingInfo() {
+  // One ranking since 2026-10-22 (Sam: "members want one table"), so this
+  // explains that one and how the list is laid out — not the five modes the
+  // chips used to offer.
   const items: Array<[string, string]> = [
-    ["Official", "The headline table. Every result is judged by how strong the opponent actually is: a win over a strong player earns a lot, a loss to a strong player costs little, and the other way round for weaker ones. How strong someone is comes from their results this season, with their level filling in while they have played only a few matches — so beating a newcomer down as Advanced still counts as a big win, and a dropdown that is wrong stops mattering once they have played. Then it is multiplied by how many matches you have won or drawn, so two good wins will not put you top — and because losses do not count towards that, a loss can never raise your points. Playing the best player in the club never costs you: losing to them is cheap and beating them is worth the most of anything."],
-    ["Glicko", "A rating with a ± for how sure it is, the system chess uses. You start from your level — 1500 is Intermediate/Low, and each step up or down the level scale is 50 — and after that only results move you: win, draw or loss, not the score. Beating someone rated well above you moves you a lot; beating someone well below, very little. The ± shrinks as you play and grows again while you don't, so a regular is sure of their number and someone back after a year off is not. Over ± 110 it says provisional: the number is a guess, and the next few results will move it a lot."],
-    ["ELO", "A pure skill rating, starting at 0. Beating someone stronger than you earns a lot; losing to someone stronger costs almost nothing. It answers 'how good are you', ignoring how often you play."],
-    ["Strength", "Built from who beat whom, rather than from your totals. Your strength is the average strength of everyone you played, plus how you did against them — so beating the people you face puts you above them, and holding your own against strong players keeps you up there even on a losing record. Because everyone's strength depends on everyone else's, it is worked out by going round and round until it settles. It is the only one here that never looks at anybody's level: it works out how good your opponents are from their own results. It is also what ranks the Global table."],
-    ["Record", "The simple one — your win rate (share of games won, a draw counts as half), nudged by how strong your opponents were and how much you've played."],
-    ["Win %", "The rawest number — just wins divided by games played (draws count as half a win), no adjustment for opponent strength or activity."],
-    ["Form", "Just your last 5 results — a win scores +1, a loss −1, a draw 0. Shows who's hot right now, regardless of overall record."],
+    ["The rating", "One number per player, with a ± for how sure it is — the Glicko system chess uses. You start from your level: 1500 is Intermediate · Low, and each step up or down the level scale is 50. After that only results move you: a win, a draw or a loss, not the score. Beating someone rated well above you moves you a lot; beating someone well below, very little."],
+    ["The ±", "How sure the rating is. It shrinks as you play and grows again while you don't, so a regular is sure of their number and somebody back after a year off is not — their next few results move them a lot."],
+    ["Provisional", "Over ± 110 the rating is still a guess. Provisional players are listed under the table without a place, and take one once a few more results come in. Nobody provisional is ever shown as the leader."],
+    ["A few more matches", "A place needs 5 matches all time, or 3 in a season. Anyone short of that is in the one line at the foot of the table — tap it to see who, and how many they need."],
+    ["Global table", "Everyone you have played, across every club. It is its own table — the link at the top."],
   ];
   return (
     <div>
