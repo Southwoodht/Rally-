@@ -1015,9 +1015,11 @@ their next visit; Help → "Take the tour" any time. What's new bumped to
 RELEASE `2026-10-22` (tour, one table, points per match, emails) and the
 September entries cut.
 
-**Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
-is still `not null` while matches and players are both nullable, so "Book a
-match" inside Friendlies fails at the database.
+**Run on 2026-10-22, verified (YES, 3): `schema_friendly_fixtures.sql`.**
+`fixtures.league_id` is nullable, and read / insert / update each carry a
+league-less branch for the two players in the fixture (insert only for one
+of them). So "Book a match" inside Friendlies works at the database. No data
+touched; club fixtures behave exactly as before.
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
