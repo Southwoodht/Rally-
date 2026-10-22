@@ -32,7 +32,6 @@ export interface Season {
 const DAY_MS = 86400000;
 const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-/** Today's date in the UK, "YYYY-MM-DD". */
 /**
  * Matches in a season before somebody is given a place on its table. Lower
  * than the all-time PROVISIONAL_GAMES (5) on purpose — Sam's ruling,
@@ -43,6 +42,7 @@ const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
  */
 export const SEASON_RANK_GAMES = 3;
 
+/** Today's date in the UK, "YYYY-MM-DD". */
 export function londonDay(ts: number = Date.now()): string {
   // en-CA formats as YYYY-MM-DD.
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ts));

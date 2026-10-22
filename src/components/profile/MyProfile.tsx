@@ -7,6 +7,7 @@ import { readPhotoAsDataUrl } from "@/lib/photo";
 import { updateMyPublicProfile } from "@/lib/profiles";
 import { LevelRequestForm } from "@/components/profile/LevelRequestForm";
 import { StartRecordEditor } from "@/components/settings/StartRecordEditor";
+import { EmailsToggle } from "@/components/profile/EmailsToggle";
 import { BALL, CHALK, MUTED, NICKS, body, card, miniInput } from "@/lib/theme";
 
 const PHOTO_SIZE = 160;
@@ -124,6 +125,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
           <div style={{ fontSize: 12.5, color: MUTED }}>Set by the organisers. Ask one if it&apos;s wrong.</div>
         </div>
       )}
+      {!friendly && <EmailsToggle flash={flash} />}
       <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only club owners can edit other players or club settings.</div>
     </div>
   );

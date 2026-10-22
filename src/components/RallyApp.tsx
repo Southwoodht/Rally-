@@ -10,6 +10,7 @@ import { HelpGuide } from "@/components/help/HelpGuide";
 import { History } from "@/components/games/History";
 import { Home } from "@/components/home/Home";
 import { LogResult } from "@/components/games/LogResult";
+import { notifyFixture } from "@/lib/emailPrefs";
 import { LeagueGamePrompt } from "@/components/games/LeagueGamePrompt";
 import { leagueGameOptions, settleTie } from "@/core/leagueGame";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -750,7 +751,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
-  const addFixture = (p1, p2, booked = null, mins?: number) => saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id: uid(), p1, p2, done: false, booked, ...(mins ? { durationMinutes: mins } : {}) }] });
+  const addFixture = async (p1, p2, booked = null, mins?: number) => {
+    const id = uid();
+    const ok = await saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id, p1, p2, done: false, booked, ...(mins ? { durationMinutes: mins } : {}) }] });
+    // A new match with a time on it is a challenge: "Sam has challenged you".
+    if (ok !== false && booked && !isFriendlyLeague(gid)) void notifyFixture("challenge", id);
+    return ok;
+  };
   /**
    * Call off an arranged match, and say so.
    *
@@ -815,7 +822,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   };
   // `mins` is how long it was booked for. Only written when given, so a
   // database without schema_fixture_duration.sql keeps saving bookings.
-  const bookFixture = (id, when, mins?: number) => saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null, ...(mins ? { durationMinutes: mins } : {}) } : f) });
+  const bookFixture = async (id, when, mins?: number) => {
+    const ok = await saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null, ...(mins ? { durationMinutes: mins } : {}) } : f) });
+    // "Match booked" to the other side (winter item 6), once the save is in.
+    if (ok !== false && when && !isFriendlyLeague(gid)) void notifyFixture("booking", id);
+    return ok;
+  };
   /**
    * Chase a result you logged.
    *

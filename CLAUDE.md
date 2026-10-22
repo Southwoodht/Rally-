@@ -936,6 +936,18 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
   score that disagrees with the winner is refused (`scoreProblem` in
   `core/sets.ts`). Sam is fixing Charlie Henry's level history (stops at
   2026-09) and the two bad scores (14 Sep 6-6, 20 Mar Will v George) by hand.
+- **Emails built 2026-10-22 (winter-pilot)**: southwood.app VERIFIED in Resend
+  (Ireland; 4 DNS records in Porkbun, wildcard parking CNAME deleted);
+  `RESEND_API_KEY` (Production only) and `SUPABASE_SERVICE_ROLE_KEY` set in
+  Vercel. `app/api/notify` sends "challenged" (new fixture with a time) and
+  "booked" (time set) to the OTHER side, checking the caller's token and that
+  they are in the fixture or staff. `app/api/cron/reminders` (vercel.json, daily
+  08:00 UTC) sends result reminders and 7/2-day deadline warnings
+  (`core/emailSchedule.ts`, tested). `email_log` makes every email once-only;
+  `profiles.email_opt_out` is the My profile switch. **Needs
+  `schema_email.sql`** — without it nothing is sent (no log, no opt-out to
+  read). Singles fixtures only; doubles fixtures send nothing yet. Optional
+  `CRON_SECRET` env var locks the daily job to Vercel.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
