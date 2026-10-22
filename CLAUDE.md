@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-awards-2026-10-22`** (4304fbb) is master just before season awards and the next-season planner; **`rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -1062,8 +1062,8 @@ Also from that day: Fixtures' search box shows from six fixtures up and
 lost its inner border; the competition form no longer reopens on every
 visit to Fixtures (module-level handled create signal).
 
-**Season awards and promotion/relegation (branch `season/awards-promotion`,
-2026-10-22, preview).** Sam: "the app proposes next season's divisions, the
+**Season awards and promotion/relegation, merged to master 2026-10-22
+(rollback: branch `rollback/pre-awards-2026-10-22`).** Sam: "the app proposes next season's divisions, the
 coach confirms" and "a trophy on their profile and a post in the feed, no
 admin".
 - `core/promotion.ts` (tested): top N up / bottom N down (default 2, never
