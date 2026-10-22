@@ -71,6 +71,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { START_ELO } from "@/core/constants";
 import { computeStats } from "@/core/elo";
 import { rankMaps } from "@/core/rank";
+import { useScreenIn } from "@/components/ui/Motion";
 import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
@@ -212,6 +213,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     setProfileId(id); setProfileYear(year ?? "all");
   };
   const [groupSheet, setGroupSheet] = useState(false);
+  // The content fades up on a tab change or a Back (ui/Motion.tsx); the
+  // header stays put.
+  const screenRef = useScreenIn<HTMLDivElement>(tab + "|" + (profileId ?? "") + "|" + tableMode);
 
   // Doubles. One load for the whole app; see useDoubles. With the flag off it
   // fetches nothing and every branch below collapses to what was there
@@ -1875,7 +1879,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
+      <div ref={screenRef} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>

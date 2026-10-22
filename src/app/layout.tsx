@@ -5,6 +5,7 @@ import {
 } from "next/font/google";
 import { THEME_BOOT_SCRIPT } from "@/lib/themes";
 import "./globals.css";
+import { MotionLayer } from "@/components/ui/Motion";
 
 // The two faces, loaded once, here.
 //
@@ -122,7 +123,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             the paint this exists to beat. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>{children}<MotionLayer /></body>
     </html>
   );
 }
