@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -949,7 +949,7 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
   `CRON_SECRET` env var locks the daily job to Vercel.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
-**Branch `ratings/glicko` (2026-10-22), preview only, NOT merged.** Sam's two
+**`ratings/glicko`, merged to master 2026-10-22 (rollback: branch `rollback/pre-glicko-2026-10-22`).** Sam's two
 rulings after the four-system comparison on the real export (every system
 predicted 68-71% of 115 decided matches — noise; level alone 78%, but the
 histories were written with hindsight):
@@ -959,8 +959,9 @@ histories were written with hindsight):
   350 without. Every match is its own update and the ± grows weekly while you
   don't play — that is the recency. Over ± 110 the row says "provisional"
   (first in the stat line, which truncates) and the number goes quiet. It
-  does NOT replace the 5/3-match cut-off, and a provisional player can still
-  get the leader card — flagged to Sam, unruled.
+  does NOT replace the 5/3-match cut-off. A provisional first place never
+  gets the Leader card (Sam's ruling): it stays an ordinary row, and the
+  card does not pass to whoever is next.
 - **Ratings read win/draw/loss only; the score feeds predictions.** Elo,
   Official's strength graph, Strength and the Global table no longer blend
   `MARGIN_WEIGHT`; `predictionResult()` in `core/predict.ts` is the only
@@ -969,6 +970,9 @@ histories were written with hindsight):
   contradicting score (`scoreProblem`) counts as no score. This supersedes
   §3's "Margin counts" for ratings. official.test 2026 pins moved
   52.5/45.1/33.6/19.6 → 53.0/45.8/34.3/20.0, same order.
+- **Sam's flag for later:** five rankings (Official, Elo, Strength, Glicko,
+  Global) is too many for a club. After watching Glicko for a few weeks,
+  pick ONE headline ranking and tuck the rest away. Not before.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
