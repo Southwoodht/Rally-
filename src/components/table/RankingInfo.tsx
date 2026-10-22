@@ -21,7 +21,7 @@ export function RankingInfo() {
   const items: Array<[string, string]> = [
     ["The rating", "One number per player, with a ± for how sure it is — the Glicko system chess uses. You start from your level: 1500 is Intermediate · Low, and each step up or down the level scale is 50. After that only results move you: a win, a draw or a loss, not the score. Beating someone rated well above you moves you a lot; beating someone well below, very little."],
     ["The ±", "How sure the rating is. It shrinks as you play and grows again while you don't, so a regular is sure of their number and somebody back after a year off is not — their next few results move them a lot."],
-    ["Provisional", "Over ± 110 the rating is still a guess. Provisional players are listed under the table without a place, and take one once a few more results come in. Nobody provisional is ever shown as the leader."],
+    ["Provisional", "Over ± 130 the rating is still a guess. Provisional players are listed under the table without a place, and take one once a few more results come in. Nobody provisional is ever shown as the leader."],
     ["A few more matches", "A place needs 5 matches all time, or 3 in a season. Anyone short of that is in the one line at the foot of the table — tap it to see who, and how many they need."],
     ["Global table", "Everyone you have played, across every club. It is its own table — the link at the top."],
   ];

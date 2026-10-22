@@ -1,7 +1,7 @@
 // Tests for the Glicko-2 table mode (core/glicko.ts).
 // Plain TypeScript with an assert; relative imports (see CLAUDE.md §1).
 
-import { computeGlicko, glickoUpdate, GLICKO_PROVISIONAL_RD, GLICKO_RD_LEVEL, GLICKO_RD_NO_LEVEL, GLICKO_START } from "./glicko";
+import { computeGlicko, glickoStandings, glickoUpdate, GLICKO_PROVISIONAL_RD, GLICKO_RD_LEVEL, GLICKO_RD_NO_LEVEL, GLICKO_START } from "./glicko";
 
 let failures = 0;
 let checks = 0;
@@ -75,6 +75,25 @@ const match = (id: string, p1: string, p2: string, winner: string, day: number, 
   ], T0 + 2 * DAY);
   ok(!("out" in t.rating), "a match against someone outside the roster is not counted");
   ok(t.rating.int > GLICKO_START && t.rating.adv < 1650, "only the pending win counted");
+}
+
+
+// ------------------------------------------------ places, as the Table gives them
+{
+  // int plays none twenty times (established); adv plays once (short of 5).
+  const ms = [
+    ...Array.from({ length: 20 }, (_, i) => match("s" + i, "int", "none", i % 4 === 3 ? "p2" : "p1", i * 7)),
+    match("a1", "adv", "int", "p1", 140),
+  ];
+  const now = T0 + 140 * DAY;
+  const st = glickoStandings(players, ms, { minGames: 5, now });
+  ok(st.status.adv === "short" && st.played.adv === 1, "one match: short of the five");
+  ok(st.status.int === "placed" && st.status.none === "placed", "twenty weekly matches each: placed");
+  ok(st.place.int === 1 && st.place.none === 2 && st.of === 2, "placed in rating order, short players not counted");
+  const onlyNone = glickoStandings(players, ms, { minGames: 5, now, eligible: (id) => id !== "int" });
+  ok(onlyNone.place.none === 1 && onlyNone.of === 1 && !("int" in onlyNone.status), "eligible narrows who is listed, and so the places");
+  const later = glickoStandings(players, ms, { minGames: 5, now: now + 3 * 365 * DAY });
+  ok(later.status.int === "provisional" && later.of === 0, "three years on, the ± has grown past the line: provisional, no place");
 }
 
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }

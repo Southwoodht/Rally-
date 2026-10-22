@@ -33,6 +33,7 @@
  */
 import { countsAsPlayed } from "./matchStatus";
 import { levelAt, levelVal } from "./levels";
+import { assignRanks, buildH2H } from "./tiebreak";
 
 export const GLICKO_START = 1500;
 /** Per step of the 18-point level scale; a category is three steps. */
@@ -47,11 +48,16 @@ export const GLICKO_RD_MAX = 350;
 export const GLICKO_VOLATILITY = 0.06;
 export const GLICKO_TAU = 0.5;
 /**
- * Above this ± a rating is provisional. 110 is Lichess's line on the same
- * scale; on Seacourt a weekly player is near 90, and somebody who has played
- * a handful of times, or not for a year, is above it.
+ * Above this ± a rating is provisional.
+ *
+ * 130, Sam's ruling 2026-10-22, once the Table became Glicko only. It was 110
+ * (Lichess's line on the same scale), which on Seacourt's real results placed
+ * exactly three people — Zaach, Charlie and Sam at ± 87-95 — and listed the
+ * rest as provisional, George at 111 and Adrian at 121 among them. At 130 it
+ * places 7 of 9 all time and 6 of 9 in the 2026 season; the two left over
+ * (± 158 and up) have three or fewer matches in the period.
  */
-export const GLICKO_PROVISIONAL_RD = 110;
+export const GLICKO_PROVISIONAL_RD = 130;
 
 const SCALE = 173.7178;
 const WEEK_MS = 7 * 864e5;
@@ -153,4 +159,60 @@ export function computeGlicko(players: any[], matches: any[], now: number = Date
     out.provisional[id] = s.rd > GLICKO_PROVISIONAL_RD;
   }
   return out;
+}
+
+export interface GlickoStandings {
+  table: GlickoTable;
+  /** Place among the established, ties shared (3, 3, 5) — exactly as the Table prints it. */
+  place: Record<string, number>;
+  /** How many hold a place. */
+  of: number;
+  /** placed | provisional (enough matches, ± too wide) | short (too few matches). */
+  status: Record<string, "placed" | "provisional" | "short">;
+  /** Matches counted per player, for "2 more to rank". */
+  played: Record<string, number>;
+}
+
+/**
+ * Who holds a place, and which, over these matches — the Table's own rules,
+ * for anything that prints a place away from the Table (the Home card, your
+ * places in other clubs). Same Glicko, same match count, same ± line, same
+ * head-to-head tiebreak on the rounded rating, so a place on Home is the place
+ * on the Table.
+ *
+ * `eligible` is who the view lists at all: the Table's default is people who
+ * are not marked inactive and have played in the last twelve months.
+ */
+export function glickoStandings(
+  players: any[], matches: any[],
+  opts: { minGames: number; eligible?: (id: string) => boolean; now?: number },
+): GlickoStandings {
+  const table = computeGlicko(players, matches, opts.now);
+  const ids = new Set(players.map((p) => p.id));
+  const played: Record<string, number> = {};
+  const w: Record<string, number> = {}, d: Record<string, number> = {}, l: Record<string, number> = {};
+  for (const m of matches) {
+    if (!countsAsPlayed(m) || !m.winner || !ids.has(m.p1) || !ids.has(m.p2)) continue;
+    for (const [me, side] of [[m.p1, "p1"], [m.p2, "p2"]] as const) {
+      played[me] = (played[me] || 0) + 1;
+      if (m.winner === "draw") d[me] = (d[me] || 0) + 1;
+      else if (m.winner === side) w[me] = (w[me] || 0) + 1;
+      else l[me] = (l[me] || 0) + 1;
+    }
+  }
+  const status: GlickoStandings["status"] = {};
+  const placed: string[] = [];
+  for (const id of Object.keys(table.rating)) {
+    if (opts.eligible && !opts.eligible(id)) continue;
+    if ((played[id] || 0) < opts.minGames) status[id] = "short";
+    else if (table.provisional[id]) status[id] = "provisional";
+    else { status[id] = "placed"; placed.push(id); }
+  }
+  const ranked = assignRanks(
+    placed.map((id) => ({ id, name: id, score: Math.round(table.rating[id]), w: w[id] || 0, d: d[id] || 0, l: l[id] || 0 })),
+    buildH2H(matches),
+  );
+  const place: Record<string, number> = {};
+  for (const r of ranked) place[r.id] = r.rank;
+  return { table, place, of: placed.length, status, played };
 }

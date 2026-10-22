@@ -14,15 +14,13 @@ import { FEED_HERO, FEED_LIME_DIVIDER, FEED_LIME_INK_2, FEED_LOSS_ON_HERO, FEED_
 // here counts anything.
 
 /**
- * What the league slides call their number.
- *
- * "all time" is in the caption because it is TRUE and currently unavoidable:
- * Home computes Official over every match a league has ever had, while the
- * Table computes it over the season-and-year filter showing on that screen.
- * Both are Official points and they are entitled to differ — but only if the
- * card says which one it is. Aligning them is a separate job; see the report.
+ * What the league slides call their number. The Glicko rating since
+ * 2026-10-22, when the Table became one ranking; the caption says which
+ * period, because the Table opens on this season while one is running and
+ * the two places are entitled to differ.
  */
-export const OFFICIAL_UNIT = "official · all time";
+export const RATING_UNIT_ALL = "rating · all time";
+export const RATING_UNIT_SEASON = "rating · this season";
 
 export interface Standing {
   /**

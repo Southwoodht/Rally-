@@ -29,7 +29,8 @@ import { LevelRepair } from "@/components/settings/LevelRepair";
 import { PROVISIONAL_GAMES, globalKeyFor, globalRankFor } from "@/lib/globalTable";
 import { myLeaguePlaces } from "@/lib/myLeaguePlaces";
 import { listMyLeagues } from "@/lib/leagues";
-import { OFFICIAL_UNIT, type Standing } from "@/components/home/StandingHero";
+import { RATING_UNIT_ALL, RATING_UNIT_SEASON, type Standing } from "@/components/home/StandingHero";
+import { glickoStandings } from "@/core/glicko";
 import { setLevelEstimate } from "@/lib/levelAdmin";
 import { LeagueHub } from "@/components/settings/LeagueHub";
 import { setLeagueFlags } from "@/lib/leagues";
@@ -1160,7 +1161,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const others = (await listMyLeagues()).filter((l: any) => l.id !== gid);
         if (others.length) {
           const places = await myLeaguePlaces(others, myAuthId);
-          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: OFFICIAL_UNIT, footer: "of " + pl.of + " players" }));
+          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: RATING_UNIT_ALL, footer: "of " + pl.of + " placed" }));
         }
       } catch {}
       if (alive) setOtherStandings(found);
@@ -1420,17 +1421,40 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const iAm = (m) => (m.p1 === meId ? "p1" : "p2");
     const first = (id) => players.find((p) => p.id === id)?.name || "them";
 
-    // Where you stand. The place and the arrow both come from officialRanks,
-    // which is also what the weekly snapshot records — one source, so the
-    // three numbers on this card cannot disagree with each other.
+    // Where you stand: the Table's own default view, so the place here is the
+    // place there (Sam, 2026-10-22 — one ranking, and the card follows it).
+    // This season while one is running, all time otherwise; people marked
+    // inactive or not seen for a year are not listed, as on the Table.
+    // glickoStandings applies the same match count, ± line and tiebreak.
+    // Not a memo: this sits below the screen's early returns, and Glicko over
+    // a club's history is a few milliseconds.
+    // No weekly arrow: the snapshots record Official places, not these.
     const rec = wdl[meId];
-    const standing = rec && rec.gp > 0 && officialRanks[meId] ? {
-      rank: officialRanks[meId],
-      rating: Math.round(officialPoints[meId] ?? 0),
-      unit: OFFICIAL_UNIT,
-      movement: movement[meId] ?? null,
-      form: (form[meId] || []).slice(-5),
-    } : null;
+    const standing = (() => {
+      if (!rec || !rec.gp) return null;
+      const cutoff = Date.now() - 365 * 86400000;
+      const recent = new Set<string>();
+      matches.forEach((m) => { if (countsAsPlayed(m) && m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });
+      const eligible = (id: string) => recent.has(id) && !players.find((p) => p.id === id)?.inactive;
+      const run = group?.season;
+      const inSeason = run ? matches.filter((m) => m.date >= run.start && (run.end == null || m.date <= run.end)) : null;
+      // In a season you have not played in yet, the all-time place stands in
+      // rather than the card vanishing on the first day of a new season.
+      const useSeason = !!inSeason && inSeason.some((m) => countsAsPlayed(m) && (m.p1 === meId || m.p2 === meId));
+      const st = glickoStandings(players, useSeason ? inSeason! : matches, { minGames: useSeason ? SEASON_RANK_GAMES : PROVISIONAL_GAMES, eligible });
+      const status = st.status[meId];
+      if (!status) return null;
+      const left = (useSeason ? SEASON_RANK_GAMES : PROVISIONAL_GAMES) - (st.played[meId] || 0);
+      return {
+        rank: status === "placed" ? st.place[meId] : (null as any),
+        note: status === "provisional" ? "Provisional" : status === "short" ? `${left} more to rank` : null,
+        rating: Math.round(st.table.rating[meId]),
+        unit: useSeason ? RATING_UNIT_SEASON : RATING_UNIT_ALL,
+        movement: null,
+        form: (form[meId] || []).slice(-5),
+        footer: status === "placed" ? "of " + st.of + " placed" : null,
+      };
+    })();
 
     // Results you logged that the other player hasn't agreed to yet. Only
     // yours: nudging asks somebody to confirm something, and a result they

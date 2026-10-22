@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -976,7 +976,8 @@ histories were written with hindsight):
   350 without. Every match is its own update and the ± grows weekly while you
   don't play — that is the recency. Over ± 110 the row says "provisional"
   (first in the stat line, which truncates) and the number goes quiet. It
-  does NOT replace the 5/3-match cut-off. A provisional first place never
+  does NOT replace the 5/3-match cut-off (and the ± line is 130 since the
+  one-table change, below). A provisional first place never
   gets the Leader card (Sam's ruling): it stays an ordinary row, and the
   card does not pass to whoever is next.
 - **Ratings read win/draw/loss only; the score feeds predictions.** Elo,
@@ -990,6 +991,21 @@ histories were written with hindsight):
 - **Sam's flag for later:** five rankings (Official, Elo, Strength, Glicko,
   Global) is too many for a club. After watching Glicko for a few weeks,
   pick ONE headline ranking and tuck the rest away. Not before.
+
+**`table/glicko-only`, merged to master 2026-10-22 (rollback: branch
+`rollback/pre-one-table-2026-10-22`).** Sam's ruling: the Table is ONE
+ranking, Glicko. No Ranked-by or year chips (This season / All time stays;
+Official, Elo and Strength are still computed for predictions, recap and
+the Global table). Placed players first; provisional ones (± over
+`GLICKO_PROVISIONAL_RD`, **raised 110 → 130**: 3 placed on Seacourt's real
+results at 110, 7 of 9 at 130) under a heading with a dash for a place;
+everyone short of 5 / 3 matches in one tappable line. **Home's card and
+"your place in other clubs" use the same rating** through
+`glickoStandings()` in `core/glicko.ts` (the Table's default view: this
+season while one runs, active players, same ± line and tiebreak), captioned
+"rating · this season / all time". Weekly movement arrows are off on both:
+the snapshots still record Official places. `officialRanks` and `movement`
+in RallyApp are now read by nothing on screen.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a

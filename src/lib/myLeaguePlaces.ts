@@ -1,14 +1,14 @@
-import { computeStats } from "@/core/elo";
-import { computeOfficial } from "@/core/official";
-import { rankMaps } from "@/core/rank";
+import { countsAsPlayed } from "@/core/matchStatus";
+import { glickoStandings } from "@/core/glicko";
 import { fetchLeagueData } from "@/lib/leagueData";
+import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 
 export interface LeaguePlace {
   leagueId: string;
   name: string;
   place: number;
   of: number;
-  /** Official points, rounded — the same number that league's table prints. */
+  /** The Glicko rating, rounded — the same number that club's table prints all time. */
   rating: number;
 }
 
@@ -38,14 +38,18 @@ export async function myLeaguePlaces(groups: any[], authId: string | null, now =
       const data = await fetchLeagueData(g.id);
       const me = data.players.find((p: any) => p.auth_id === authId);
       if (!me) continue;
-      const { elo, wdl } = computeStats(data.players, data.matches);
-      const maps = rankMaps(data.players, data.matches, elo, wdl);
-      const place = maps.off[me.id];
-      // The same computeOfficial the league table runs, for the same reason
-      // the place comes from rankMaps: one formula, so the number here and
-      // the number on that league's own table cannot disagree.
-      const points = computeOfficial(data.players, data.matches, wdl);
-      if (place) places.push({ leagueId: g.id, name: g.name, place, of: Object.keys(maps.off).length, rating: Math.round(points[me.id] ?? 0) });
+      // The same glickoStandings the Home card uses, on that club's all-time
+      // view (active players, 5 matches, the ± line): one ranking since
+      // 2026-10-22, so the place here is the place on that club's Table.
+      const cutoff = now - 365 * 86400000;
+      const recent = new Set<string>();
+      data.matches.forEach((m: any) => { if (countsAsPlayed(m) && m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });
+      const st = glickoStandings(data.players, data.matches, {
+        minGames: PROVISIONAL_GAMES, now,
+        eligible: (id) => recent.has(id) && !data.players.find((p: any) => p.id === id)?.inactive,
+      });
+      const place = st.place[me.id];
+      if (place) places.push({ leagueId: g.id, name: g.name, place, of: st.of, rating: Math.round(st.table.rating[me.id]) });
     } catch {
       // A league that won't load is simply left off the list. A profile is
       // not worth failing over, and a half-loaded league would produce a
