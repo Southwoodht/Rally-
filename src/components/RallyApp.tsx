@@ -269,6 +269,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // go before there are any (Sam: "can't see it"); members only once one runs.
   const divisionsTab = divisionComps.length > 0 || (leagueRole === "owner" || leagueRole === "editor") && !!competitionsEnabled && !comps.unavailable;
   const tableView = tableMode === "divisions" && !divisionsTab ? "standings" : tableMode;
+  // "Create a division" / "Add a division": the competition form, titled and
+  // named for the next division, then back to this table.
+  const startDivision = () => {
+    divisionMade.current = false;
+    setDivisionPreset({ title: "New division", name: "Division " + (divisionComps.length + 1) });
+    setTab("fixtures");
+    if (showDoubles) setCompCreateSignal((n) => n + 1); else setSinglesCreateSignal((n) => n + 1);
+  };
   // Standby view: the Table tab shows the people you've played instead of a
   // league. The league still loads underneath — this changes what's shown,
   // not what's fetched.
@@ -1922,12 +1930,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               table, like the football. Put them in a season to give the matches play-by dates.
             </div>
             <button
-              onClick={() => {
-                divisionMade.current = false;
-                setDivisionPreset({ title: "New division", name: "Division " + (divisionComps.length + 1) });
-                setTab("fixtures");
-                if (showDoubles) setCompCreateSignal((n) => n + 1); else setSinglesCreateSignal((n) => n + 1);
-              }}
+              onClick={startDivision}
               style={{ marginTop: 12, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}
             >
               Create a division
@@ -1948,6 +1951,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               ? doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).remaining
               : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).remaining}
             onOpenPlayer={openProfile}
+            onAdd={leagueRole === "owner" || leagueRole === "editor" ? startDivision : undefined}
           />
         )}
         {/* Doubles compares two PAIRS; singles stays exactly as it was. */}
