@@ -126,13 +126,23 @@ const segment = (on: boolean): React.CSSProperties => ({
 const unit = (kind: CompetitionKind, n: number) =>
   kind === "doubles" ? (n === 1 ? "pair" : "pairs") : (n === 1 ? "player" : "players");
 
+let handledCreateSignal = 0;
+
 export function Competitions(props: Props) {
   const { kind, players, competitions, entries, canManage, unavailable } = props;
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  // Open the form once per press of "Start a competition", not on every
+  // mount: the signal stays bumped in the parent, and this screen unmounts
+  // with every tab change, so a component-local check re-opened the form each
+  // time Fixtures was visited (Sam: "confused me here"). Module state, like
+  // the robins' last-animated count, outlives the mount.
   useEffect(() => {
-    if (props.createSignal && canManage) { setOpenId(null); setCreating(true); }
+    if (props.createSignal && canManage && props.createSignal !== handledCreateSignal) {
+      handledCreateSignal = props.createSignal;
+      setOpenId(null); setCreating(true);
+    }
   }, [props.createSignal, canManage]);
 
   // The SQL is not run yet: say nothing rather than something wrong, and

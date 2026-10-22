@@ -2037,9 +2037,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 const cutoff = Date.now() - 365 * 86400000;
                 const recent = new Set<string>();
                 matches.forEach((m: any) => { if (countsAsPlayed(m) && m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });
+                // Established ratings first, then provisional ones: a single
+                // win puts somebody on a high rating with a wide ±, and that
+                // put Lloyd (one match) at the top of the first ladder.
                 const g = computeGlicko(players, matches);
                 return players.filter((p: any) => !p.inactive && recent.has(p.id) && g.rating[p.id] != null)
-                  .sort((a: any, b: any) => g.rating[b.id] - g.rating[a.id]).map((p: any) => p.id);
+                  .sort((a: any, b: any) => (Number(g.provisional[a.id]) - Number(g.provisional[b.id])) || g.rating[b.id] - g.rating[a.id]).map((p: any) => p.id);
               })();
               const nextSeed = () => ladderEntries.reduce((m, e) => Math.max(m, e.seed), 0) + 1;
               return (
@@ -2072,6 +2075,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   }}
                   onLeave={async (entryId) => { await removeLadderEntry(entryId); await comps.reload(); }}
                   onSettle={(id, outcome) => setSinglesTie(id, { outcome })}
+                  onDelete={async () => {
+                    if (!ladderComp) return;
+                    await deleteCompetition(ladderComp.id);
+                    comps.removed(ladderComp.id);
+                    setGdata((g: any) => ({ ...g, fixtures: (g.fixtures || []).filter((f: any) => f.competitionId !== ladderComp.id) }));
+                    flash("Ladder deleted");
+                  }}
                   renderOpen={() => (
                     <FixturesPanel
                       fixtures={ladderFixtures}

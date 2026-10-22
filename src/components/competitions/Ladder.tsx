@@ -35,6 +35,8 @@ export function Ladder(props: {
   onLeave: (entryId: string) => Promise<void>;
   /** Organiser: a challenge nobody played — walkover to one side, or call it off. */
   onSettle: (challengeId: string, outcome: "walkover_p1" | "walkover_p2" | "void") => Promise<void>;
+  /** Organiser: take the whole ladder down, to start it again. Results played stay as matches. */
+  onDelete: () => Promise<void>;
   /** The open challenges' fixture cards, drawn by the parent's FixturesPanel. */
   renderOpen: () => React.ReactNode;
 }) {
@@ -73,7 +75,7 @@ export function Ladder(props: {
         <div style={{ ...note, marginTop: 6 }}>
           Challenge anyone up to {LADDER_REACH} places above you; win and you take their place. Singles only.
           It starts with the {props.startingOrder.length} people who have played singles in the last year, in rating
-          order, and anyone can join at the bottom after.
+          order — settled ratings first, then people who have only played a few — and anyone can join at the bottom after.
         </div>
         {err && <div style={{ ...note, color: DOT_LOSS, marginTop: 8 }}>{err}</div>}
         <button disabled={busy || !props.startingOrder.length} onClick={() => act(props.onStart)} style={{ ...pill(FEED_LIME, FEED_LIME_INK), marginTop: 12 }}>
@@ -173,6 +175,22 @@ export function Ladder(props: {
             {candidates.map((p) => <option key={p.id} value={p.id}>{fullNameOf(p)}</option>)}
           </select>
           <button disabled={busy || !adding} onClick={() => act(async () => { await props.onJoin(adding); setAdding(""); })} style={pill(FEED_LIME, FEED_LIME_INK)}>Add</button>
+        </div>
+      )}
+
+      {/* Two taps, and the second says what goes: §3, destructive things
+          state the cost. Results already played are matches and stay. */}
+      {canManage && (
+        <div style={{ marginTop: 22 }}>
+          {confirm === "delete" ? (
+            <button disabled={busy} onClick={() => act(async () => { await props.onDelete(); setOpen(false); })} style={pill(FEED_RAISED, DOT_LOSS)}>
+              Delete the ladder and its {order.length} places? Results stay.
+            </button>
+          ) : (
+            <button onClick={() => setConfirm("delete")} style={{ background: "none", border: "none", color: FEED_TEXT_LOW, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>
+              Delete the ladder (to start it again)
+            </button>
+          )}
         </div>
       )}
     </div>
