@@ -11,7 +11,8 @@ import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { officialTimeline } from "@/core/officialTimeline";
-import { rankMaps } from "@/core/rank";
+import { glickoStandings } from "@/core/glicko";
+import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 import { topRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
 import { PeopleYouMayKnow } from "@/components/social/PeopleYouMayKnow";
@@ -152,12 +153,30 @@ export function ProfileContainer({
       };
     });
 
-    const ranks = rankMaps(players, matches, elo, wdl);
-    const field = Object.keys(ranks.off).length;
+    // The club's Table, all time: the same glickoStandings the Table, Home
+    // and "your place in other clubs" use (active players, 5 matches, the ±
+    // line), so a profile can never show a place the Table doesn't. Elo and
+    // Record rows went with the one-ranking Table (Sam, 2026-10-22).
+    const cutoff = Date.now() - 365 * 86400000;
+    const recent = new Set<string>();
+    (matches || []).forEach((m: any) => { if (countsAsPlayed(m) && m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });
+    const st = glickoStandings(players || [], matches || [], {
+      minGames: PROVISIONAL_GAMES,
+      eligible: (id) => recent.has(id) && !byId[id]?.inactive,
+    });
+    const myStatus = st.status[pid];
     const rankings = [
-      { label: group?.name || "Club", value: ranks.off[pid] ? ordinal(ranks.off[pid]) + " of " + field : "unranked", emphasis: true },
-      { label: "Elo", value: ranks.el[pid] ? ordinal(ranks.el[pid]) + " of " + field : "unranked" },
-      { label: "Record", value: ranks.rec[pid] ? ordinal(ranks.rec[pid]) + " of " + field : "unranked" },
+      {
+        label: group?.name || "Club",
+        value: myStatus === "placed" ? ordinal(st.place[pid]) + " of " + st.of
+          : myStatus === "provisional" ? "Provisional"
+          : myStatus === "short" ? (PROVISIONAL_GAMES - (st.played[pid] || 0)) + " more to rank"
+          : "Not ranked",
+        emphasis: true,
+      },
+      ...(st.table.rating[pid] != null && (st.played[pid] || 0) > 0
+        ? [{ label: "Rating", value: String(Math.round(st.table.rating[pid])), qualifier: "± " + Math.round(st.table.rd[pid]) }]
+        : []),
     ];
 
     // Head-to-head totals against everyone they have faced.
@@ -204,15 +223,12 @@ export function ProfileContainer({
     // The gap to whoever is directly above, which is the only rank change
     // within reach. A gap to the leader is a fact; a gap to the person one
     // place up is a target.
-    const officialOrder = (players || [])
-      .filter((p: any) => wdl?.[p.id]?.gp > 0 && !p.inactive)
-      .sort((a: any, b: any) => (ranks.off[a.id] ?? 1e9) - (ranks.off[b.id] ?? 1e9));
-    const myIdx = officialOrder.findIndex((p: any) => p.id === pid);
-    const above = myIdx > 0 ? officialOrder[myIdx - 1] : null;
+    const placedOrder = Object.keys(st.place).sort((a, b) => st.place[a] - st.place[b]);
+    const above = st.place[pid] ? byId[placedOrder.filter((id) => st.place[id] < st.place[pid]).pop() as string] ?? null : null;
 
     let gap: { headline: string; advice: string } | null = null;
     if (isSelf && above) {
-      const places = (ranks.off[pid] ?? 0) - (ranks.off[above.id] ?? 0);
+      const places = st.place[pid] - st.place[above.id];
       gap = {
         headline: places === 1
           ? "One place behind " + fullNameOf(above) + "."
