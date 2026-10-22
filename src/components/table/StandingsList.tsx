@@ -31,7 +31,13 @@ export interface StandingsPlayer {
   form?: FormResult[];
   /** Places gained since the last weekly snapshot; null when unknown. */
   movement?: number | null;
+  /** Glicko's ± — printed under the number. Absent in every other mode. */
+  uncertainty?: number;
+  /** A ± too wide to stand behind: said in words on the row, number quiet. */
+  provisional?: boolean;
 }
+
+const plusMinus = (p: StandingsPlayer) => (p.uncertainty == null ? null : "± " + Math.round(p.uncertainty));
 
 export interface StandingsListProps {
   players: StandingsPlayer[];
@@ -60,7 +66,9 @@ const statLineOf = (p: StandingsPlayer) => {
   if (!gamesOf(p)) return "no games yet";
   const pct = winPctOf(p);
   const lv = levelNow(p.player);
-  return [recordOf(p), pct === null ? null : pct + "%", lv?.cat ? String(lv.cat).toLowerCase() : null]
+  // "provisional" first: the line truncates at the right, and it was the
+  // word that went — "advanced · pr…" — on exactly the rows it describes.
+  return [p.provisional ? "provisional" : null, recordOf(p), pct === null ? null : pct + "%", lv?.cat ? String(lv.cat).toLowerCase() : null]
     .filter(Boolean).join(" · ");
 };
 
@@ -111,6 +119,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <StatNumeral size={36} tone="ink" style={{ letterSpacing: "-0.04em" }}>{display}</StatNumeral>
+          {plusMinus(p) && <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1 }}>{plusMinus(p)}</div>}
           <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2, textTransform: "uppercase", letterSpacing: 0.6, marginTop: 2 }}>{unit}</div>
         </div>
       </div>
@@ -180,7 +189,10 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
           )}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 24, letterSpacing: "-0.03em", color: !played ? FEED_TEXT_MID : isMe ? FEED_LIME : FEED_TEXT_HI }}>{played ? display : "–"}</span>
+          <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 24, letterSpacing: "-0.03em", color: !played || p.provisional ? FEED_TEXT_MID : isMe ? FEED_LIME : FEED_TEXT_HI }}>{played ? display : "–"}</span>
+          {played && plusMinus(p) && (
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 1 }}>{plusMinus(p)}</div>
+          )}
           {p.movement !== null && p.movement !== undefined && (
             <div style={{ marginTop: 2 }}><MovementIndicator delta={p.movement} size={11} /></div>
           )}

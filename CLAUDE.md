@@ -949,6 +949,27 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
   `CRON_SECRET` env var locks the daily job to Vercel.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
+**Branch `ratings/glicko` (2026-10-22), preview only, NOT merged.** Sam's two
+rulings after the four-system comparison on the real export (every system
+predicted 68-71% of 115 decided matches — noise; level alone 78%, but the
+histories were written with hindsight):
+- **Glicko-2 is a table mode beside Official** (`core/glicko.ts`, tested
+  against Glickman's worked example). Levels are the start only: 1500 is
+  Intermediate/Low, 50 per step, ± 200 with a level at your first match and
+  350 without. Every match is its own update and the ± grows weekly while you
+  don't play — that is the recency. Over ± 110 the row says "provisional"
+  (first in the stat line, which truncates) and the number goes quiet. It
+  does NOT replace the 5/3-match cut-off, and a provisional player can still
+  get the leader card — flagged to Sam, unruled.
+- **Ratings read win/draw/loss only; the score feeds predictions.** Elo,
+  Official's strength graph, Strength and the Global table no longer blend
+  `MARGIN_WEIGHT`; `predictionResult()` in `core/predict.ts` is the only
+  reader (head-to-head and form inside `predictProb`, so Compare, the
+  favourite and the venue prediction follow). A missing, unreadable or
+  contradicting score (`scoreProblem`) counts as no score. This supersedes
+  §3's "Margin counts" for ratings. official.test 2026 pins moved
+  52.5/45.1/33.6/19.6 → 53.0/45.8/34.3/20.0, same order.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.

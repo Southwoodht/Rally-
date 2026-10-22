@@ -12,6 +12,7 @@ import { START_ELO } from "@/core/constants";
 import { ratingForMatch } from "@/core/difficulty";
 import { computeStats } from "@/core/elo";
 import { computeOfficial } from "@/core/official";
+import { computeGlicko } from "@/core/glicko";
 import { computeRatings, type Edge } from "@/core/rating";
 import { WEEK, currentStreakOf } from "@/core/rank";
 import { fullNameOf, winPct } from "@/lib/format";
@@ -93,20 +94,25 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     for (const k of Object.keys(raw)) out[k] = raw[k] * 100;
     return out;
   }, [filtered]);
+  // Glicko-2 over the same matches (core/glicko.ts): a rating with a ± for
+  // how sure it is, levels only as the starting point. Beside Official, not
+  // instead of it — Sam, 2026-10-22.
+  const glicko = useMemo(() => computeGlicko(players, filtered), [players, filtered]);
   const ranked = useMemo(() => {
     const arr = players.filter((p) => !p.inactive);
     const avgOpp = {}; players.forEach((p) => { avgOpp[p.id] = { sum: 0, n: 0 }; });
     filtered.filter((m) => countsAsPlayed(m)).forEach((m) => { if (avgOpp[m.p1]) { avgOpp[m.p1].sum += (elo[m.p2] ?? 0); avgOpp[m.p1].n++; } if (avgOpp[m.p2]) { avgOpp[m.p2].sum += (elo[m.p1] ?? 0); avgOpp[m.p2].n++; } });
     const rec = (p) => { const r = wdl[p.id] || { gp: 0 }; if (!r.gp) return -1; const act = r.gp / (r.gp + 5); const ao = avgOpp[p.id].n ? avgOpp[p.id].sum / avgOpp[p.id].n : 0; const of = Math.max(0.5, Math.min(2, 1 + ao / 200)); return winPct(r) * act * of; };
     const formScoreOf = (p) => (form[p.id] || []).slice(-5).reduce((s, x) => s + (x === "W" ? 1 : x === "L" ? -1 : 0), 0);
-    if (mode === "network") arr.sort((a, b) => (networkMap[b.id] ?? -1e9) - (networkMap[a.id] ?? -1e9) || (wdl[b.id]?.gp ?? 0) - (wdl[a.id]?.gp ?? 0));
+    if (mode === "glicko") arr.sort((a, b) => (glicko.rating[b.id] ?? -1e9) - (glicko.rating[a.id] ?? -1e9) || (glicko.rd[a.id] ?? 1e9) - (glicko.rd[b.id] ?? 1e9));
+    else if (mode === "network") arr.sort((a, b) => (networkMap[b.id] ?? -1e9) - (networkMap[a.id] ?? -1e9) || (wdl[b.id]?.gp ?? 0) - (wdl[a.id]?.gp ?? 0));
     else if (mode === "elo") arr.sort((a, b) => (elo[b.id] ?? START_ELO) - (elo[a.id] ?? START_ELO));
     else if (mode === "record") arr.sort((a, b) => rec(b) - rec(a) || (wdl[b.id]?.w ?? 0) - (wdl[a.id]?.w ?? 0));
     else if (mode === "winpct") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return winPct(rb) - winPct(ra) || rb.gp - ra.gp; });
     else if (mode === "form") arr.sort((a, b) => { const ra = wdl[a.id] || { gp: 0 }, rb = wdl[b.id] || { gp: 0 }; if (!ra.gp && !rb.gp) return 0; if (!ra.gp) return 1; if (!rb.gp) return -1; return formScoreOf(b) - formScoreOf(a) || (rb.w ?? 0) - (ra.w ?? 0); });
     else arr.sort((a, b) => ((officialMap[b.id] ?? -1e9) - (officialMap[a.id] ?? -1e9)) || ((elo[b.id] ?? 0) - (elo[a.id] ?? 0)) || ((wdl[a.id]?.gp ?? 0) - (wdl[b.id]?.gp ?? 0)));
     return arr;
-  }, [players, filtered, elo, wdl, form, mode, officialMap, networkMap]);
+  }, [players, filtered, elo, wdl, form, mode, officialMap, networkMap, glicko]);
 
   // Active view only ever hides rows from this same ranked list — it never
   // changes anyone's actual rating or official position, just which of them
@@ -195,6 +201,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // appeared, which is more table than table.
   const METRICS = [
     { value: "official", label: "Official", note: "Every result judged by how strong the opponent really is, times how regularly you play." },
+    { value: "glicko", label: "Glicko", note: "A rating with a ± for how sure it is. Starts from your level, then only results move it. A big ± is marked provisional." },
     { value: "elo", label: "Elo", note: "Moves every match, by how surprising the result was." },
     { value: "network", label: "Strength", note: "Built from who beat whom, so it counts who you played and not just how many you won." },
     { value: "record", label: "Record", note: "Win rate, weighted by opposition and how much you have played." },
@@ -244,6 +251,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
   // while still sorting and drawing its bar on the numeric score behind it.
   const valueOf = (id: string): number => {
     const r = wdl[id] || { w: 0, d: 0, l: 0, gp: 0 };
+    if (mode === "glicko") return glicko.rating[id] ?? 0;
     if (mode === "network") return networkMap[id] ?? 0;
     if (mode === "elo") return elo[id] ?? START_ELO;
     if (mode === "winpct") return r.gp ? Math.round(winPct(r) * 100) : 0;
@@ -251,7 +259,7 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
     if (mode === "record") return r.gp ? winPct(r) * 100 : 0;
     return officialMap[id] ?? 0;
   };
-  const unit = mode === "network" ? "strength" : mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
+  const unit = mode === "glicko" ? "glicko" : mode === "network" ? "strength" : mode === "elo" ? "elo" : mode === "winpct" ? "win %" : mode === "form" ? "form" : mode === "record" ? "record" : "rating";
 
   const q = query.trim().toLowerCase();
   const searched = q
@@ -275,6 +283,8 @@ export function LeagueHome({ players, matches, group, fixtures, mode, onMode, on
       player: pl,
       rating: valueOf(pl.id),
       displayOverride: mode === "record" ? r.w + "-" + r.d + "-" + r.l : undefined,
+      uncertainty: mode === "glicko" && glicko.rd[pl.id] != null ? glicko.rd[pl.id] : undefined,
+      provisional: mode === "glicko" ? !!glicko.provisional[pl.id] : undefined,
       w: r.w, d: r.d, l: r.l,
       form: (form[pl.id] || []).slice(-5) as any,
       movement: movement ? movement[pl.id] : undefined,
