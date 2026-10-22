@@ -53,6 +53,7 @@ import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
 import { addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeLadderEntry } from "@/lib/doublesData";
 import { Ladder } from "@/components/competitions/Ladder";
+import { Divisions } from "@/components/competitions/Divisions";
 import { LADDER_DAYS, type LadderChallenge } from "@/core/ladder";
 import { computeGlicko } from "@/core/glicko";
 import { knockoutBracket, roundRobin, tiesReadyToDraw, totalRounds, withDeadlines, type Tie } from "@/core/doubles/competition";
@@ -169,7 +170,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Standings or Compare, on the Table tab. Session only — a filter you
   // chose once is not a preference worth remembering across launches, and
   // opening the app into Compare would be answering a question nobody asked.
-  const [tableMode, setTableMode] = useState<"standings" | "compare">("standings");
+  const [tableMode, setTableMode] = useState<"standings" | "divisions" | "compare">("standings");
   // Which half of "Your matches" you arrived at. Session only, like the
   // Table's: the mode is decided by the link you followed, and remembering
   // it across launches would override that.
@@ -255,6 +256,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Anything that turns doubles UI on has to pass BOTH: the league allows it
   // and the person chose it. Two separate conditions, never conflated.
   const showDoubles = !!doublesEnabled && sport === "doubles";
+  // The Table tab's Divisions view: every running league-format competition
+  // of the kind on screen. With none, the view falls back to Standings.
+  const divisionComps = (competitionsEnabled && !comps.unavailable ? comps.competitions : [])
+    .filter((c) => c.kind === (showDoubles ? "doubles" : "singles") && c.format === "league" && c.status === "running");
+  const tableView = tableMode === "divisions" && !divisionComps.length ? "standings" : tableMode;
   // Standby view: the Table tab shows the people you've played instead of a
   // league. The league still loads underneath — this changes what's shown,
   // not what's fetched.
@@ -1893,16 +1899,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><Globe size={18} /><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} /></button>}
         {tab === "ladder" && (
           <div style={{ ...segmentTrack, marginBottom: 14 }}>
-            <button onClick={() => setTableMode("standings")} style={segmentOption(tableMode === "standings")}>Standings</button>
+            <button onClick={() => setTableMode("standings")} style={segmentOption(tableView === "standings")}>Standings</button>
+            {/* Only when there is a division to show: an empty tab is a
+                question nobody asked. */}
+            {divisionComps.length > 0 && <button onClick={() => setTableMode("divisions")} style={segmentOption(tableMode === "divisions")}>Divisions</button>}
             <button onClick={() => setTableMode("compare")} style={segmentOption(tableMode === "compare")}>Compare</button>
           </div>
+        )}
+        {tab === "ladder" && tableMode === "divisions" && divisionComps.length > 0 && (
+          <Divisions
+            kind={showDoubles ? "doubles" : "singles"}
+            competitions={divisionComps}
+            entries={comps.pairs}
+            players={players}
+            meId={meId}
+            resultsOf={(c) => showDoubles
+              ? doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).results
+              : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results}
+            remainingOf={(c) => showDoubles
+              ? doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).remaining
+              : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).remaining}
+            onOpenPlayer={openProfile}
+          />
         )}
         {/* Doubles compares two PAIRS; singles stays exactly as it was. */}
         {tab === "ladder" && tableMode === "compare" && showDoubles && !personal && (
           <DoublesCompare players={players} matches={doubles.matches} meId={meId} onOpen={openProfile} onCreatePlayer={addPlayer} />
         )}
         {tab === "ladder" && tableMode === "compare" && !(showDoubles && !personal) && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
-        {tab === "ladder" && tableMode === "standings" && showDoubles && !personal && (
+        {tab === "ladder" && tableView === "standings" && showDoubles && !personal && (
           doubles.unavailable
             ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
                 {/* States what happened, not why. The read failed; the cause
@@ -1913,7 +1938,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               </div>
             : <DoublesStandings players={players} matches={doubles.matches} meId={meId} onOpen={openProfile} />
         )}
-        {tab === "ladder" && tableMode === "standings" && !showDoubles && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
+        {tab === "ladder" && tableView === "standings" && !showDoubles && <LeagueHome players={personal ? myCirclePlayers : players} matches={matches} group={personal ? personalGroup : group} fixtures={personal ? [] : fixtures} mode={rankingMode} onMode={setMode} onOpen={openProfile} onCompare={(id: string) => { setCompareWith(id); setTableMode("compare"); }} onOpenLegacy={setLegacyId} meId={meId} movement={(!rankingMode || rankingMode === "overall" || rankingMode === "official") ? movement : undefined} onGoGlobal={() => setTab("global")} requireSetup={personal ? false : group?.requireSetup} nameOf={nameOf} />}
         {tab === "add" && showDoubles && (
           <DoublesEntry
             players={players}

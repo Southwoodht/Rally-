@@ -220,6 +220,50 @@ export function Competitions(props: Props) {
   );
 }
 
+/**
+ * A league-format competition's table: place, name, P, Left, W, D, L, sets,
+ * points. One component for the competition's own screen and for the
+ * Divisions view on the Table tab, so the two can never show different
+ * tables for the same division.
+ */
+export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, left, meId, entryName, onOpenEntry }: {
+  kind: CompetitionKind; entries: CompetitionPair[]; results: CompetitionResult[];
+  pointsWin: number; pointsDraw: number; left: Record<string, number> | null; meId: string;
+  entryName: (id: string | null | undefined, short?: boolean) => string;
+  /** Tap a row — the Divisions view opens the player's profile. */
+  onOpenEntry?: (entry: CompetitionPair) => void;
+}) {
+  const table = leagueTable(entries, results, pointsWin, pointsDraw);
+  // P, Left, W, D, L, Sets, Pts. "Left" is brief item 1's "played and
+  // remaining for each player"; it only appears where it can be counted.
+  const cols = left ? "20px 1fr 22px 26px 22px 22px 22px 32px 30px" : "22px 1fr 26px 26px 26px 26px 34px 34px";
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
+        <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span>{left && <span style={{ textAlign: "right" }}>Left</span>}<span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
+      </div>
+      {table.map((r) => {
+        const entry = entries.find((p) => p.id === r.pairId);
+        const isMine = !!entry && (entry.p1 === meId || entry.p2 === meId);
+        const sd = r.setsFor - r.setsAgainst;
+        return (
+          <div key={r.pairId} onClick={onOpenEntry && entry ? () => onOpenEntry(entry) : undefined} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: onOpenEntry ? "pointer" : "default", ...tabular }}>
+            <span style={{ color: isMine ? FEED_LIME : FEED_TEXT_MID }}>{r.place}</span>
+            <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{entryName(r.pairId)}</span>
+            <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
+            {left && <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{left[r.pairId] || 0}</span>}
+            <span style={{ textAlign: "right" }}>{r.won}</span>
+            <span style={{ textAlign: "right" }}>{r.drawn}</span>
+            <span style={{ textAlign: "right" }}>{r.lost}</span>
+            <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{sd > 0 ? "+" + sd : sd}</span>
+            <span style={{ textAlign: "right", fontWeight: 600 }}>{r.points}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // One competition
 // ---------------------------------------------------------------------------
@@ -236,7 +280,6 @@ function Detail(props: Props & {
   const bracket = c.format === "knockout" ? knockoutBracket(cEntries, props.tiesOf(c)) : [];
   const ready = c.format === "knockout" && c.status === "running" ? tiesReadyToDraw(bracket) : [];
   const champ = c.format === "knockout" ? champion(bracket) : null;
-  const table = c.format === "league" ? leagueTable(cEntries, props.resultsOf(c), c.pointsWin, c.pointsDraw) : [];
   const n = cEntries.length;
 
   const act = async (fn: () => Promise<void>) => {
@@ -246,9 +289,6 @@ function Detail(props: Props & {
   };
 
   const left = props.remainingOf ? props.remainingOf(c) : null;
-  // P, Left, W, D, L, Sets, Pts. "Left" is brief item 1's "played and
-  // remaining for each player"; it only appears where it can be counted.
-  const cols = left ? "20px 1fr 22px 26px 22px 22px 22px 32px 30px" : "22px 1fr 26px 26px 26px 26px 34px 34px";
   return (
     <div>
       <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "0 0 10px" }}>
@@ -272,28 +312,7 @@ function Detail(props: Props & {
         )}
 
         {c.format === "league" && (
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
-              <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span>{left && <span style={{ textAlign: "right" }}>Left</span>}<span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
-            </div>
-            {table.map((r) => {
-              const isMine = cEntries.some((p) => p.id === r.pairId && (p.p1 === meId || p.p2 === meId));
-              const sd = r.setsFor - r.setsAgainst;
-              return (
-                <div key={r.pairId} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, ...tabular }}>
-                  <span style={{ color: isMine ? FEED_LIME : FEED_TEXT_MID }}>{r.place}</span>
-                  <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{entryName(r.pairId)}</span>
-                  <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
-                  {left && <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{left[r.pairId] || 0}</span>}
-                  <span style={{ textAlign: "right" }}>{r.won}</span>
-                  <span style={{ textAlign: "right" }}>{r.drawn}</span>
-                  <span style={{ textAlign: "right" }}>{r.lost}</span>
-                  <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{sd > 0 ? "+" + sd : sd}</span>
-                  <span style={{ textAlign: "right", fontWeight: 600 }}>{r.points}</span>
-                </div>
-              );
-            })}
-          </div>
+          <LeagueTable kind={kind} entries={cEntries} results={props.resultsOf(c)} pointsWin={c.pointsWin} pointsDraw={c.pointsDraw} left={left} meId={meId} entryName={entryName} />
         )}
 
         {c.format === "knockout" && bracket.map((round, ri) => (
