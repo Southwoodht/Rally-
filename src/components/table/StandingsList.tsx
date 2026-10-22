@@ -238,8 +238,13 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating" 
   // Only crown somebody when they are alone at the top. Two players sharing
   // first and one of them getting the leader card would be the screen picking
   // a winner the ranking deliberately refused to.
+  //
+  // And never somebody provisional (Sam, 2026-10-22): a newcomer who wins
+  // two matches against weak players should not be the big name at the top
+  // of the club's table. They keep first place in the list, marked
+  // provisional; only the card is withheld.
   const leaders = rows.filter((r) => r.rank === 1);
-  const crowned = leaders.length === 1 ? leaders[0] : null;
+  const crowned = leaders.length === 1 && !leaders[0].p.provisional ? leaders[0] : null;
   const rest = crowned ? rows.slice(1) : rows;
 
   return (
