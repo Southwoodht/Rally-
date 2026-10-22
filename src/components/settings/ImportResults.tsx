@@ -37,7 +37,7 @@ const EXAMPLE = `12/03/2019  Sam Henry beat Charlie Henry  6-4 6-2
 14/03/2019  Zaach Rodriguez v Adrian Bowles  3-6 6-3 6-4
 Hugh Jones lost to Mike Tait 2-6 4-6`;
 
-const lbl: React.CSSProperties = { fontFamily: body, fontSize: 11, color: FEED_TEXT_MID, textTransform: "uppercase", letterSpacing: 0.8 };
+const lbl: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, letterSpacing: 0 };
 const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
 const btn = (fill: string, ink: string, disabled = false): React.CSSProperties => ({
   fontFamily: body, fontWeight: 500, fontSize: 14.5, padding: "12px 14px", borderRadius: 12, border: "none",

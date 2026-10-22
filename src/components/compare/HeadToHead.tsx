@@ -36,8 +36,8 @@ function FilterChip({ active, onClick, children }: any) {
 }
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreatePlayer, initialA, initialB }: any) {
@@ -266,7 +266,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             );
           })()}
           <SurfaceCard radius={18} style={{ marginBottom: 12 }}>
-            <div style={{ textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID, textTransform: "uppercase", letterSpacing: 0.8 }}>Predicted win</div>
+            <div style={{ textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, letterSpacing: 0 }}>Predicted win</div>
             <div style={{ ...tabular, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
               <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: pctA >= 50 ? FEED_LIME : FEED_TEXT_MID }}>{pctA}%</span>
               <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: pctA < 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - pctA}%</span>

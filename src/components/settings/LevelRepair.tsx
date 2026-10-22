@@ -30,8 +30,8 @@ const fmtBoundary = (v: any): string => {
 };
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 const field: React.CSSProperties = {

@@ -69,7 +69,7 @@ function Group({ title, items, accent, recordColour, visible, onOpen, onAll }: a
   const rest = items.length - shown.length;
   return (
     <div style={{ marginTop: 16 }}>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: accent, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: accent, letterSpacing: 0, marginBottom: 6 }}>
         {title} · {items.length}
       </div>
       <SurfaceCard radius={14} pad={0} clip>

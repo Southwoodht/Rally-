@@ -79,7 +79,7 @@ export function VerifiedTrophies({ player, meId }: any) {
   return (
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED }}>Verified trophies</div>
+        <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED }}>Verified trophies</div>
         {isOwn && <button onClick={() => setClaiming(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Claim a trophy</button>}
         {!isOwn && canRecord && <button onClick={() => setRecording(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>+ Record a trophy</button>}
       </div>
@@ -97,7 +97,7 @@ export function VerifiedTrophies({ player, meId }: any) {
               <span style={{ fontSize: 20 }}></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · {t.claimed_by ? "Verified ✓" : "Recorded by the club ✓"}</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: MUTED, letterSpacing: 0 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · {t.claimed_by ? "Verified ✓" : "Recorded by the club ✓"}</div>
               </div>
               {((canRecord && !t.claimed_by) || (isOwn && !!t.claimed_by)) && (
                 <button
@@ -124,7 +124,7 @@ export function VerifiedTrophies({ player, meId }: any) {
               <span style={{ fontSize: 20, opacity: 0.5 }}></span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{t.result ? t.result + " — " : ""}{t.competition}</div>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · Pending review</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: MUTED, letterSpacing: 0 }}>{t.clubs?.name || "Club"}{t.season ? " · " + t.season : ""} · Pending review</div>
               </div>
               <button onClick={() => withdraw(t.id)} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 5, padding: "5px 8px", fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer", flexShrink: 0 }}>Withdraw</button>
             </div>

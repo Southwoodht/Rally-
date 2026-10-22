@@ -38,7 +38,7 @@ export default function UpdatePassword({ onDone }: { onDone: () => void }) {
           <div style={{ fontFamily: display, fontSize: "min(54px, 14vw)", fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -1, lineHeight: 1 }}>Southwood</div>
         </div>
         <div style={{ background: PANEL, border: "none", borderRadius: 16, padding: 20 }}>
-          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+          <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, marginBottom: 14 }}>
             Set a new password
           </div>
           <input style={field} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="New password" type="password" autoComplete="new-password" />

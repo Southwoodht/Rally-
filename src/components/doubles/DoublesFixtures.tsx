@@ -56,8 +56,8 @@ interface Props {
 }
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 const actionBtn = (fill: string, ink: string): React.CSSProperties => ({

@@ -23,8 +23,8 @@ import { FEED_DEEP, FEED_HERO, FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED
 const OPPONENTS_SHOWN = 8;
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 const recordStr = (r: Record3) => (r.d > 0 ? `${r.w}–${r.d}–${r.l}` : `${r.w}–${r.l}`);

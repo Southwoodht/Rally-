@@ -86,7 +86,7 @@ export default function Welcome() {
 
           {(mode === "signup" || mode === "login") && (
             <>
-              <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+              <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, marginBottom: 14 }}>
                 {mode === "signup" ? "Create your account" : "Welcome back"}
               </div>
 
@@ -129,7 +129,7 @@ export default function Welcome() {
 
           {mode === "reset" && (
             <>
-              <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, marginBottom: 14 }}>
+              <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, marginBottom: 14 }}>
                 Reset your password
               </div>
               <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 12, lineHeight: 1.5 }}>

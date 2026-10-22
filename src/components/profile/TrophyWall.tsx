@@ -12,7 +12,7 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontFamily: body, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 8 }}>Achievements</div>
+      <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, marginBottom: 8 }}>Achievements</div>
       {trophies.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
           {trophies.map((t, i) => (
@@ -20,7 +20,7 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
               <span style={{ fontSize: 22 }}>{medalIcon[t.medal]}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{t.competition}</div>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8 }}>{medalLabel[t.medal]} · {new Date(t.date).getFullYear()}</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: MUTED, letterSpacing: 0 }}>{medalLabel[t.medal]} · {new Date(t.date).getFullYear()}</div>
               </div>
             </div>
           ))}
@@ -30,7 +30,7 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
         {achievements.map((a) => (
           <div key={a.id} style={{ background: a.achieved ? PANEL2 : "transparent", opacity: a.achieved ? 1 : 0.4, border: "1px solid " + (a.achieved ? BALL : LINE), borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
             <Glyph name={a.icon} size={17} />
-            <div style={{ fontFamily: body, fontSize: 8.5, color: a.achieved ? CHALK : MUTED, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.3, lineHeight: 1.3 }}>{a.label}</div>
+            <div style={{ fontFamily: body, fontSize: 10.5, color: a.achieved ? CHALK : MUTED, marginTop: 4, letterSpacing: 0, lineHeight: 1.3 }}>{a.label}</div>
             {a.achieved && a.date != null && <div style={{ fontFamily: body, fontSize: 8, color: MUTED, marginTop: 2 }}>{new Date(a.date).getFullYear()}</div>}
           </div>
         ))}

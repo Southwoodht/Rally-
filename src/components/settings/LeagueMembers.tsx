@@ -63,7 +63,7 @@ export function LeagueMembers({ leagueId, leagueName }: { leagueId: string; leag
 
   return (
     <SurfaceCard radius={16} pad="14px" style={{ marginBottom: 12 }}>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0, marginBottom: 10 }}>
         Who can do what{leagueName ? " in " + leagueName : ""}
       </div>
 

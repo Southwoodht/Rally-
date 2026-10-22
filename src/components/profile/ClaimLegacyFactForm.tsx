@@ -53,7 +53,7 @@ export function ClaimLegacyFactForm({ claimantName, factType, factValue, label, 
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 95 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COURT, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED }}>Verify a fact</div>
+          <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED }}>Verify a fact</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontSize: 12, cursor: "pointer" }}>Close</button>
         </div>
         <div style={{ fontFamily: body, fontSize: 12, color: BALL, marginBottom: 16 }}>{label}: {factValue}</div>
@@ -65,13 +65,13 @@ export function ClaimLegacyFactForm({ claimantName, factType, factValue, label, 
                 <select value={clubId} onChange={(e) => setClubId(e.target.value)} style={{ ...input, boxSizing: "border-box" as const, marginBottom: 8 }}>
                   {clubs.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <button onClick={() => setAddingClub(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 11, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5 }}>+ Add a different club</button>
+                <button onClick={() => setAddingClub(true)} style={{ background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, cursor: "pointer", letterSpacing: 0 }}>+ Add a different club</button>
               </>
             )}
             {addingClub && (
               <>
                 <input value={newClubName} onChange={(e) => setNewClubName(e.target.value)} placeholder="Club name" style={{ ...input, boxSizing: "border-box" as const }} />
-                {clubs.length > 0 && <button onClick={() => setAddingClub(false)} style={{ background: "transparent", border: "none", color: MUTED, fontFamily: body, fontSize: 11, cursor: "pointer", textTransform: "uppercase", letterSpacing: 0.5, marginTop: 6 }}>Cancel — pick an existing club</button>}
+                {clubs.length > 0 && <button onClick={() => setAddingClub(false)} style={{ background: "transparent", border: "none", color: MUTED, fontFamily: body, fontSize: 13, cursor: "pointer", letterSpacing: 0, marginTop: 6 }}>Cancel — pick an existing club</button>}
               </>
             )}
           </Field>

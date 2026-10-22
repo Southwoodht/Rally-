@@ -107,8 +107,8 @@ export function competitionLabel(c: Competition, entryCount: number, round: numb
 }
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 const btn = (fill: string, ink: string): React.CSSProperties => ({
@@ -252,7 +252,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
   const cols = left ? "20px 1fr 22px 26px 22px 22px 22px 32px 30px" : "22px 1fr 26px 26px 26px 26px 34px 34px";
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, fontSize: 12, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
         <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span>{left && <span style={{ textAlign: "right" }}>Left</span>}<span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
       </div>
       {table.map((r) => {

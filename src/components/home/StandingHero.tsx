@@ -113,10 +113,10 @@ const labelStyle: React.CSSProperties = {
  * the same lime and the caption is doing the same job on both, so a caption
  * that looked different here would read as a different kind of thing.
  */
-// The mockup's caption: 11px, weight 600, letter-spacing 1.6, 6px above.
+// The caption: sentence case at 13px since 2026-10-22 — spaced capitals read as code (Sam).
 const unitStyle: React.CSSProperties = {
-  fontFamily: body, fontWeight: 600, fontSize: 11, color: FEED_ON_HERO,
-  textTransform: "uppercase", letterSpacing: 1.6, marginTop: 6,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_ON_HERO,
+  letterSpacing: 0, marginTop: 6,
   whiteSpace: "nowrap",
 };
 

@@ -13,7 +13,7 @@ export function BottomNav({ tab, setTab }: any) {
     const on = active === key;
     return (
       <button onClick={() => setTab(key)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "transparent", border: "none", cursor: "pointer", padding: "8px 0", color: on ? BALL : MUTED }}>
-        <Icon size={22} strokeWidth={2} /><span style={{ fontFamily: body, fontWeight: 600, fontSize: 10, letterSpacing: 1.2, textTransform: "uppercase" }}>{label}</span>
+        <Icon size={22} strokeWidth={2} /><span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, letterSpacing: 0 }}>{label}</span>
       </button>
     );
   };

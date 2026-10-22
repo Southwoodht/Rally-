@@ -103,7 +103,7 @@ function SetupNeeded() {
     <div style={{ minHeight: "100vh", background: COURT, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ maxWidth: 460, background: PANEL, border: "none", borderRadius: 16, padding: 22 }}>
         <div style={{ fontFamily: display, fontSize: 30, fontWeight: 800, color: BALL, textTransform: "uppercase" }}>Southwood</div>
-        <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 0.8, textTransform: "uppercase", color: MUTED, margin: "10px 0 12px" }}>Setup needed</div>
+        <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, margin: "10px 0 12px" }}>Setup needed</div>
         <div style={{ fontFamily: body, fontSize: 14, color: CHALK, lineHeight: 1.6 }}>
           Southwood can&apos;t find your Supabase keys. Create a file called <strong>.env.local</strong> in the
           project folder with these two lines, then restart the dev server:

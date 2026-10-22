@@ -341,7 +341,7 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
             />}
             {provisionalRows.length > 0 && (
               <div style={{ marginTop: 18 }}>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, padding: "0 4px 2px" }}>Provisional</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: MUTED, letterSpacing: 0, padding: "0 4px 2px" }}>Provisional</div>
                 <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.45, padding: "0 4px 8px" }}>
                   Rated, but the ± is still wide — a few more results and they take a place.
                 </div>

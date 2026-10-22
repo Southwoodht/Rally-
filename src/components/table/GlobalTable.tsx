@@ -46,8 +46,8 @@ const LEVEL_COLOUR: Record<string, string> = {
 const NO_LEVEL_COLOUR = FEED_TEXT_DIM;
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 const rec = (r: { w: number; d: number; l: number }) => (r.d > 0 ? `${r.w}–${r.d}–${r.l}` : `${r.w}–${r.l}`);
@@ -201,7 +201,7 @@ function LeaderCard({ r, rating, onOpen }: { r: GlobalRow; rating: string; onOpe
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Face row={r} size={50} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2, textTransform: "uppercase", letterSpacing: 0.6 }}>Top ranked</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Top ranked</div>
           <div style={{ ...tight(19), fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {nameOf(r)}
           </div>

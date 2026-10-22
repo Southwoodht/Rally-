@@ -18,8 +18,8 @@ const addLink: React.CSSProperties = {
 };
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -201,8 +201,8 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                     {toClear.length} match{toClear.length === 1 ? "" : "es"} will be permanently deleted. This cannot be undone.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => setConfirmClear(false)} style={{ flex: 1, fontFamily: body, fontSize: 11, color: CHALK, background: "transparent", border: "none", borderRadius: 10, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700 }}>Cancel</button>
-                    <button onClick={clearExisting} disabled={!toClear.length} style={{ flex: 1, fontFamily: body, fontSize: 11, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "9px 10px", cursor: "pointer", textTransform: "uppercase", fontWeight: 700, opacity: toClear.length ? 1 : 0.5 }}>Delete</button>
+                    <button onClick={() => setConfirmClear(false)} style={{ flex: 1, fontFamily: body, fontSize: 13, color: CHALK, background: "transparent", border: "none", borderRadius: 10, padding: "9px 10px", cursor: "pointer", fontWeight: 700 }}>Cancel</button>
+                    <button onClick={clearExisting} disabled={!toClear.length} style={{ flex: 1, fontFamily: body, fontSize: 13, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "9px 10px", cursor: "pointer", fontWeight: 700, opacity: toClear.length ? 1 : 0.5 }}>Delete</button>
                   </div>
                 </div>
               ) : (

@@ -43,8 +43,8 @@ import {
 type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels" | "disputes";
 
 const lbl: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID,
-  textTransform: "uppercase", letterSpacing: 0.8,
+  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  letterSpacing: 0,
 };
 const fld: React.CSSProperties = {
   ...miniInput, fontFamily: body, fontSize: 15, background: FEED_RAISED, color: FEED_TEXT_HI,

@@ -107,7 +107,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <Avatar player={p.player} size={52} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2, textTransform: "uppercase", letterSpacing: 0.6 }}>Leader</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Leader</div>
           {/* Full names. Sam, 2026-09-22: the Table is not a versus card and
               not a rivalry card, which are the only two places a first name
               is the right length. It truncates with an ellipsis when a row
@@ -124,7 +124,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <StatNumeral size={36} tone="ink" style={{ letterSpacing: "-0.04em" }}>{display}</StatNumeral>
           {plusMinus(p) && <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1 }}>{plusMinus(p)}</div>}
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_LIME_INK_2, textTransform: "uppercase", letterSpacing: 0.6, marginTop: 2 }}>{unit}</div>
+          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0, marginTop: 2 }}>{unit}</div>
         </div>
       </div>
       {p.form && p.form.length > 0 && (
@@ -264,7 +264,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
           not a label. */}
       {rest.length > 0 && !placeless && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "2px 14px 0" }}>
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_LOW, textTransform: "uppercase", letterSpacing: 0.6 }}>
+          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
             {unit}
           </span>
         </div>

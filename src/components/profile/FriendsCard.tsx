@@ -65,7 +65,7 @@ export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
   return (
     <SurfaceCard radius={18} pad="14px" style={style || { marginTop: 16 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, textTransform: "uppercase", letterSpacing: 0.8 }}>
+        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
           Friends
         </span>
         <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>
