@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -1045,6 +1045,22 @@ starting order puts settled ratings before provisional ones (Lloyd, one match,
 topped the first try). **`schema_ladder.sql` run 2026-10-22,
 verified (YES, 2)**: the format check names 'ladder', and two policies let a
 player add or remove their OWN entry on a ladder.
+
+**Divisions on the Table tab, merged to master 2026-10-22 (rollback: branch
+`rollback/pre-divisions-2026-10-22`).** Sam wants box-league-style divisions
+"like football". A division is just a League competition; the Table tab's
+switch is Standings | Divisions | Compare, Divisions listing every running
+league table (`competitions/Divisions.tsx`, sharing the exported
+`LeagueTable` with the competition screen) ordered by the number in the
+name, each labelled Top / Middle / Bottom tier by position (`tierLabel`).
+Organisers always see the tab, with "Create a division" / "+ Add a
+division", which open the competition form preset as "New division ·
+Division N" (league only) and return to the tab after. Promotion and
+relegation between seasons is still by hand — a proper box league (app
+proposes next season's boxes) is the follow-up Sam wants to dissect.
+Also from that day: Fixtures' search box shows from six fixtures up and
+lost its inner border; the competition form no longer reopens on every
+visit to Fixtures (module-level handled create signal).
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
