@@ -1040,9 +1040,9 @@ seeds are the starting order, each challenge is a competition fixture with
 the CHALLENGER as p1 — and the order is replayed from decided challenges,
 never stored. `Ladder.tsx` is a card on the Fixtures tab; organisers start it
 (active players in Glicko order), add/remove anyone and settle an unplayed
-challenge (walkover / call off). **Needs `schema_ladder.sql`**: the format
-check gains 'ladder', and two policies let a player add or remove their OWN
-entry on a ladder. Until it runs, "Start the ladder" fails with an error.
+challenge (walkover / call off). **`schema_ladder.sql` run 2026-10-22,
+verified (YES, 2)**: the format check names 'ladder', and two policies let a
+player add or remove their OWN entry on a ladder.
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
