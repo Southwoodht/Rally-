@@ -949,6 +949,14 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
   `CRON_SECRET` env var locks the daily job to Vercel.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
+**brief-2 (2026-10-22), item 1 settled without SQL.** Sam had logged three
+test wins for Charlie Henry over himself in Seacourt (pending, so counting).
+He cancelled them himself from the feed — a reporter cancelling their own
+pending result deleted cleanly — and confirmed they're gone. NB pending
+results do NOT expire: they auto-confirm after 48h (CONFIRM_WINDOW_MS) unless
+disputed or cancelled. Measured on them before they went: each was worth
+about +1.6 to Charlie and −0.9 to Sam on Official; Sam stayed #2, Charlie #3.
+
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a
 match" inside Friendlies fails at the database.
