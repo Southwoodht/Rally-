@@ -118,10 +118,16 @@ function Section({ s, open, onToggle }: { s: Sect; open: boolean; onToggle: () =
   );
 }
 
-export function HelpGuide() {
+export function HelpGuide({ onTour }: { onTour?: () => void } = {}) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
     <div>
+      {onTour && (
+        <button onClick={onTour} style={{ ...listCard, width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", marginBottom: 14, cursor: "pointer", border: "none", textAlign: "left" }}>
+          <span style={{ flex: 1, fontFamily: body, fontSize: 15, color: CHALK }}>Take the tour</span>
+          <span style={{ fontFamily: body, fontSize: 13, color: MUTED }}>5 quick steps ›</span>
+        </button>
+      )}
       <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 14, lineHeight: 1.5 }}>
         A quick guide to how Southwood works. Tap a section to open it.
       </div>

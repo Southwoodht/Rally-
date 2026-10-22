@@ -14,6 +14,7 @@ import { notifyFixture } from "@/lib/emailPrefs";
 import { LeagueGamePrompt } from "@/components/games/LeagueGamePrompt";
 import { leagueGameOptions, settleTie } from "@/core/leagueGame";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { FirstTour } from "@/components/home/FirstTour";
 import { GroupSheet } from "@/components/layout/GroupSheet";
 import { SubHeader } from "@/components/layout/SubHeader";
 import { MyProfile } from "@/components/profile/MyProfile";
@@ -374,6 +375,26 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const closeLevelRecheck = () => {
     setLevelAsked(true);
     storage.set(LEVEL_RECHECK_KEY, String(Date.now())).catch((e) => console.error("Couldn't remember the level prompt", e));
+  };
+
+  // The first-time tour (home/FirstTour.tsx). Once per person, in
+  // user_storage like the level prompt, and for the same reason a failed read
+  // counts as seen: a tour that reappears on every network hiccup is worse
+  // than one somebody missed, and Help offers it again either way.
+  const TOUR_KEY = "tour.v1";
+  const [tourSeen, setTourSeen] = useState<boolean | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
+  useEffect(() => {
+    let live = true;
+    storage.get(TOUR_KEY)
+      .then((r) => { if (live) setTourSeen(!!r?.value); })
+      .catch(() => { if (live) setTourSeen(true); });
+    return () => { live = false; };
+  }, []);
+  const closeTour = () => {
+    setTourOpen(false);
+    setTourSeen(true);
+    storage.set(TOUR_KEY, String(Date.now())).catch((e) => console.error("Couldn't remember the tour", e));
   };
 
 
@@ -2204,7 +2225,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "clubadmin" && <SubHeader title="Trophies & honours" onBack={() => setTab("profile")} />}
         {tab === "clubadmin" && <ClubAdminReview />}
         {tab === "help" && <SubHeader title="Help" onBack={() => setTab("profile")} />}
-        {tab === "help" && <HelpGuide />}
+        {tab === "help" && <HelpGuide onTour={() => setTourOpen(true)} />}
         {tab === "messages" && <Messages startWith={msgWith} onStarted={() => setMsgWith(null)} players={players} onBack={() => setTab("profile")} onOpenProfile={openProfile} />}
         {tab === "friends" && <SubHeader title="Friends" onBack={() => setTab("profile")} />}
         {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }} meAuthId={myAuthId} mePlayerId={meId} players={players} matches={matches} leagueName={group?.name || leagueName} />}
@@ -2291,6 +2312,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && <GroupSheet friendly={isFriendlyLeague(gid)} groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onManageLeagues={onManageLeagues} onClose={() => setGroupSheet(false)} />}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
+      {/* After onboarding, never on top of it; once, or when asked from Help. */}
+      {meId && onboarded && (tourOpen || tourSeen === false) && (
+        <FirstTour onTab={(t) => { setProfileId(null); setTab(t); }} onDone={closeTour} />
+      )}
       <BottomNav tab={tab} setTab={(t) => { setProfileId(null); setTab(t); }} />
       {toast && <div style={{ position: "fixed", bottom: 96, left: "50%", transform: "translateX(-50%)", background: FEED_RAISED, color: FEED_TEXT_HI, fontFamily: body, fontWeight: 600, padding: "12px 18px", borderRadius: 999, fontSize: 13.5, boxShadow: "0 8px 24px var(--shadow-strong)", zIndex: 80 }}>{toast}</div>}
     </div>
