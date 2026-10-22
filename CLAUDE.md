@@ -1062,6 +1062,29 @@ Also from that day: Fixtures' search box shows from six fixtures up and
 lost its inner border; the competition form no longer reopens on every
 visit to Fixtures (module-level handled create signal).
 
+**Season awards and promotion/relegation (branch `season/awards-promotion`,
+2026-10-22, preview).** Sam: "the app proposes next season's divisions, the
+coach confirms" and "a trophy on their profile and a post in the feed, no
+admin".
+- `core/promotion.ts` (tested): top N up / bottom N down (default 2, never
+  more than half a division), by-hand moves. `PlanNextSeason.tsx` on the
+  Divisions tab ("Plan next season", organisers): creates the new divisions
+  (same names, legs, points) in a DIFFERENT running season, draws them with
+  that season's deadlines, and marks the old ones finished. Singles ties are
+  saved in ONE saveData — a save per division would diff against a stale
+  league and undo the one before.
+- **The season podium is Glicko now** (`seasonPodium`), established players
+  only, judged as at the season's last match so post-season quiet cannot
+  inflate the ±. First place is "Player of the Season" in the season-end
+  post. Caveat measured in the test: an unbeaten run against much weaker
+  players keeps a wide ± (Glicko learns little from expected wins), so a
+  runaway leader can be provisional; real Seacourt leaders sit at ± 87-95.
+- `core/seasonHonours.ts` (tested): Player of the Season and each league
+  competition's winner, per ENDED season, DERIVED, never stored — shown first
+  in the profile's trophy list (not removable). No permission problem at the
+  moment a member's app closes the season, and corrected results correct
+  them.
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE

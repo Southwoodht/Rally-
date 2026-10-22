@@ -54,6 +54,9 @@ import { useCompetitions } from "@/components/doubles/useCompetitions";
 import { addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeLadderEntry } from "@/lib/doublesData";
 import { Ladder } from "@/components/competitions/Ladder";
 import { Divisions } from "@/components/competitions/Divisions";
+import { PlanNextSeason } from "@/components/competitions/PlanNextSeason";
+import type { ProposedDivision } from "@/core/promotion";
+import { seasonHonours } from "@/core/seasonHonours";
 import { LADDER_DAYS, type LadderChallenge } from "@/core/ladder";
 import { computeGlicko } from "@/core/glicko";
 import { knockoutBracket, roundRobin, tiesReadyToDraw, totalRounds, withDeadlines, type Tie } from "@/core/doubles/competition";
@@ -248,6 +251,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // titled for a division, and back to the Divisions table once it is made.
   const [divisionPreset, setDivisionPreset] = useState<{ title: string; name: string } | null>(null);
   const divisionMade = useRef(false);
+  const [planningNext, setPlanningNext] = useState(false);
   // The doubles result open for viewing or correcting, if any.
   const [editDoublesId, setEditDoublesId] = useState<string | null>(null);
   // A + result between two players who still owe each other a competition
@@ -1778,7 +1782,18 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const profilePlayer = players.find((p) => p.id === profileId);
   const matchDetailMatch = matches.find((m) => m.id === matchDetailId);
   const legacyPlayer = players.find((p) => p.id === legacyId);
-  const shared = { players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  // Season honours (core/seasonHonours.ts): Player of the Season and each
+  // division's winner, for every ended season, worked out from the results
+  // when a profile asks — never stored, so nothing needs an admin and a
+  // corrected result corrects the honour.
+  const seasonHonoursOf = (pid: string) => seasonHonours({
+    players, matches, seasons: seasonsState.seasons, competitions: comps.competitions, entries: comps.pairs,
+    resultsOf: (c) => c.kind === "doubles"
+      ? doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).results
+      : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results,
+    minGames: SEASON_RANK_GAMES,
+  }).filter((h) => h.playerId === pid);
+  const shared = { seasonHonoursOf, players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
   // ---------------------------------------------------------- doubles Home
@@ -1937,7 +1952,60 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             </button>
           </SurfaceCard>
         )}
-        {tab === "ladder" && tableView === "divisions" && divisionComps.length > 0 && (
+        {tab === "ladder" && tableView === "divisions" && divisionComps.length > 0 && planningNext && (() => {
+          // Next season's divisions (core/promotion.ts): this season's tables,
+          // top tier first, each as its finishing order of entry ids.
+          const ordered = [...divisionComps].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+          const resultsOfComp = (c: any) => c.kind === "doubles"
+            ? doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).results
+            : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results;
+          const standingsOf = (c: any) => leagueTable(comps.pairs.filter((p) => p.competitionId === c.id), resultsOfComp(c), c.pointsWin, c.pointsDraw).map((r) => r.pairId);
+          const labelOf = (eid: string) => {
+            const e = comps.pairs.find((x) => x.id === eid);
+            if (!e) return "?";
+            const one = (pid: string | null) => fullNameOf(players.find((p: any) => p.id === pid));
+            return e.p2 ? one(e.p1) + " & " + one(e.p2) : one(e.p1);
+          };
+          const create = async (plan: ProposedDivision[], seasonId: string) => {
+            const kind = showDoubles ? "doubles" : "singles";
+            const freshSingles: any[] = [];
+            for (let i = 0; i < plan.length; i++) {
+              const old: any = ordered[i];
+              const rows = plan[i].players.map((eid) => { const e = comps.pairs.find((x) => x.id === eid)!; return { p1: e.p1, p2: e.p2 ?? null }; });
+              if (rows.length < 2) continue;
+              const spec = { name: old.name, format: "league" as const, legs: old.legs, pointsWin: old.pointsWin, pointsDraw: old.pointsDraw, seasonId };
+              const r = await createCompetition(leagueId, { ...spec, kind, createdBy: meId || null }, rows,
+                (ps) => withSeasonDeadlines({ ...spec, createdAt: Date.now() }, ps.length)(roundRobin(ps.map((p) => p.id), old.legs)));
+              comps.added(r.competition, r.pairs);
+              if (kind === "doubles") doubles.addFixtures(r.fixtures);
+              else {
+                // Collected and saved once: saveData diffs against the league
+                // as this render saw it, so a save per division would undo the
+                // one before it.
+                const p1Of = new Map(r.pairs.map((e) => [e.id, e.p1]));
+                freshSingles.push(...r.ties.map((t) => ({ id: uid(), p1: p1Of.get(t.pairA), p2: p1Of.get(t.pairB), done: false, booked: null, competitionId: r.competition.id, round: t.round, ...(t.playBy ? { playBy: t.playBy } : {}) })));
+              }
+            }
+            if (freshSingles.length) {
+              const ok = await saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), ...freshSingles] });
+              if (ok === false) throw new Error("The divisions were made but their matches didn't save — open each one and press Draw.");
+            }
+            for (const old of ordered) { await finishCompetition(old.id, true); comps.statusChanged(old.id, "finished"); }
+            setPlanningNext(false);
+            flash("Next season's divisions are ready");
+          };
+          return (
+            <PlanNextSeason
+              divisions={ordered.map((c) => ({ name: c.name, standings: standingsOf(c) }))}
+              labelOf={labelOf}
+              seasons={seasonsState.seasons}
+              currentSeasonIds={ordered.map((c: any) => c.seasonId)}
+              onConfirm={create}
+              onClose={() => setPlanningNext(false)}
+            />
+          );
+        })()}
+        {tab === "ladder" && tableView === "divisions" && divisionComps.length > 0 && !planningNext && (
           <Divisions
             kind={showDoubles ? "doubles" : "singles"}
             competitions={divisionComps}
@@ -1952,6 +2020,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).remaining}
             onOpenPlayer={openProfile}
             onAdd={leagueRole === "owner" || leagueRole === "editor" ? startDivision : undefined}
+            onPlanNext={leagueRole === "owner" || leagueRole === "editor" ? () => setPlanningNext(true) : undefined}
           />
         )}
         {/* Doubles compares two PAIRS; singles stays exactly as it was. */}

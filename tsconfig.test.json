@@ -78,6 +78,10 @@
     "src/core/glicko.ts",
     "src/core/glicko.test.ts",
     "src/core/ladder.ts",
-    "src/core/ladder.test.ts"
+    "src/core/ladder.test.ts",
+    "src/core/promotion.ts",
+    "src/core/promotion.test.ts",
+    "src/core/seasonHonours.ts",
+    "src/core/seasonHonours.test.ts"
   ]
 }

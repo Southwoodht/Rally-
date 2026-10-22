@@ -48,7 +48,7 @@ export function ProfileContainer({
   player, players, matches, elo, wdl, form, deltas, ratingBefore, meId, group, groups,
   viewer = "self", onOpen, onOpenMatch, onProposeEdit, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
-  myAuthId, onMessage, onOpenMatches,
+  myAuthId, onMessage, onOpenMatches, seasonHonoursOf,
   // False where the profile was reached from outside your league (search,
   // a friend's list): the database only lets an admin award inside a league
   // they are in, so the button would only ever fail there.
@@ -384,7 +384,12 @@ export function ProfileContainer({
       opponents={data.opponents}
       achievements={data.achievements}
       trophies={{
-        list: trophies.map((t: any) => ({
+        // Honours the app works out from finished seasons come first: they
+        // are the club's own, and nobody can take them down but the results.
+        list: [...(pid && seasonHonoursOf ? seasonHonoursOf(pid) : []).map((h: any) => ({
+          id: h.id, competition: h.competition, result: h.result, season: h.season,
+          clubName: group?.name || null, recorded: true, removable: false, wonOn: h.wonOn, format: h.format,
+        })), ...trophies.map((t: any) => ({
           id: t.id,
           competition: t.competition || "Trophy",
           result: t.result,
@@ -396,7 +401,7 @@ export function ProfileContainer({
           removable: isSelf || (clubAdmin && !t.claimed_by),
           wonOn: t.won_on ?? null,
           format: t.format ?? null,
-        })),
+        }))],
         // Only your own profile offers it. Claiming a trophy on somebody
         // else's behalf is exactly what the club-admin flow exists for, and
         // it is not this button.

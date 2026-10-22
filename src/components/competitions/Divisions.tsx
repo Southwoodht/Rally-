@@ -30,7 +30,7 @@ export function tierLabel(index: number, count: number): string | null {
  * Ordered by name with numbers read as numbers, so Division 10 follows 9.
  * Tapping a row opens the player (singles) or the first of the pair.
  */
-export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, onOpenPlayer, onAdd }: {
+export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, onOpenPlayer, onAdd, onPlanNext }: {
   kind: CompetitionKind;
   /** Running league-format competitions of this kind. */
   competitions: Competition[];
@@ -42,6 +42,8 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
   onOpenPlayer: (id: string) => void;
   /** Organisers: make the next division. Absent for everyone else. */
   onAdd?: () => void;
+  /** Organisers: propose next season's divisions from these tables. */
+  onPlanNext?: () => void;
 }) {
   const ordered = useMemo(
     () => [...competitions].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
@@ -77,6 +79,17 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
           </SurfaceCard>
         );
       })}
+      {onPlanNext && (
+        <SurfaceCard radius={16} pad="14px 16px">
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI }}>End of the season?</div>
+          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
+            Southwood proposes next season&apos;s divisions from these tables — promotions and relegations done — for you to check and confirm.
+          </div>
+          <button onClick={onPlanNext} style={{ marginTop: 10, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}>
+            Plan next season
+          </button>
+        </SurfaceCard>
+      )}
       {onAdd && (
         <button onClick={onAdd} style={{ alignSelf: "flex-start", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}>
           + Add a division
