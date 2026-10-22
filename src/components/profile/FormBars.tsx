@@ -1,19 +1,16 @@
 "use client";
 import React from "react";
-import { FEED_LIME, FEED_LOSS, FEED_TEXT_MID, body } from "@/lib/theme";
+import { FEED_LIME, FEED_LOST, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
 
-// The last five results, with height carrying who they were against.
+// The last five results, and who they were against.
 //
 // Profile only. The Table and Home keep plain FormDots — a dot answers "how
 // is he doing", and this answers "against whom", which is a question you
 // only ask once you are already looking at one person.
 //
-// Height is the opponent's level AT THE DATE OF THE MATCH, never today's.
-// Form that redraws itself when an old opponent gets promoted is not form,
-// it is a rolling reinterpretation of the past.
-
-const ROW_HEIGHT = 30;
-const STUB = 3;
+// Until 2026-10-22 it was five bars whose height was the opponent's level at
+// the date; Sam found them unreadable, so it is letters now. `height` is
+// still supplied by callers and no longer drawn.
 
 export interface FormBarItem {
   outcome: "W" | "D" | "L";
@@ -32,59 +29,39 @@ export interface FormBarItem {
   levelLabel?: string;
 }
 
-const fillFor = (outcome: FormBarItem["outcome"]) =>
-  outcome === "W" ? FEED_LIME : outcome === "L" ? FEED_LOSS : "transparent";
-
-function Bar({ item }: { item: FormBarItem }) {
-  const known = item.height !== null && item.height !== undefined;
-  const h = known ? item.height! : STUB;
+/**
+ * The last five as letters — W W L W L — oldest on the left, each with who it
+ * was against underneath (Sam, 2026-10-22: the bars whose height was the
+ * opponent's level "look nice but I don't get it"). The opponent's level is
+ * still there for anyone who holds a finger on a result.
+ */
+function Chip({ item }: { item: FormBarItem }) {
   const verb = item.outcome === "W" ? "Beat" : item.outcome === "L" ? "Lost to" : "Drew with";
-  const label = known
-    ? `${verb} ${item.opponentName}, ${item.levelLabel || "level unknown"}`
-    : `${verb} ${item.opponentName}, level not recorded`;
+  const label = `${verb} ${item.opponentName}${item.levelLabel ? ", " + item.levelLabel : ""}`;
+  const colour = item.outcome === "W" ? FEED_LIME : item.outcome === "L" ? FEED_LOST : FEED_TEXT_HI;
+  // "Charlie H", not "Charlie": Seacourt has two, and the bare first name
+  // would put both on the same chip.
+  const parts = (item.opponentName || "").trim().split(/\s+/);
+  const first = parts[0] + (parts[1] ? " " + parts[1][0] : "");
   return (
-    <span
-      role="img"
-      aria-label={label}
-      title={label}
-      style={{
-        width: 9, height: h, borderRadius: 3, display: "block", flexShrink: 0,
-        background: fillFor(item.outcome),
-        border: item.outcome === "D" ? "1.5px solid " + FEED_LIME : undefined,
-        boxSizing: "border-box",
-      }}
-    />
+    <div title={label} aria-label={label} role="img" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 48, minWidth: 0 }}>
+      <span style={{ width: 30, height: 30, borderRadius: 9, background: FEED_RAISED, color: colour, display: "grid", placeItems: "center", fontFamily: body, fontWeight: 500, fontSize: 15 }}>{item.outcome}</span>
+      <span style={{ fontFamily: body, fontSize: 10.5, color: FEED_TEXT_MID, maxWidth: 48, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{first}</span>
+    </div>
   );
 }
 
 export function FormBars({ items }: { items: FormBarItem[] }) {
   if (!items || !items.length) return null;
   const shown = items.slice(-5);
-  const unknown = shown.filter((i) => i.height === null || i.height === undefined).length;
-
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID }}>
-          {shown.length === 5 ? "Last 5" : "Last " + shown.length}
-        </span>
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID }}>height = opponent level</span>
+      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID, marginBottom: 8, textAlign: "center" }}>
+        {shown.length === 5 ? "Last 5" : "Last " + shown.length} · latest on the right
       </div>
-      {/* Bottom-aligned so the heights are read against a shared baseline —
-          centred bars would make a tall one and a short one look like two
-          different kinds of thing rather than two amounts. */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 10, height: ROW_HEIGHT }}>
-        {shown.map((item, i) => <Bar key={i} item={item} />)}
+      <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
+        {shown.map((item, i) => <Chip key={i} item={item} />)}
       </div>
-      {/* Said out loud rather than left to be inferred from a short mark.
-          Two thirds of this league have no level history, so this line will
-          be common until the re-pick prompt lands — and a gap somebody can
-          see is a gap somebody can fill. */}
-      {unknown > 0 && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID, textAlign: "center", marginTop: 8 }}>
-          {unknown} of {shown.length} {unknown === 1 ? "has" : "have"} no level recorded
-        </div>
-      )}
     </div>
   );
 }

@@ -82,6 +82,8 @@
     "src/core/promotion.ts",
     "src/core/promotion.test.ts",
     "src/core/seasonHonours.ts",
-    "src/core/seasonHonours.test.ts"
+    "src/core/seasonHonours.test.ts",
+    "src/core/backfill.ts",
+    "src/core/backfill.test.ts"
   ]
 }

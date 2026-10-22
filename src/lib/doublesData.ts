@@ -478,3 +478,8 @@ export async function removeLadderEntry(id: string): Promise<void> {
   if (gone && gone.length) return;
   throw new Error("That was refused — you can only take yourself off, unless you run the club.");
 }
+
+/** Any competition's entries, for an organiser: a division's late joiner or
+ *  withdrawal. Same rows and the same refused-delete check as the ladder's. */
+export const addCompetitionEntry = addLadderEntry;
+export const removeCompetitionEntry = removeLadderEntry;

@@ -161,15 +161,18 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
   const [showUnranked, setShowUnranked] = useState(false);
   const scopedRanked = activeScope === "active" ? activeRanked : activeScope === "nonactive" ? nonActiveRanked : ranked;
 
+  // Who is most likely to top the season, on the Table's own rating (Sam,
+  // 2026-10-22: it was Elo plus form, and had Charlie ahead of Zaach while
+  // the table above it had Zaach clear). Each player's chance is their share
+  // of 10^(rating/400) — the chess odds, so 200 points apart is about three
+  // to one.
   const prediction = useMemo(() => {
-    const cont = players.filter((p) => (wdl[p.id]?.gp || 0) > 0 && !p.inactive);
+    const cont = players.filter((p) => (wdl[p.id]?.gp || 0) > 0 && !p.inactive && glicko.rating[p.id] != null);
     if (!cont.length) return [];
-    const SCALE = 70;
-    const scoreOf = (p) => { const f = (form[p.id] || []).slice(-5); const fb = f.reduce((s, x) => s + (x === "W" ? 1 : x === "L" ? -1 : 0), 0) * 8; return (elo[p.id] ?? 0) + fb; };
-    const raw = cont.map((p) => ({ p, e: Math.exp(scoreOf(p) / SCALE) }));
+    const raw = cont.map((p) => ({ p, e: Math.pow(10, glicko.rating[p.id] / 400) }));
     const tot = raw.reduce((s, x) => s + x.e, 0) || 1;
     return raw.map((x) => ({ p: x.p, pct: Math.round((x.e / tot) * 100) })).sort((a, b) => b.pct - a.pct);
-  }, [players, elo, form, wdl]);
+  }, [players, wdl, glicko]);
 
   const recap = useMemo(() => {
     const confirmed = filtered.filter((m) => countsAsPlayed(m));

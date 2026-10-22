@@ -51,7 +51,8 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/competitionAdapters";
 import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
-import { addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeLadderEntry } from "@/lib/doublesData";
+import { addCompetitionEntry, addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeCompetitionEntry, removeLadderEntry } from "@/lib/doublesData";
+import { backfillTies } from "@/core/backfill";
 import { Ladder } from "@/components/competitions/Ladder";
 import { Divisions } from "@/components/competitions/Divisions";
 import { PlanNextSeason } from "@/components/competitions/PlanNextSeason";
@@ -2021,6 +2022,58 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onOpenPlayer={openProfile}
             onAdd={leagueRole === "owner" || leagueRole === "editor" ? startDivision : undefined}
             onPlanNext={leagueRole === "owner" || leagueRole === "editor" ? () => setPlanningNext(true) : undefined}
+            manage={leagueRole === "owner" || leagueRole === "editor" ? (showDoubles ? {
+              onDelete: async (c) => { await deleteCompetition(c.id); comps.removed(c.id); flash("Deleted " + c.name); },
+            } : {
+              // A late joiner: on the table at 0, with a match against everyone
+              // (twice if the division plays twice), due by the season's end.
+              onAdd: async (c, playerId) => {
+                const es = comps.pairs.filter((p) => p.competitionId === c.id);
+                const seed = es.reduce((m, e) => Math.max(m, e.seed), 0) + 1;
+                const entry = await addCompetitionEntry(c.id, playerId, seed);
+                const mine = (fixtures || []).filter((f: any) => f.competitionId === c.id);
+                const top = mine.reduce((m: number, f: any) => Math.max(m, f.round ?? 0), 0);
+                const season = seasonsState.seasons.find((x) => x.id === c.seasonId);
+                const ties: Tie[] = [];
+                for (let leg = 1; leg <= (c.legs || 1); leg++) for (const e of es) ties.push({ round: top + leg, pairA: entry.id, pairB: e.id, ...(season?.endsOn ? { playBy: season.endsOn } : {}) });
+                const ok = await addSinglesTies(c.id, ties, [...es, entry]);
+                await comps.reload();
+                if (ok === false) throw new Error("Added, but their matches didn't save. Try again from the competition's Draw.");
+              },
+              // Withdrawn: their unplayed matches go; their played results stay
+              // as matches (ratings keep them) but no longer score in this table.
+              onRemove: async (c, entry) => {
+                const keep = (gdata.fixtures || []).filter((f: any) => !(f.competitionId === c.id && !f.done && !f.outcome && (f.p1 === entry.p1 || f.p2 === entry.p1)));
+                if (keep.length !== (gdata.fixtures || []).length) {
+                  const ok = await saveData({ ...gdata, fixtures: keep });
+                  if (ok === false) throw new Error("Their matches couldn't be removed — only an organiser can.");
+                }
+                await removeCompetitionEntry(entry.id);
+                await comps.reload();
+              },
+              // Matches already played this season settle the ties still open,
+              // earliest first (core/backfill.ts) — one save for all of them.
+              onFill: async (c) => {
+                const season = seasonsState.seasons.find((x) => x.id === c.seasonId);
+                if (!season) throw new Error("This division isn't in a season, so there are no dates to fill from.");
+                const from = londonDayStart(season.startsOn);
+                const to = season.endsOn ? londonDayStart(season.endsOn) + 86400000 - 1 : Date.now();
+                const all = gdata.fixtures || [];
+                const used = new Set<string>(all.filter((f: any) => f.matchId).map((f: any) => f.matchId));
+                const picks = backfillTies(all.filter((f: any) => f.competitionId === c.id), gdata.matches || [], { from, to }, used);
+                if (!picks.length) return 0;
+                const byTie = new Map(picks.map((x) => [x.tieId, x.match]));
+                const ok = await saveData({ ...gdata, fixtures: all.map((f: any) => (byTie.has(f.id) ? settleTie(f, byTie.get(f.id) as any) : f)) });
+                if (ok === false) throw new Error("That didn't save — only an organiser can fill a division.");
+                return picks.length;
+              },
+              onDelete: async (c) => {
+                await deleteCompetition(c.id);
+                comps.removed(c.id);
+                setGdata((g: any) => ({ ...g, fixtures: (g.fixtures || []).filter((f: any) => f.competitionId !== c.id) }));
+                flash("Deleted " + c.name);
+              },
+            }) : undefined}
           />
         )}
         {/* Doubles compares two PAIRS; singles stays exactly as it was. */}
