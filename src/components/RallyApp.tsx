@@ -95,7 +95,8 @@ import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
 import { AUTO_CANCEL_DAYS, DEFAULT_DURATION_MINUTES } from "@/core/booking";
 import { FEED_OVERLAY, BALL, CHALK, COURT, MUTED, PANEL, body, display, listCard, listRow, segmentOption, segmentTrack, wrap } from "@/lib/theme";
-import { FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, FEED_TEXT_HI, tabular } from "@/lib/theme";
+import { FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_MID, FEED_TEXT_HI, tabular } from "@/lib/theme";
+import { SurfaceCard } from "@/components/ui/Surfaces";
 import { supabase } from "@/lib/supabase";
 import { normalizePlayerName } from "@/lib/historyImport";
 import { fetchLeagueData, insertPlayerRow, syncFixtures, syncMatches, syncPlayers, syncPosts, updatePlayerRow } from "@/lib/leagueData";
@@ -260,7 +261,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // of the kind on screen. With none, the view falls back to Standings.
   const divisionComps = (competitionsEnabled && !comps.unavailable ? comps.competitions : [])
     .filter((c) => c.kind === (showDoubles ? "doubles" : "singles") && c.format === "league" && c.status === "running");
-  const tableView = tableMode === "divisions" && !divisionComps.length ? "standings" : tableMode;
+  // Organisers always see the Divisions tab, so they can find where divisions
+  // go before there are any (Sam: "can't see it"); members only once one runs.
+  const divisionsTab = divisionComps.length > 0 || (leagueRole === "owner" || leagueRole === "editor") && !!competitionsEnabled && !comps.unavailable;
+  const tableView = tableMode === "divisions" && !divisionsTab ? "standings" : tableMode;
   // Standby view: the Table tab shows the people you've played instead of a
   // league. The league still loads underneath — this changes what's shown,
   // not what's fetched.
@@ -1902,11 +1906,26 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             <button onClick={() => setTableMode("standings")} style={segmentOption(tableView === "standings")}>Standings</button>
             {/* Only when there is a division to show: an empty tab is a
                 question nobody asked. */}
-            {divisionComps.length > 0 && <button onClick={() => setTableMode("divisions")} style={segmentOption(tableMode === "divisions")}>Divisions</button>}
+            {divisionsTab && <button onClick={() => setTableMode("divisions")} style={segmentOption(tableView === "divisions")}>Divisions</button>}
             <button onClick={() => setTableMode("compare")} style={segmentOption(tableMode === "compare")}>Compare</button>
           </div>
         )}
-        {tab === "ladder" && tableMode === "divisions" && divisionComps.length > 0 && (
+        {tab === "ladder" && tableView === "divisions" && divisionComps.length === 0 && (
+          <SurfaceCard radius={16} pad="16px">
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>No divisions yet</div>
+            <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>
+              A division is a League competition — call them Division 1, Division 2 and so on. Each one shows here as its own
+              table, like the football. Put them in a season to give the matches play-by dates.
+            </div>
+            <button
+              onClick={() => { setTab("fixtures"); if (showDoubles) setCompCreateSignal((n) => n + 1); else setSinglesCreateSignal((n) => n + 1); }}
+              style={{ marginTop: 12, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}
+            >
+              Create a division
+            </button>
+          </SurfaceCard>
+        )}
+        {tab === "ladder" && tableView === "divisions" && divisionComps.length > 0 && (
           <Divisions
             kind={showDoubles ? "doubles" : "singles"}
             competitions={divisionComps}
