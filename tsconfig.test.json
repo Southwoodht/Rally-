@@ -31,6 +31,8 @@
     "src/core/scoreCheck.test.ts",
     "src/core/emailSchedule.ts",
     "src/core/emailSchedule.test.ts",
+    "src/core/officialTimeline.ts",
+    "src/core/officialTimeline.test.ts",
     "src/core/feedContext.ts",
     "src/core/matchGrade.ts",
     "src/core/matchGrade.test.ts",

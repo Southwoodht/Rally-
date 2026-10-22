@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { TrophyMoment } from "@/components/ui/TrophyMoment";
 import { YearHeader } from "@/components/ui/YearHeader";
@@ -34,9 +34,9 @@ export interface MatchHistoryItem {
   ts?: number;
   /** "6-2, 6-4", or null. */
   score?: string | null;
-  /** How good a result it was, in words ("Statement win"). Absent when
-   *  pending or when either level is unknown on the day. */
-  grade?: string | null;
+  /** What this result did to your Official points, as the table counts them
+   *  (core/officialTimeline.ts). Absent for a result that counts for nothing. */
+  points?: number | null;
   /** Nobody has agreed to it yet, so it counts for nothing. */
   pending?: boolean;
   onEdit?: () => void;
@@ -54,6 +54,30 @@ const VERB = { W: "Beat", D: "Drew with", L: "Lost to" };
 export type HistoryTrophy = TrophyLike & { clubName?: string | null; onOpen?: () => void };
 
 type Entry = { kind: "match"; ts: number | null; m: MatchHistoryItem } | { kind: "trophy"; ts: number; t: HistoryTrophy };
+
+/** "+2.0", "−1.3", "0.0" — one decimal, a real minus sign. */
+const signed = (n: number) => (Math.abs(n) < 0.05 ? "0.0" : (n > 0 ? "+" : "−") + Math.abs(n).toFixed(1));
+
+/**
+ * The line that makes the numbers add up: your results, plus what other
+ * people's results did to you, equals your Official on the table. With a
+ * "Why?" that says how a result is weighed — opened in place, not a sheet,
+ * because it is two sentences.
+ */
+export function PointsSummary({ own, others, total }: { own: number; others: number; total: number }) {
+  const [why, setWhy] = useState(false);
+  return (
+    <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "10px 4px 0" }}>
+      <span style={tabular}>Your results {signed(own)} · other people&apos;s results {signed(others)} = {total.toFixed(1)} Official points (all time).</span>{" "}
+      <button onClick={() => setWhy(!why)} style={{ background: "none", border: "none", padding: 0, color: FEED_LIME, font: "inherit", cursor: "pointer" }}>{why ? "Hide" : "Why?"}</button>
+      {why && (
+        <div style={{ marginTop: 6 }}>
+          Each number is what that result did to your Official points on the day. Every result counts, judged by how strong the opponent has proved to be: beating someone the table rates low adds little, and losing to someone strong costs little — a loss never adds points. Your number also moves a little when people you have played win or lose, because that changes how strong they look; that is the &ldquo;other people&apos;s results&rdquo; part.
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function MatchHistoryList({ items, years, trophies }: {
   items: MatchHistoryItem[];
@@ -142,7 +166,10 @@ export function MatchHistoryList({ items, years, trophies }: {
             </div>
             {m.pending && (
               <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
-                Awaiting their ok · not counted
+                {/* It IS counted — unconfirmed results count from the moment
+                    they're logged (core/matchStatus.ts, since 2026-09-10) —
+                    so the line says what it did rather than "not counted". */}
+                Awaiting their ok{m.points != null ? <span style={tabular}> · {signed(m.points)} points</span> : null}
               </div>
             )}
             <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
@@ -159,9 +186,9 @@ export function MatchHistoryList({ items, years, trophies }: {
               </button>
             )
           ) : (
-            m.grade && (
-              <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: m.grade === "Statement win" ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, textAlign: "right" }}>
-                {m.grade}
+            m.points !== null && m.points !== undefined && (
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 15, color: m.points > 0.05 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0 }}>
+                {signed(m.points)}
               </span>
             )
           )}

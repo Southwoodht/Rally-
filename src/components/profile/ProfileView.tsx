@@ -4,7 +4,7 @@ import { Achievements, type Achievement } from "@/components/profile/Achievement
 import { BestWins, type BestWin } from "@/components/profile/BestWins";
 import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps } from "@/components/profile/GapInsight";
 import { onSide } from "@/core/trophyTimeline";
-import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
+import { MatchHistoryList, PointsSummary, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { recordsByYear } from "@/core/yearRecord";
 import { OpponentRecords, type OpponentRecord } from "@/components/profile/OpponentRecords";
 import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
@@ -52,6 +52,8 @@ export interface ProfileViewProps {
   trophies?: { list: ProfileTrophy[]; onClaim?: () => void; onGive?: () => void; onRemove?: (id: string) => void } | null;
   history?: MatchHistoryItem[];
   historyTotal?: number;
+  /** Own results + other people's = Official (core/officialTimeline.ts). */
+  pointsSummary?: { own: number; others: number; total: number };
   settings?: SettingsRow[];
   onOpenPlayer?: (playerId: string) => void;
   onOpenMatch?: (matchId: string) => void;
@@ -203,6 +205,7 @@ export function ProfileView(p: ProfileViewProps) {
           {/* Editing is an action on your own result, so it does not travel
               with the list when somebody else is reading it. */}
           <MatchHistoryList items={forViewer(shownHistory)} years={years} trophies={historyTrophies} />
+          {p.pointsSummary && <PointsSummary {...p.pointsSummary} />}
           {/* The graded version is a different question — how good were these
               results, not what were they — so it is a separate destination
               rather than what "All 44" now means. */}
