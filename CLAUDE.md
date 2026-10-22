@@ -949,6 +949,23 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
   `CRON_SECRET` env var locks the daily job to Vercel.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
+**brief-2 (2026-10-22), item 1 settled without SQL.** Sam had logged three
+test wins for Charlie Henry over himself in Seacourt (pending, so counting).
+He cancelled them himself from the feed — a reporter cancelling their own
+pending result deleted cleanly — and confirmed they're gone. NB pending
+results do NOT expire: they auto-confirm after 48h (CONFIRM_WINDOW_MS) unless
+disputed or cancelled. Measured on them before they went: each was worth
+about +1.6 to Charlie and −0.9 to Sam on Official; Sam stayed #2, Charlie #3.
+**brief-2 merged to master 2026-10-22** (rollback: branch
+`rollback/pre-brief2-2026-10-22`): per-match Official points in match history
+with a Why? (`core/officialTimeline.ts`, tested), and the score/winner check
+on edits as well as logging. Sam, same day: "the bad scores don't matter" —
+`fix_bad_scores.sql` / `diagnose_bad_scores.sql` were dropped in the merge;
+the two rows (xefu1o73 "6-6", me3n6foy) stay as they are, and since ratings
+no longer read scores they affect only predictions, which ignore a score
+that contradicts its result. The Test-club demo season SQL is there if
+wanted; Sam has not run it.
+
 **`ratings/glicko`, merged to master 2026-10-22 (rollback: branch `rollback/pre-glicko-2026-10-22`).** Sam's two
 rulings after the four-system comparison on the real export (every system
 predicted 68-71% of 115 decided matches — noise; level alone 78%, but the

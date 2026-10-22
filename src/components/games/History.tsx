@@ -1,5 +1,6 @@
 "use client";
 import { countsAsPlayed, isAgreed, isDisputed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
+import { scoreProblem } from "@/core/sets";
 import { Glyph } from "@/components/ui/Glyph";
 import React, { useState, useMemo } from "react";
 import { FixturesPanel } from "@/components/games/FixturesPanel";
@@ -94,8 +95,13 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
     setEditingMatchId(m.id);
     setEditDraft({ date: m.date ? new Date(m.date).toISOString().slice(0, 10) : "", p1: m.p1, p2: m.p2, winner: m.winner || "draw", score: m.score || "" });
   };
+  const [editErr, setEditErr] = useState<string | null>(null);
   const saveEdit = (m: any) => {
     if (!editDraft || !onEditMatch) return;
+    // Same rule as logging a new result (core/sets.ts scoreProblem).
+    const problem = scoreProblem(editDraft.score, editDraft.winner, false);
+    if (problem) { setEditErr(problem); return; }
+    setEditErr(null);
     onEditMatch(m.id, { date: editDraft.date ? new Date(editDraft.date).getTime() : m.date, p1: editDraft.p1, p2: editDraft.p2, winner: editDraft.winner, score: editDraft.score.trim() });
     setEditingMatchId(null);
     setEditDraft(null);
@@ -415,6 +421,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                               <option value="draw">Draw</option>
                             </select>
                             <input value={editDraft?.score || ""} onChange={(e) => setEditDraft({ ...editDraft, score: e.target.value })} placeholder="Score (optional), e.g. 6–4" style={{ ...miniInput, boxSizing: "border-box" as const }} />
+                            {editErr && <div style={{ fontFamily: body, fontSize: 12, color: CLAY }}>{editErr}</div>}
                             <div style={{ display: "flex", gap: 8 }}>
                               <button onClick={() => saveEdit(m)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: BALL, border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Save</button>
                               <button onClick={() => { setEditingMatchId(null); setEditDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button>

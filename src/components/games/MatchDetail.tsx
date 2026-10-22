@@ -1,5 +1,6 @@
 "use client";
 import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { scoreProblem } from "@/core/sets";
 import { dominationHeadline } from "@/core/domination";
 import React, { useRef, useState } from "react";
 import { MatchCard } from "@/components/games/MatchCard";
@@ -73,6 +74,9 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
 export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, groupName, season }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
+  // The same check Log a result makes (core/sets.ts scoreProblem): an edit
+  // must not be the way a 6-6 "win" gets in.
+  const [editErr, setEditErr] = useState<string | null>(null);
   const [notesDraft, setNotesDraft] = useState<string | null>(null);
   const [venueDraft, setVenueDraft] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -125,6 +129,9 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   const saveEdit = () => {
     if (!draft) return;
     const winner = draft.result === "D" ? "draw" : draft.result === "W1" ? "p1" : "p2";
+    const problem = scoreProblem(draft.score, winner, false);
+    if (problem) { setEditErr(problem); return; }
+    setEditErr(null);
     onProposeEdit(match.id, { date: draft.date ? new Date(draft.date).getTime() : match.date, score: draft.score.trim(), winner });
     setEditing(false);
     setDraft(null);
@@ -301,6 +308,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
                   ))}
                 </div>
                 <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID }}>{needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
+                {editErr && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{editErr}</div>}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={saveEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: COURT, background: BALL, border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Save</button>
                   <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Cancel</button>

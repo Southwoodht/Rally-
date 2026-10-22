@@ -10,7 +10,7 @@ import type { Achievement, AchievementIcon } from "@/components/profile/Achievem
 import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
-import { GRADE_LABEL, gradeAgainstHistory } from "@/core/matchGrade";
+import { officialTimeline } from "@/core/officialTimeline";
 import { rankMaps } from "@/core/rank";
 import { topRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
@@ -107,6 +107,10 @@ export function ProfileContainer({
       .catch(() => {});
     return () => { alive = false; };
   }, [pid, player?.auth_id, reloadTrophies]);
+
+  // Every result's effect on Official, over ALL the club's matches — the
+  // table's all-time number — so the history's points add up to it.
+  const officialSteps = useMemo(() => officialTimeline(players || [], matches || []), [players, matches]);
 
   const data = useMemo(() => {
     if (!pid) return null;
@@ -271,13 +275,11 @@ export function ProfileContainer({
         date: shortDate(m.date),
         ts: m.date,
         score: m.score || null,
-        // A word, not the per-match Elo change (Sam, 2026-10-22). That number
-        // swung from −0.9 to −17 for the same loss because Elo scales by the
-        // level gap unevenly and a missing level switches the scaling off; a
-        // grade by category — the one Your matches already uses — says what
-        // the result meant and cannot look inconsistent. Fixing Elo is
-        // separate and needs numbers first.
-        grade: pending ? null : (() => { const g = gradeAgainstHistory(outcome(m), byId[pid] || player, o, m.date).then; return g ? GRADE_LABEL[g] : null; })(),
+        // What it did to Official points, the table's number (Sam,
+        // 2026-10-22) — replacing the per-match Elo change, which swung
+        // −0.9 to −17 for the same loss, and then the grade word that stood
+        // in for it for a day.
+        points: officialSteps.perMatch[m.id]?.[pid] ?? null,
         pending,
         onOpen: onOpenMatch ? () => onOpenMatch(m.id) : undefined,
         onEdit: pending && onProposeEdit ? () => onOpenMatch && onOpenMatch(m.id) : undefined,
@@ -305,8 +307,12 @@ export function ProfileContainer({
       record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round(((r.w + r.d * 0.5) / r.gp) * 100) : 0, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
       gap, playingStyle, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
       historyTotal: mine.length, meta,
+      pointsSummary: (() => {
+        const own = Object.values(officialSteps.perMatch).reduce((t, row) => t + (row[pid] ?? 0), 0);
+        return { own, others: officialSteps.others[pid] ?? 0, total: officialSteps.final[pid] ?? 0 };
+      })(),
     };
-  }, [pid, players, matches, scopedMatches, period, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit]);
+  }, [pid, players, matches, scopedMatches, period, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit, officialSteps]);
 
   if (!player || !data) return null;
 
@@ -401,6 +407,7 @@ export function ProfileContainer({
       }}
       history={data.history}
       historyTotal={data.historyTotal}
+      pointsSummary={data.pointsSummary}
       settings={[
         { key: "friends", icon: "friends", label: "Friends", onClick: onFriends },
         { key: "linked", icon: "linked", label: "Linked player", detail: fullNameOf(player), onClick: onLinkedPlayer },
