@@ -1021,6 +1021,14 @@ league-less branch for the two players in the fixture (insert only for one
 of them). So "Book a match" inside Friendlies works at the database. No data
 touched; club fixtures behave exactly as before.
 
+**Data change, run 2026-10-22, verified (0, 122): `delete_test_season.sql`.**
+Sam's ruling: Seacourt's "Test League" season was only a tester nobody in the
+club knew about, so it was deleted rather than ended (ending posts winners
+to the feed). Only the season row; all 122 matches untouched. Seacourt has
+no season until Sam starts James's real winter one from Run your club →
+Season, so its Table opens on All time meanwhile. Charlie Henry's level
+history now runs to "Oct 2026–now" (Sam did it in the app).
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE
