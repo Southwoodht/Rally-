@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -1006,6 +1006,14 @@ season while one runs, active players, same ± line and tiebreak), captioned
 "rating · this season / all time". Weekly movement arrows are off on both:
 the snapshots still record Official places. `officialRanks` and `movement`
 in RallyApp are now read by nothing on screen.
+
+**First-time tour, merged 2026-10-22 (rollback: branch
+`rollback/pre-tour-2026-10-22`).** `home/FirstTour.tsx`, five steps, one per
+bottom-bar tab, each switching to its screen. Once per person (`tour.v1` in
+user_storage, failed read = seen), so every existing member sees it once on
+their next visit; Help → "Take the tour" any time. What's new bumped to
+RELEASE `2026-10-22` (tour, one table, points per match, emails) and the
+September entries cut.
 
 **Now waiting to be run: `schema_friendly_fixtures.sql`.** `fixtures.league_id`
 is still `not null` while matches and players are both nullable, so "Book a

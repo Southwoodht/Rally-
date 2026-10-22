@@ -91,3 +91,14 @@ create policy "update fixtures in your league"
 -- Nothing to do. schema_fixture_delete_participants.sql already resolves a
 -- participant through players.auth_id without reading league_id, so it
 -- covers a league-less fixture exactly as written.
+
+-- Check. Should come back: YES, 3
+--   league_id_nullable  YES  — a fixture can now exist outside a club
+--   policies            3    — read, insert and update each carry the friendly branch
+select
+  (select is_nullable from information_schema.columns
+    where table_schema = 'public' and table_name = 'fixtures' and column_name = 'league_id') as league_id_nullable,
+  (select count(*) from pg_policies
+    where schemaname = 'public' and tablename = 'fixtures'
+      and policyname in ('read fixtures in your leagues', 'manage fixtures in your league', 'update fixtures in your league')
+      and coalesce(qual, with_check) like '%auth.uid()%') as policies;

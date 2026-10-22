@@ -14,7 +14,7 @@
  * as "seen", so an old entry never reappears and a new one always shows.
  */
 
-export const RELEASE = "2026-09-11";
+export const RELEASE = "2026-10-22";
 
 export interface NewsItem {
   /** A few words. The headline is what most people will read and nothing else. */
@@ -23,29 +23,24 @@ export interface NewsItem {
   detail: string;
 }
 
+// The 2026-09-11 entries (asks how it went, nudges, photos, avatars, invite
+// links, six levels) were cut on 2026-10-22: everybody who was here then has
+// seen them, and a newcomer reading eight items reads none.
 export const WHATS_NEW: NewsItem[] = [
   {
-    title: "Southwood asks how it went",
-    detail: "Once a booked match should have finished, Home asks for the result — with the buttons right there, so it is one tap rather than a trip to Fixtures.",
+    title: "A quick tour",
+    detail: "Five steps, one for each button along the bottom. You can take it again any time from Help.",
   },
   {
-    title: "Chase a result",
-    detail: "If you logged a match and the other player hasn't agreed to it yet, you can nudge them. Once a day, so it stays a reminder.",
+    title: "One table",
+    detail: "The club table now has one ranking. Your rating has a ± for how sure it is, and players who haven't played much sit underneath until they have.",
   },
   {
-    title: "Send photos",
-    detail: "Messages take pictures now. Tap one to see it full size.",
+    title: "Points for every match",
+    detail: "Your match history shows how many points each result gained or lost you, with a Why? that explains it.",
   },
   {
-    title: "New avatars",
-    detail: "The avatars are drawn by Southwood instead of borrowed from your phone, so everyone sees the same thing whatever they are using.",
-  },
-  {
-    title: "Invite by link",
-    detail: "Share a link instead of reading a six-character code down the phone. It works for people who haven't signed up yet.",
-  },
-  {
-    title: "Six levels",
-    detail: "Amateur and Semi-pro were added between Beginner and Pro. Worth re-picking yours — nobody gets moved automatically.",
+    title: "Emails",
+    detail: "You'll get an email when somebody challenges you or books a time, and a reminder before a competition deadline. You can switch them off in My profile.",
   },
 ];
