@@ -8,7 +8,7 @@
 
 import { roundDeadlines } from "../seasons";
 
-export type CompetitionFormat = "league" | "knockout";
+export type CompetitionFormat = "league" | "knockout" | "ladder";
 /** Singles competitions use exactly the same schedule, draw and table. */
 export type CompetitionKind = "doubles" | "singles";
 

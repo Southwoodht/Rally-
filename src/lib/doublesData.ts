@@ -453,3 +453,28 @@ export async function deleteCompetition(id: string): Promise<void> {
   if (gone && gone.length) return;
   throw new Error("That delete was refused — only club organisers can delete a competition.");
 }
+
+/**
+ * Put one player on a ladder (core/ladder.ts), at the given starting place —
+ * the bottom, normally. Players may add themselves; organisers anyone
+ * (schema_ladder.sql). A refused insert raises, so the screen says so.
+ */
+export async function addLadderEntry(competitionId: string, p1: string, seed: number): Promise<CompetitionPair> {
+  if (!supabase) throw new Error("Not connected.");
+  const row = await run(
+    supabase.from("doubles_competition_pairs").insert({ competition_id: competitionId, p1, p2: null, seed }).select().single(),
+    "joining the ladder",
+  );
+  return rowToPair(row);
+}
+
+/** Take one player off a ladder. Same refused-delete check as every delete here. */
+export async function removeLadderEntry(id: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const gone = await run(
+    supabase.from("doubles_competition_pairs").delete().eq("id", id).select("id"),
+    "leaving the ladder",
+  );
+  if (gone && gone.length) return;
+  throw new Error("That was refused — you can only take yourself off, unless you run the club.");
+}

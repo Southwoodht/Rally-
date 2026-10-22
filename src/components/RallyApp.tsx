@@ -51,7 +51,10 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/competitionAdapters";
 import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
-import { createCompetition, deleteCompetition, drawTies, finishCompetition } from "@/lib/doublesData";
+import { addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeLadderEntry } from "@/lib/doublesData";
+import { Ladder } from "@/components/competitions/Ladder";
+import { LADDER_DAYS, type LadderChallenge } from "@/core/ladder";
+import { computeGlicko } from "@/core/glicko";
 import { knockoutBracket, roundRobin, tiesReadyToDraw, totalRounds, withDeadlines, type Tie } from "@/core/doubles/competition";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
@@ -70,7 +73,7 @@ import { computeOfficial } from "@/core/official";
 import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
 import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
-import { SEASON_RANK_GAMES, dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
+import { SEASON_RANK_GAMES, addDays, dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
 import { sealTimeline, withLevelChange } from "@/core/levels";
 import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, setPlayerStart, type LevelRequest } from "@/lib/levelAdmin";
 import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
@@ -212,7 +215,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Competitions need doubles on AND their own flag. Off, this loads nothing.
   // Competitions have their own flag, and cover singles as well as doubles.
   const comps = useCompetitions(leagueId, !!competitionsEnabled);
-  const singlesComps = comps.competitions.filter((c) => c.kind === "singles");
+  // The singles ladder is a competition too (format "ladder", core/ladder.ts)
+  // but it has its own card above the list, so the list leaves it out.
+  const singlesComps = comps.competitions.filter((c) => c.kind === "singles" && c.format !== "ladder");
+  const ladderComp = comps.competitions.find((c) => c.kind === "singles" && c.format === "ladder" && c.status === "running") || null;
   const doublesComps = comps.competitions.filter((c) => c.kind === "doubles");
   // Requests from players to change their level (brief item 2): for
   // organisers, the queue to decide; for a player, their own. Null until
@@ -2006,6 +2012,78 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "fixtures" && !showDoubles && (personal ? feed : (
           <div style={{ marginTop: 14 }}>
+            {competitionsEnabled && !comps.unavailable && (() => {
+              // The singles ladder (core/ladder.ts). Its challenges are this
+              // competition's fixtures, challenger as p1; the order is replayed
+              // from them on every render, never stored.
+              const ladderEntries = ladderComp ? comps.pairs.filter((p) => p.competitionId === ladderComp.id) : [];
+              const ladderFixtures = ladderComp ? (fixtures || []).filter((f: any) => f.competitionId === ladderComp.id) : [];
+              const byMatch = new Map(matches.map((m: any) => [m.id, m]));
+              const challenges: LadderChallenge[] = ladderFixtures.map((f: any) => {
+                const m: any = f.matchId ? byMatch.get(f.matchId) : null;
+                let result: LadderChallenge["result"] = null;
+                let at = f.playBy ? londonDayStart(f.playBy) : 0;
+                if (f.outcome === "walkover_p1") result = "challenger";
+                else if (f.outcome === "walkover_p2") result = "defender";
+                else if (f.done && m && countsAsPlayed(m)) {
+                  result = m.winner === "draw" ? "draw" : (m.winner === "p1" ? m.p1 : m.p2) === f.p1 ? "challenger" : "defender";
+                  at = m.date || at;
+                }
+                return { id: f.id, challenger: f.p1, defender: f.p2, result, at, round: f.round ?? null, open: !f.done && !f.outcome };
+              });
+              // Who it would start with: everyone who has played in the last
+              // year, top of the club's rating first.
+              const startingOrder = (() => {
+                const cutoff = Date.now() - 365 * 86400000;
+                const recent = new Set<string>();
+                matches.forEach((m: any) => { if (countsAsPlayed(m) && m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });
+                const g = computeGlicko(players, matches);
+                return players.filter((p: any) => !p.inactive && recent.has(p.id) && g.rating[p.id] != null)
+                  .sort((a: any, b: any) => g.rating[b.id] - g.rating[a.id]).map((p: any) => p.id);
+              })();
+              const nextSeed = () => ladderEntries.reduce((m, e) => Math.max(m, e.seed), 0) + 1;
+              return (
+                <Ladder
+                  ladder={ladderComp}
+                  entries={ladderEntries}
+                  challenges={challenges}
+                  players={players}
+                  meId={meId}
+                  canManage={!!canManageMatches}
+                  startingOrder={startingOrder}
+                  onStart={async () => {
+                    const r = await createCompetition(leagueId, { name: "Singles ladder", kind: "singles", format: "ladder", legs: 1, pointsWin: 3, pointsDraw: 1, createdBy: meId || null, seasonId: null },
+                      startingOrder.map((id) => ({ p1: id, p2: null })), () => []);
+                    comps.added(r.competition, r.pairs);
+                    flash("Ladder started with " + r.pairs.length + " players");
+                  }}
+                  onChallenge={async (defender) => {
+                    const mine = ladderEntries.find((e) => e.p1 === meId), theirs = ladderEntries.find((e) => e.p1 === defender);
+                    if (!ladderComp || !mine || !theirs) throw new Error("One of you is no longer on the ladder.");
+                    const round = ladderFixtures.reduce((m: number, f: any) => Math.max(m, f.round ?? 0), 0) + 1;
+                    const ok = await addSinglesTies(ladderComp.id, [{ round, pairA: mine.id, pairB: theirs.id, playBy: addDays(londonDay(), LADDER_DAYS) }], ladderEntries);
+                    if (ok === false) throw new Error("That challenge didn't save. Try again.");
+                    flash("Challenge sent to " + (players.find((p: any) => p.id === defender)?.name || "them"));
+                  }}
+                  onJoin={async (playerId) => {
+                    if (!ladderComp) return;
+                    await addLadderEntry(ladderComp.id, playerId, nextSeed());
+                    await comps.reload();
+                  }}
+                  onLeave={async (entryId) => { await removeLadderEntry(entryId); await comps.reload(); }}
+                  onSettle={(id, outcome) => setSinglesTie(id, { outcome })}
+                  renderOpen={() => (
+                    <FixturesPanel
+                      fixtures={ladderFixtures}
+                      players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId}
+                      onResolve={resolveFixture} onBook={bookFixture} onRemoveFixture={removeFixture}
+                      canManage={canManageMatches} hideBooking emptyText="No challenges on."
+                      labelFor={(f: any) => "Ladder challenge" + playByNote(f)}
+                    />
+                  )}
+                />
+              );
+            })()}
             <Competitions
               kind="singles"
               players={players}

@@ -76,6 +76,8 @@
     "src/core/predict.ts",
     "src/core/predict.test.ts",
     "src/core/glicko.ts",
-    "src/core/glicko.test.ts"
+    "src/core/glicko.test.ts",
+    "src/core/ladder.ts",
+    "src/core/ladder.test.ts"
   ]
 }

@@ -1029,6 +1029,21 @@ no season until Sam starts James's real winter one from Run your club →
 Season, so its Table opens on All time meanwhile. Charlie Henry's level
 history now runs to "Oct 2026–now" (Sam did it in the app).
 
+**The singles ladder (branch `ladder`, 2026-10-22).** Sam: Seacourt's
+real ladder is a wooden board mixing singles and doubles, so doubles players
+sit high and Zaach is below people who never play him at singles. This is
+singles only. `core/ladder.ts` (tested): challenge up to `LADDER_REACH` (3)
+places above, a win takes the defender's place and shifts those between down
+one, one open challenge per player, `LADDER_DAYS` (14) to play, newcomers at
+the bottom. Stored as a singles competition with format `ladder` — entries'
+seeds are the starting order, each challenge is a competition fixture with
+the CHALLENGER as p1 — and the order is replayed from decided challenges,
+never stored. `Ladder.tsx` is a card on the Fixtures tab; organisers start it
+(active players in Glicko order), add/remove anyone and settle an unplayed
+challenge (walkover / call off). **Needs `schema_ladder.sql`**: the format
+check gains 'ladder', and two policies let a player add or remove their OWN
+entry on a ladder. Until it runs, "Start the ladder" fails with an error.
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE

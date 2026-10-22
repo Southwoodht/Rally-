@@ -92,6 +92,7 @@ interface Props {
 
 /** "Winter Doubles · Semi-finals" — how a competition tie labels itself anywhere. */
 export function competitionLabel(c: Competition, entryCount: number, round: number | null): string {
+  if (c.format === "ladder") return `${c.name} · challenge`;
   if (round == null) return c.name;
   if (c.format === "knockout") {
     const total = Math.round(Math.log2(bracketSize(entryCount)));
