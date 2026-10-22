@@ -21,7 +21,6 @@ import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 import { SEASON_RANK_GAMES } from "@/core/seasons";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { BALL, CHALK, CLAY, LINE, MUTED, PANEL, PANEL2, body, miniInput, segmentOption, segmentTrack } from "@/lib/theme";
-import { SeasonBanner } from "@/components/seasons/SeasonBanner";
 import { SeasonPodium } from "@/components/seasons/SeasonPodium";
 import { seasonMatches, seasonPodium } from "@/core/seasonStandings";
 
@@ -298,7 +297,9 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
 
   return (
     <div>
-      {group?.season && <SeasonBanner season={group.season} />}
+      {/* No season banner here (Sam, 2026-10-22): the This season / All time
+          switch right below already says which you are looking at, and Home
+          carries the countdown. */}
       {season && view !== "legacy" && (
         <div style={{ ...segmentTrack, marginBottom: 12 }}>
           <button onClick={() => setScope("season")} style={segmentOption(inSeason)}>
