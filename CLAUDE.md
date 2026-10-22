@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-divmanage-2026-10-22`** (4eaea3e) is master just before division settings; **`rollback/pre-awards-2026-10-22`** (4304fbb) is master just before season awards and the next-season planner; **`rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-polish-2026-10-22`** (9cd4b4b) is master just before the motion layer and sentence-case labels; **`rollback/pre-profile-places-2026-10-22`** (fb73560) is master just before profile places moved to Glicko; **`rollback/pre-divmanage-2026-10-22`** (4eaea3e) is master just before division settings; **`rollback/pre-awards-2026-10-22`** (4304fbb) is master just before season awards and the next-season planner; **`rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -1097,6 +1097,23 @@ confirmed-only filter as `leagueTable`, so it sums to Pts), what is left
 and "Open profile". Only Division 1 carries a tier chip ("Top tier") —
 Sam: bottom tier wasn't needed. The season prediction runs on Glicko, and
 Last 5 on the profile is W/D/L letters with the opponent's name.
+
+**Profile places are Glicko (merged 2026-10-22).** The record card's club
+place and "one place behind X" come from the same all-time
+`glickoStandings` as the Table / Home / other clubs; the Elo and Record
+rows are gone, a Rating row (± shown) replaced them.
+
+**Motion and labels (merged 2026-10-22, Sam: "smooth like Apple", "nothing
+in a code-looking font").** `ui/Motion.tsx` in the root layout: press
+feedback on anything tappable (buttons, links, any pointer-cursor element),
+a rise-and-fade on every position: fixed element as it mounts (sheets,
+full-screen views, the toast — via MutationObserver, animating `translate`
+so an element's own transform survives), and `useScreenIn` on RallyApp's
+content for tab changes and Back, header excluded. Off under
+prefers-reduced-motion. **No small label is spaced capitals any more** —
+sentence case, no tracking, two points up. Only display headings (TABLE,
+PROFILE, the wordmark) and the join-code box keep capitals; don't bring
+uppercase labels back.
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
