@@ -944,9 +944,8 @@ fixtures and entries cascaded. **Tests go in the Test club, never Seacourt.**
   they are in the fixture or staff. `app/api/cron/reminders` (vercel.json, daily
   08:00 UTC) sends result reminders and 7/2-day deadline warnings
   (`core/emailSchedule.ts`, tested). `email_log` makes every email once-only;
-  `profiles.email_opt_out` is the My profile switch. **Needs
-  `schema_email.sql`** — without it nothing is sent (no log, no opt-out to
-  read). Singles fixtures only; doubles fixtures send nothing yet. Optional
+  `profiles.email_opt_out` is the My profile switch. **`schema_email.sql`
+  run 2026-10-22, verified (email_opt_out, YES, true).** Singles fixtures only; doubles fixtures send nothing yet. Optional
   `CRON_SECRET` env var locks the daily job to Vercel.
 - Emails (item 6): Sam bought **southwood.app** (Porkbun, 2026-10-21) for sending through Resend. The API key and the Supabase service-role key belong in Vercel's environment variables, set by Sam — never in the repo or the chat.
 
