@@ -105,6 +105,13 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
         <SurfaceCard radius={16} pad="14px 14px" style={{ marginTop: 12 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {stepper("Courts", courts, 1, maxCourts, (n) => set({ courts: n }))}
+            {/* Four a court: say why + stops, rather than leaving a dead
+                button (Sam: "it says 1 court?"). */}
+            {courts >= maxCourts && (
+              <div style={{ ...note, marginTop: -4 }}>
+                {here.length < 4 ? "Four players to a court." : `${here.length} players fill ${maxCourts} ${maxCourts === 1 ? "court" : "courts"} — tick ${(maxCourts + 1) * 4 - here.length} more for another.`}
+              </div>
+            )}
             {stepper("Rounds", night.rounds, 1, 12, (n) => set({ rounds: n }))}
           </div>
         </SurfaceCard>

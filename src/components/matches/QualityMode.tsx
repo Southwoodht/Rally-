@@ -252,9 +252,12 @@ function WinsFrom({ q, v }: { q: MatchQuality; v: Voice }) {
   const total = above + at + below;
   if (!total) return null;
   const rows: Array<[string, number, string]> = [
+    // Three steps of one scale, strongest for the best wins. At and Below
+    // were FEED_TEXT_LOW and FEED_TEXT_MID, which are the same colour, so
+    // the bar and the dots could not tell them apart (Sam, 2026-10-24).
     ["Above " + theirs(v) + " level", above, FEED_LIME],
-    ["At " + theirs(v) + " level", at, FEED_TEXT_LOW],
-    ["Below " + theirs(v) + " level", below, FEED_TEXT_MID],
+    ["At " + theirs(v) + " level", at, FEED_TEXT_MID],
+    ["Below " + theirs(v) + " level", below, FEED_TEXT_DIM],
   ];
   return (
     <SurfaceCard radius={16}>

@@ -49,6 +49,9 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   // Read once, then in the way. Behind the icon it stays available without
   // costing every later visit six lines of screen.
   const [explainerOpen, setExplainerOpen] = useState(false);
+  // Six a side until asked: Sam's Compare showed six of his eight wins with
+  // nothing to say there were more (2026-10-24).
+  const [allLines, setAllLines] = useState(false);
   // Which filter sheet is open, if any.
   const [sheet, setSheet] = useState<null | "year" | "venue">(null);
   const byId = {}; players.forEach((p) => { byId[p.id] = p; });
@@ -345,7 +348,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
                   <button onClick={() => onOpen && onOpen(e.oid)} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "5px 0", cursor: "pointer", textAlign: i ? "right" : "left" }}>
                     <div style={{ display: "flex", flexDirection: i ? "row-reverse" : "row", justifyContent: "space-between", alignItems: "baseline", gap: 6 }}>
                       <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(e.oid)}</span>
-                      <span style={{ ...tabular, fontFamily: body, fontSize: 13, fontWeight: 500, color: FEED_LIME }}>{e.w}–{e.l}</span>
+                      <span style={{ ...tabular, fontFamily: body, fontSize: 13, fontWeight: 500, color: FEED_LIME, whiteSpace: "nowrap", flexShrink: 0 }}>{e.w}–{e.l}</span>
                     </div>
                     <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 2 }}>{lvl ? lvl.cat + " · " : ""}{o.w}–{o.l}</div>
                   </button>
@@ -354,13 +357,18 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
               return (
                 <div key={i} style={{ flex: 1, minWidth: 0, textAlign: i ? "right" : "left", paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                   <div style={{ ...sectionLabel, color: FEED_LIME, marginBottom: 6, textAlign: i ? "right" : "left" }}>Winning against</div>
-                  {s.winning.length ? s.winning.slice(0, 6).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>None</div>}
+                  {s.winning.length ? (allLines ? s.winning : s.winning.slice(0, 6)).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>None</div>}
                   <div style={{ ...sectionLabel, color: FEED_THEY_LEAD, margin: "14px 0 6px", textAlign: i ? "right" : "left" }}>Losing against</div>
-                  {s.losing.length ? s.losing.slice(0, 6).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>Nobody</div>}
+                  {s.losing.length ? (allLines ? s.losing : s.losing.slice(0, 6)).map((e) => <Line key={e.oid} e={e} />) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>Nobody</div>}
                 </div>
               );
             })}
           </div>
+          {!allLines && [sa, sb].some((s: any) => s.winning.length > 6 || s.losing.length > 6) && (
+            <button onClick={() => setAllLines(true)} style={{ background: "none", border: "none", padding: "10px 0 0", color: FEED_LIME, fontFamily: body, fontSize: 14, cursor: "pointer" }}>
+              Show everyone
+            </button>
+          )}
           <div style={{ ...sectionLabel, margin: "22px 0 8px" }}>Their matches</div>
           {listed.length ? listed.map((m) => <div key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI }}><span style={{ ...tabular, color: FEED_TEXT_MID, flexShrink: 0 }}>{fmtDate(m.date)}</span><span style={{ textAlign: "right" }}>{winnerLabel(m, nameOf)}{m.score ? <span style={{ ...tabular, color: FEED_TEXT_MID }}> · {m.score}</span> : null}{isShortMatch(m) ? <span style={{ color: FEED_TEXT_MID }}> · short match</span> : null}</span></div>) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "6px 0" }}>They've never played each other — the prediction above is based on their form, levels and results against others.</div>}
         </>
