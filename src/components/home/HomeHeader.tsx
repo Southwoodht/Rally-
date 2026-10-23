@@ -19,9 +19,13 @@ export interface HomeHeaderProps {
    *  on the notification stack to render. The caller styles them: this is a
    *  row, not a single round button, because Home has two of them.  */
   bell?: React.ReactNode;
+  /** The app's shared top row (RallyApp's topRow): when given, it replaces
+   *  this header's own league row and icons, so Home's top matches every
+   *  other tab exactly and nothing moves when you switch (Sam, 2026-10-24). */
+  topRow?: React.ReactNode;
 }
 
-export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHeaderProps) {
+export function HomeHeader({ leagueName, greeting, onPickLeague, bell, topRow }: HomeHeaderProps) {
   const league = (
     // 14px per the mockup, up from 12. The club selector is the one control
     // above the greeting and it was reading as a caption.
@@ -44,7 +48,7 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
   // Profile, so nothing moves when you switch tab.
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      {topRow ?? <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         {/* The mark in the top-left corner, ahead of the club name. Same
             letter as the app icon, in theme colours — see RallyMark. */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
@@ -56,8 +60,8 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell }: HomeHea
           ) : league}
         </div>
         <ThemePicker />
-      </div>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginTop: 6 }}>
+      </div>}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, marginTop: topRow ? 12 : 6 }}>
         {/* The greeting: display font, 30/700, letter-spacing -0.6px. Exactly
             the mockup, and the first place in the app where Bricolage does the
             job the old condensed face was reserved for. */}

@@ -1903,6 +1903,40 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Club night mixer's door, on Fixtures in both modes — styled as the
   // ladder's closed card so the two read as one list. From singles it
   // switches to doubles first, since mixer games are doubles.
+  // ONE top row on every tab, Home included — Sam, 2026-10-24: "everything
+  // moves and changes when selecting the tabs; would it look better if the
+  // top and messages etc all stayed in one place?" Mark and club on the
+  // left, search / messages / bell / menu on the right; only the title
+  // under it changes. The theme picker moved into the menu (set-and-forget).
+  const topRow = (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+        <RallyMark title="Southwood" />
+        <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 12px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
+          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "Club")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
+        </button>
+      </div>
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                {/* Finding somebody is a top-level thing to want, and until
+                    now the only way to reach a person was to already share a
+                    league with them. */}
+                <a href="/search" aria-label="Find a player" style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, textDecoration: "none" }}>
+                  <Search size={18} strokeWidth={2} />
+                </a>
+                <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
+                  <MessageRobins count={unreadMsgs} />
+                </button>
+                <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
+                </div>
+                {(
+                  <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3.5, flexShrink: 0 }}>
+                    {[0, 1, 2].map((i) => <span key={i} style={{ display: "block", width: 17, height: 2, background: BALL, borderRadius: 2 }} />)}
+                  </button>
+                )}
+              </div>
+    </div>
+  );
   const mixerRow = doublesEnabled && !personal ? (
     <SurfaceCard radius={18} pad="0" style={{ marginBottom: 14 }}>
       <button onClick={() => { setSport("doubles"); setMixerOpen(true); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: "16px", cursor: "pointer", textAlign: "left" }}>
@@ -1920,43 +1954,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       <div ref={screenRef} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
-            {/* The club and theme switchers live on Home and Profile only
-                (Sam, 2026-10-24: "does it need to be there every tab? takes
-                up room"). They are set-and-forget, so Table, Fixtures and Add
-                result open on their title instead. */}
-            {tab === "profile" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                <RallyMark title="Southwood" />
-                <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
-                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "Club")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
-                </button>
-              </div>
-              <ThemePicker />
-            </div>}
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
-              <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: tab === "profile" ? "10px 0 0" : 0, fontSize: 32, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: "-0.5px", minWidth: 0 }}>
-                {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
-              </h1>
-              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                {/* Finding somebody is a top-level thing to want, and until
-                    now the only way to reach a person was to already share a
-                    league with them. */}
-                <a href="/search" aria-label="Find a player" style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, textDecoration: "none" }}>
-                  <Search size={18} strokeWidth={2} />
-                </a>
-                <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
-                  <MessageRobins count={unreadMsgs} />
-                </button>
-                <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
-                </div>
-                {tab === "profile" && (
-                  <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3.5, flexShrink: 0 }}>
-                    {[0, 1, 2].map((i) => <span key={i} style={{ display: "block", width: 17, height: 2, background: BALL, borderRadius: 2 }} />)}
-                  </button>
-                )}
-              </div>
-            </div>
+            {topRow}
+            <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "12px 0 0", fontSize: 32, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: "-0.5px", minWidth: 0 }}>
+              {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
+            </h1>
           </header>
         )}
 
@@ -2238,6 +2239,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           if (options.length) setLeagueAsk({ match: mt, options });
           else saveLogged(mt, []);
         }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        {/* Home's top row sits outside Home itself, in a <header>, so the
+            screen-change fade (ui/Motion.tsx) leaves it still like on every
+            other tab. */}
+        {tab === "home" && <header>{topRow}</header>}
         {tab === "home" && (
           <Home
             seasonBanner={!personal && group?.season ? <SeasonBanner season={group.season} onOpen={() => setTab("ladder")} /> : undefined}
@@ -2249,21 +2254,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               leagueName: personal ? "Everyone I've played" : (group?.name || "Club"),
               greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
               onPickLeague: () => setGroupSheet(true),
-              bell: (
-                <>
-                  {/* Same as the other header: finding somebody is a
-                      top-level thing to want. */}
-                  <a href="/search" aria-label="Find a player" style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, textDecoration: "none" }}>
-                    <Search size={18} strokeWidth={2} />
-                  </a>
-                  <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
-                    <MessageRobins count={unreadMsgs} />
-                  </button>
-                  <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
-                    <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
-                  </div>
-                </>
-              ),
+              topRow: <></>,
             }}
             standing={homeDoubles ? doublesStanding : homeData?.standing ? {
               ...homeData.standing,
@@ -2720,6 +2711,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 Friends is the Friends row at the foot of your profile. The
                 screens are untouched — only the extra doors are gone. */}
             <div style={listCard}>
+              {/* The theme picker's home since the top row became the same on
+                  every tab (2026-10-24). */}
+              <div style={{ ...listRow, cursor: "default" }}><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Theme</span><ThemePicker /></div>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"}</span><span style={{ color: MUTED }}>›</span></button>
               {(canSetLevels || isFriendlyLeague(gid)) && <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>}
