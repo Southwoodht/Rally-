@@ -11,6 +11,12 @@
  * shared between the tied entries. A finished division needs no dice: the
  * leader is 100%.
  *
+ * The ± counts (Glickman's g factor, as Glicko itself predicts a game): a
+ * player with a big ± — a handful of matches — is pulled towards 50/50 in
+ * each game rather than treated as exactly as good as their number. Without
+ * it, somebody with four wins and a high but shaky rating (Connor Truman,
+ * 2026-10-24) came out a near-certain winner.
+ *
  * Seeded and pure, so the same table gives the same numbers on every
  * render.
  */
@@ -36,6 +42,8 @@ export function divisionOdds(opts: {
   pointsWin: number;
   /** An entry's rating; unknown entries sit at 1500. */
   rating: (entryId: string) => number;
+  /** An entry's ± (Glicko RD). Absent: no uncertainty is assumed. */
+  rd?: (entryId: string) => number;
   sims?: number;
   seed?: number;
 }): Record<string, number> {
@@ -44,7 +52,13 @@ export function divisionOdds(opts: {
   if (!entries.length) return out;
   const sims = open.length ? opts.sims ?? 4000 : 1;
   const rand = rng(opts.seed ?? 1);
-  const pA = open.map(([a, b]) => 1 / (1 + Math.pow(10, (opts.rating(b) - opts.rating(a)) / 400)));
+  const q = Math.LN10 / 400;
+  const g = (a: string, b: string) => {
+    if (!opts.rd) return 1;
+    const v = opts.rd(a) ** 2 + opts.rd(b) ** 2;
+    return 1 / Math.sqrt(1 + (3 * q * q * v) / (Math.PI * Math.PI));
+  };
+  const pA = open.map(([a, b]) => 1 / (1 + Math.pow(10, (-g(a, b) * (opts.rating(a) - opts.rating(b))) / 400)));
   for (let s = 0; s < sims; s++) {
     const tally: Record<string, number> = {};
     for (const e of entries) tally[e] = points[e] || 0;

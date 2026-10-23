@@ -2079,6 +2079,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   .map((f: any) => [entryOf.get(f.p1), entryOf.get(f.p2)])
                   .filter((x: any) => x[0] && x[1]) as Array<[string, string]>,
                 rating: (eid) => glickoAll.rating[p1Of.get(eid) as string] ?? 1500,
+                rd: (eid) => glickoAll.rd[p1Of.get(eid) as string] ?? 350,
               };
             }}
             onOpenPlayer={openProfile}

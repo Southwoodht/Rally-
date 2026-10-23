@@ -143,7 +143,7 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
   datesOf?: (c: Competition) => { startsOn: string | null; endsOn: string | null };
   onOpenPlayer: (id: string) => void;
   /** For the prediction: each division's unplayed matches (entry ids) and an entry's rating. */
-  oddsOf?: (c: Competition) => { open: Array<[string, string]>; rating: (entryId: string) => number };
+  oddsOf?: (c: Competition) => { open: Array<[string, string]>; rating: (entryId: string) => number; rd?: (entryId: string) => number };
   /** Organisers: make the next division. Absent for everyone else. */
   onAdd?: () => void;
   /** Organisers: propose next season's divisions from these tables. */
@@ -225,16 +225,17 @@ function DivisionPredictions({ ordered, entries, resultsOf, oddsOf, entryName }:
   ordered: Competition[];
   entries: CompetitionPair[];
   resultsOf: (c: Competition) => CompetitionResult[];
-  oddsOf: (c: Competition) => { open: Array<[string, string]>; rating: (entryId: string) => number };
+  oddsOf: (c: Competition) => { open: Array<[string, string]>; rating: (entryId: string) => number; rd?: (entryId: string) => number };
   entryName: (id: string | null | undefined) => string;
 }) {
+  const [copied, setCopied] = useState(false);
   const blocks = useMemo(() => ordered.map((c) => {
     const mine = entries.filter((e) => e.competitionId === c.id);
     if (mine.length < 2) return null;
     const table = leagueTable(mine, resultsOf(c), c.pointsWin, c.pointsDraw);
     const points = Object.fromEntries(table.map((r) => [r.pairId, r.points]));
-    const { open, rating } = oddsOf(c);
-    const odds = divisionOdds({ entries: mine.map((e) => e.id), points, open, pointsWin: c.pointsWin, rating, seed: 7 });
+    const { open, rating, rd } = oddsOf(c);
+    const odds = divisionOdds({ entries: mine.map((e) => e.id), points, open, pointsWin: c.pointsWin, rating, rd, seed: 7 });
     const top = Object.entries(odds).sort((a, b) => b[1] - a[1]).filter(([, p]) => p >= 0.005).slice(0, 3);
     return { c, top, done: !open.length };
   }).filter(Boolean) as Array<{ c: Competition; top: Array<[string, number]>; done: boolean }>,
@@ -242,9 +243,17 @@ function DivisionPredictions({ ordered, entries, resultsOf, oddsOf, entryName }:
   [ordered, entries, resultsOf, oddsOf]);
   if (!blocks.length) return null;
   const pct = (p: number) => (p >= 0.995 ? "100" : p < 0.01 ? "<1" : String(Math.round(p * 100)));
+  // Plain text for the club group chat (Sam: "can you make that copy and paste").
+  const copy = async () => {
+    const text = ["Who wins each division", ...blocks.map(({ c, top }) => c.name + ": " + top.map(([id, p]) => `${entryName(id)} ${pct(p)}%`).join(", "))].join("\n");
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+  };
   return (
     <SurfaceCard radius={16} pad="16px 14px">
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Who wins each division</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ flex: 1, fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Who wins each division</div>
+        <button onClick={copy} style={{ background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "6px 12px", fontFamily: body, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{copied ? "Copied" : "Copy"}</button>
+      </div>
       <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 2 }}>
         From the points so far and everyone&apos;s rating, with the matches left played out thousands of times. Not a promise — it moves with every result.
       </div>

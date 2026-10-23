@@ -35,5 +35,10 @@ ok(near(three.a + three.b + three.c, 1, 1e-9), "the chances add up to 100%");
 // Seeded: the same table gives the same numbers.
 ok(JSON.stringify(three) === JSON.stringify(divisionOdds({ entries: ["a", "b", "c"], points: { a: 3, b: 3, c: 0 }, open: [["a", "b"], ["b", "c"], ["a", "c"]], pointsWin: 3, rating: flat })), "same table, same numbers");
 
+// A wide ± pulls a favourite back towards evens.
+const sure = divisionOdds({ entries: ["a", "b"], points: { a: 0, b: 0 }, open: [["a", "b"]], pointsWin: 3, rating: (e) => (e === "a" ? 1900 : 1500), rd: () => 50 });
+const shaky = divisionOdds({ entries: ["a", "b"], points: { a: 0, b: 0 }, open: [["a", "b"]], pointsWin: 3, rating: (e) => (e === "a" ? 1900 : 1500), rd: (e) => (e === "a" ? 300 : 50) });
+ok(shaky.a < sure.a - 0.05 && shaky.a > 0.5, "a shaky rating is still favoured, but less");
+
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
 console.log(`PASSED — ${checks}/${checks} checks (division odds)`);
