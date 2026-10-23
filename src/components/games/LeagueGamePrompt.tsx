@@ -14,7 +14,8 @@ export function LeagueGamePrompt({ who, options, onChoose }: {
   /** "You and Charlie Henry", or both names when staff log for others. */
   who: string;
   options: Array<{ tieId: string; name: string; left: number }>;
-  onChoose: (tieId: string | null) => void;
+  /** The ties it counts for — one per competition — or none for a friendly. */
+  onChoose: (tieIds: string[]) => void;
 }) {
   const btn: React.CSSProperties = {
     width: "100%", border: "none", borderRadius: 14, padding: "14px 16px", fontFamily: body, fontSize: 16,
@@ -27,15 +28,22 @@ export function LeagueGamePrompt({ who, options, onChoose }: {
         <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>
           {who} still {options.length === 1
             ? `have ${options[0].left} ${options[0].left === 1 ? "game" : "games"} to play in ${options[0].name}.`
-            : "have competition games to play."}{" "}
+            : `have games to play in ${options.map((o) => o.name).join(" and ")}.`}{" "}
           If this was one of them, it goes in the table. If not, it&apos;s a friendly and only counts in the ratings.
         </div>
+        {/* In two divisions at once (Division 1 and Division Everyone), the
+            usual answer is both, so it comes first. */}
+        {options.length > 1 && (
+          <button onClick={() => onChoose(options.map((o) => o.tieId))} style={{ ...btn, background: FEED_LIME, color: FEED_LIME_INK }}>
+            Yes, count it in all {options.length}
+          </button>
+        )}
         {options.map((o) => (
-          <button key={o.tieId} onClick={() => onChoose(o.tieId)} style={{ ...btn, background: FEED_LIME, color: FEED_LIME_INK }}>
-            Yes, a {o.name} game
+          <button key={o.tieId} onClick={() => onChoose([o.tieId])} style={{ ...btn, background: options.length > 1 ? FEED_CARD : FEED_LIME, color: options.length > 1 ? FEED_TEXT_HI : FEED_LIME_INK }}>
+            {options.length > 1 ? "Only " + o.name : "Yes, a " + o.name + " game"}
           </button>
         ))}
-        <button onClick={() => onChoose(null)} style={{ ...btn, background: FEED_CARD, color: FEED_TEXT_HI }}>
+        <button onClick={() => onChoose([])} style={{ ...btn, background: FEED_CARD, color: FEED_TEXT_HI }}>
           No, just a friendly
         </button>
       </div>

@@ -914,12 +914,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   // Log a result's save, with or without a competition tie it settles. With
   // one, the match and the tie go in the same save, as resolveFixture does.
-  const saveLogged = async (mt: any, tieId: string | null) => {
-    const tie = tieId ? (gdata.fixtures || []).find((f) => f.id === tieId) : null;
+  // tieIds: one per competition the result counts in. Two players in two
+  // divisions (Division 1 and Division Everyone) can count one match in both.
+  const saveLogged = async (mt: any, tieIds: string[]) => {
+    const ids = new Set(tieIds);
+    const ties = (gdata.fixtures || []).filter((f) => ids.has(f.id));
     const pendingNote = isUnconfirmedResult(mt) ? " — awaiting opponent's OK" : "";
-    if (tie) {
-      const ok = await saveData({ ...gdata, matches: [mt, ...gdata.matches], fixtures: (gdata.fixtures || []).map((f) => (f.id === tie.id ? settleTie(f, mt) : f)) });
-      if (ok !== false) flash("Logged as a " + (comps.competitions.find((c) => c.id === tie.competitionId)?.name || "league") + " game" + pendingNote);
+    if (ties.length) {
+      const ok = await saveData({ ...gdata, matches: [mt, ...gdata.matches], fixtures: (gdata.fixtures || []).map((f) => (ids.has(f.id) ? settleTie(f, mt) : f)) });
+      const names = ties.map((t) => comps.competitions.find((c) => c.id === t.competitionId)?.name || "league");
+      if (ok !== false) flash("Logged in " + names.join(" and ") + pendingNote);
     } else {
       setMatches([mt, ...matches]);
       flash(isShortMatch(mt) ? "Logged as a short match" : "Logged" + pendingNote);
@@ -2167,14 +2171,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               ? "You and " + fullNameOf(players.find((p) => p.id === (leagueAsk.match.p1 === meId ? leagueAsk.match.p2 : leagueAsk.match.p1)))
               : fullNameOf(players.find((p) => p.id === leagueAsk.match.p1)) + " and " + fullNameOf(players.find((p) => p.id === leagueAsk.match.p2))}
             options={leagueAsk.options.map((o) => ({ tieId: o.tie.id, left: o.left, name: comps.competitions.find((c) => c.id === o.tie.competitionId)?.name || "league" }))}
-            onChoose={(tieId) => { const mt = leagueAsk.match; setLeagueAsk(null); void saveLogged(mt, tieId); }}
+            onChoose={(tieIds) => { const mt = leagueAsk.match; setLeagueAsk(null); void saveLogged(mt, tieIds); }}
           />
         )}
         {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => {
           // A short match never counts, so it is never offered to a table.
           const options = isShortMatch(mt) ? [] : leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
           if (options.length) setLeagueAsk({ match: mt, options });
-          else saveLogged(mt, null);
+          else saveLogged(mt, []);
         }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
         {tab === "home" && (
           <Home
