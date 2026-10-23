@@ -53,8 +53,15 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Trophy size={19} color={FEED_TEXT_MID} strokeWidth={1.8} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>Verified trophies</div>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>None yet</div>
+            {/* The section heading above already says "Verified trophies";
+                saying it again inside the card read as a stutter (Sam's
+                screenshot, 2026-10-23). */}
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>None yet</div>
+            {action && (
+              <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>
+                {onGive ? "Record one when they win something at the club." : "Won something at the club? Claim it and an organiser checks it."}
+              </div>
+            )}
           </div>
           {action && (
             <button onClick={action.run} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}>
