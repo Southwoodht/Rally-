@@ -2,9 +2,11 @@
 import React, { useMemo, useState } from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { LeagueTable } from "@/components/competitions/Competitions";
+import { divisionOdds } from "@/core/divisionOdds";
+import { leagueTable } from "@/core/doubles/competition";
 import type { Competition, CompetitionKind, CompetitionPair, CompetitionResult } from "@/core/doubles/competition";
 import { fullNameOf } from "@/lib/format";
-import { DOT_LOSS, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body } from "@/lib/theme";
+import { DOT_LOSS, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
 
 /** An organiser's controls for one division (Sam, 2026-10-22: "should they
  *  have their own settings — add, remove, delete?"). */
@@ -128,7 +130,7 @@ export function tierLabel(index: number, count: number): string | null {
  * Ordered by name with numbers read as numbers, so Division 10 follows 9.
  * Tapping a row lists that player's matches, with a link to their profile.
  */
-export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, datesOf, onOpenPlayer, onAdd, onPlanNext, manage }: {
+export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, datesOf, oddsOf, onOpenPlayer, onAdd, onPlanNext, manage }: {
   kind: CompetitionKind;
   /** Running league-format competitions of this kind. */
   competitions: Competition[];
@@ -140,6 +142,8 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
   /** Its dates: its own, or its season's (core/backfill.ts divisionDates). */
   datesOf?: (c: Competition) => { startsOn: string | null; endsOn: string | null };
   onOpenPlayer: (id: string) => void;
+  /** For the prediction: each division's unplayed matches (entry ids) and an entry's rating. */
+  oddsOf?: (c: Competition) => { open: Array<[string, string]>; rating: (entryId: string) => number };
   /** Organisers: make the next division. Absent for everyone else. */
   onAdd?: () => void;
   /** Organisers: propose next season's divisions from these tables. */
@@ -186,6 +190,7 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
           </SurfaceCard>
         );
       })}
+      {oddsOf && <DivisionPredictions ordered={ordered} entries={entries} resultsOf={resultsOf} oddsOf={oddsOf} entryName={entryName} />}
       {onPlanNext && (
         <SurfaceCard radius={16} pad="14px 16px">
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI }}>End of the season?</div>
@@ -208,5 +213,57 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Who wins each division (core/divisionOdds.ts): the rest of each division
+ * played out from today's points and the ratings, a few thousand times. The
+ * season's prediction card, one block per division, top three in each.
+ */
+function DivisionPredictions({ ordered, entries, resultsOf, oddsOf, entryName }: {
+  ordered: Competition[];
+  entries: CompetitionPair[];
+  resultsOf: (c: Competition) => CompetitionResult[];
+  oddsOf: (c: Competition) => { open: Array<[string, string]>; rating: (entryId: string) => number };
+  entryName: (id: string | null | undefined) => string;
+}) {
+  const blocks = useMemo(() => ordered.map((c) => {
+    const mine = entries.filter((e) => e.competitionId === c.id);
+    if (mine.length < 2) return null;
+    const table = leagueTable(mine, resultsOf(c), c.pointsWin, c.pointsDraw);
+    const points = Object.fromEntries(table.map((r) => [r.pairId, r.points]));
+    const { open, rating } = oddsOf(c);
+    const odds = divisionOdds({ entries: mine.map((e) => e.id), points, open, pointsWin: c.pointsWin, rating, seed: 7 });
+    const top = Object.entries(odds).sort((a, b) => b[1] - a[1]).filter(([, p]) => p >= 0.005).slice(0, 3);
+    return { c, top, done: !open.length };
+  }).filter(Boolean) as Array<{ c: Competition; top: Array<[string, number]>; done: boolean }>,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [ordered, entries, resultsOf, oddsOf]);
+  if (!blocks.length) return null;
+  const pct = (p: number) => (p >= 0.995 ? "100" : p < 0.01 ? "<1" : String(Math.round(p * 100)));
+  return (
+    <SurfaceCard radius={16} pad="16px 14px">
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Who wins each division</div>
+      <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 2 }}>
+        From the points so far and everyone&apos;s rating, with the matches left played out thousands of times. Not a promise — it moves with every result.
+      </div>
+      {blocks.map(({ c, top, done }) => (
+        <div key={c.id} style={{ marginTop: 14 }}>
+          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_LOW, marginBottom: 6 }}>{c.name}{done ? " · all played" : ""}</div>
+          {top.map(([id, p], i) => (
+            <div key={id} style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+                <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entryName(id)}</span>
+                <span style={{ ...tabular, fontFamily: body, fontSize: 15, color: i === 0 ? FEED_LIME : FEED_TEXT_HI }}>{pct(p)}%</span>
+              </div>
+              <div style={{ height: 5, background: FEED_RAISED, borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ width: Math.max(2, p * 100) + "%", height: "100%", background: i === 0 ? FEED_LIME : FEED_TEXT_MID, borderRadius: 3 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </SurfaceCard>
   );
 }
