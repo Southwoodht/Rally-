@@ -43,6 +43,7 @@ function remainingByEntry(open: Array<{ a: string | null | undefined; b: string 
 /** A singles match as the league stores it (gdata.matches). */
 export interface SinglesMatchLike {
   id: string; p1: string; p2: string; winner: "p1" | "p2" | "draw" | string; score?: string; status?: string;
+  date?: number;
 }
 
 /**
@@ -99,7 +100,7 @@ export function singlesCompetitionView(
     const oriented = raw ? orientToWinner(raw, o.match.winner as any) : null;
     const flip = o.match.p1 !== f.p1;
     const sets = (oriented || []).map((s) => (flip ? { a: s.b, b: s.a } : s));
-    results.push({ pairA: a, pairB: b, winner: o.winner, sets });
+    results.push({ pairA: a, pairB: b, winner: o.winner, sets, ...(o.match.date != null ? { date: o.match.date } : {}) });
   }
 
   const open = mine.filter(isOpen);
@@ -123,6 +124,7 @@ export interface DoublesFixtureLike {
 export interface DoublesMatchLike {
   id: string; winner: string; status?: string; sets: Array<{ a: number; b: number }>;
   competitionId: string | null; teamAPairId: string | null; teamBPairId: string | null;
+  playedAt?: number;
 }
 
 const confirmed = (m: { status?: string }) => m.status === undefined || m.status === "confirmed";
@@ -142,7 +144,7 @@ export function doublesCompetitionView(
   const played = matches.filter((m) => m.competitionId === competitionId);
   const results: CompetitionResult[] = played
     .filter((m) => m.teamAPairId && m.teamBPairId)
-    .map((m) => ({ pairA: m.teamAPairId as string, pairB: m.teamBPairId as string, winner: m.winner, sets: m.sets, status: m.status }));
+    .map((m) => ({ pairA: m.teamAPairId as string, pairB: m.teamBPairId as string, winner: m.winner, sets: m.sets, status: m.status, ...(m.playedAt != null ? { date: m.playedAt } : {}) }));
   // Walkovers: points in the competition, nothing anywhere else.
   for (const f of mine) {
     if ((f.outcome === "walkover_a" || f.outcome === "walkover_b") && f.pairA && f.pairB) {

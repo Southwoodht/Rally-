@@ -239,6 +239,8 @@ export interface CompetitionResult {
   winner: string; // 'A' | 'B' | 'draw'
   sets: Array<{ a: number; b: number }>;
   status?: string;
+  /** When it was played, ms — for listing a player's results in order. */
+  date?: number;
 }
 
 export interface TableRow {

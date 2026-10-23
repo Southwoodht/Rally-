@@ -292,7 +292,8 @@ function RowMatches({ pairId, results, pointsWin, pointsDraw, left, entryName, o
   entryName: (id: string | null | undefined, short?: boolean) => string; onOpen?: () => void;
 }) {
   // The same filter leagueTable counts with, so the rows sum to Pts.
-  const mine = results.filter((r) => (r.status === undefined || r.status === "confirmed") && (r.pairA === pairId || r.pairB === pairId));
+  const mine = results.filter((r) => (r.status === undefined || r.status === "confirmed") && (r.pairA === pairId || r.pairB === pairId))
+    .sort((x, y) => (y.date ?? 0) - (x.date ?? 0)); // newest first; walkovers (no date) last
   const small: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID };
   return (
     <div style={{ background: FEED_RAISED, borderRadius: 10, padding: "8px 12px", margin: "0 0 8px" }}>
@@ -305,8 +306,11 @@ function RowMatches({ pairId, results, pointsWin, pointsDraw, left, entryName, o
         return (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
             <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, width: 14, flexShrink: 0, color: outcome === "W" ? FEED_LIME : outcome === "L" ? DOT_LOSS : FEED_TEXT_HI }}>{outcome}</span>
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {outcome === "W" ? "Beat " : outcome === "L" ? "Lost to " : "Drew with "}{entryName(opp)}
+            <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+              <span style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {outcome === "W" ? "Beat " : outcome === "L" ? "Lost to " : "Drew with "}{entryName(opp)}
+              </span>
+              {r.date != null && <span style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW, ...tabular }}>{formatMatchDate(r.date)}</span>}
             </span>
             {score && <span style={{ ...small, ...tabular, flexShrink: 0 }}>{score}</span>}
             <span style={{ fontFamily: body, fontSize: 13, color: pts ? FEED_TEXT_HI : FEED_TEXT_LOW, width: 34, textAlign: "right", flexShrink: 0, ...tabular }}>+{pts}</span>
