@@ -1162,8 +1162,9 @@ player with no games now starts from `glickoSeed()` (core/glicko.ts:
 on Fixtures in both modes (switches to doubles); Clubhouse TV is
 organisers-only.
 
-**Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
-is, deleting a match against a shell opponent, and Dispute/Cancel on a
+**RUN on 2026-10-24, verified (1, integer): `schema_match_delete_shell_and_pending.sql`
+and `schema_fixture_duration.sql`.** History of the first, kept: until it
+was, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE
 for participants but both of its branches require `delete_requested_by` to be
 set, and those two paths correctly never set it — there is nobody to agree
