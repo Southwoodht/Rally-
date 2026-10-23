@@ -1,7 +1,7 @@
 "use client";
 import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, User, Users } from "lucide-react";
+import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -44,6 +44,9 @@ import { ModeSwitch } from "@/components/doubles/ModeSwitch";
 import { DoublesCompare } from "@/components/doubles/DoublesCompare";
 import { DoublesStandings } from "@/components/doubles/DoublesStandings";
 import { DoublesEntry } from "@/components/doubles/DoublesEntry";
+import { Mixer } from "@/components/doubles/Mixer";
+import { ClubBoard } from "@/components/board/ClubBoard";
+import type { MixerCourt } from "@/core/doubles/mixer";
 import { DoublesProfile } from "@/components/doubles/DoublesProfile";
 import { DoublesFixtures } from "@/components/doubles/DoublesFixtures";
 import { Competitions, competitionLabel } from "@/components/competitions/Competitions";
@@ -259,6 +262,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [planningNext, setPlanningNext] = useState(false);
   // The doubles result open for viewing or correcting, if any.
   const [editDoublesId, setEditDoublesId] = useState<string | null>(null);
+  // Club night mixer (doubles Fixtures): open, and the court being logged.
+  const [mixerOpen, setMixerOpen] = useState(false);
+  // Clubhouse TV (board/ClubBoard.tsx).
+  const [boardOpen, setBoardOpen] = useState(false);
+  const [mixerLog, setMixerLog] = useState<{ court: MixerCourt; done: (saved: boolean) => void } | null>(null);
   // A + result between two players who still owe each other a competition
   // game waits here until they say whether it was one (core/leagueGame.ts).
   const [leagueAsk, setLeagueAsk] = useState<null | { match: any; options: Array<{ tie: any; left: number }> }>(null);
@@ -688,6 +696,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
   };
 
+  // The TV board re-reads the club every minute. Read-only: it never writes,
+  // so a failed read just leaves the last good picture up.
+  const boardRefresh = useCallback(async () => {
+    if (!gid) return;
+    try {
+      const fresh = await fetchLeagueData(gid);
+      setGdata((prev: any) => ({ ...fresh, me: prev.me }));
+      if (doublesEnabled) void doubles.reload?.();
+    } catch {}
+  }, [gid, doublesEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
   const setPlayers = (np) => saveData({ ...gdata, players: np });
   // A league-less shell needs an owner, and this is the only place one is
   // made. RLS lets you edit or delete a friendly player row only when it is
@@ -2394,8 +2412,28 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             </Competitions>
           </div>
         ))}
-        {tab === "fixtures" && showDoubles && !personal && (
+        {tab === "fixtures" && showDoubles && !personal && mixerOpen && (
           <div style={{ marginTop: 14 }}>
+            <Mixer
+              leagueId={leagueId}
+              players={players}
+              rating={(id) => doubles.stats?.elo?.[id] ?? 1500}
+              onLog={(court) => new Promise<boolean>((resolve) => setMixerLog({ court, done: resolve }))}
+              onBack={() => setMixerOpen(false)}
+            />
+          </div>
+        )}
+        {tab === "fixtures" && showDoubles && !personal && !mixerOpen && (
+          <div style={{ marginTop: 14 }}>
+            {/* Club night: Rallio's Mixer, done as a Southwood fixture — every
+                game it deals is an ordinary doubles result once logged. */}
+            <button onClick={() => setMixerOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: PANEL, border: "none", borderRadius: 18, padding: "14px 16px", cursor: "pointer", marginBottom: 14, textAlign: "left" }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI }}>Club night mixer</span>
+                <span style={{ display: "block", fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Tick who&apos;s here and get tonight&apos;s courts — new partners every round.</span>
+              </span>
+              <ChevronRight size={18} color={FEED_TEXT_MID} />
+            </button>
             <Competitions
               kind="doubles"
               players={players}
@@ -2557,6 +2595,39 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "friends" && <Friends leagueJoinCode={leagueJoinCode} flash={flash} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }} meAuthId={myAuthId} mePlayerId={meId} players={players} matches={matches} leagueName={group?.name || leagueName} />}
       </div>
 
+      {boardOpen && (
+        <ClubBoard
+          clubName={group?.name || leagueName || "Club"}
+          players={players}
+          matches={matches}
+          fixtures={fixtures}
+          doublesMatches={doublesEnabled ? doubles.matches : undefined}
+          joinCode={leagueJoinCode}
+          onRefresh={boardRefresh}
+          onClose={() => setBoardOpen(false)}
+        />
+      )}
+      {mixerLog && (
+        <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 130, overflowY: "auto", paddingBottom: 40 }}>
+          <div style={{ ...wrap, paddingTop: "calc(env(safe-area-inset-top) + 14px)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
+              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>Log a mixer game</span>
+              <button onClick={() => { mixerLog.done(false); setMixerLog(null); }} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 15, cursor: "pointer" }}>Close</button>
+            </div>
+            <DoublesEntry
+              players={players}
+              history={doubles.matches}
+              meId={meId}
+              onCreatePlayer={addPlayer}
+              preset={{ teamA: mixerLog.court.a, teamB: mixerLog.court.b }}
+              onSave={async (m) => {
+                try { await doubles.add({ ...m, enteredBy: meId }); flash("Logged"); mixerLog.done(true); setMixerLog(null); }
+                catch (e: any) { flash(e?.message || "Could not save that doubles match."); }
+              }}
+            />
+          </div>
+        </div>
+      )}
       {editDoublesId && (() => {
         const m = doubles.matches.find((x) => x.id === editDoublesId);
         if (!m) return null;
@@ -2618,6 +2689,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"}</span><span style={{ color: MUTED }}>›</span></button>
               {(canSetLevels || isFriendlyLeague(gid)) && <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>}
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Trophies &amp; honours</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
+              {!personal && !isFriendlyLeague(gid) && <button onClick={() => { setMenuOpen(false); setBoardOpen(true); }} style={listRow}><Tv size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Clubhouse TV</span><span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
             </div>
           </div>

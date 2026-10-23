@@ -84,6 +84,8 @@
     "src/core/seasonHonours.ts",
     "src/core/seasonHonours.test.ts",
     "src/core/backfill.ts",
-    "src/core/backfill.test.ts"
+    "src/core/backfill.test.ts",
+    "src/core/doubles/mixer.ts",
+    "src/core/doubles/mixer.test.ts"
   ]
 }

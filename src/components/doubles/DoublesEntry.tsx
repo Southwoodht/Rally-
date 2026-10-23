@@ -50,6 +50,12 @@ interface Props {
   initial?: { teamA: [string, string | null]; teamB: [string, string | null]; sets: Array<{ a: number; b: number }>; winner: string; playedAt: number };
   /** Offered only to whoever may delete (league staff); two steps. */
   onDelete?: () => void;
+  /**
+   * A NEW result with the four players already seated — the Mixer's "Log"
+   * (core/doubles/mixer.ts). Every seat can change, like editing, because
+   * whoever logs a court may not be on it.
+   */
+  preset?: { teamA: [string, string]; teamB: [string, string] };
 }
 
 type SetScore = { a: string; b: string };
@@ -105,13 +111,15 @@ const dayOf = (t: number): string => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving, initial, onDelete }: Props) {
+export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, saving, initial, onDelete, preset }: Props) {
   const editing = !!initial;
   // The first seat: "You" on a new result, any player when editing.
-  const [first, setFirst] = useState<string>(initial ? initial.teamA[0] : meId);
-  const [partner, setPartner] = useState<string>(initial ? unseat(initial.teamA[1]) : "");
-  const [opp1, setOpp1] = useState<string>(initial ? initial.teamB[0] : "");
-  const [opp2, setOpp2] = useState<string>(initial ? unseat(initial.teamB[1]) : "");
+  const seated = initial || preset;
+  const anySeat = editing || !!preset;
+  const [first, setFirst] = useState<string>(seated ? seated.teamA[0] : meId);
+  const [partner, setPartner] = useState<string>(seated ? unseat(seated.teamA[1]) : "");
+  const [opp1, setOpp1] = useState<string>(seated ? seated.teamB[0] : "");
+  const [opp2, setOpp2] = useState<string>(seated ? unseat(seated.teamB[1]) : "");
   const [sets, setSets] = useState<SetScore[]>(
     initial && initial.sets.length
       ? initial.sets.map((x) => ({ a: String(x.a), b: String(x.b) }))
@@ -159,7 +167,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
   const mine = preview?.find((d) => d.playerId === first);
   const theirs = preview?.find((d) => d.playerId === opp1);
 
-  const label = { fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, letterSpacing: 1 } as const;
+  const label = { fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, letterSpacing: 0 } as const;
   const card = { margin: "12px 16px 0", padding: "16px 18px", borderRadius: FEED_RADIUS, background: FEED_CARD } as const;
 
   // `hint` false on the two seats that also offer "Don't know": with two
@@ -243,12 +251,12 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
     <>
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <span style={label}>YOUR TEAM</span>
+          <span style={label}>{anySeat && first !== meId && partner !== meId ? "Team 1" : "Your team"}</span>
           {/* A readout of the score, not a button. See the header. */}
           {winner === "A" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
           {winner === "draw" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_TEXT_MID }}>Drawn</span>}
         </div>
-        {editing
+        {anySeat
           ? personRow(first, <PlayerPicker players={eligible(first)} value={first} onChange={setFirst} onCreatePlayer={onCreatePlayer} triggerLabel="Change" />, first === meId)
           : personRow(meId, <span style={{ fontFamily: body, fontSize: 13, fontWeight: 600, color: FEED_TEXT_MID, padding: "0 4px" }}>You</span>, true)}
         {personRow(partner, unknownable(partner, setPartner, "Partner"), false, false)}
@@ -258,7 +266,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
 
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-          <span style={label}>OPPONENTS</span>
+          <span style={label}>{anySeat && first !== meId && partner !== meId ? "Team 2" : "Opponents"}</span>
           {winner === "B" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
         </div>
         {personRow(opp1, <PlayerPicker players={eligible(opp1)} value={opp1} onChange={setOpp1} onCreatePlayer={onCreatePlayer} triggerLabel={opp1 ? "Change" : "Add"} />)}
@@ -266,7 +274,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
       </div>
 
       <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <span style={label}>DATE PLAYED</span>
+        <span style={label}>Date played</span>
         <input
           type="date"
           value={day}
@@ -278,7 +286,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
 
       <div style={{ ...card, display: "flex", flexDirection: "column", gap: 12, padding: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", ...label }}>
-          <span>SCORE</span>{!noScore && <span>You · Them</span>}
+          <span>Score</span>{!noScore && <span>You · Them</span>}
         </div>
         {noScore ? (
           <>
