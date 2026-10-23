@@ -71,7 +71,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   );
 }
 
-export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, groupName, season }: any) {
+export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, groupName, season, organiser }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   // The same check Log a result makes (core/sets.ts scoreProblem): an edit
@@ -89,9 +89,15 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   const nm = (id: string) => byId[id]?.name ? (byId[id].name + (byId[id].last ? " " + byId[id].last : "")) : nameOf(id);
   const isDraw = match.winner === "draw";
   const p1Won = match.winner === "p1", p2Won = match.winner === "p2";
-  const canEdit = !!(onProposeEdit && meId && (match.p1 === meId || match.p2 === meId));
+  // The two players can edit their own match. A club organiser can also edit
+  // one between two shell players (Sam, 2026-10-23: "only if they're shell
+  // players") — nobody with an account has their record changed by somebody
+  // else from here. It applies at once, as any edit against a shell does.
+  const mine = !!meId && (match.p1 === meId || match.p2 === meId);
+  const bothShells = !!p1 && !!p2 && !p1.auth_id && !p2.auth_id;
+  const canEdit = !!(onProposeEdit && meId && (mine || (organiser && bothShells)));
   const oppOf = (selfId: string) => byId[selfId === match.p1 ? match.p2 : match.p1];
-  const opponentOfMe = meId ? oppOf(meId) : null;
+  const opponentOfMe = mine ? oppOf(meId) : null;
   const needsApproval = !!(opponentOfMe && opponentOfMe.auth_id);
 
   const ctx = matchContext(players, matches, match);
