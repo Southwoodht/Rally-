@@ -30,7 +30,7 @@ re-derive the reasoning from the commit log every session.
 | Stack | Next.js 14 (app router) · TypeScript · Tailwind · Supabase |
 | Repo | `Southwoodht/Rally-` on GitHub, branch `master` |
 | Deploy | Vercel, auto-deploys from `master`. **A push is a deploy.** |
-| Rollback | **branch `rollback/pre-division-dates-2026-10-23`** (cebe8b7) is master just before per-division dates; **`rollback/pre-polish-2026-10-22`** (9cd4b4b) is master just before the motion layer and sentence-case labels; **`rollback/pre-profile-places-2026-10-22`** (fb73560) is master just before profile places moved to Glicko; **`rollback/pre-divmanage-2026-10-22`** (4eaea3e) is master just before division settings; **`rollback/pre-awards-2026-10-22`** (4304fbb) is master just before season awards and the next-season planner; **`rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
+| Rollback | **branch `rollback/pre-organiser-edit-2026-10-23`** (751cec4) is master just before shell-match editing and the per-division Fill fix; **`rollback/pre-division-dates-2026-10-23`** (cebe8b7) is master just before per-division dates; **`rollback/pre-polish-2026-10-22`** (9cd4b4b) is master just before the motion layer and sentence-case labels; **`rollback/pre-profile-places-2026-10-22`** (fb73560) is master just before profile places moved to Glicko; **`rollback/pre-divmanage-2026-10-22`** (4eaea3e) is master just before division settings; **`rollback/pre-awards-2026-10-22`** (4304fbb) is master just before season awards and the next-season planner; **`rollback/pre-divisions-2026-10-22`** is master just before Divisions; **`rollback/pre-ladder-2026-10-22`** (76a172c) is master just before the singles ladder; **`rollback/pre-tour-2026-10-22`** (a7bcf99) is master just before the tour; **`rollback/pre-one-table-2026-10-22`** (72d0371) is master just before the one-ranking Table; **`rollback/pre-glicko-2026-10-22`** (6b136c4) is master just before Glicko and score-free ratings merged; **`rollback/pre-emails-2026-10-22`** (bbf40a5) is master just before emails merged; **`rollback/pre-phase2-2026-10-22`** (76b0036) is master just before winter Phase 2 merged; **`rollback/pre-winter-2026-10-21`** (aa8d516) is master just before winter-pilot merged — tag pushes are refused from cloud sessions, so it is a branch. Older tags: **`rally-pre-holiday-2026-09-12`** is the most recent known-good (also `v1.1-global-table`, `rally-golden-2026-08-15`, `rally-pre-deployment-2026-08-19`) |
 | Dev server | `npm run dev` → :3000, or the `rally-dev` config in `.claude/launch.json` |
 | Checks | `npx tsc --noEmit`, `npm run test:core`, `npm run check:sql`, `npm run build` |
 
@@ -1121,6 +1121,12 @@ null = the season's dates (`divisionDates` in `core/backfill.ts`). Saving a
 division's dates in Settings reopens ties settled by matches now outside
 them (`tiesOutsideWindow`, tested; walkovers/voids stay), refills from
 inside, and moves unplayed play-by to the new end, in one save.
+
+**Merged 2026-10-23:** an organiser can edit/delete a match from match detail
+when NEITHER player has an account (Sam: "only if they're shell players").
+And Fill's "already used" is per division: a match may settle one tie in
+each division both players are in (Division Everyone runs alongside the
+others), and a match that settled a plain booked fixture still counts.
 
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
