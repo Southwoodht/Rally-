@@ -1115,6 +1115,13 @@ sentence case, no tracking, two points up. Only display headings (TABLE,
 PROFILE, the wordmark) and the join-code box keep capitals; don't bring
 uppercase labels back.
 
+**Run on 2026-10-23, verified (2): `schema_division_dates.sql`** (branch
+`divisions/dates`). Nullable `doubles_competitions.starts_on / ends_on`;
+null = the season's dates (`divisionDates` in `core/backfill.ts`). Saving a
+division's dates in Settings reopens ties settled by matches now outside
+them (`tiesOutsideWindow`, tested; walkovers/voids stay), refills from
+inside, and moves unplayed play-by to the new end, in one save.
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE
