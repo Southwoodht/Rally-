@@ -1920,10 +1920,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       <div ref={screenRef} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              {/* Same corner mark as Home, in the same place. The header is
-                  identical across the four tabs and the logo has to be part
-                  of that or it reappears and vanishes as you move. */}
+            {/* The club and theme switchers live on Home and Profile only
+                (Sam, 2026-10-24: "does it need to be there every tab? takes
+                up room"). They are set-and-forget, so Table, Fixtures and Add
+                result open on their title instead. */}
+            {tab === "profile" && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                 <RallyMark title="Southwood" />
                 <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 14px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
@@ -1931,9 +1932,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 </button>
               </div>
               <ThemePicker />
-            </div>
+            </div>}
             <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10 }}>
-              <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: "10px 0 0", fontSize: 32, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: "-0.5px", minWidth: 0 }}>
+              <h1 style={{ fontFamily: display, fontWeight: 800, color: CHALK, margin: tab === "profile" ? "10px 0 0" : 0, fontSize: 32, lineHeight: 1.05, textTransform: "uppercase", letterSpacing: "-0.5px", minWidth: 0 }}>
                 {tab === "ladder" ? "Table" : tab === "add" ? "Add result" : tab === "fixtures" ? "Fixtures" : "Profile"}
               </h1>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
