@@ -1134,6 +1134,21 @@ open ties in several divisions (`saveLogged` takes tie ids); division row
 results carry the match date (`CompetitionResult.date`) and list newest
 first; the empty trophies card no longer repeats its heading.
 
+**Rallio answers, 2026-10-23 (branch `improve/oct23`), no SQL:**
+- **Club night mixer** — doubles Fixtures → Club night mixer.
+  `core/doubles/mixer.ts` (tested): sit-outs shared first, then no repeat
+  partners, then no repeat opponents, then balanced pairs on doubles rating;
+  seeded, so the night survives a reload (kept in localStorage
+  `rally.mixer.<league>`). "Log" opens DoublesEntry with `preset` seats; a
+  mixer game is an ordinary doubles result.
+- **Clubhouse TV** — Profile menu. `board/ClubBoard.tsx`: table (all-time
+  glickoStandings), latest singles + doubles, booked fixtures, clock, QR to
+  the invite link (`qrcode-generator`, the only new dependency). Re-reads the
+  club every minute via `boardRefresh`, Wake Lock, read-only.
+- **Message to arrange it** on a fixture you're in, when the opponent has an
+  account (FixturesPanel `onMessage`).
+Still not built: Open games (needs a table) and tournaments with handicaps.
+
 **Waiting to be run: `schema_match_delete_shell_and_pending.sql`.** Until it
 is, deleting a match against a shell opponent, and Dispute/Cancel on a
 pending one, are refused. `schema_match_delete_agreement.sql` widened DELETE

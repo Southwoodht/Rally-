@@ -1878,7 +1878,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     onOpenPlayer: openProfile,
   } : null;
 
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId}
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
     doublesMode={tab === "home" && homeDoubles}
     doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
@@ -2336,6 +2336,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   }}
                   renderOpen={() => (
                     <FixturesPanel
+                    onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
                       fixtures={ladderFixtures}
                       players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId}
                       onResolve={resolveFixture} onBook={bookFixture} onRemoveFixture={removeFixture}
@@ -2398,6 +2399,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               countsOf={(c) => singlesCompetitionView(c.id, comps.pairs, fixtures, matches).counts}
               renderFixtures={(c, label, knockout, emptyText) => (
                 <FixturesPanel
+                    onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
                   // All of them: the panel lists the unplayed ones itself and
                   // counts the played ones for its "3 of 6 played" line.
                   fixtures={fixtures.filter((f: any) => f.competitionId === c.id)}

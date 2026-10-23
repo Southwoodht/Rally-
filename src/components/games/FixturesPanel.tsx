@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { scoreProblem } from "@/core/sets";
 import { DEFAULT_DURATION_MINUTES, DURATION_CHOICES } from "@/core/booking";
-import { Calendar, Plus, Search } from "lucide-react";
+import { Calendar, MessageCircle, Plus, Search } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
@@ -64,7 +64,7 @@ const timeOf = (v: any): number | null => {
 // the same four the doubles panel takes: "Club Champs · Semi-finals" on a
 // tie, no Draw button in a knockout, and no "Book a match" inside a
 // competition, which is for casual games.
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer, labelFor, noDraw, hideBooking, emptyText }: any) {
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer, labelFor, noDraw, hideBooking, emptyText, onMessage }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
@@ -317,6 +317,19 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
 
               {open === f.id && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: "0.5px solid " + FEED_HAIRLINE }}>
+                  {/* Arrange it where the match is (Rallio opens a chat per
+                      challenge): straight into a message thread with the
+                      other player, when they have an account to read it. */}
+                  {(() => {
+                    if (!onMessage || (f.p1 !== meId && f.p2 !== meId)) return null;
+                    const them = (players || []).find((p: any) => p.id === (f.p1 === meId ? f.p2 : f.p1));
+                    if (!them?.auth_id) return null;
+                    return (
+                      <button onClick={() => onMessage(them.auth_id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontSize: 14, cursor: "pointer", marginBottom: 12 }}>
+                        <MessageCircle size={15} /> Message {(them.name || "them").trim()} to arrange it
+                      </button>
+                    );
+                  })()}
                   <div style={{ ...label, marginBottom: 7 }}>Set a game</div>
                   <div style={{ display: "flex", gap: 8, marginBottom: f.booked ? 8 : 16 }}>
                     <input
