@@ -2051,7 +2051,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 const mine = all.filter((f: any) => f.competitionId === c.id);
                 const reopen = new Set(tiesOutsideWindow(mine, gdata.matches || [], { from, to }));
                 const reopened = all.map((f: any) => (reopen.has(f.id) ? { ...f, done: false, winner: undefined, matchId: undefined } : f));
-                const used = new Set<string>(reopened.filter((f: any) => f.matchId).map((f: any) => f.matchId));
+                // Only this division's own results are "used": the same match can
+                // count in each division both players are in, and a match that
+                // settled a booked fixture still counts here (see onFill).
+                const used = new Set<string>(reopened.filter((f: any) => f.competitionId === c.id && f.matchId).map((f: any) => f.matchId));
                 const picks = backfillTies(reopened.filter((f: any) => f.competitionId === c.id), gdata.matches || [], { from, to }, used);
                 const byTie = new Map(picks.map((x) => [x.tieId, x.match]));
                 const next = reopened.map((f: any) => {
@@ -2103,7 +2106,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 const from = londonDayStart(d.startsOn);
                 const to = d.endsOn ? londonDayStart(d.endsOn) + 86400000 - 1 : Date.now();
                 const all = gdata.fixtures || [];
-                const used = new Set<string>(all.filter((f: any) => f.matchId).map((f: any) => f.matchId));
+                // Used means used IN THIS DIVISION. It was every fixture in the
+                // club, so a match that had settled a booked fixture, or a tie in
+                // another division, could never fill one here — Sam's 15 Oct loss
+                // to Zaach sat outside Division Everyone with ties still open.
+                const used = new Set<string>(all.filter((f: any) => f.competitionId === c.id && f.matchId).map((f: any) => f.matchId));
                 const picks = backfillTies(all.filter((f: any) => f.competitionId === c.id), gdata.matches || [], { from, to }, used);
                 if (!picks.length) return 0;
                 const byTie = new Map(picks.map((x) => [x.tieId, x.match]));
