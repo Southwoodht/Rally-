@@ -331,6 +331,8 @@ const rowToCompetition = (r: any): Competition => ({
   createdBy: r.created_by ?? null,
   createdAt: new Date(r.created_at).getTime(),
   seasonId: r.season_id ?? null,
+  startsOn: r.starts_on ?? null,
+  endsOn: r.ends_on ?? null,
 });
 
 const rowToPair = (r: any): CompetitionPair => ({
@@ -437,6 +439,20 @@ export async function drawTies(
 export async function finishCompetition(id: string, finished: boolean): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   await run(supabase.from("doubles_competitions").update({ status: finished ? "finished" : "running" }).eq("id", id), "updating the competition");
+}
+
+/**
+ * A division's own dates (schema_division_dates.sql). Null clears one back
+ * to the season's. Names the file when the columns are not there yet.
+ */
+export async function setCompetitionDates(id: string, startsOn: string | null, endsOn: string | null): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await supabase.from("doubles_competitions").update({ starts_on: startsOn, ends_on: endsOn }).eq("id", id).select("id");
+  if (res.error) {
+    if (/starts_on|ends_on/.test(res.error.message || "")) throw new Error("Division dates need supabase/schema_division_dates.sql run first.");
+    throw new Error(res.error.message || "Couldn't save the dates.");
+  }
+  if (!res.data?.length) throw new Error("That was refused — only club organisers can change a division's dates.");
 }
 
 /**

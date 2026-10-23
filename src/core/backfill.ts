@@ -36,3 +36,32 @@ export function backfillTies(
   }
   return out;
 }
+
+/**
+ * A division's dates: its own where set (schema_division_dates.sql), the
+ * season's otherwise. Sam, 2026-10-23: one division can start a month ago
+ * while the season started in January, so the early-year results it would
+ * have filled from do not give anybody a head start.
+ */
+export function divisionDates(
+  c: { startsOn?: string | null; endsOn?: string | null },
+  season?: { startsOn: string; endsOn: string | null } | null,
+): { startsOn: string | null; endsOn: string | null } {
+  return { startsOn: c.startsOn || season?.startsOn || null, endsOn: c.endsOn || season?.endsOn || null };
+}
+
+/**
+ * After a division's dates change: the ties settled by a match that now
+ * falls outside them, to reopen. Only ties settled by a match — a walkover
+ * or a void is an organiser's ruling and stays. Matches not found (deleted)
+ * are left alone rather than guessed about.
+ */
+export function tiesOutsideWindow(
+  ties: Array<BackfillTie & { matchId?: string | null }>, matches: BackfillMatch[], window: { from: number; to: number },
+): string[] {
+  const byId = new Map(matches.map((m) => [m.id, m]));
+  return ties
+    .filter((t) => t.done && !t.outcome && t.matchId && byId.has(t.matchId))
+    .filter((t) => { const d = byId.get(t.matchId!)!.date; return d < window.from || d > window.to; })
+    .map((t) => t.id);
+}

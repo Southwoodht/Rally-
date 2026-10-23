@@ -51,8 +51,8 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/competitionAdapters";
 import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
-import { addCompetitionEntry, addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeCompetitionEntry, removeLadderEntry } from "@/lib/doublesData";
-import { backfillTies } from "@/core/backfill";
+import { addCompetitionEntry, addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeCompetitionEntry, removeLadderEntry, setCompetitionDates } from "@/lib/doublesData";
+import { backfillTies, divisionDates, tiesOutsideWindow } from "@/core/backfill";
 import { Ladder } from "@/components/competitions/Ladder";
 import { Divisions } from "@/components/competitions/Divisions";
 import { PlanNextSeason } from "@/components/competitions/PlanNextSeason";
@@ -2026,9 +2026,49 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onOpenPlayer={openProfile}
             onAdd={leagueRole === "owner" || leagueRole === "editor" ? startDivision : undefined}
             onPlanNext={leagueRole === "owner" || leagueRole === "editor" ? () => setPlanningNext(true) : undefined}
+            datesOf={(c) => divisionDates(c, seasonsState.seasons.find((x) => x.id === c.seasonId))}
             manage={leagueRole === "owner" || leagueRole === "editor" ? (showDoubles ? {
               onDelete: async (c) => { await deleteCompetition(c.id); comps.removed(c.id); flash("Deleted " + c.name); },
+              // Doubles: the dates and the deadlines on matches still to play.
+              onDates: async (c, startsOn, endsOn) => {
+                await setCompetitionDates(c.id, startsOn, endsOn);
+                const end = divisionDates({ startsOn, endsOn }, seasonsState.seasons.find((x) => x.id === c.seasonId)).endsOn;
+                for (const f of doubles.fixtures.filter((f: any) => f.competitionId === c.id && !f.done && !f.outcome && f.playBy !== end)) await doubles.setTie(f.id, { playBy: end });
+                await comps.reload();
+                return "Dates saved.";
+              },
             } : {
+              // Its own dates (Sam, 2026-10-23: "started a month ago"). Results
+              // now outside them come off this table, matches still to play are
+              // due by the new end, and the division is filled again from inside
+              // the new dates — one save for all of it.
+              onDates: async (c, startsOn, endsOn) => {
+                await setCompetitionDates(c.id, startsOn, endsOn);
+                const d = divisionDates({ startsOn, endsOn }, seasonsState.seasons.find((x) => x.id === c.seasonId));
+                const from = d.startsOn ? londonDayStart(d.startsOn) : -Infinity;
+                const to = d.endsOn ? londonDayStart(d.endsOn) + 86400000 - 1 : Date.now();
+                const all = gdata.fixtures || [];
+                const mine = all.filter((f: any) => f.competitionId === c.id);
+                const reopen = new Set(tiesOutsideWindow(mine, gdata.matches || [], { from, to }));
+                const reopened = all.map((f: any) => (reopen.has(f.id) ? { ...f, done: false, winner: undefined, matchId: undefined } : f));
+                const used = new Set<string>(reopened.filter((f: any) => f.matchId).map((f: any) => f.matchId));
+                const picks = backfillTies(reopened.filter((f: any) => f.competitionId === c.id), gdata.matches || [], { from, to }, used);
+                const byTie = new Map(picks.map((x) => [x.tieId, x.match]));
+                const next = reopened.map((f: any) => {
+                  if (byTie.has(f.id)) return settleTie(f, byTie.get(f.id) as any);
+                  if (f.competitionId === c.id && !f.done && !f.outcome && d.endsOn && f.playBy !== d.endsOn) return { ...f, playBy: d.endsOn };
+                  return f;
+                });
+                if (next.some((f: any, i: number) => f !== all[i])) {
+                  const ok = await saveData({ ...gdata, fixtures: next });
+                  if (ok === false) throw new Error("The dates saved, but the matches didn't update. Try Fill from results.");
+                }
+                await comps.reload();
+                const bits = ["Dates saved."];
+                if (reopen.size) bits.push(`${reopen.size} ${reopen.size === 1 ? "result" : "results"} outside them came off.`);
+                if (picks.length) bits.push(`${picks.length} filled in from inside them.`);
+                return bits.join(" ");
+              },
               // A late joiner: on the table at 0, with a match against everyone
               // (twice if the division plays twice), due by the season's end.
               onAdd: async (c, playerId) => {
@@ -2037,9 +2077,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 const entry = await addCompetitionEntry(c.id, playerId, seed);
                 const mine = (fixtures || []).filter((f: any) => f.competitionId === c.id);
                 const top = mine.reduce((m: number, f: any) => Math.max(m, f.round ?? 0), 0);
-                const season = seasonsState.seasons.find((x) => x.id === c.seasonId);
+                const end = divisionDates(c, seasonsState.seasons.find((x) => x.id === c.seasonId)).endsOn;
                 const ties: Tie[] = [];
-                for (let leg = 1; leg <= (c.legs || 1); leg++) for (const e of es) ties.push({ round: top + leg, pairA: entry.id, pairB: e.id, ...(season?.endsOn ? { playBy: season.endsOn } : {}) });
+                for (let leg = 1; leg <= (c.legs || 1); leg++) for (const e of es) ties.push({ round: top + leg, pairA: entry.id, pairB: e.id, ...(end ? { playBy: end } : {}) });
                 const ok = await addSinglesTies(c.id, ties, [...es, entry]);
                 await comps.reload();
                 if (ok === false) throw new Error("Added, but their matches didn't save. Try again from the competition's Draw.");
@@ -2058,10 +2098,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               // Matches already played this season settle the ties still open,
               // earliest first (core/backfill.ts) — one save for all of them.
               onFill: async (c) => {
-                const season = seasonsState.seasons.find((x) => x.id === c.seasonId);
-                if (!season) throw new Error("This division isn't in a season, so there are no dates to fill from.");
-                const from = londonDayStart(season.startsOn);
-                const to = season.endsOn ? londonDayStart(season.endsOn) + 86400000 - 1 : Date.now();
+                const d = divisionDates(c, seasonsState.seasons.find((x) => x.id === c.seasonId));
+                if (!d.startsOn) throw new Error("Give this division a start date first (Dates, above), so there's a window to fill from.");
+                const from = londonDayStart(d.startsOn);
+                const to = d.endsOn ? londonDayStart(d.endsOn) + 86400000 - 1 : Date.now();
                 const all = gdata.fixtures || [];
                 const used = new Set<string>(all.filter((f: any) => f.matchId).map((f: any) => f.matchId));
                 const picks = backfillTies(all.filter((f: any) => f.competitionId === c.id), gdata.matches || [], { from, to }, used);

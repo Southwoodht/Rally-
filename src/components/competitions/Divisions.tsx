@@ -16,10 +16,23 @@ export interface DivisionManage {
   /** Settle unplayed ties from matches already played this season; returns how many. Singles only. */
   onFill?: (c: Competition) => Promise<number>;
   onDelete: (c: Competition) => Promise<void>;
+  /** Its own start and end (empty = the season's); returns what changed. */
+  onDates?: (c: Competition, startsOn: string | null, endsOn: string | null) => Promise<string>;
 }
 
-function ManagePanel({ c, entries, players, manage, nameOf }: { c: Competition; entries: CompetitionPair[]; players: any[]; manage: DivisionManage; nameOf: (e: CompetitionPair) => string }) {
+/** "1 Oct – 31 Mar", "from 1 Oct", or null with no dates at all. */
+function dateSpan(d: { startsOn: string | null; endsOn: string | null }): string | null {
+  const f = (iso: string) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" });
+  if (d.startsOn && d.endsOn) return f(d.startsOn) + " – " + f(d.endsOn);
+  if (d.startsOn) return "from " + f(d.startsOn);
+  if (d.endsOn) return "until " + f(d.endsOn);
+  return null;
+}
+
+function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Competition; entries: CompetitionPair[]; players: any[]; manage: DivisionManage; nameOf: (e: CompetitionPair) => string; dates: { startsOn: string | null; endsOn: string | null } }) {
   const [adding, setAdding] = useState("");
+  const [from, setFrom] = useState(dates.startsOn || "");
+  const [to, setTo] = useState(dates.endsOn || "");
   const [confirm, setConfirm] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -32,8 +45,29 @@ function ManagePanel({ c, entries, players, manage, nameOf }: { c: Competition; 
   };
   const pill = (fill: string, ink: string): React.CSSProperties => ({ background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 500, fontSize: 13.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, flexShrink: 0 });
   const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
+  const dateBox: React.CSSProperties = { flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "8px 10px", fontFamily: body, fontSize: 14, colorScheme: "dark" };
   return (
     <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 12, paddingTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+      {manage.onDates && (
+        <div>
+          <div style={{ ...note, color: FEED_TEXT_LOW, marginBottom: 4 }}>Dates for this division</div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="Starts" style={dateBox} />
+            <span style={{ ...note, flexShrink: 0 }}>to</span>
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Ends" style={dateBox} />
+          </div>
+          <button
+            disabled={busy || (from === (dates.startsOn || "") && to === (dates.endsOn || "")) || (!!from && !!to && to < from)}
+            onClick={() => act(() => manage.onDates!(c, from || null, to || null))}
+            style={{ ...pill(FEED_LIME, FEED_LIME_INK), marginTop: 8, opacity: busy || (from === (dates.startsOn || "") && to === (dates.endsOn || "")) ? 0.5 : 1 }}
+          >
+            Save dates
+          </button>
+          <div style={{ ...note, marginTop: 4 }}>
+            {!!from && !!to && to < from ? "The end is before the start." : "Only results inside these dates count here. Matches still to play are due by the end."}
+          </div>
+        </div>
+      )}
       {manage.onAdd && candidates.length > 0 && (
         <div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -51,7 +85,7 @@ function ManagePanel({ c, entries, players, manage, nameOf }: { c: Competition; 
           <button disabled={busy} onClick={() => act(async () => { const n = await manage.onFill!(c); return n ? `${n} ${n === 1 ? "match" : "matches"} filled in from results already played.` : "Nothing to fill — no matches between these players in the season yet."; })} style={pill(FEED_RAISED, FEED_TEXT_HI)}>
             Fill from results already played
           </button>
-          <div style={{ ...note, marginTop: 4 }}>Uses matches inside the season&apos;s dates, earliest first, for any match still to play.</div>
+          <div style={{ ...note, marginTop: 4 }}>Uses matches inside this division&apos;s dates, earliest first, for any match still to play.</div>
         </div>
       )}
       {manage.onRemove && <div>
@@ -94,7 +128,7 @@ export function tierLabel(index: number, count: number): string | null {
  * Ordered by name with numbers read as numbers, so Division 10 follows 9.
  * Tapping a row lists that player's matches, with a link to their profile.
  */
-export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, onOpenPlayer, onAdd, onPlanNext, manage }: {
+export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, datesOf, onOpenPlayer, onAdd, onPlanNext, manage }: {
   kind: CompetitionKind;
   /** Running league-format competitions of this kind. */
   competitions: Competition[];
@@ -103,6 +137,8 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
   meId: string;
   resultsOf: (c: Competition) => CompetitionResult[];
   remainingOf: (c: Competition) => Record<string, number>;
+  /** Its dates: its own, or its season's (core/backfill.ts divisionDates). */
+  datesOf?: (c: Competition) => { startsOn: string | null; endsOn: string | null };
   onOpenPlayer: (id: string) => void;
   /** Organisers: make the next division. Absent for everyone else. */
   onAdd?: () => void;
@@ -129,6 +165,8 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
       {ordered.map((c, i) => {
         const mine = entries.filter((e) => e.competitionId === c.id);
         const tier = tierLabel(i, ordered.length);
+        const dates = datesOf ? datesOf(c) : { startsOn: null, endsOn: null };
+        const span = dateSpan(dates);
         return (
           <SurfaceCard key={c.id} radius={16} pad="16px 14px">
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -137,14 +175,14 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
               {tier && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{tier}</span>}
             </div>
             <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
-              {mine.length} {kind === "doubles" ? "pairs" : "players"} · play each {c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · {c.pointsWin} for a win
+              {mine.length} {kind === "doubles" ? "pairs" : "players"} · play each {c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · {c.pointsWin} for a win{span ? " · " + span : ""}
             </div>
             <LeagueTable
               kind={kind} entries={mine} results={resultsOf(c)} pointsWin={c.pointsWin} pointsDraw={c.pointsDraw}
               left={remainingOf(c)} meId={meId} entryName={entryName}
               onOpenEntry={(e) => onOpenPlayer(e.p1)}
             />
-            {manage && managing === c.id && <ManagePanel c={c} entries={mine} players={players} manage={manage} nameOf={(e) => entryName(e.id)} />}
+            {manage && managing === c.id && <ManagePanel c={c} entries={mine} players={players} manage={manage} nameOf={(e) => entryName(e.id)} dates={dates} />}
           </SurfaceCard>
         );
       })}

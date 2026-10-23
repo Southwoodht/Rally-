@@ -27,6 +27,9 @@ export interface Competition {
   createdAt: number;
   /** The season it belongs to (schema_seasons.sql), whose dates it takes. */
   seasonId?: string | null;
+  /** Its own dates, "YYYY-MM-DD", over the season's (schema_division_dates.sql). */
+  startsOn?: string | null;
+  endsOn?: string | null;
 }
 
 export interface CompetitionPair {
