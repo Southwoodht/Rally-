@@ -96,5 +96,13 @@ const match = (id: string, p1: string, p2: string, winner: string, day: number, 
   ok(later.status.int === "provisional" && later.of === 0, "three years on, the ± has grown past the line: provisional, no place");
 }
 
+// The seed: an unplayed Beginner/Medium starts five steps under the middle.
+{
+  const { glickoSeed } = require("./glicko");
+  const seed = glickoSeed({ id: "c", level: { cat: "Beginner", sub: "Medium" } });
+  ok(seed.rating === 1250 && seed.rd === 200, "an unplayed Beginner/Medium starts at 1250 ± 200");
+  ok(glickoSeed({ id: "x" }).rating === 1500 && glickoSeed({ id: "x" }).rd === 350, "no level: the middle, widest ±");
+}
+
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
 console.log(`PASSED — ${checks}/${checks} checks (glicko)`);

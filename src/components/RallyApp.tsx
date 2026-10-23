@@ -62,7 +62,7 @@ import { PlanNextSeason } from "@/components/competitions/PlanNextSeason";
 import type { ProposedDivision } from "@/core/promotion";
 import { seasonHonours } from "@/core/seasonHonours";
 import { LADDER_DAYS, type LadderChallenge } from "@/core/ladder";
-import { computeGlicko } from "@/core/glicko";
+import { computeGlicko, glickoSeed } from "@/core/glicko";
 import { knockoutBracket, roundRobin, tiesReadyToDraw, totalRounds, withDeadlines, type Tie } from "@/core/doubles/competition";
 import { Robin } from "@/components/ui/Robin";
 import { Messages } from "@/components/social/Messages";
@@ -2078,8 +2078,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 open: singlesCompetitionView(c.id, comps.pairs, fixtures, matches).unplayed
                   .map((f: any) => [entryOf.get(f.p1), entryOf.get(f.p2)])
                   .filter((x: any) => x[0] && x[1]) as Array<[string, string]>,
-                rating: (eid) => glickoAll.rating[p1Of.get(eid) as string] ?? 1500,
-                rd: (eid) => glickoAll.rd[p1Of.get(eid) as string] ?? 350,
+                // Not played yet: their level's starting point, never a
+                // made-up 1500 (Connor Truman, Beginner, no games, read 88%).
+                rating: (eid) => { const id = p1Of.get(eid) as string; return glickoAll.rating[id] ?? glickoSeed(players.find((p) => p.id === id)).rating; },
+                rd: (eid) => { const id = p1Of.get(eid) as string; return glickoAll.rd[id] ?? glickoSeed(players.find((p) => p.id === id)).rd; },
               };
             }}
             onOpenPlayer={openProfile}

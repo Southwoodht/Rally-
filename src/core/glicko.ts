@@ -32,7 +32,7 @@
  * Pure: no React, no Supabase.
  */
 import { countsAsPlayed } from "./matchStatus";
-import { levelAt, levelVal } from "./levels";
+import { levelAt, levelNow, levelVal } from "./levels";
 import { assignRanks, buildH2H } from "./tiebreak";
 
 export const GLICKO_START = 1500;
@@ -125,6 +125,20 @@ export interface GlickoTable {
  * in date order (then the order they were logged), and both sides of one
  * match are updated from the ratings they walked on court with.
  */
+/**
+ * Where somebody who has not played yet stands, for predicting games they
+ * have not played: their level TODAY as the seed (levelNow — a prediction
+ * asks about now, CLAUDE.md §2), or the middle with the widest ± when they
+ * have none. For the division prediction, so an unplayed Beginner is not
+ * given a made-up 1500.
+ */
+export function glickoSeed(player: any): { rating: number; rd: number } {
+  const lv = levelVal(levelNow(player));
+  return lv == null
+    ? { rating: GLICKO_START, rd: GLICKO_RD_NO_LEVEL }
+    : { rating: GLICKO_START + GLICKO_PER_LEVEL * (lv - GLICKO_MIDDLE_LEVEL), rd: GLICKO_RD_LEVEL };
+}
+
 export function computeGlicko(players: any[], matches: any[], now: number = Date.now()): GlickoTable {
   const byId: Record<string, any> = {};
   players.forEach((p) => { byId[p.id] = p; });
