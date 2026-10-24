@@ -6,7 +6,8 @@ import { divisionOdds } from "@/core/divisionOdds";
 import { leagueTable } from "@/core/doubles/competition";
 import type { Competition, CompetitionKind, CompetitionPair, CompetitionResult } from "@/core/doubles/competition";
 import { fullNameOf } from "@/lib/format";
-import { DOT_LOSS, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
+import { DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, LINE, body, tabular } from "@/lib/theme";
+import { GroupCard, GroupLabel, GroupRow } from "@/components/ui/Grouped";
 
 /** An organiser's controls for one division (Sam, 2026-10-22: "should they
  *  have their own settings — add, remove, delete?"). */
@@ -220,25 +221,14 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
       })}
       {oddsOf && <DivisionPredictions ordered={ordered} entries={entries} resultsOf={resultsOf} oddsOf={oddsOf} entryName={entryName} />}
       {onPlanNext && (
-        <SurfaceCard radius={16} pad="14px 16px">
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI }}>End of the season?</div>
-          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
-            Southwood proposes next season&apos;s divisions from these tables — promotions and relegations done — for you to check and confirm.
-          </div>
-          <button onClick={onPlanNext} style={{ marginTop: 10, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}>
-            Plan next season
-          </button>
-        </SurfaceCard>
+        <GroupCard>
+          <GroupRow first chevron onClick={onPlanNext} title="Plan next season" sub="Promotions and relegations done for you" />
+        </GroupCard>
       )}
       {onAdd && (
         <button onClick={onAdd} style={{ alignSelf: "flex-start", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}>
           + Add a division
         </button>
-      )}
-      {ordered.length > 1 && (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
-          Division 1 is the top tier; the order follows the number in each name.
-        </div>
       )}
     </div>
   );
@@ -276,31 +266,34 @@ function DivisionPredictions({ ordered, entries, resultsOf, oddsOf, entryName }:
     const text = ["Who wins each division", ...blocks.map(({ c, top }) => c.name + ": " + top.map(([id, p]) => `${entryName(id)} ${pct(p)}%`).join(", "))].join("\n");
     try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
   };
+  // Inset-grouped (Sam, 2026-10-24): one muted line instead of a paragraph,
+  // a small label and a card per division, thin bars with the favourite in
+  // the accent and everyone else muted.
   return (
-    <SurfaceCard radius={16} pad="16px 14px">
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ flex: 1, fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Who wins each division</div>
-        <button onClick={copy} style={{ background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "6px 12px", fontFamily: body, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{copied ? "Copied" : "Copy"}</button>
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 4px" }}>
+        <div style={{ flex: 1, fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI }}>Who wins each division</div>
+        <button onClick={copy} style={{ background: FEED_CARD, color: FEED_TEXT_HI, border: "1px solid " + LINE, borderRadius: 999, padding: "6px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{copied ? "Copied" : "Copy"}</button>
       </div>
-      <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 2 }}>
-        From the points so far and everyone&apos;s rating, with the matches left played out thousands of times. Not a promise — it moves with every result.
-      </div>
+      <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, padding: "2px 4px 0", marginBottom: 14 }}>Simulated from points so far and ratings</div>
       {blocks.map(({ c, top, done }) => (
-        <div key={c.id} style={{ marginTop: 14 }}>
-          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_LOW, marginBottom: 6 }}>{c.name}{done ? " · all played" : ""}</div>
-          {top.map(([id, p], i) => (
-            <div key={id} style={{ marginBottom: 8 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-                <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entryName(id)}</span>
-                <span style={{ ...tabular, fontFamily: body, fontSize: 15, color: i === 0 ? FEED_LIME : FEED_TEXT_HI }}>{pct(p)}%</span>
+        <div key={c.id} style={{ marginBottom: 14 }}>
+          <GroupLabel>{c.name}{done ? " · all played" : ""}</GroupLabel>
+          <GroupCard>
+            {top.map(([id, p], i) => (
+              <div key={id} style={{ padding: "11px 16px 12px", borderTop: i ? "1px solid " + LINE : "none" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 7 }}>
+                  <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entryName(id)}</span>
+                  <span style={{ ...tabular, fontFamily: body, fontWeight: 700, fontSize: 15, color: i === 0 ? FEED_LIME : FEED_TEXT_MID }}>{pct(p)}%</span>
+                </div>
+                <div style={{ height: 3, background: FEED_RAISED, borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ width: Math.max(2, p * 100) + "%", height: "100%", background: i === 0 ? FEED_LIME : FEED_TEXT_DIM, borderRadius: 2 }} />
+                </div>
               </div>
-              <div style={{ height: 5, background: FEED_RAISED, borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ width: Math.max(2, p * 100) + "%", height: "100%", background: i === 0 ? FEED_LIME : FEED_TEXT_MID, borderRadius: 3 }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </GroupCard>
         </div>
       ))}
-    </SurfaceCard>
+    </div>
   );
 }
