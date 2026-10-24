@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { MapPin, Search as SearchIcon } from "lucide-react";
+import { Loader2, MapPin, Search as SearchIcon } from "lucide-react";
 import { currentSpot, distanceLabel } from "@/lib/place";
 import { findTown, venueLabel, venuesNear, type Venue, type VenueHit } from "@/lib/venues";
 import {
@@ -23,6 +23,8 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
 
   const lookNear = async (where?: string) => {
     setBusy(true); setNote(null); setHits(null);
+    // Name the place straight away, so the spinner says where it is looking.
+    setNear(where ? where.trim() : "you");
     try {
       let spot;
       if (where) {
@@ -43,6 +45,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
   const openSheet = () => { setOpen(true); if (!hits) void lookNear(); };
   const pick = (v: Venue | null) => { onChange(v); setOpen(false); };
 
+  const chip: React.CSSProperties = { background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", color: FEED_TEXT_HI, fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
   const fld: React.CSSProperties = { ...miniInput, fontFamily: body, fontSize: 15, background: FEED_RAISED, color: FEED_TEXT_HI, padding: "10px 12px", boxSizing: "border-box" };
 
   return (
@@ -69,39 +72,78 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
                 <SearchIcon size={17} color={FEED_TEXT_HI} />
               </button>
             </div>
-            <div style={{ display: "flex", gap: 14, margin: "4px 2px 12px" }}>
-              {near !== "you" && <button onClick={() => void lookNear()} style={{ background: "none", border: "none", padding: 0, color: FEED_TEXT_HI, fontFamily: body, fontSize: 13, cursor: "pointer" }}>Near me instead</button>}
-              {text.trim() && <button onClick={() => pick({ name: text.trim() })} style={{ background: "none", border: "none", padding: 0, color: FEED_TEXT_HI, fontFamily: body, fontSize: 13, cursor: "pointer" }}>Use &ldquo;{text.trim()}&rdquo; as typed</button>}
-              {value && <button onClick={() => pick(null)} style={{ background: "none", border: "none", padding: 0, color: FEED_TEXT_MID, fontFamily: body, fontSize: 13, cursor: "pointer" }}>No venue</button>}
+            {/* The choices as small buttons, not loose text that reads as a
+                sentence (Sam: "a bit messy"). */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "6px 0 16px" }}>
+              {near !== "you" && <button onClick={() => void lookNear()} style={chip}>Near me</button>}
+              {text.trim() && <button onClick={() => pick({ name: text.trim() })} style={chip}>Use &ldquo;{text.trim()}&rdquo;</button>}
+              {value && <button onClick={() => pick(null)} style={{ ...chip, color: FEED_TEXT_MID }}>No venue</button>}
             </div>
 
-            <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, margin: "0 2px 6px" }}>
-              {busy ? "Looking for courts…" : hits ? `Near ${near}` : ""}
-            </div>
             {/* Your own club first, always — even before it has a pin, when
                 no search could find it. */}
             {home?.name && (
-              <button onClick={() => pick(home)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
+              <button onClick={() => pick(home)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "4px 2px 14px", cursor: "pointer", textAlign: "left" }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{home.name}</span>
                   <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>{[home.place, "Your club"].filter(Boolean).join(" · ")}</span>
                 </span>
               </button>
             )}
-            {(hits || []).filter((h) => !(home?.name && h.club && h.name === home.name)).map((h, i) => (
-              <button key={h.name + i} onClick={() => pick({ name: h.name, place: h.place, lat: h.lat, lng: h.lng, url: h.url, club: h.club, members: h.members })} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", borderTop: i || home?.name ? "0.5px solid " + FEED_HAIRLINE : "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</span>
-                  <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
-                    {[distanceLabel(h.km), h.place, h.club ? "On Southwood" : h.members ? "Members only" : null].filter(Boolean).join(" · ")}
+
+            {/* Searching is unmistakable: a spinner, the place, and grey rows
+                where the answers will be — never the last answer sitting
+                there looking finished. */}
+            {busy ? (
+              <div aria-live="polite">
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 2px", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
+                  <Loader2 size={18} color={FEED_TEXT_HI} className="sw-spin" />
+                  <span style={{ fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI }}>
+                    Finding courts near {near === "you" ? "you" : near}…
                   </span>
-                </span>
-              </button>
-            ))}
-            {note && (
+                </div>
+                {[0, 1, 2].map((k) => (
+                  <div key={k} style={{ padding: "12px 2px", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
+                    <div style={{ height: 14, width: ["62%", "48%", "55%"][k], borderRadius: 7, background: FEED_RAISED }} />
+                    <div style={{ height: 10, width: "30%", borderRadius: 5, background: FEED_RAISED, marginTop: 8, opacity: 0.7 }} />
+                  </div>
+                ))}
+              </div>
+            ) : hits && (
+              <>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID, padding: "12px 2px 4px", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
+                  {(() => { const n = hits.filter((h) => !(home?.name && h.club && h.name === home.name)).length; return n ? `${n} ${n === 1 ? "place" : "places"} near ${near}` : `Near ${near}`; })()}
+                </div>
+                {hits.filter((h) => !(home?.name && h.club && h.name === home.name)).map((h, i) => (
+                  <button key={h.name + i} onClick={() => pick({ name: h.name, place: h.place, lat: h.lat, lng: h.lng, url: h.url, club: h.club, members: h.members })} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</span>
+                      <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
+                        {[distanceLabel(h.km), h.place, h.club ? "On Southwood" : h.members ? "Members only" : null].filter(Boolean).join(" · ")}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </>
+            )}
+            {note && !busy && (
               <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "8px 2px" }}>
                 {note}{" "}
-                {!busy && <button onClick={() => void lookNear(near === "you" ? undefined : text || near)} style={{ background: "none", border: "none", padding: 0, color: FEED_TEXT_HI, fontFamily: body, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Try again</button>}
+                <button onClick={() => void lookNear(near === "you" ? undefined : text || near)} style={{ background: "none", border: "none", padding: 0, color: FEED_TEXT_HI, fontFamily: body, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Try again</button>
+              </div>
+            )}
+
+            {/* The map misses some clubs (Sam: "missed a couple"). Say what to
+                do rather than leave it at that. */}
+            {hits && !busy && (
+              <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "12px 14px", marginTop: 14 }}>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>Missing a club?</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 3 }}>
+                  Type its name in the box above and tap Use. Or find it on the map first:
+                </div>
+                <a href={`https://www.google.com/maps/search/${encodeURIComponent("tennis club near " + (near === "you" ? "me" : near))}`} target="_blank" rel="noopener noreferrer" style={{ ...chip, display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, textDecoration: "none", background: PANEL }}>
+                  <MapPin size={14} /> Look on Google Maps
+                </a>
               </div>
             )}
             <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 14, lineHeight: 1.5 }}>

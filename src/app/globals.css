@@ -209,3 +209,8 @@ body {
   .sw-overlay.sw-beside { left: calc(248px + 24px + 460px + 24px) !important; border-left: 1px solid var(--line); box-shadow: -12px 0 32px rgba(0,0,0,0.06); }
   .sw-overlay.sw-beside .sw-overlay-inner { max-width: 640px !important; margin: 0 !important; }
 }
+
+/* A spinner (VenuePicker's "Finding courts…"). */
+@keyframes sw-spin { to { transform: rotate(360deg); } }
+.sw-spin { animation: sw-spin 0.9s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .sw-spin { animation-duration: 2.5s; } }

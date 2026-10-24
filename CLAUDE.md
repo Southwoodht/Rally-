@@ -1301,7 +1301,13 @@ real try (PO11 9AJ) geocoded fine and the court lookup failed — the
 public Overpass server turning requests away — so courts now come through
 `app/api/courts` (three Overpass servers in turn, 12 s each, cached a day
 at Vercel's edge per point rounded to 2 dp), with the direct call only as
-a fallback. The picker lists your own club first always, pinned or not. Singles bookings only; doubles bookings have no venue yet.
+a fallback. The picker lists your own club first always, pinned or not. **Working on Sam's phone 2026-10-24** (SO31 7EJ: Glebian, Crofton,
+Waterside, Lee-on-the-Solent, Swaythling, Bassett... — "missed a couple").
+The named clubs come from `namedTennisNear` (Nominatim place search
+for "tennis" / "racket club" in a 10 km box), which reached the phone
+when the Overpass court map did not; the phone also tries Overpass
+directly if /api/courts fails. Searching shows a spinner and grey rows,
+and a "Missing a club?" card links Google Maps and says to type the name. Singles bookings only; doubles bookings have no venue yet.
 
 **Glitch fixes, merged 2026-10-24.** Motion animations use fill-mode
 `backwards`, never `both`: a held last frame leaves `translate: 0 0`, which
