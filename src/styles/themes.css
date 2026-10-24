@@ -26,118 +26,80 @@
 
 :root,
 [data-theme="rally"] {
-  /* ---- surfaces ---------------------------------------------------- */
-  --bg-page: #16271F;
-  --bg-bar: #1C3127;
-  --bg-card: #203A2D;
-  --bg-raised: #243F31;
-  --line: #2B4A3A;
+  /* Southwood since 2026-10-24: cream, brass and ink (Sam's spec). It was
+   * the dark green; the four other themes are unchanged. Ink is for text and
+   * icons only, brass for the icon, the one hero card's rim, win markers and
+   * the + button. The rules that keep ink off filled buttons live in the
+   * [data-theme="rally"] block at the foot of this file. */
+  --bg-page: #F8F4EB;
+  --bg-bar: #FBF8F1;
+  --bg-card: #FBF8F1;
+  --bg-raised: #EDE3CF;
+  --line: #E3D3AE;
 
-  /* ---- text -------------------------------------------------------- */
-  --text-hi: #F4EFE3;
-  --text-mid: #A9B8A8;
-  --text-initials: #C9D4C4;
+  --text-hi: #2A2118;
+  --text-mid: #6E6252;
+  --text-initials: #6E6252;
 
-  /*
-   * NOT IN THE BRIEF. The app has four text tiers, not three: hi, mid, low
-   * and dim. Low folds into --text-mid with no loss, but dim is deliberately
-   * below AA and exists only for text that is decoration (see §10 of
-   * CLAUDE.md). Deleting it would either promote decoration to readable or
-   * silently drop contrast on real screens, so it keeps a token of its own.
-   */
-  --text-dim: #6E8578;
+  --text-dim: #A3957F;
 
-  /* ---- gold: small accents ----------------------------------------- */
-  --accent: #E9C46A;
-  --accent-hover: #F3D98F;
-  --on-accent: #16271F;
+  /* The accent is the ink: every link, active tab and highlighted name. */
+  --accent: #2A2118;
+  --accent-hover: #4A3C2C;
+  --on-accent: #2A2118;
 
-  /*
-   * The ball in the Rally mark (components/ui/RallyMark.tsx).
-   *
-   * NOT --accent, which is what it was for about ten minutes. On sw19 and
-   * melbourne the accent and --text-hi are both dark — #1F5B3A beside
-   * #1E2A22 — so at 22px the letter and the ball merged into a single shape
-   * and the mark stopped reading as an R with a ball beside it. Each theme
-   * therefore names a ball that contrasts with its OWN text colour and still
-   * looks like a tennis ball; this is not a colour that can be derived from
-   * the others.
-   */
-  --mark-ball: #E9C46A;
+  --mark-ball: #B8955A;
 
-  /* ---- primary call to action -------------------------------------- */
-  --cta: #E9C46A;
-  --on-cta: #16271F;
+  --cta: #2A2118;
+  --on-cta: #2A2118;
 
-  /* ---- cream: big filled "hero" surfaces --------------------------- */
-  --hero: #F4EFE3;
-  --on-hero: #16271F;
+  /* The hero is a card, not a block; its brass rim is drawn by .sw-hero. */
+  --hero: #FBF8F1;
+  --on-hero: #2A2118;
 
-  /*
-   * NOT IN THE BRIEF. Ink ON cream, quieter than --on-hero: the "OFFICIAL ·
-   * ALL TIME" caption and the rule under the rank both sit on the hero card
-   * and must not be full strength. The mockup does this with opacity, which
-   * is exactly the trick that breaks on a light theme — so it is a colour.
-   */
-  --on-hero-mid: #4A5A50;
-  --on-hero-line: #C9C2B4;
+  --on-hero-mid: #6E6252;
+  --on-hero-line: #E3D3AE;
 
-  /* ---- centre (+) button ------------------------------------------- */
-  --fab: #F4EFE3;
-  --on-fab: #16271F;
+  --fab: linear-gradient(145deg, #E2C98E 0%, #B8955A 100%);
+  --on-fab: #2A2118;
 
-  /* ---- results ------------------------------------------------------ */
-  --muted-fill: #3A5A48;
-  --lost: #8FA594;
-  --win-on-hero: #1F5B3A;
-  --loss-on-hero: #C9BFA6;
+  --muted-fill: #E3D3AE;
+  --lost: #A3957F;
+  --win-on-hero: #B8955A;
+  --loss-on-hero: #C3B49A;
 
-  /*
-   * NOT IN THE BRIEF. The Table draws a rating bar behind each row as a
-   * measurable length — it has to read as the accent at low strength and
-   * cannot be an alpha, for the light-theme reason above.
-   */
-  --bar-fill: #2C4433;
+  --bar-fill: #EDE3CF;
 
-  /* ---- movement, which is not win/loss ------------------------------ */
-  --up: #7BD88F;
-  --down: #E2705F;
+  --up: #4E7547;
+  --down: #A3432C;
 
-  /* ---- states ------------------------------------------------------- */
-  --danger: #E8836B;
-  --danger-dim: #7E4A4A;
-  --overlay: rgba(10, 20, 15, 0.6);
-  /*
-   * The safe-area strip and the browser's own chrome. The other four themes
-   * each define this and rally did not, which was not a cosmetic gap: the
-   * strip painted `var(--status-bg)` with nothing behind it, and applyTheme()
-   * skips the meta update when the value is empty — so switching BACK to
-   * rally left the phone's status bar on the previous theme's colour.
-   */
-  --status-bg: #16271F;
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-  /* A stronger scrim/shadow, and the segmented-control track. Both were
-   * alphas on black at their call sites, which is the trick §1 bans. */
-  --shadow-strong: rgba(0, 0, 0, 0.35);
-  --track: rgba(0, 0, 0, 0.22);
+  --danger: #A3432C;
+  --danger-dim: #E6C7BB;
+  --overlay: rgba(42, 33, 24, 0.38);
+  --status-bg: #F8F4EB;
+  --shadow: 0 6px 18px rgba(42, 33, 24, 0.08);
+  --shadow-strong: rgba(42, 33, 24, 0.16);
+  --track: #EDE3CF;
 
-  /* ---- the level ramp on the Global table --------------------------- */
-  /* Six steps from the quietest surface to the accent. Not derivable from
-   * one token, and the old ramp ended on lime. */
-  --ramp-1: #2F4A3A;
-  --ramp-2: #40614B;
-  --ramp-3: #6E7F55;
-  --ramp-4: #A79A5E;
-  --ramp-5: #E9C46A;
-  --ramp-6: #E9C46A;
+  --ramp-1: #EDE3CF;
+  --ramp-2: #E2D3B2;
+  --ramp-3: #D6C090;
+  --ramp-4: #C8AA72;
+  --ramp-5: #B8955A;
+  --ramp-6: #B8955A;
 
-  /* ---- type --------------------------------------------------------- */
-  /* Indirection on purpose: next/font owns --font-bricolage and
-   * --font-dmsans, and a future theme swaps the face by pointing these at a
-   * different one. Appendix A gives each theme its own display font, and
-   * that only stays a one-block change if the block can repoint the family. */
-  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
   --font-body: var(--font-dmsans), system-ui, sans-serif;
+
+  /* Theme-only hooks, neutral here because :root also matches the other
+   * themes (whatever this block defines and they do not, they inherit).
+   * The Southwood values are set again in its own block below. */
+  --win: initial;
+  --loss-fill: initial;
+  --loss-border: initial;
+  --seg-on: initial;
+  --seg-shadow: initial;
+  --seg-off: initial;
 }
 
 /* ===================================================================== *
@@ -245,4 +207,56 @@
   --ramp-1: #C5D8EC; --ramp-2: #9CBFE0; --ramp-3: #6BA0D4;
   --ramp-4: #3C7FC6; --ramp-5: #0B5FB5; --ramp-6: #0B5FB5;
   --font-display: var(--font-sora), system-ui, sans-serif;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * SOUTHWOOD ONLY — cream, brass and ink (Sam, 2026-10-24).
+ *
+ * The app paints buttons and markers with the accent inline, and here the
+ * accent is ink. Sam's rules are "ink is for text and icons only" and
+ * "no solid ink blocks or buttons", so in this theme:
+ *   - a BUTTON filled with the accent or the CTA becomes a 1.5px ink outline
+ *     with ink text on a transparent fill (the secondary-button rule);
+ *   - anything else filled with the accent (progress bars, markers, badges)
+ *     becomes brass — progress bars may be brass.
+ * Matched on the inline style React writes ("background: var(--accent)"),
+ * which is the one place every such element has in common.
+ * ------------------------------------------------------------------------- */
+[data-theme="rally"] {
+  --win: #B8955A;
+  --loss-fill: transparent;
+  --loss-border: 1.5px solid #C3B49A;
+  --seg-on: #FFFDF8;
+  --seg-shadow: 0 1px 4px rgba(42, 33, 24, 0.14);
+  --seg-off: #EDE3CF;
+}
+[data-theme="rally"] body {
+  background: linear-gradient(180deg, #F8F4EB 0%, #EFE7D7 100%) fixed;
+}
+[data-theme="rally"] [style*="background: var(--bg-page)"][style*="min-height: 100vh"] {
+  background: linear-gradient(180deg, #F8F4EB 0%, #EFE7D7 100%) fixed !important;
+}
+[data-theme="rally"] [style*="background: var(--accent)"],
+[data-theme="rally"] [style*="background: var(--cta)"] {
+  background: #B8955A !important;
+}
+[data-theme="rally"] button[style*="background: var(--accent)"],
+[data-theme="rally"] button[style*="background: var(--cta)"],
+[data-theme="rally"] button[style*="background: var(--line)"],
+[data-theme="rally"] a[style*="background: var(--accent)"],
+[data-theme="rally"] [role="button"][style*="background: var(--accent)"] {
+  background: transparent !important;
+  color: #2A2118 !important;
+  box-shadow: inset 0 0 0 1.5px #2A2118 !important;
+}
+[data-theme="rally"] button[style*="background: var(--accent)"] svg,
+[data-theme="rally"] button[style*="background: var(--cta)"] svg { color: #2A2118; stroke: #2A2118; }
+
+/* The ONE hero card per screen: an 8px inner padding ring of card colour,
+ * then a 1px brass rim. */
+[data-theme="rally"] .sw-hero {
+  border: 1px solid #E3D3AE !important;
+  box-shadow: inset 0 0 0 8px #FBF8F1, inset 0 0 0 9px #B8955A, 0 6px 18px rgba(42, 33, 24, 0.06) !important;
+  padding: 28px 26px !important;
 }

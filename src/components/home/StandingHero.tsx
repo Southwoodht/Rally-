@@ -206,7 +206,7 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
     // Cream, per §2: this is the biggest filled surface in the app and the
     // single clearest case of "if the old lime filled a big card, it becomes
     // cream". 20px vertical / 18px horizontal padding, radius 26.
-    <div style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: "20px " + FEED_PAD + "px" }}>
+    <div className="sw-hero" style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: "20px " + FEED_PAD + "px" }}>
       <Cycler
         labels={list.map((s2) => s2.scope)}
         render={slide}

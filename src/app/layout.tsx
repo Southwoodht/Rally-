@@ -90,7 +90,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   // Matches --bg-page. Not a variable: the browser reads this before any
   // stylesheet, to colour the status bar and the splash.
-  themeColor: "#1F5B3A",
+  themeColor: "#F8F4EB",
   // WITHOUT THIS, env(safe-area-inset-*) IS ZERO ON iOS.
   //
   // The shell has carried padding-top: env(safe-area-inset-top) since the
@@ -117,7 +117,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     // so on any other theme React finds an attribute it did not render and
     // logs a mismatch on every single load. It suppresses this one element's
     // attribute diff and nothing inside it.
-    <html lang="en" data-theme="sw19" className={FONT_VARS} suppressHydrationWarning>
+    <html lang="en" data-theme="rally" className={FONT_VARS} suppressHydrationWarning>
       <head>
         {/* Inline and synchronous on purpose: anything deferred runs after
             the paint this exists to beat. */}

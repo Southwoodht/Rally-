@@ -111,7 +111,8 @@ export const segmentTrack: CSSProperties = { display: "flex", gap: 2, background
 export const segmentOption = (on: boolean): CSSProperties => ({
   flex: 1, textAlign: "center", padding: "8px 10px", borderRadius: 9, border: "none", cursor: "pointer",
   fontFamily: body, fontWeight: 600, fontSize: 13,
-  background: on ? PANEL2 : "transparent", color: on ? CHALK : MUTED,
+  // Southwood: a white pill with a soft shadow (--seg-on / --seg-shadow).
+  background: on ? "var(--seg-on, " + PANEL2 + ")" : "transparent", color: on ? CHALK : MUTED,
   boxShadow: on ? "0 1px 4px var(--shadow-strong)" : "none",
   transition: "background 0.15s ease, color 0.15s ease",
 });
@@ -196,7 +197,8 @@ export const FEED_BAR = "var(--bar-fill)";
 // apart as quantities rather than as text — split bars, form bars, dots.
 // FEED_LOSS is deliberately quiet: a loss is a fact, not an alarm, and CLAY
 // would read as an error state.
-export const FEED_WIN = BALL;
+// Wins: brass in Southwood (--win), the accent everywhere else.
+export const FEED_WIN = "var(--win, var(--accent))";
 export const FEED_DRAW = "var(--line)";
 export const FEED_LOSS = "var(--muted-fill)";
 
@@ -222,9 +224,9 @@ export const FEED_THEY_LEAD_DIM = "var(--danger-dim)";
  * FEED_LOSS still exists and is still the right quiet green for a scoreline.
  * It is just not a colour anything can be drawn 3px wide in.
  */
-export const OUTCOME_RAIL = { W: BALL, D: FEED_TEXT_LOW, L: FEED_THEY_LEAD };
+export const OUTCOME_RAIL = { W: "var(--win, var(--accent))", D: FEED_TEXT_LOW, L: FEED_THEY_LEAD };
 
-export const DOT_WIN = BALL;
+export const DOT_WIN = "var(--win, var(--accent))";
 export const DOT_DRAW = MUTED;
 // The same red as a rank drop, and for the same reason — both mean it went
 // the wrong way.

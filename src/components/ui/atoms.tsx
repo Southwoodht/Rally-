@@ -23,7 +23,7 @@ export function StreakTile({ n, label, c, active, onClick }: any) {
 // A segment inside an iOS-style recessed track (see theme.segmentTrack) — also
 // used standalone as a soft filled/outline toggle where there's no shared track.
 export function Toggle({ on, onClick, label, icon, emphasize, big }: any) {
-  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: body, fontSize: big ? 13.5 : 13, padding: big ? "10px 8px" : "9px 8px", borderRadius: RADIUS_SM - 2, cursor: "pointer", border: "none", background: on ? FEED_HERO : FEED_MUTED_FILL, color: on ? FEED_ON_HERO : emphasize ? BALL : MUTED, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "background 0.15s ease, color 0.15s ease" }}>{icon ? icon + " " : ""}{label}</button>;
+  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: body, fontSize: big ? 13.5 : 13, padding: big ? "10px 8px" : "9px 8px", borderRadius: RADIUS_SM - 2, cursor: "pointer", border: "none", background: on ? `var(--seg-on, ${FEED_HERO})` : `var(--seg-off, ${FEED_MUTED_FILL})`, boxShadow: on ? "var(--seg-shadow, none)" : "none", color: on ? FEED_ON_HERO : emphasize ? BALL : MUTED, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "background 0.15s ease, color 0.15s ease" }}>{icon ? icon + " " : ""}{label}</button>;
 }
 
 export function Tally({ name, n, lead }: any) {

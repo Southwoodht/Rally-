@@ -28,8 +28,10 @@ const TONE_BG: Record<SurfaceTone, string> = {
 };
 
 export function SurfaceCard({
-  children, tone = "card", radius = FEED_RADIUS, pad = FEED_PAD, clip = false, style, onClick,
+  children, tone = "card", radius = FEED_RADIUS, pad = FEED_PAD, clip = false, style, onClick, className,
 }: {
+  /** "sw-hero" marks the ONE hero card on a screen (Southwood draws a brass rim). */
+  className?: string;
   children: React.ReactNode;
   tone?: SurfaceTone;
   radius?: number;
@@ -43,6 +45,7 @@ export function SurfaceCard({
   return (
     <div
       onClick={onClick}
+      className={className}
       style={{
         background: TONE_BG[tone], borderRadius: radius, padding: pad,
         // A 1px --line border in EVERY theme. On rally it is very nearly
@@ -200,10 +203,14 @@ export function FormDots({ form, size = 10, ink, lossInk, tone = "colour" }: {
           aria-label={r === "W" ? "win" : r === "D" ? "draw" : "loss"}
           style={{
             width: size, height: size, borderRadius: size / 2, display: "block", flexShrink: 0,
-            background: tone === "ink"
-              ? (r === "D" ? "transparent" : r === "L" ? (lossInk || colour) : colour)
-              : DOT_COLOUR[r],
-            border: tone === "ink" && r === "D" ? "1.5px solid " + colour : undefined,
+            // A loss is an outlined circle in Southwood (--loss-fill /
+            // --loss-border); the other themes keep their filled dot.
+            background: r === "L"
+              ? `var(--loss-fill, ${tone === "ink" ? (lossInk || colour) : DOT_COLOUR.L})`
+              : tone === "ink"
+                ? (r === "D" ? "transparent" : colour)
+                : DOT_COLOUR[r],
+            border: r === "L" ? "var(--loss-border, none)" : tone === "ink" && r === "D" ? "1.5px solid " + colour : undefined,
             boxSizing: "border-box",
           }}
         />

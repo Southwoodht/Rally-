@@ -2,10 +2,10 @@ const fs = require('fs');
 const d = fs.readFileSync('s-path.txt', 'utf8');
 const defs = `<defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8F4EB"/><stop offset="1" stop-color="#E6DCC8"/></linearGradient>
-    <radialGradient id="ball" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#F0D488"/><stop offset="1" stop-color="#C99D3B"/></radialGradient>
+    <radialGradient id="ball" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#E2C98E"/><stop offset="1" stop-color="#B8955A"/></radialGradient>
     <clipPath id="clip"><circle cx="79" cy="73" r="8.5"/></clipPath>
   </defs>`;
-const mark = `<rect x="6" y="6" width="88" height="88" rx="18" fill="none" stroke="#C99D3B" stroke-width="1.4"/>
+const mark = `<rect x="6" y="6" width="88" height="88" rx="18" fill="none" stroke="#B8955A" stroke-width="1.4"/>
   <path d="${d}" fill="#1C2D23"/>
   <circle cx="79" cy="73" r="8.5" fill="url(#ball)"/>
   <g clip-path="url(#clip)" fill="none" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round">

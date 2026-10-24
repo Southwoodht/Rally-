@@ -72,7 +72,7 @@ export function RecordCard({ record, form, winRate, currentStreak, bestStreak, r
   const tap = (o: Exclude<OutcomeFilter, null>) =>
     onFilter ? () => onFilter(activeFilter === o ? null : o) : undefined;
   return (
-    <SurfaceCard radius={FEED_RADIUS} pad={FEED_PAD_Y + "px " + FEED_PAD + "px"}>
+    <SurfaceCard className="sw-hero" radius={FEED_RADIUS} pad={FEED_PAD_Y + "px " + FEED_PAD + "px"}>
       {/* a — the record. Won is the accent and lost is --lost, per §2 and
           Appendix C; drawn stays plain text. The separators are 14x2 bars of
           --muted-fill rather than an en dash, which is what the mockup

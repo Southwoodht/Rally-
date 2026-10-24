@@ -148,7 +148,7 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
             <div className="rally-hop" data-cycle={CYCLE_MS}>
               <svg className="rally-roll" data-cycle={SPIN_MS} width="28" height="28" viewBox="70.5 64.5 17 17" aria-hidden="true" style={{ display: "block" }}>
                 <defs>
-                  <radialGradient id="rally-loader-gold" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stopColor="#F0D488" /><stop offset="1" stopColor="#C99D3B" /></radialGradient>
+                  <radialGradient id="rally-loader-gold" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stopColor="#E2C98E" /><stop offset="1" stopColor="#B8955A" /></radialGradient>
                   <clipPath id="rally-loader-ball"><circle cx="79" cy="73" r="8.5" /></clipPath>
                 </defs>
                 <circle cx="79" cy="73" r="8.5" fill="url(#rally-loader-gold)" />
