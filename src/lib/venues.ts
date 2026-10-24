@@ -62,15 +62,24 @@ export function mapsUrl(v: Venue): string {
  * merged so one club's eight mapped courts are one row.
  */
 export async function courtsNear(spot: Spot, km = 8): Promise<VenueHit[]> {
-  const m = Math.round(km * 1000);
-  const query = `[out:json][timeout:15];(nwr["sport"="tennis"](around:${m},${spot.lat},${spot.lng});nwr["leisure"="park"]["name"](around:${m},${spot.lat},${spot.lng}););out center tags 400;`;
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: "data=" + encodeURIComponent(query),
-  });
-  if (!res.ok) throw new Error("The court map didn't answer. Try again, or type the place.");
-  const j: any = await res.json();
+  // Our own /api/courts first (several map servers, cached a day); the
+  // public server straight from the phone only if that route isn't there.
+  let j: any = null;
+  try {
+    const res = await fetch(`/api/courts?lat=${spot.lat}&lng=${spot.lng}&km=${km}`);
+    if (res.ok) j = await res.json();
+  } catch { /* fall through */ }
+  if (!j?.elements) {
+    const m = Math.round(km * 1000);
+    const query = `[out:json][timeout:15];(nwr["sport"="tennis"](around:${m},${spot.lat},${spot.lng});nwr["leisure"="park"]["name"](around:${m},${spot.lat},${spot.lng}););out center tags 400;`;
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(query),
+    });
+    if (!res.ok) throw new Error("The court map didn't answer. Try again, or type the place.");
+    j = await res.json();
+  }
   const pos = (e: any): Spot | null =>
     e.lat != null ? { lat: e.lat, lng: e.lon } : e.center ? { lat: e.center.lat, lng: e.center.lon } : null;
 

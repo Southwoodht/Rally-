@@ -13,7 +13,7 @@ import {
  * play: near you on opening, or near a town you search, Southwood clubs
  * first, then courts from the map. "Somewhere else" takes whatever is typed.
  */
-export function VenuePicker({ value, onChange }: { value: Venue | null; onChange: (v: Venue | null) => void }) {
+export function VenuePicker({ value, onChange, home }: { value: Venue | null; onChange: (v: Venue | null) => void; home?: Venue | null }) {
   const [open, setOpen] = useState(false);
   const [hits, setHits] = useState<VenueHit[] | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -78,8 +78,18 @@ export function VenuePicker({ value, onChange }: { value: Venue | null; onChange
             <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, margin: "0 2px 6px" }}>
               {busy ? "Looking for courts…" : hits ? `Near ${near}` : ""}
             </div>
-            {(hits || []).map((h, i) => (
-              <button key={h.name + i} onClick={() => pick({ name: h.name, place: h.place, lat: h.lat, lng: h.lng, url: h.url, club: h.club, members: h.members })} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
+            {/* Your own club first, always — even before it has a pin, when
+                no search could find it. */}
+            {home?.name && (
+              <button onClick={() => pick(home)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{home.name}</span>
+                  <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>{[home.place, "Your club"].filter(Boolean).join(" · ")}</span>
+                </span>
+              </button>
+            )}
+            {(hits || []).filter((h) => !(home?.name && h.club && h.name === home.name)).map((h, i) => (
+              <button key={h.name + i} onClick={() => pick({ name: h.name, place: h.place, lat: h.lat, lng: h.lng, url: h.url, club: h.club, members: h.members })} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", borderTop: i || home?.name ? "0.5px solid " + FEED_HAIRLINE : "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</span>
                   <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>

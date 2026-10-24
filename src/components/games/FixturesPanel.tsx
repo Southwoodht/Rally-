@@ -202,7 +202,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
             style={{ ...field, width: "100%", marginBottom: 12 }}
           />
           {newWhen && <><div style={{ ...label, marginBottom: 7 }}>How long</div>{lengthPicker}</>}
-          {venueReady && <><div style={{ ...label, marginBottom: 7 }}>Where</div><div style={{ marginBottom: 12 }}><VenuePicker value={newVenue} onChange={setNewVenue} /></div></>}
+          {venueReady && <><div style={{ ...label, marginBottom: 7 }}>Where</div><div style={{ marginBottom: 12 }}><VenuePicker value={newVenue} onChange={setNewVenue} home={homeVenue} /></div></>}
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={bookNew} disabled={!newOpp} style={{ ...actionBtn(newOpp ? FEED_LIME : FEED_RAISED, newOpp ? FEED_LIME_INK : FEED_TEXT_LOW), cursor: newOpp ? "pointer" : "default" }}>Book it</button>
@@ -360,7 +360,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     </button>
                   </div>
                   {whenText && lengthPicker}
-                  {venueReady && <div style={{ marginBottom: 12 }}><VenuePicker value={rowVenue} onChange={setRowVenue} /></div>}
+                  {venueReady && <div style={{ marginBottom: 12 }}><VenuePicker value={rowVenue} onChange={setRowVenue} home={homeVenue} /></div>}
                   {f.venue?.name && (
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                       <a href={mapsUrl(f.venue)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13.5, textDecoration: "none" }}>

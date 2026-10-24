@@ -1296,8 +1296,12 @@ copies `venue.name` onto the match, feeding venue predictions. Offered
 only once `useColumnReady("fixtures","venue")` (lib/utrReady.ts) says the
 column exists, because a booking naming a missing column fails the save.
 **This sandbox cannot reach overpass-api.de or nominatim** (network
-policy), so the parsing was tested against a mocked answer; phones reach
-them directly. Singles bookings only; doubles bookings have no venue yet.
+policy), so the parsing was tested against a mocked answer. Sam's first
+real try (PO11 9AJ) geocoded fine and the court lookup failed — the
+public Overpass server turning requests away — so courts now come through
+`app/api/courts` (three Overpass servers in turn, 12 s each, cached a day
+at Vercel's edge per point rounded to 2 dp), with the direct call only as
+a fallback. The picker lists your own club first always, pinned or not. Singles bookings only; doubles bookings have no venue yet.
 
 **Glitch fixes, merged 2026-10-24.** Motion animations use fill-mode
 `backwards`, never `both`: a held last frame leaves `translate: 0 0`, which
