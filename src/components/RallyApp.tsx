@@ -2018,7 +2018,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <div ref={screenRef} className="sw-main" style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
+      <div ref={screenRef} className={"sw-main" + (tab === "home" ? " sw-wide" : "")} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
             {topRow}

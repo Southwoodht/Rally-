@@ -61,8 +61,9 @@ export function FirstTour({ onTab, onDone }: { onTab: (tab: string) => void; onD
     <>
       {/* Taps outside the card do nothing rather than closing it: Skip is
           there for that, and a tour lost to a stray tap is not offered again. */}
-      <div aria-hidden="true" style={{ position: "fixed", inset: 0, bottom: 84, background: "rgba(0,0,0,0.35)", zIndex: 70 }} />
+      <div className="sw-tour-dim" aria-hidden="true" style={{ position: "fixed", inset: 0, bottom: 84, background: "rgba(0,0,0,0.35)", zIndex: 70 }} />
       <div
+        className="sw-tour"
         role="dialog"
         aria-label={`Tour, step ${i + 1} of ${STEPS.length}: ${step.title}`}
         style={{ position: "fixed", left: 0, right: 0, bottom: 96, zIndex: 71, display: "flex", justifyContent: "center", padding: "0 12px", pointerEvents: "none" }}
@@ -92,7 +93,7 @@ export function FirstTour({ onTab, onDone }: { onTab: (tab: string) => void; onD
               </button>
             </div>
           </div>
-          <div aria-hidden="true" style={{ position: "absolute", bottom: -8, left: pointerLeft, transform: "translateX(-50%) rotate(45deg)", width: 16, height: 16, background: FEED_HERO, borderRadius: 3 }} />
+          <div className="sw-tour-pointer" aria-hidden="true" style={{ position: "absolute", bottom: -8, left: pointerLeft, transform: "translateX(-50%) rotate(45deg)", width: 16, height: 16, background: FEED_HERO, borderRadius: 3 }} />
         </div>
       </div>
     </>

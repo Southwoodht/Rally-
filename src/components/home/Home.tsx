@@ -53,8 +53,14 @@ export function Home({
   onResolveFixture, onCancelFixture, children,
 }: HomeProps) {
   let step = 0;
+  // Two wrappers that do nothing on a phone: sw-home is a plain block and the
+  // page reads top to bottom exactly as before. On a wide laptop (the foot of
+  // globals.css) they become two columns, the dashboard on the left and the
+  // feed beside it, so the feed is on screen from the start rather than below
+  // a page of cards.
   return (
-    <div>
+    <div className="sw-home">
+      <div className="sw-home-side">
       <HomeHeader {...header} />
       {modeSwitch && <div style={{ margin: "-6px -16px 14px" }}>{modeSwitch}</div>}
       {seasonBanner}
@@ -95,8 +101,9 @@ export function Home({
           <HomeFocus {...focus} />
         </Reveal>
       )}
+      </div>
 
-      {children}
+      <div className="sw-home-feed">{children}</div>
     </div>
   );
 }
