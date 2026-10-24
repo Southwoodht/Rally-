@@ -98,7 +98,12 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
                 </span>
               </button>
             ))}
-            {note && <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "8px 2px" }}>{note}</div>}
+            {note && (
+              <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "8px 2px" }}>
+                {note}{" "}
+                {!busy && <button onClick={() => void lookNear(near === "you" ? undefined : text || near)} style={{ background: "none", border: "none", padding: 0, color: FEED_TEXT_HI, fontFamily: body, fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>Try again</button>}
+              </div>
+            )}
             <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 14, lineHeight: 1.5 }}>
               Courts from OpenStreetMap. Your location is only used for this search and isn&apos;t saved.
             </div>

@@ -61,25 +61,19 @@ export function mapsUrl(v: Venue): string {
  * Tennis courts from OpenStreetMap within `km` of a spot, nearest first,
  * merged so one club's eight mapped courts are one row.
  */
-export async function courtsNear(spot: Spot, km = 8): Promise<VenueHit[]> {
+export async function courtsNear(spot: Spot, km = 6): Promise<VenueHit[]> {
   // Our own /api/courts first (several map servers, cached a day); the
   // public server straight from the phone only if that route isn't there.
+  // Never longer than 15 s in all: a spinner that never ends is worse than
+  // "try again".
+  const within = <T,>(p: Promise<T>, ms: number) =>
+    Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error("slow")), ms))]);
   let j: any = null;
   try {
-    const res = await fetch(`/api/courts?lat=${spot.lat}&lng=${spot.lng}&km=${km}`);
+    const res = await within(fetch(`/api/courts?lat=${spot.lat}&lng=${spot.lng}&km=${km}`), 15000);
     if (res.ok) j = await res.json();
   } catch { /* fall through */ }
-  if (!j?.elements) {
-    const m = Math.round(km * 1000);
-    const query = `[out:json][timeout:15];(nwr["sport"="tennis"](around:${m},${spot.lat},${spot.lng});nwr["leisure"="park"]["name"](around:${m},${spot.lat},${spot.lng}););out center tags 400;`;
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "data=" + encodeURIComponent(query),
-    });
-    if (!res.ok) throw new Error("The court map didn't answer. Try again, or type the place.");
-    j = await res.json();
-  }
+  if (!j?.elements) throw new Error("The court map didn't answer. Try again, or type the place.");
   const pos = (e: any): Spot | null =>
     e.lat != null ? { lat: e.lat, lng: e.lon } : e.center ? { lat: e.center.lat, lng: e.center.lon } : null;
 
@@ -89,7 +83,7 @@ export async function courtsNear(spot: Spot, km = 8): Promise<VenueHit[]> {
     const at = pos(e);
     if (!at) continue;
     const t = e.tags || {};
-    if (t.leisure === "park" && t.sport !== "tennis") { if (t.name) parks.push({ name: t.name, at }); continue; }
+    if (t.leisure === "park" && !String(t.sport || "").includes("tennis")) { if (t.name) parks.push({ name: t.name, at }); continue; }
     courts.push({ tags: t, at });
   }
 
@@ -134,7 +128,7 @@ export async function courtsNear(spot: Spot, km = 8): Promise<VenueHit[]> {
 
 /** Southwood clubs and mapped courts near a spot, clubs first. */
 export async function venuesNear(spot: Spot): Promise<{ hits: VenueHit[]; note: string | null }> {
-  const [clubs, courts] = await Promise.allSettled([clubsNear(spot, 15), courtsNear(spot, 8)]);
+  const [clubs, courts] = await Promise.allSettled([clubsNear(spot, 15), courtsNear(spot, 6)]);
   const hits: VenueHit[] = [];
   if (clubs.status === "fulfilled") {
     for (const c of clubs.value) hits.push({ name: c.name, place: c.location, km: c.km, club: true });
@@ -146,7 +140,7 @@ export async function venuesNear(spot: Spot): Promise<{ hits: VenueHit[]; note: 
   }
   const note = courts.status === "rejected"
     ? "The court map didn't answer, so only Southwood clubs are shown. Try again in a moment."
-    : !hits.length ? "No courts found within 8 km. Search a town, or type the place." : null;
+    : !hits.length ? "No courts found within 6 km. Search a town, or type the place." : null;
   return { hits, note };
 }
 

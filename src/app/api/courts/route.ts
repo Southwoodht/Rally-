@@ -21,6 +21,11 @@ const SERVERS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 
+// Vercel stops a function at 10 s unless told otherwise. The servers are
+// asked at the same time, the first good answer wins, and each gives up at
+// 8 s, so the whole thing fits.
+export const maxDuration = 20;
+
 export async function GET(req: Request) {
   const u = new URL(req.url);
   const lat = Math.round(Number(u.searchParams.get("lat")) * 100) / 100;
@@ -30,12 +35,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "bad point" }, { status: 400 });
   }
   const m = Math.round(km * 1000);
-  const query = `[out:json][timeout:20];(nwr["sport"="tennis"](around:${m},${lat},${lng});nwr["leisure"="park"]["name"](around:${m},${lat},${lng}););out center tags 400;`;
+  // Courts first, then only the named parks within 300 m OF a court — a far
+  // lighter question than every park in the area, which near a city is
+  // hundreds of shapes and what made the first version slow.
+  const query = `[out:json][timeout:8];nwr["sport"~"tennis"](around:${m},${lat},${lng})->.t;(.t;nwr(around.t:300)["leisure"="park"]["name"];);out center tags 300;`;
 
-  for (const server of SERVERS) {
+  const ask = async (server: string) => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
     try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 12000);
       const res = await fetch(server, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "Southwood (southwood.app) court finder" },
@@ -43,15 +51,21 @@ export async function GET(req: Request) {
         signal: ctrl.signal,
         cache: "no-store",
       });
-      clearTimeout(t);
-      if (!res.ok) continue;
+      if (!res.ok) throw new Error("status " + res.status);
       const j: any = await res.json();
-      if (!Array.isArray(j?.elements)) continue;
-      return NextResponse.json(
-        { elements: j.elements },
-        { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" } },
-      );
-    } catch { /* next server */ }
-  }
+      if (!Array.isArray(j?.elements)) throw new Error("no elements");
+      return j.elements;
+    } finally {
+      clearTimeout(t);
+    }
+  };
+
+  try {
+    const elements = await Promise.any(SERVERS.map(ask));
+    return NextResponse.json(
+      { elements },
+      { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" } },
+    );
+  } catch { /* every server failed */ }
   return NextResponse.json({ error: "map busy" }, { status: 503 });
 }
