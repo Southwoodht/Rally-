@@ -3,7 +3,7 @@ import React from "react";
 import { Check, ChevronRight, LogIn, Plus, Users } from "lucide-react";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID,
-  FEED_PAGE, PANEL, body, tabular,
+  FEED_PAGE, LINE, PANEL, body, display, tabular,
 } from "@/lib/theme";
 
 /**
@@ -43,8 +43,8 @@ export function GroupSheet({
     display: "flex", alignItems: "center", gap: 12, width: "100%", background: FEED_CARD, border: "none",
     borderRadius: 16, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", boxSizing: "border-box",
   };
-  const title: React.CSSProperties = { fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
-  const sub: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
+  const title: React.CSSProperties = { fontFamily: body, fontWeight: 700, fontSize: 18, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+  const sub: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
   const here = (
     <span style={{ width: 24, height: 24, borderRadius: 12, background: FEED_LIME, display: "grid", placeItems: "center", flexShrink: 0 }}>
       <Check size={14} color={FEED_LIME_INK} strokeWidth={3} />
@@ -55,53 +55,56 @@ export function GroupSheet({
   );
   const go = <ChevronRight size={18} color={FEED_TEXT_LOW} style={{ flexShrink: 0 }} />;
   const count = (n?: { players: number; matches: number }) =>
-    n ? `${n.players} ${n.players === 1 ? "player" : "players"}, ${n.matches} ${n.matches === 1 ? "match" : "matches"}` : null;
+    n ? `${n.players} ${n.players === 1 ? "player" : "players"} · ${n.matches} ${n.matches === 1 ? "match" : "matches"}` : null;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "20px 16px 36px", boxSizing: "border-box", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
-        {/* Two sections, as on the landing page (Sam, 2026-10-24): clubs, with
-            Join and Create at the foot of their list; then no club. */}
-        <div style={{ padding: "0 4px", marginBottom: 8 }}>
-          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, letterSpacing: -0.2 }}>Clubs</div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Your club&apos;s table, rankings, divisions and fixtures.</div>
-        </div>
-        <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden", marginBottom: 24 }}>
+        {/* The landing page's layout (Sam's mockup, 2026-10-24): clubs in one
+            card, Join and Create as two tiles, Friendlies outside, dashed. */}
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, letterSpacing: 1.6, textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>Your clubs</div>
+        <div style={{ background: FEED_CARD, border: "1px solid " + LINE, borderRadius: 24, overflow: "hidden", marginBottom: 12 }}>
           {(clubs || []).map((c, i) => {
             const on = !friendly && c.id === currentClubId;
             const n = count(sizes?.[c.id]);
             return (
-              <button key={c.id} onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={{ ...card, background: "transparent", borderRadius: 0, marginBottom: 0, borderTop: i ? "0.5px solid " + FEED_RAISED : "none" }}>
-                {letter((c.name || "?").trim().charAt(0).toUpperCase())}
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ ...title, display: "block" }}>{c.name}</span>
-                  <span style={{ ...sub, display: "block" }}>
-                    {n || c.location || "Your club"}
+              <div key={c.id}>
+                <button onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={{ ...card, background: "transparent", borderRadius: 0, marginBottom: 0, gap: 16, padding: "16px 16px" }}>
+                  <span style={{ width: 50, height: 50, borderRadius: 25, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_LIME, color: FEED_LIME_INK, fontFamily: display, fontWeight: 700, fontSize: 24 }}>
+                    {(c.name || "?").trim().charAt(0).toUpperCase()}
                   </span>
-                </span>
-                {on ? here : go}
-              </button>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ ...title, display: "block" }}>{c.name}</span>
+                    <span style={{ ...sub, display: "block" }}>{[n, c.location || null].filter(Boolean).join(" · ") || "Your club"}</span>
+                  </span>
+                  {on ? here : go}
+                </button>
+                {i < (clubs || []).length - 1 && <div style={{ height: 1, background: LINE, marginLeft: 82 }} />}
+              </div>
             );
           })}
-          <div style={{ display: "flex", borderTop: (clubs || []).length ? "0.5px solid " + FEED_RAISED : "none" }}>
-            <button onClick={onJoin} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 15, cursor: "pointer" }}><LogIn size={16} /> Join a club</button>
-            <span style={{ width: 0.5, background: FEED_RAISED }} />
-            <button onClick={onCreate} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 15, cursor: "pointer" }}><Plus size={16} /> Create a club</button>
-          </div>
+        </div>
+        <div style={{ display: "flex", gap: 12, marginBottom: 26 }}>
+          {([["Join", "Got a code?", <LogIn key="j" size={19} color={FEED_LIME} />, onJoin], ["Create", "For your group", <Plus key="c" size={19} color={FEED_LIME} />, onCreate]] as const).map(([t, s2, icon, act]) => (
+            <button key={t} onClick={act} style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: FEED_CARD, border: "1px solid " + LINE, borderRadius: 20, padding: "14px 12px", cursor: "pointer", textAlign: "left" }}>
+              <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE }}>{icon}</span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 17, color: FEED_TEXT_HI }}>{t}</span>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap" }}>{s2}</span>
+              </span>
+            </button>
+          ))}
         </div>
 
-        <div style={{ padding: "0 4px", marginBottom: 8 }}>
-          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, letterSpacing: -0.2 }}>No club</div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Just you and your mates. No table, no organisers.</div>
-        </div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, letterSpacing: 1.6, textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>Outside a club</div>
         <button
           onClick={() => { if (friendly) onClose(); else if (typeof window !== "undefined") window.location.href = onFriendly; }}
-          style={card}
+          style={{ ...card, background: "transparent", border: "1.5px dashed " + FEED_TEXT_MID, borderRadius: 24, gap: 16, padding: "16px 16px" }}
         >
-          {letter(<Users size={19} color={FEED_LIME} />)}
+          <span style={{ width: 50, height: 50, flexShrink: 0, display: "grid", placeItems: "center" }}><Users size={24} color={FEED_TEXT_HI} /></span>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ ...title, display: "block" }}>Friendlies</span>
-            <span style={{ ...sub, display: "block" }}>Log matches against anyone</span>
+            <span style={{ ...sub, display: "block" }}>Log a match against anyone</span>
           </span>
           {friendly ? here : go}
         </button>

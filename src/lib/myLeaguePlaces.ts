@@ -59,3 +59,65 @@ export async function myLeaguePlaces(groups: any[], authId: string | null, now =
   cache = { at: now, key, places };
   return places;
 }
+
+/**
+ * One line per club for the landing page (Sam's mockup, 2026-10-24): "4th ·
+ * 1463 · 5 days ago". Your place and rating from the same all-time Glicko
+ * standings as above, so the landing page cannot disagree with the Table;
+ * when you last played; and whether the club has any results at all.
+ */
+export interface ClubSummary {
+  leagueId: string;
+  place: number | null;
+  rating: number | null;
+  lastPlayed: number | null;
+  clubMatches: number;
+}
+
+let summaryCache: { at: number; key: string; out: ClubSummary[] } | null = null;
+
+export async function myClubSummaries(leagues: Array<{ id: string }>, authId: string | null, now = Date.now()): Promise<ClubSummary[]> {
+  if (!authId || !leagues || !leagues.length) return [];
+  const key = authId + "|" + leagues.map((g) => g.id).sort().join(",");
+  if (summaryCache && summaryCache.key === key && now - summaryCache.at < CACHE_MS) return summaryCache.out;
+
+  const out: ClubSummary[] = [];
+  await Promise.all(leagues.map(async (g) => {
+    try {
+      const data = await fetchLeagueData(g.id);
+      const played = data.matches.filter((m: any) => countsAsPlayed(m));
+      const me = data.players.find((p: any) => p.auth_id === authId);
+      let place: number | null = null;
+      let rating: number | null = null;
+      let lastPlayed: number | null = null;
+      if (me) {
+        const cutoff = now - 365 * 86400000;
+        const recent = new Set<string>();
+        played.forEach((m: any) => { if (m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });
+        const st = glickoStandings(data.players, data.matches, {
+          minGames: PROVISIONAL_GAMES, now,
+          eligible: (id) => recent.has(id) && !data.players.find((p: any) => p.id === id)?.inactive,
+        });
+        place = st.place[me.id] ?? null;
+        rating = st.table.rating[me.id] != null ? Math.round(st.table.rating[me.id]) : null;
+        for (const m of played) if ((m.p1 === me.id || m.p2 === me.id) && (!lastPlayed || m.date > lastPlayed)) lastPlayed = m.date;
+      }
+      out.push({ leagueId: g.id, place, rating, lastPlayed, clubMatches: played.length });
+    } catch {
+      // A club that will not load just shows its plain line.
+    }
+  }));
+  summaryCache = { at: now, key, out };
+  return out;
+}
+
+/** "today", "yesterday", "5 days ago", "3 weeks ago", "4 months ago". */
+export function playedAgo(ts: number, now = Date.now()): string {
+  const days = Math.floor((now - ts) / 86400000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 14) return days + " days ago";
+  if (days < 60) return Math.round(days / 7) + " weeks ago";
+  if (days < 730) return Math.round(days / 30) + " months ago";
+  return Math.round(days / 365) + " years ago";
+}
