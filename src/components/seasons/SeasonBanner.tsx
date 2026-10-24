@@ -30,7 +30,7 @@ export function SeasonBanner({ season, onOpen, style }: { season: any; onOpen?: 
     <SurfaceCard radius={18} pad="12px 14px" style={{ marginBottom: 14, cursor: onOpen ? "pointer" : "default", ...style }} onClick={onOpen}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <CalendarDays size={17} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0 }} />
-        <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {season.name}
         </span>
         <span style={{ ...tabular, fontFamily: body, fontSize: 13, color: FEED_LIME, flexShrink: 0 }}>{right}</span>

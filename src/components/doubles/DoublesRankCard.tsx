@@ -95,7 +95,7 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
           {/* Same wording and treatment as the singles card, so the two pages
               of the carousel read as one card. */}
           {movement !== null && (
-            <div style={{ fontFamily: body, fontSize: 12, fontWeight: 500, lineHeight: 1, marginTop: 8, letterSpacing: 0 }}>
+            <div style={{ fontFamily: body, fontSize: 12, fontWeight: 600, lineHeight: 1, marginTop: 8, letterSpacing: 0 }}>
               <MovementIndicator
                 delta={movement}
                 tone="onAccent"

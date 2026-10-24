@@ -54,12 +54,12 @@ export function AccountCard({ displayName }: { displayName?: string | null }) {
 
   return (
     <SurfaceCard radius={16} pad="14px" style={{ marginTop: 18 }}>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0, marginBottom: 10 }}>
         Account
       </div>
 
       {displayName && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginBottom: 12, lineHeight: 1.45 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginBottom: 12, lineHeight: 1.45 }}>
           Signed in as <span style={{ color: FEED_TEXT_HI }}>{displayName}</span>.
         </div>
       )}
@@ -68,7 +68,7 @@ export function AccountCard({ displayName }: { displayName?: string | null }) {
         onClick={out}
         disabled={busy}
         style={{
-          display: "block", width: "100%", fontFamily: body, fontWeight: 500, fontSize: 15,
+          display: "block", width: "100%", fontFamily: body, fontWeight: 600, fontSize: 15,
           padding: "12px 14px", borderRadius: 12, border: "none",
           cursor: busy ? "default" : "pointer",
           background: FEED_RAISED, color: FEED_THEY_LEAD, opacity: busy ? 0.6 : 1,
@@ -78,7 +78,7 @@ export function AccountCard({ displayName }: { displayName?: string | null }) {
       </button>
 
       {failed && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_THEY_LEAD, lineHeight: 1.45, marginTop: 10 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_THEY_LEAD, lineHeight: 1.45, marginTop: 10 }}>
           {failed}
         </div>
       )}

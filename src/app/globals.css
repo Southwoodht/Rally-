@@ -12,6 +12,9 @@ body {
   background: var(--bg-page);
   color: var(--text-hi);
   font-family: var(--font-body);
+  /* 500, not the browser's 400 (Sam, 2026-10-24: thin text read "like Word
+   * or a spreadsheet or code"). Text with no weight of its own takes this. */
+  font-weight: 500;
   -webkit-font-smoothing: antialiased;
   /* Even-height figures everywhere (Sam, 2026-10-24). London's display face,
    * Cormorant, sets old-style figures by default, so a rating or a "4th"

@@ -71,7 +71,7 @@ export function ResultPrompt({ items, onResolve, onCancel }: {
 
   const btn = (bg: string, fg: string) => ({
     flex: 1, minWidth: 0, background: bg, color: fg, border: "none", borderRadius: 14,
-    padding: "11px 10px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 14,
+    padding: "11px 10px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14,
     whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis",
   });
 
@@ -81,13 +81,13 @@ export function ResultPrompt({ items, onResolve, onCancel }: {
         const open = openId === it.fixtureId;
         return (
           <SurfaceCard key={it.fixtureId} radius={20} pad="16px 16px 14px" style={{ marginBottom: 8 }}>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
               How did it go?
             </div>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4 }}>
               You v {it.opponent}
             </div>
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>
               {formatMatchDateTime(it.when)}
             </div>
 
@@ -112,12 +112,12 @@ export function ResultPrompt({ items, onResolve, onCancel }: {
                   <button disabled={saving} onClick={() => submit(it, it.meIsP1 ? "p2" : "p1")} style={btn(FEED_RAISED, FEED_TEXT_HI)}>{it.opponentFirst} won</button>
                 </div>
                 {error && (
-                  <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{error}</div>
+                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{error}</div>
                 )}
                 {onCancel && (
                   <button
                     onClick={() => onCancel(it.fixtureId)}
-                    style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer" }}
+                    style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer" }}
                   >
                     It didn&apos;t happen
                   </button>

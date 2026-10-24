@@ -42,7 +42,7 @@ export function ProfileModal({ beside, player, onClose, profileYear, doubles, sp
         <button
           onClick={onClose}
           aria-label="Back"
-          style={{ display: "flex", alignItems: "center", gap: 2, background: "transparent", border: "none", color: FEED_TEXT_MID, cursor: "pointer", padding: "10px 6px 10px 0", fontFamily: body, fontWeight: 400, fontSize: 15 }}
+          style={{ display: "flex", alignItems: "center", gap: 2, background: "transparent", border: "none", color: FEED_TEXT_MID, cursor: "pointer", padding: "10px 6px 10px 0", fontFamily: body, fontWeight: 500, fontSize: 15 }}
         >
           <ChevronLeft size={22} strokeWidth={2.2} /> Back
         </button>

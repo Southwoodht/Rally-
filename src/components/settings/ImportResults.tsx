@@ -40,7 +40,7 @@ Hugh Jones lost to Mike Tait 2-6 4-6`;
 const lbl: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, letterSpacing: 0 };
 const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
 const btn = (fill: string, ink: string, disabled = false): React.CSSProperties => ({
-  fontFamily: body, fontWeight: 500, fontSize: 14.5, padding: "12px 14px", borderRadius: 12, border: "none",
+  fontFamily: body, fontWeight: 600, fontSize: 14.5, padding: "12px 14px", borderRadius: 12, border: "none",
   cursor: disabled ? "default" : "pointer", background: fill, color: ink, opacity: disabled ? 0.5 : 1, width: "100%",
 });
 const chip = (on: boolean): React.CSSProperties => ({
@@ -211,7 +211,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
   const stepLabel = (n: number, title: string) => (
     <div style={{ marginBottom: 10 }}>
       <div style={lbl}>Step {n} of 3</div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, marginTop: 2 }}>{title}</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, marginTop: 2 }}>{title}</div>
     </div>
   );
 
@@ -261,7 +261,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
             return (
               <div key={n.key} style={{ padding: "12px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>“{n.written}”</span>
+                  <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI }}>“{n.written}”</span>
                   <span style={{ ...note, ...tabular }}>{n.count} result{n.count === 1 ? "" : "s"}</span>
                 </div>
                 {p.kind === "player" && (
@@ -310,7 +310,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
           <div style={{ width: 44, height: 44, borderRadius: 22, background: FEED_LIME, display: "grid", placeItems: "center", margin: "0 auto 12px" }}>
             <Check size={24} color={FEED_LIME_INK} strokeWidth={3} />
           </div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, ...tabular }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, ...tabular }}>
             {added.results} result{added.results === 1 ? "" : "s"} added
           </div>
           <div style={{ ...note, marginTop: 4 }}>
@@ -462,7 +462,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
 function Stat({ n, label, hi = false }: { n: number; label: string; hi?: boolean }) {
   return (
     <div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 24, color: hi ? FEED_LIME : FEED_TEXT_HI, letterSpacing: "-0.02em" }}>{n}</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 24, color: hi ? FEED_LIME : FEED_TEXT_HI, letterSpacing: "-0.02em" }}>{n}</div>
       <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>{label}</div>
     </div>
   );

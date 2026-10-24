@@ -23,7 +23,7 @@ import {
 const btnBase: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
   border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer",
-  fontFamily: body, fontWeight: 500, fontSize: 13.5, flex: 1, minWidth: 0,
+  fontFamily: body, fontWeight: 600, fontSize: 13.5, flex: 1, minWidth: 0,
 };
 
 const lime: React.CSSProperties = { ...btnBase, background: FEED_LIME, color: FEED_LIME_INK };
@@ -93,7 +93,7 @@ export function ProfileActions({ theirAuthId, myAuthId, onMessage }: ProfileActi
   if (!theirAuthId) {
     return (
       <SurfaceCard radius={16} style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
           They haven&apos;t claimed their profile yet, so there is no account to
           message or add as a friend.
         </div>

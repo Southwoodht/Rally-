@@ -147,11 +147,11 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
     >
       <Avatar player={{ id: key, name, avatarUrl }} size={38} />
       <span style={{ minWidth: 0, flex: 1 }}>
-        <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {name}
         </span>
         {sub && (
-          <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {sub}
           </span>
         )}
@@ -170,12 +170,12 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
           <ChevronLeft size={22} strokeWidth={2.2} /> Back
         </button>
 
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_TEXT_HI, ...tight(26), marginBottom: 14 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 26, color: FEED_TEXT_HI, ...tight(26), marginBottom: 14 }}>
           Find a player
         </div>
 
         {signedOut && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             Sign in to search for players. <a href="/" style={{ color: FEED_TEXT_HI }}>Go to Southwood</a>
           </div>
         )}
@@ -199,20 +199,20 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
             spellCheck={false}
             style={{
               flex: 1, minWidth: 0, height: 46, background: "transparent", border: "none",
-              color: FEED_TEXT_HI, fontFamily: body, fontWeight: 400, fontSize: 15.5, outline: "none",
+              color: FEED_TEXT_HI, fontFamily: body, fontWeight: 500, fontSize: 15.5, outline: "none",
             }}
           />
         </div>}
 
         {!q.trim() && !!recents.length && (
           <>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 8 }}>Recently viewed</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 8 }}>Recently viewed</div>
             {recents.map((r) => row(r.id, r.name, null, r.avatar_url, () => open(r)))}
           </>
         )}
 
         {!!q.trim() && ordered && !ordered.length && alsoInYourLeagues && !alsoInYourLeagues.length && !searching && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, padding: "18px 2px", lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_MID, padding: "18px 2px", lineHeight: 1.5 }}>
             No one called &ldquo;{q.trim()}&rdquo;.
           </div>
         )}
@@ -234,7 +234,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
             row has fewer things you can do with it. */}
         {!!alsoInYourLeagues?.length && (
           <>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, margin: "18px 0 8px" }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, margin: "18px 0 8px" }}>
               In your clubs
             </div>
             {alsoInYourLeagues.map((m) =>
@@ -253,7 +253,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
         )}
 
         {searching && !ordered?.length && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, padding: "14px 2px" }}>Searching…</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, padding: "14px 2px" }}>Searching…</div>
         )}
       </div>
     </div>

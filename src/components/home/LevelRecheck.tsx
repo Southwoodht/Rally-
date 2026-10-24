@@ -32,15 +32,15 @@ export function LevelRecheck({ current, onPick, onDismiss }: {
     background: active ? FEED_HERO : FEED_RAISED,
     color: active ? FEED_ON_HERO : FEED_TEXT_MID,
     border: "none", borderRadius: 999, padding: "9px 13px", cursor: "pointer",
-    fontFamily: body, fontWeight: 500, fontSize: 13.5, whiteSpace: "nowrap",
+    fontFamily: body, fontWeight: 600, fontSize: 13.5, whiteSpace: "nowrap",
   });
 
   return (
     <SurfaceCard radius={20} pad="18px 16px 16px" style={{ marginBottom: 12 }}>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
         Southwood has six levels now
       </div>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.5 }}>
         Amateur and Semi-pro were added after you picked yours. Worth a look —
         nobody gets moved automatically.
       </div>
@@ -68,14 +68,14 @@ export function LevelRecheck({ current, onPick, onDismiss }: {
           style={{
             flex: 1, background: cat ? FEED_HERO : FEED_RAISED, color: cat ? FEED_ON_HERO : FEED_TEXT_MID,
             border: "none", borderRadius: 16, padding: "13px 14px", cursor: cat ? "pointer" : "default",
-            fontFamily: body, fontWeight: 500, fontSize: 15,
+            fontFamily: body, fontWeight: 600, fontSize: 15,
           }}
         >
           {current?.cat && cat === current.cat && sub === current.sub ? "Keep it" : "That's me"}
         </button>
         <button
           onClick={onDismiss}
-          style={{ background: FEED_CARD, color: FEED_TEXT_MID, border: "none", borderRadius: 16, padding: "13px 16px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 15 }}
+          style={{ background: FEED_CARD, color: FEED_TEXT_MID, border: "none", borderRadius: 16, padding: "13px 16px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15 }}
         >
           Not now
         </button>

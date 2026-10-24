@@ -93,7 +93,7 @@ export function StatNumeral({
     <span
       style={{
         ...tabular, ...tight(size),
-        fontFamily: body, fontWeight: 500, fontSize: size, lineHeight: 1,
+        fontFamily: body, fontWeight: 600, fontSize: size, lineHeight: 1,
         color: NUMERAL_COLOR[tone], ...style,
       }}
     >
@@ -140,7 +140,7 @@ export function MovementIndicator({
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
       <Icon size={size} color={color} strokeWidth={2} />
-      <span style={{ fontFamily: body, fontWeight: 400, fontSize: size, color }}>{text}</span>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: size, color }}>{text}</span>
     </span>
   );
 }
@@ -240,7 +240,7 @@ export function PlayerIdentity({
     <span style={{ display: "block", minWidth: 0 }}>
       {nameEl}
       {statLine && (
-        <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {statLine}
         </span>
       )}

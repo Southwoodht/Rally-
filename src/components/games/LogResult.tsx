@@ -14,11 +14,11 @@ import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TE
 // set in it reads as a code rather than something you can tap.
 const addLink: React.CSSProperties = {
   background: "transparent", border: "none", color: FEED_LIME, fontFamily: body,
-  fontWeight: 400, fontSize: 13, cursor: "pointer", textAlign: "left",
+  fontWeight: 500, fontSize: 13, cursor: "pointer", textAlign: "left",
 };
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
@@ -118,11 +118,11 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <div style={{ display: "grid", gridTemplateColumns: `minmax(0,1fr) repeat(${sets.length}, 46px)`, gap: 6, alignItems: "center" }}>
               <span />
               {sets.map((_, i) => (
-                <span key={"h" + i} style={{ fontFamily: body, fontSize: 11, fontWeight: 400, color: FEED_TEXT_MID, textAlign: "center" }}>Set {i + 1}</span>
+                <span key={"h" + i} style={{ fontFamily: body, fontSize: 11, fontWeight: 500, color: FEED_TEXT_MID, textAlign: "center" }}>Set {i + 1}</span>
               ))}
               {([["a", n1], ["b", n2]] as const).map(([side, label]) => (
                 <React.Fragment key={side}>
-                  <span style={{ fontFamily: body, fontSize: 14, fontWeight: 500, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+                  <span style={{ fontFamily: body, fontSize: 14, fontWeight: 600, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
                   {sets.map((s, i) => (
                     <input
                       key={side + i}
@@ -130,7 +130,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                       onChange={(e) => setCell(i, side, e.target.value)}
                       inputMode="numeric"
                       aria-label={`${label}, set ${i + 1}`}
-                      style={{ ...input, ...tabular, fontFamily: body, fontWeight: 500, fontSize: 16, background: FEED_RAISED, color: FEED_TEXT_HI, textAlign: "center", padding: "10px 4px", marginBottom: 0 }}
+                      style={{ ...input, ...tabular, fontFamily: body, fontWeight: 600, fontSize: 16, background: FEED_RAISED, color: FEED_TEXT_HI, textAlign: "center", padding: "10px 4px", marginBottom: 0 }}
                     />
                   ))}
                 </React.Fragment>
@@ -175,7 +175,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submit("draw")} color={MUTED}>Draw</BigBtn>
             <BigBtn onClick={() => submit("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
             {short ? "Short matches show in the feed and head-to-head, labelled, and count towards nothing — no rating, no table." : needsConfirm ? "Your opponent has 48 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Southwood account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
           </div>
         </>
@@ -206,7 +206,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                   </div>
                 </div>
               ) : (
-                <button onClick={() => setConfirmClear(true)} style={{ marginTop: existingYears.length > 1 ? 0 : 8, fontFamily: body, fontSize: 13, fontWeight: 500, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "6px 10px", cursor: "pointer" }}>Clear {clearYear === "all" ? "existing record" : clearYear + " record"} vs {n2}</button>
+                <button onClick={() => setConfirmClear(true)} style={{ marginTop: existingYears.length > 1 ? 0 : 8, fontFamily: body, fontSize: 13, fontWeight: 600, color: CLAY, background: "transparent", border: "none", borderRadius: 5, padding: "6px 10px", cursor: "pointer" }}>Clear {clearYear === "all" ? "existing record" : clearYear + " record"} vs {n2}</button>
               )}
             </div>
           )}

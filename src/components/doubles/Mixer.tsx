@@ -87,7 +87,7 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
     return (
       <div>
         {header}
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI }}>Club night mixer</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 22, color: FEED_TEXT_HI }}>Club night mixer</div>
         <div style={{ ...note, marginTop: 4, marginBottom: 14 }}>
           Tick who&apos;s here. Southwood deals the courts: a new partner every round, sitting out shared fairly, and close games. Results go in as normal doubles.
         </div>
@@ -118,7 +118,7 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
         <button
           disabled={here.length < 4}
           onClick={() => set({ dealt: true, seed: Math.floor(Math.random() * 1e9), logged: [] })}
-          style={{ marginTop: 14, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "13px 16px", fontFamily: body, fontWeight: 500, fontSize: 16, cursor: here.length < 4 ? "default" : "pointer", opacity: here.length < 4 ? 0.5 : 1 }}
+          style={{ marginTop: 14, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "13px 16px", fontFamily: body, fontWeight: 600, fontSize: 16, cursor: here.length < 4 ? "default" : "pointer", opacity: here.length < 4 ? 0.5 : 1 }}
         >
           {here.length < 4 ? `Pick ${4 - here.length} more` : "Deal the courts"}
         </button>
@@ -132,7 +132,7 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
     <div>
       {header}
       <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-        <div style={{ flex: 1, fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI }}>Tonight&apos;s courts</div>
+        <div style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 22, color: FEED_TEXT_HI }}>Tonight&apos;s courts</div>
         <button onClick={() => set({ seed: Math.floor(Math.random() * 1e9), logged: [] })} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontSize: 14, cursor: "pointer" }}>
           <Shuffle size={15} /> Shuffle
         </button>
@@ -145,7 +145,7 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {rounds.map((r, ri) => (
           <SurfaceCard key={ri} radius={16} pad="12px 14px">
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI, marginBottom: 2 }}>Round {ri + 1}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, marginBottom: 2 }}>Round {ri + 1}</div>
             {r.courts.map((c, ci) => {
               const id = `${ri}:${ci}`;
               const done = night.logged.includes(id);

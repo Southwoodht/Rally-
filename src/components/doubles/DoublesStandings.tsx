@@ -118,7 +118,7 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
               a session that reached for it printed a second man's name on
               Charlie Henry's row. */}
           {fullNameOf(r.player)}
-          {mine && <span style={{ fontFamily: body, fontSize: 12, fontWeight: 500, color: FEED_TEXT_MID, marginLeft: 6 }}>You</span>}
+          {mine && <span style={{ fontFamily: body, fontSize: 12, fontWeight: 600, color: FEED_TEXT_MID, marginLeft: 6 }}>You</span>}
         </span>
         <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, ...tabular }}>
           {r.won}–{r.lost}

@@ -136,7 +136,7 @@ export function Cycler({ labels, render, labelColor, dotColor, minBodyHeight, la
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span
           style={{
-            fontFamily: body, fontWeight: 400, fontSize: 12, color: labelColor,
+            fontFamily: body, fontWeight: 500, fontSize: 12, color: labelColor,
             flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
             opacity: lit ? 1 : 0, transition: `opacity ${FADE_MS}ms ease`,
             ...labelStyle,

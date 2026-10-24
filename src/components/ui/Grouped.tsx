@@ -51,7 +51,7 @@ export function GroupRow({ title, sub, right, onClick, first, chevron, style }: 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
         {sub != null && sub !== "" && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", ...tabular }}>{sub}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", ...tabular }}>{sub}</div>
         )}
       </div>
       {right}

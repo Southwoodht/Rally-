@@ -159,7 +159,7 @@ export function ThemePicker() {
             <Swatch colours={t.swatch} />
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
-              <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.caption}</span>
+              <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.caption}</span>
             </span>
             {on && <Check size={18} color={FEED_LIME} strokeWidth={2.4} style={{ flexShrink: 0 }} />}
           </button>

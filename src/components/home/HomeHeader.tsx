@@ -29,7 +29,7 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell, topRow }:
   const league = (
     // 14px per the mockup, up from 12. The club selector is the one control
     // above the greeting and it was reading as a caption.
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
       {leagueName}
       {onPickLeague && <ChevronDown size={13} color={FEED_TEXT_MID} strokeWidth={2} />}
     </span>

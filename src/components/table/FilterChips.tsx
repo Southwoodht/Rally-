@@ -28,7 +28,7 @@ export interface FilterDef {
 }
 
 const chipBase: React.CSSProperties = {
-  fontFamily: body, fontWeight: 500, fontSize: 13, padding: "7px 13px", borderRadius: 999,
+  fontFamily: body, fontWeight: 600, fontSize: 13, padding: "7px 13px", borderRadius: 999,
   border: "none", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
 };
 
@@ -57,7 +57,7 @@ function Sheet({ title, children, onClose }: any) {
         style={{ background: FEED_CARD, width: "100%", maxWidth: 620, maxHeight: "80vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 32px" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{title}</span>
+          <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>{title}</span>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "4px 6px" }}>Done</button>
         </div>
         {children}
@@ -77,7 +77,7 @@ function OptionRow({ option, selected, onPick }: { option: FilterOption; selecte
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: "block", fontFamily: body, fontWeight: selected ? 500 : 400, fontSize: 15, color: FEED_TEXT_HI }}>{option.label}</span>
-        {option.note && <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2, lineHeight: 1.4 }}>{option.note}</span>}
+        {option.note && <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2, lineHeight: 1.4 }}>{option.note}</span>}
       </span>
     </button>
   );

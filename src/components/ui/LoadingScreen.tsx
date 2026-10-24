@@ -162,7 +162,7 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
           </div>
         </div>
         {/* The one thing that changes between the three screens. */}
-        <div key={label} className="rally-arrive" style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: SPLASH_MUTED, marginTop: 18 }}>
+        <div key={label} className="rally-arrive" style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: SPLASH_MUTED, marginTop: 18 }}>
           {label}
         </div>
       </div>

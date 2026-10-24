@@ -76,7 +76,7 @@ const ordinal = (n: number): string => {
 
 const HIGHLIGHT_ICON = { climb: TrendingUp, streak: Flame, firstWin: Award };
 
-const labelStyle: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
+const labelStyle: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW };
 
 export function WeeklyRoundupCard({ periods }: WeeklyRoundupCardProps) {
   const slide = (i: number) => {
@@ -145,7 +145,7 @@ function Period({ p }: { p: RoundupPeriod }) {
 
   return (
     <>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_TEXT_HI, marginTop: 2, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI, marginTop: 2, marginBottom: 10 }}>
         {title}
       </div>
 
@@ -172,7 +172,7 @@ function Period({ p }: { p: RoundupPeriod }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 16 }}>
           {shown.map((s) => (
             <span key={s.name} style={{ display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>{s.name}</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>{s.name}</span>
               <MovementIndicator delta={s.placesGained} size={12} />
             </span>
           ))}
@@ -194,11 +194,11 @@ function Period({ p }: { p: RoundupPeriod }) {
             }}
           >
             <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              <span style={{ fontWeight: 500 }}>{r.winnerName}</span>
-              <span style={{ fontWeight: 400, color: FEED_TEXT_LOW }}>{r.drawn ? " drew with " : " beat "}</span>
-              <span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>{r.loserName}</span>
+              <span style={{ fontWeight: 600 }}>{r.winnerName}</span>
+              <span style={{ fontWeight: 500, color: FEED_TEXT_LOW }}>{r.drawn ? " drew with " : " beat "}</span>
+              <span style={{ fontWeight: 500, color: FEED_TEXT_MID }}>{r.loserName}</span>
             </span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, flexShrink: 0 }}>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, flexShrink: 0 }}>
               {r.score || "—"}
             </span>
           </div>
@@ -215,7 +215,7 @@ function Period({ p }: { p: RoundupPeriod }) {
       {highlight && HighlightIcon && (
         <SurfaceTile style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, padding: "10px 12px" }}>
           <HighlightIcon size={18} color={FEED_LIME} strokeWidth={2} />
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}>{highlight.sentence}</span>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}>{highlight.sentence}</span>
         </SurfaceTile>
       )}
     </>

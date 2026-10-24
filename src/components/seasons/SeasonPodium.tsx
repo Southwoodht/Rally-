@@ -26,7 +26,7 @@ export function SeasonPodium({ season, podium, players, onOpen }: {
     <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
         <Trophy size={17} color={FEED_LIME} strokeWidth={2} />
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>{season.name} · final</span>
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>{season.name} · final</span>
       </div>
       <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginBottom: 10 }}>
         Standings froze {season.endedAt ? formatMatchDate(season.endedAt) : "when it ended"}. Results logged later count everywhere else.

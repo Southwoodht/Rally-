@@ -21,9 +21,9 @@ export function YearHeader({ year, rec, honours, style }: { year: number; rec?: 
   return (
     <div style={style}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>{year}</span>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>{year}</span>
         {rec && rec.played > 0 && (
-          <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID }}>
             {rec.w}–{rec.d}–{rec.l} · {rec.pct}% won
           </span>
         )}
@@ -31,7 +31,7 @@ export function YearHeader({ year, rec, honours, style }: { year: number; rec?: 
       {honours && honours.length > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, minWidth: 0 }}>
           <Trophy size={13} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0 }} />
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {honours.join(" · ")}
           </span>
         </div>

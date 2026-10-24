@@ -59,8 +59,8 @@ export interface PeriodStat {
 }
 
 const tile: React.CSSProperties = { background: FEED_CARD, borderRadius: 16, padding: 14, minWidth: 0 };
-const label: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
-const line = (color: string): React.CSSProperties => ({ fontFamily: body, fontWeight: 400, fontSize: 12.5, color, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
+const label: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW };
+const line = (color: string): React.CSSProperties => ({ fontFamily: body, fontWeight: 500, fontSize: 12.5, color, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
 
 export function HomeTiles({ nextUp, periods, onBook }: {
   nextUp?: NextUp | null;
@@ -84,7 +84,7 @@ export function HomeTiles({ nextUp, periods, onBook }: {
           <div style={{ marginTop: 4 }}>
             {p
               ? <StatNumeral size={22} tone={p.winRate === null ? "mid" : "hi"}>{p.w}–{p.l}</StatNumeral>
-              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>None yet</span>}
+              : <span style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_MID }}>None yet</span>}
           </div>
           <div style={line(FEED_TEXT_MID)}>
             {!p ? "Log one and this fills in" : p.winRate === null ? "Nothing played" : p.winRate + "% win rate"}
@@ -99,7 +99,7 @@ export function HomeTiles({ nextUp, periods, onBook }: {
           <div style={{ marginTop: 4 }}>
             {p
               ? <StatNumeral size={22} tone={p.opponents ? "hi" : "mid"}>{p.opponents}</StatNumeral>
-              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>Nobody yet</span>}
+              : <span style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_MID }}>Nobody yet</span>}
           </div>
           {/* Who you beat against who beat you, in people rather than
               matches. The count above is everybody you faced; this is how
@@ -130,7 +130,7 @@ export function HomeTiles({ nextUp, periods, onBook }: {
       {nextUp ? (
         <div style={tile}>
           <div style={label}>Next up</div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_HI, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {nextUp.opponent}
           </div>
           <div style={{ ...line(FEED_TEXT_MID), ...tabular }}>{formatMatchDateTime(nextUp.when)}</div>
@@ -138,7 +138,7 @@ export function HomeTiles({ nextUp, periods, onBook }: {
               number is the app's; the sentence is for the person reading it
               ten minutes before they leave the house. */}
           {nextUp.line && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
               {nextUp.line}
               {nextUp.winChance != null && (
                 <span style={{ ...tabular, color: FEED_LIME, marginLeft: 6 }}>{nextUp.winChance}%</span>
@@ -151,7 +151,7 @@ export function HomeTiles({ nextUp, periods, onBook }: {
           <div style={label}>Next up</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
             <CalendarPlus size={16} color={FEED_LIME} strokeWidth={2} />
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_LIME }}>Book a match</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_LIME }}>Book a match</span>
           </div>
           <div style={line(FEED_TEXT_MID)}>Nothing in the diary</div>
         </button>

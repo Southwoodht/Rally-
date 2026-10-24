@@ -44,7 +44,7 @@ export function PlanNextSeason({ divisions, labelOf, seasons, currentSeasonIds, 
   const note: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 };
   const seg = (on: boolean): React.CSSProperties => ({
     flex: 1, height: 36, borderRadius: 10, border: "none", cursor: "pointer",
-    background: on ? FEED_LIME : FEED_RAISED, color: on ? FEED_LIME_INK : FEED_TEXT_MID, fontFamily: body, fontSize: 14, fontWeight: 500,
+    background: on ? FEED_LIME : FEED_RAISED, color: on ? FEED_LIME_INK : FEED_TEXT_MID, fontFamily: body, fontSize: 14, fontWeight: 600,
   });
   const arrowBtn: React.CSSProperties = { background: FEED_RAISED, border: "none", borderRadius: 8, width: 30, height: 30, display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 };
 
@@ -53,7 +53,7 @@ export function PlanNextSeason({ divisions, labelOf, seasons, currentSeasonIds, 
       <button onClick={onClose} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "0 0 10px" }}>
         <ChevronLeft size={16} /> Divisions
       </button>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI }}>Next season&apos;s divisions</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 22, color: FEED_TEXT_HI }}>Next season&apos;s divisions</div>
       <div style={{ ...note, marginTop: 4, marginBottom: 12 }}>
         From this season&apos;s tables. Check it, move anyone by hand, then create. Nothing changes until you do.
       </div>
@@ -67,7 +67,7 @@ export function PlanNextSeason({ divisions, labelOf, seasons, currentSeasonIds, 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {plan.map((d, di) => (
           <SurfaceCard key={d.name} radius={16} pad="12px 14px">
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, marginBottom: 4 }}>{d.name}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, marginBottom: 4 }}>{d.name}</div>
             {d.players.map((id, i) => {
               const up = d.up.includes(id), down = d.down.includes(id);
               return (
@@ -100,7 +100,7 @@ export function PlanNextSeason({ divisions, labelOf, seasons, currentSeasonIds, 
                 try { await onConfirm(plan, seasonId); } catch (e: any) { setErr(e?.message || "That didn't save. Try again."); }
                 setBusy(false);
               }}
-              style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "13px 16px", fontFamily: body, fontWeight: 500, fontSize: 15.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+              style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "13px 16px", fontFamily: body, fontWeight: 600, fontSize: 15.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
             >
               {busy ? "Creating…" : `Create ${plan.length} divisions and draw the matches`}
             </button>

@@ -60,7 +60,7 @@ interface Props {
 }
 
 const lbl: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0, marginBottom: 6,
 };
 const fld: React.CSSProperties = {
@@ -178,7 +178,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <Avatar player={p} size={44} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(p) || "New player"}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(p) || "New player"}</div>
             <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
               {played} played{p.auth_id ? " · has an account" : " · no account yet"}
             </div>

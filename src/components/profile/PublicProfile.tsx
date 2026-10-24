@@ -148,7 +148,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
         <button
           onClick={() => (onBack ? onBack() : window.history.back())}
           aria-label="Back"
-          style={{ display: "flex", alignItems: "center", gap: 2, background: "transparent", border: "none", color: FEED_TEXT_MID, cursor: "pointer", padding: "10px 6px 10px 0", fontFamily: body, fontWeight: 400, fontSize: 15 }}
+          style={{ display: "flex", alignItems: "center", gap: 2, background: "transparent", border: "none", color: FEED_TEXT_MID, cursor: "pointer", padding: "10px 6px 10px 0", fontFamily: body, fontWeight: 500, fontSize: 15 }}
         >
           <ChevronLeft size={22} strokeWidth={2.2} /> Back
         </button>
@@ -159,10 +159,10 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
 
   const note = (title: string, detail: string, cta?: boolean) => shell(
     <SurfaceCard radius={20} pad="22px 18px">
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{title}</div>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>{detail}</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>{title}</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>{detail}</div>
       {cta && (
-        <a href="/" style={{ display: "block", textAlign: "center", background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 16, padding: "12px 14px", marginTop: 16, textDecoration: "none", fontFamily: body, fontWeight: 500, fontSize: 15 }}>
+        <a href="/" style={{ display: "block", textAlign: "center", background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 16, padding: "12px 14px", marginTop: 16, textDecoration: "none", fontFamily: body, fontWeight: 600, fontSize: 15 }}>
           Go to Southwood
         </a>
       )}
@@ -279,7 +279,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
   const pill = (fill: string, ink: string): React.CSSProperties => ({
     flex: 1, minWidth: 0, background: fill, color: ink, border: "none", borderRadius: 16,
     padding: "12px 10px", cursor: busy ? "default" : "pointer", fontFamily: body,
-    fontWeight: 500, fontSize: 14.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+    fontWeight: 600, fontSize: 14.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
     textAlign: "center", textDecoration: "none", display: "block",
   });
 
@@ -376,7 +376,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
       />
 
       {summaryNote && (
-        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "11px 13px", marginBottom: 14, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "11px 13px", marginBottom: 14, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
           {summaryNote}
         </div>
       )}
@@ -420,7 +420,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
 
           {!!rivalries.length && (
             <div style={{ marginTop: 22 }}>
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Rivalries</div>
+              <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Rivalries</div>
               {rivalries.map((r) => (
                 <div key={r.id || r.name} style={{ marginBottom: 8 }}>
                   <RivalryCard
@@ -438,25 +438,25 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
 
           {(!!opponentsLead.length || !!opponentsBehind.length) && (
             <div style={{ marginTop: 22 }}>
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Their opponents</div>
+              <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Their opponents</div>
               <OpponentRecords lead={opponentsLead} behind={opponentsBehind} />
             </div>
           )}
 
           {!!history.length && (
             <div style={{ marginTop: 22 }}>
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Recent matches</div>
+              <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Recent matches</div>
               <MatchHistoryList items={history.slice(0, 10)} />
             </div>
           )}
         </>
       ) : (
         <SurfaceCard radius={20} pad="16px">
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             Their record isn&apos;t showing. Everything else on this page works.
           </div>
           {card.statsProblem && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 8 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 8 }}>
               {card.statsProblem}
             </div>
           )}

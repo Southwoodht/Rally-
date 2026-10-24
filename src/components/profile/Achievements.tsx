@@ -51,8 +51,8 @@ export function Achievements({ items }: { items: Achievement[] }) {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI }}>Achievements</span>
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{earned} of {items.length}</span>
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI }}>Achievements</span>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{earned} of {items.length}</span>
       </div>
       <SurfaceCard radius={18} pad="14px 0">
         <div style={{ display: "flex", gap: 14, overflowX: "auto", padding: "0 16px", scrollbarWidth: "none" }}>
@@ -64,10 +64,10 @@ export function Achievements({ items }: { items: Achievement[] }) {
                 <div style={{ width: 44, height: 44, margin: "0 auto", borderRadius: 22, border: "1.5px solid " + ring, display: "grid", placeItems: "center" }}>
                   <Icon size={20} color={a.earned ? FEED_LIME : FEED_TEXT_DIM} strokeWidth={1.8} />
                 </div>
-                <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11, color: a.earned ? FEED_TEXT_HI : FEED_TEXT_DIM, marginTop: 6, lineHeight: 1.25 }}>
+                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: a.earned ? FEED_TEXT_HI : FEED_TEXT_DIM, marginTop: 6, lineHeight: 1.25 }}>
                   {a.label}
                 </div>
-                <div style={{ fontFamily: body, fontWeight: 400, fontSize: 10, color: FEED_TEXT_MID, marginTop: 2 }}>
+                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 10, color: FEED_TEXT_MID, marginTop: 2 }}>
                   {a.earned ? a.year : a.progress}
                 </div>
               </div>

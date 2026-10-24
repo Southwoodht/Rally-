@@ -24,7 +24,7 @@ export function GapInsight({ headline, advice }: GapInsightProps) {
     <div style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: "20px 18px" }}>
       <div style={{ fontFamily: display, fontWeight: 700, fontSize: 20, letterSpacing: "-0.3px", color: FEED_ON_HERO, lineHeight: 1.3 }}>{headline}</div>
       {advice && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 8 }}>{advice}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 8 }}>{advice}</div>
       )}
     </div>
   );
@@ -41,13 +41,13 @@ export function PlayingStyle({ title, description, onDetails }: PlayingStyleProp
     <SurfaceCard radius={18}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>{title}</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 4 }}>{description}</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>{title}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 4 }}>{description}</div>
         </div>
         {onDetails && (
           <button
             onClick={onDetails}
-            style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 13, flexShrink: 0 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 13, flexShrink: 0 }}
           >
             Details<ChevronRight size={14} strokeWidth={2} />
           </button>

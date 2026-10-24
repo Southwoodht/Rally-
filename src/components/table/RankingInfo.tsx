@@ -29,8 +29,8 @@ export function RankingInfo() {
     <div>
       {items.map(([t, d], i) => (
         <div key={t} style={{ paddingTop: i ? 16 : 0 }}>
-          <div style={{ fontFamily: body, fontSize: 16, fontWeight: 500, color: BALL }}>{t}</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: CHALK, marginTop: 4, lineHeight: 1.55 }}>{d}</div>
+          <div style={{ fontFamily: body, fontSize: 16, fontWeight: 600, color: BALL }}>{t}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: CHALK, marginTop: 4, lineHeight: 1.55 }}>{d}</div>
         </div>
       ))}
     </div>

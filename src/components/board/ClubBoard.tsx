@@ -123,7 +123,7 @@ export function ClubBoard({ clubName, players, matches, fixtures, doublesMatches
   };
 
   const panel: React.CSSProperties = { background: FEED_CARD, borderRadius: 22, padding: "clamp(14px, 2vw, 26px)", minWidth: 0 };
-  const heading: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: "clamp(17px, 1.8vw, 28px)", color: FEED_TEXT_MID, marginBottom: 10 };
+  const heading: React.CSSProperties = { fontFamily: body, fontWeight: 600, fontSize: "clamp(17px, 1.8vw, 28px)", color: FEED_TEXT_MID, marginBottom: 10 };
   const row: React.CSSProperties = { display: "flex", alignItems: "baseline", gap: 12, padding: "clamp(6px, 0.8vw, 12px) 0", borderTop: "0.5px solid " + FEED_HAIRLINE };
   const big = "clamp(16px, 1.7vw, 30px)";
   const small = "clamp(13px, 1.1vw, 19px)";
@@ -178,7 +178,7 @@ export function ClubBoard({ clubName, players, matches, fixtures, doublesMatches
             <div style={{ ...panel, display: "flex", alignItems: "center", gap: "clamp(12px, 1.5vw, 24px)" }}>
               <QR text={link} size={140} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: body, fontWeight: 500, fontSize: big, color: FEED_TEXT_HI }}>Join {clubName}</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: big, color: FEED_TEXT_HI }}>Join {clubName}</div>
                 <div style={{ fontFamily: body, fontSize: small, color: FEED_TEXT_MID, marginTop: 4, lineHeight: 1.4 }}>Scan with your phone camera, or enter code</div>
                 <div style={{ ...tabular, fontFamily: body, fontSize: big, color: FEED_LIME, letterSpacing: 2, marginTop: 4 }}>{joinCode}</div>
               </div>

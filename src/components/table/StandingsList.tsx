@@ -107,24 +107,24 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <Avatar player={p.player} size={52} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Leader</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Leader</div>
           {/* Full names. Sam, 2026-09-22: the Table is not a versus card and
               not a rivalry card, which are the only two places a first name
               is the right length. It truncates with an ellipsis when a row
               runs out of width rather than falling back to the first name —
               a shortened "Charlie Hen…" still says which Charlie, where
               "Charlie" alone does not. */}
-          <div style={{ ...tight(20), fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ ...tight(20), fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {fullNameOf(p.player)}
           </div>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statLineOf(p)}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <StatNumeral size={36} tone="ink" style={{ letterSpacing: "-0.04em" }}>{display}</StatNumeral>
-          {plusMinus(p) && <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1 }}>{plusMinus(p)}</div>}
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0, marginTop: 2 }}>{unit}</div>
+          {plusMinus(p) && <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1 }}>{plusMinus(p)}</div>}
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0, marginTop: 2 }}>{unit}</div>
         </div>
       </div>
       {p.form && p.form.length > 0 && (
@@ -178,10 +178,10 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
               {fullNameOf(p.player)}
             </span>
             {isMe && (
-              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 10, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 10, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
             )}
           </div>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statLineOf(p)}
           </div>
           {p.form && p.form.length > 0 && (
@@ -193,7 +193,7 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 24, letterSpacing: "-0.03em", color: !played || p.provisional ? FEED_TEXT_MID : isMe ? FEED_LIME : FEED_TEXT_HI }}>{played ? display : "–"}</span>
           {played && plusMinus(p) && (
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 1 }}>{plusMinus(p)}</div>
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 1 }}>{plusMinus(p)}</div>
           )}
           {p.movement !== null && p.movement !== undefined && (
             <div style={{ marginTop: 2 }}><MovementIndicator delta={p.movement} size={11} /></div>
@@ -262,7 +262,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
           not a label. */}
       {rest.length > 0 && !placeless && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "2px 14px 0" }}>
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
             {unit}
           </span>
         </div>

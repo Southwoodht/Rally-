@@ -65,7 +65,7 @@ function Section({ title, right, children }: { title: string; right?: React.Reac
   return (
     <div style={{ marginTop: 22 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI }}>{title}</span>
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI }}>{title}</span>
         {right}
       </div>
       {children}
@@ -75,7 +75,7 @@ function Section({ title, right, children }: { title: string; right?: React.Reac
 
 const Link = ({ label, onClick, arrow = true }: { label: string; onClick?: () => void; arrow?: boolean }) =>
   onClick ? (
-    <button onClick={onClick} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 13 }}>
+    <button onClick={onClick} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 13 }}>
       {label}{arrow ? " ›" : ""}
     </button>
   ) : null;
@@ -131,7 +131,7 @@ export function ProfileView(p: ProfileViewProps) {
       {filter && (
         <div style={{ marginTop: 12 }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI }}>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI }}>
               {FILTER_TITLE[filter]} · {filtered.length}
             </span>
             <Link label="Close" onClick={() => setFilter(null)} arrow={false} />
@@ -212,7 +212,7 @@ export function ProfileView(p: ProfileViewProps) {
           {p.onAllHistory && (
             <button
               onClick={p.onAllHistory}
-              style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME }}
+              style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME }}
             >
               Every match, graded <ChevronRight size={14} strokeWidth={2} />
             </button>

@@ -38,7 +38,7 @@ export function TrophyMoment({ title, who, date, club, onOpen, edge = true, styl
     >
       <Trophy size={20} color={FEED_LIME} strokeWidth={1.8} style={{ flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis" }}>
           {who || title}
         </div>
         {/* In the feed the name leads and the honour follows it; on somebody's
@@ -46,11 +46,11 @@ export function TrophyMoment({ title, who, date, club, onOpen, edge = true, styl
             out and the honour leads. "Zaach won Champion — Men's Singles"
             was the alternative, and nobody talks like that. */}
         {who && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_LIME, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_LIME, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis" }}>
             {title}
           </div>
         )}
-        <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
+        <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
           {[date, club].filter(Boolean).join(" · ")}
         </div>
       </div>

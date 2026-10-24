@@ -38,7 +38,7 @@ function Badge({ place }: { place: number }) {
         width: 22, height: 22, borderRadius: 11, flexShrink: 0, display: "grid", placeItems: "center",
         background: gold ? FEED_LIME : FEED_RAISED,
         color: gold ? FEED_LIME_INK : FEED_TEXT_HI,
-        ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12,
+        ...tabular, fontFamily: body, fontWeight: 600, fontSize: 12,
       }}
     >
       {place}
@@ -63,10 +63,10 @@ export function BestWins({ wins, onOpenMatch }: BestWinsProps) {
         >
           <Badge place={i + 1} />
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {fullNameOf(w.opponent)}
             </span>
-            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{w.subtitle}</span>
+            <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{w.subtitle}</span>
           </span>
           {onOpenMatch && <ChevronRight size={16} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />}
         </button>

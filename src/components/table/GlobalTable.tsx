@@ -46,7 +46,7 @@ const LEVEL_COLOUR: Record<string, string> = {
 const NO_LEVEL_COLOUR = FEED_TEXT_DIM;
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
@@ -68,7 +68,7 @@ const statusOf = (r: GlobalRow) => {
 
 /** Never wraps. A wrapped name changes row height and breaks the column. */
 const nameStyle: React.CSSProperties = {
-  display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI,
+  display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI,
   whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "-0.01em",
 };
 
@@ -94,7 +94,7 @@ function Face({ row, size = 38, dim }: { row: GlobalRow; size?: number; dim?: bo
       aria-hidden="true"
       style={{
         ...common, display: "inline-grid", placeItems: "center", background: FEED_RAISED,
-        fontFamily: body, fontWeight: 500, fontSize: size * 0.34, letterSpacing: 0.3, color: FEED_TEXT_LOW,
+        fontFamily: body, fontWeight: 600, fontSize: size * 0.34, letterSpacing: 0.3, color: FEED_TEXT_LOW,
       }}
     >
       {initialsOf(row.name)}
@@ -124,7 +124,7 @@ function Header({ onBack }: { onBack?: () => void }) {
             <ChevronLeft size={22} color={FEED_LIME} strokeWidth={2} />
           </button>
         )}
-        <span style={{ ...tight(28), fontFamily: body, fontWeight: 500, fontSize: 28, letterSpacing: "-0.035em", color: FEED_TEXT_HI }}>
+        <span style={{ ...tight(28), fontFamily: body, fontWeight: 600, fontSize: 28, letterSpacing: "-0.035em", color: FEED_TEXT_HI }}>
           Global
         </span>
       </div>
@@ -133,13 +133,13 @@ function Header({ onBack }: { onBack?: () => void }) {
         aria-expanded={open}
         style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
       >
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>
           Everyone you&apos;ve played, on their own record
         </span>
         <Info size={13} color={open ? FEED_LIME : FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
       </button>
       {open && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.55, marginTop: 10, background: FEED_CARD, borderRadius: 14, padding: 14 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.55, marginTop: 10, background: FEED_CARD, borderRadius: 14, padding: 14 }}>
           Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level is only a starting assumption: the more someone plays their own level or better, the more their results decide their place and the less their claimed level does. Nobody has to set a level to be ranked — without one we simply assume the middle and let the results talk.
         </div>
       )}
@@ -168,7 +168,7 @@ function Distribution({ rows }: { rows: GlobalRow[] }) {
     <SurfaceCard radius={18} style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10 }}>
         <span style={label}>Ranked players</span>
-        <span style={{ ...tabular, ...tight(22), fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI }}>{total}</span>
+        <span style={{ ...tabular, ...tight(22), fontFamily: body, fontWeight: 600, fontSize: 22, color: FEED_TEXT_HI }}>{total}</span>
       </div>
       {/* One bar, so the shape of the population is a shape. Five separate
           chips read as tappable filters when they are statistics, and they
@@ -180,7 +180,7 @@ function Distribution({ rows }: { rows: GlobalRow[] }) {
         {counts.map((c) => (
           <span key={c.label} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: c.colour, flexShrink: 0 }} />
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID }}>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID }}>
               {c.n} {c.label.toLowerCase()}
             </span>
           </span>
@@ -201,17 +201,17 @@ function LeaderCard({ r, rating, onOpen }: { r: GlobalRow; rating: string; onOpe
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <Face row={r} size={50} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Top ranked</div>
-          <div style={{ ...tight(19), fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Top ranked</div>
+          <div style={{ ...tight(19), fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {nameOf(r)}
           </div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statusOf(r)}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <div style={{ ...tabular, ...tight(24), fontFamily: body, fontWeight: 500, fontSize: 24, color: FEED_LIME_INK }}>{rec(r)}</div>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 2 }}>
+          <div style={{ ...tabular, ...tight(24), fontFamily: body, fontWeight: 600, fontSize: 24, color: FEED_LIME_INK }}>{rec(r)}</div>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 2 }}>
             {pct === null ? "—" : pct + "% won"} · {rating}
           </div>
         </div>
@@ -235,7 +235,7 @@ function Row({ r, place, rating, fraction, isMe, onOpen }: any) {
           highest — see the Table's barFraction for why not from zero. */}
       <div style={{ position: "absolute", inset: 0, width: fraction * 100 + "%", background: FEED_BAR, pointerEvents: "none" }} />
       <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 11, padding: "11px 13px" }}>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, width: 20, flexShrink: 0 }}>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_MID, width: 20, flexShrink: 0 }}>
           {place}
         </span>
         <Face row={r} size={38} />
@@ -243,16 +243,16 @@ function Row({ r, place, rating, fraction, isMe, onOpen }: any) {
           <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
             <span style={{ ...nameStyle, flex: 1, minWidth: 0 }}>{nameOf(r)}</span>
             {isMe && (
-              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
             )}
           </span>
-          <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statusOf(r)}
           </span>
         </span>
         <span style={{ textAlign: "right", flex: "none" }}>
-          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI }}>{rec(r)}</span>
-          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 1 }}>{rating}</span>
+          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI }}>{rec(r)}</span>
+          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 1 }}>{rating}</span>
         </span>
       </div>
     </div>
@@ -266,9 +266,9 @@ function ProvisionalGroup({ rows, myKey, onOpenFor }: { rows: GlobalRow[]; myKey
     <div style={{ marginTop: 22 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
         <span style={label}>Provisional</span>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{rows.length}</span>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{rows.length}</span>
       </div>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
         Their results count towards everyone else&apos;s rating, but {PROVISIONAL_GAMES} matches
         are needed before we put a number on where they stand.
       </div>
@@ -284,15 +284,15 @@ function ProvisionalGroup({ rows, myKey, onOpenFor }: { rows: GlobalRow[]; myKey
               borderTop: i ? "0.5px solid " + FEED_RAISED : "none",
             }}
           >
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, width: 20, flexShrink: 0 }}>–</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, width: 20, flexShrink: 0 }}>–</span>
             <Face row={r} size={34} dim />
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ ...nameStyle, fontSize: 14.5, color: FEED_TEXT_HI }}>{nameOf(r)}</span>
-              <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {(r.level?.cat || "No level")}{r.level?.sub ? " · " + String(r.level.sub).toLowerCase() : ""} · {r.gp} played
               </span>
             </span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, flex: "none" }}>{rec(r)}</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, flex: "none" }}>{rec(r)}</span>
           </button>
         ))}
       </SurfaceCard>
@@ -322,9 +322,9 @@ export function GlobalTable({ myAuthId, players, onOpenProfile, onBack }: {
       <>
         <Header onBack={onBack} />
         <SurfaceCard radius={18}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_THEY_LEAD }}>Global table unavailable.</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_THEY_LEAD }}>Global table unavailable.</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
             If this says the function is missing, the one-off SQL in supabase/schema_global_standings.sql hasn&apos;t been run yet.
           </div>
         </SurfaceCard>

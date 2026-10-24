@@ -79,7 +79,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
                 ) : (
                   <span style={{ color: MUTED, fontFamily: body, fontSize: 10 }}>
                     · player reported
-                    {isOwn && player.auth_id && <button onClick={() => setClaiming(true)} style={{ marginLeft: 6, background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Verify</button>}
+                    {isOwn && player.auth_id && <button onClick={() => setClaiming(true)} style={{ marginLeft: 6, background: "transparent", border: "none", color: BALL, fontFamily: body, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Verify</button>}
                   </span>
                 )}
               </Row>

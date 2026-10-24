@@ -24,7 +24,7 @@ function MessagesHeader({ onBack }: { onBack?: () => void }) {
           <ChevronLeft size={22} color={FEED_LIME} strokeWidth={2} />
         </button>
       )}
-      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 28, letterSpacing: "-0.035em", color: FEED_TEXT_HI }}>Messages</span>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 28, letterSpacing: "-0.035em", color: FEED_TEXT_HI }}>Messages</span>
     </div>
   );
 }
@@ -91,7 +91,7 @@ function Face({ t, name, player, size = 44 }: { t: Thread; name: string; player?
       aria-hidden="true"
       style={{
         ...common, display: "inline-grid", placeItems: "center", background: FEED_RAISED,
-        fontFamily: body, fontWeight: 500, fontSize: size * 0.34, letterSpacing: 0.3, color: FEED_TEXT_LOW,
+        fontFamily: body, fontWeight: 600, fontSize: size * 0.34, letterSpacing: 0.3, color: FEED_TEXT_LOW,
       }}
     >
       {initialsOf(player || name)}
@@ -139,13 +139,13 @@ function ThreadRowView({ t, players, onClick, first }: { t: Thread; players?: an
         <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 500, fontSize: 17, letterSpacing: "-0.2px", color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {name}
         </span>
-        <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_LOW, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_LOW, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {t.lastMessage ? (t.lastFromMe ? "You: " : "") + t.lastMessage : "No messages yet"}
         </span>
       </span>
       <span style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, alignSelf: "flex-start", marginTop: 2 }}>
         {t.last_message_at && (
-          <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_LOW }}>{when(t.last_message_at)}</span>
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_LOW }}>{when(t.last_message_at)}</span>
         )}
         {unread && <span style={{ width: 8, height: 8, borderRadius: 4, background: FEED_LIME, flexShrink: 0 }} />}
       </span>
@@ -273,7 +273,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
         >
         <Face t={t} name={who} player={whoPlayer} size={40} />
         <span style={{ minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{who}</span>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{who}</span>
           <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
             {t.status === "accepted" ? (msgs ? msgs.length + " message" + (msgs.length === 1 ? "" : "s") : " ") : t.isRequestToMe ? "Message request" : "Request sent — not accepted yet"}
           </span>
@@ -283,26 +283,26 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
 
       {t.isRequestToMe && (
         <div style={{ background: FEED_CARD, borderRadius: 18, padding: 16, marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
-            <span style={{ fontWeight: 500 }}>{who}</span> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
+            <span style={{ fontWeight: 600 }}>{who}</span> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={async () => { await acceptThread(t.id); onChanged?.(); }} style={{ flex: 1, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 14 }}>Accept</button>
-            <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ flex: 1, background: FEED_RAISED, color: FEED_TEXT_MID, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 14 }}>Delete</button>
+            <button onClick={async () => { await acceptThread(t.id); onChanged?.(); }} style={{ flex: 1, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14 }}>Accept</button>
+            <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ flex: 1, background: FEED_RAISED, color: FEED_TEXT_MID, border: "none", borderRadius: 12, padding: "11px 14px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14 }}>Delete</button>
           </div>
         </div>
       )}
 
       <div style={{ minHeight: 200 }}>
         {!msgs ? (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, padding: "24px 0" }}>Loading…</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, padding: "24px 0" }}>Loading…</div>
         ) : !msgs.length ? (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
             <Face t={t} name={who} player={whoPlayer} size={56} />
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginTop: 12 }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, marginTop: 12 }}>
               {who}
             </div>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
               No messages yet. Say something.
             </div>
           </div>
@@ -345,7 +345,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
               <React.Fragment key={m.id}>
                 {divider && (
                   <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "20px 0 12px" }}>
-                    <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
+                    <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>
                       {dividerLabel(m.created_at)}
                     </span>
                   </div>
@@ -355,7 +355,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
                     style={{
                       width: "calc(100% - 32px)", background: FEED_RAISED, color: FEED_TEXT_MID,
                       borderRadius: 14, padding: "9px 14px", textAlign: "center",
-                      fontFamily: body, fontWeight: 400, fontSize: 13, lineHeight: 1.45,
+                      fontFamily: body, fontWeight: 500, fontSize: 13, lineHeight: 1.45,
                     }}
                   >
                     {m.body}
@@ -369,7 +369,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
             <React.Fragment key={m.id}>
               {divider && (
                 <div style={{ textAlign: "center", margin: i === 0 ? "2px 0 12px" : "20px 0 12px" }}>
-                  <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
+                  <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>
                     {dividerLabel(m.created_at)}
                   </span>
                 </div>
@@ -394,7 +394,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
                       // A picture fills its bubble; text needs breathing
                       // room. Padding only when there are words.
                       padding: m.image_url && !m.body ? 0 : "8px 12px",
-                      fontFamily: body, fontWeight: 400, fontSize: 15, lineHeight: 1.45,
+                      fontFamily: body, fontWeight: 500, fontSize: 15, lineHeight: 1.45,
                       whiteSpace: "pre-wrap", wordBreak: "break-word",
                       overflow: "hidden",
                     }}
@@ -411,7 +411,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
                     {m.body}
                   </div>
                   {isMyLast && m.read_at && !withNext && (
-                    <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 4, textAlign: "right" }}>
+                    <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 4, textAlign: "right" }}>
                       Seen
                     </div>
                   )}
@@ -460,7 +460,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
             placeholder={t.status === "pending" ? "Send a request…" : "Message…"}
             style={{
               flex: 1, minWidth: 0, height: 40, background: FEED_CARD, border: "none", borderRadius: 20,
-              padding: "0 16px", fontFamily: body, fontWeight: 400, fontSize: 15,
+              padding: "0 16px", fontFamily: body, fontWeight: 500, fontSize: 15,
               color: FEED_TEXT_HI, outline: "none", boxSizing: "border-box" as const,
             }}
           />
@@ -481,7 +481,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
         </div>
         </div>
       ) : (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
           Accept the request above to reply.
         </div>
       )}
@@ -496,7 +496,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
       )}
 
       {t.status === "accepted" && (
-        <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ background: "transparent", border: "none", padding: "18px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW }}>
+        <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ background: "transparent", border: "none", padding: "18px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW }}>
           Delete this conversation
         </button>
       )}
@@ -539,9 +539,9 @@ export function Messages({ startWith, onStarted, players, onBack, onOpenProfile 
       <>
       <MessagesHeader onBack={onBack} />
       <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_THEY_LEAD }}>Messages unavailable.</div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_THEY_LEAD }}>Messages unavailable.</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
           If this says a table or function is missing, the one-off SQL in supabase/schema_messages.sql hasn&apos;t been run yet.
         </div>
       </div>
@@ -568,8 +568,8 @@ export function Messages({ startWith, onStarted, players, onBack, onOpenProfile 
       {requests.length > 0 && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: CHALK }}>Requests</span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: CHALK }}>Requests</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
           </div>
           <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden", marginBottom: 18 }}>
             {requests.map((t, i) => <ThreadRowView key={t.id} t={t} players={players} first={i === 0} onClick={() => setOpenId(t.id)} />)}
@@ -581,13 +581,13 @@ export function Messages({ startWith, onStarted, players, onBack, onOpenProfile 
       )}
       {conversations.length > 0 && (
         <>
-          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
+          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
           <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden" }}>
             {conversations.map((t, i) => <ThreadRowView key={t.id} t={t} players={players} first={i === 0} onClick={() => setOpenId(t.id)} />)}
           </div>
         </>
       )}
-      {err && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_THEY_LEAD, marginTop: 10 }}>{err}</div>}
+      {err && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_THEY_LEAD, marginTop: 10 }}>{err}</div>}
     </>
   );
 }

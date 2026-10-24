@@ -43,7 +43,7 @@ export function Avatar({ player, size = 34, enlargeable = false }: any) {
         style={{
           width: size, height: size, borderRadius: size / 2, flexShrink: 0,
           display: "inline-grid", placeItems: "center", background: PANEL2,
-          fontFamily: bodyFont, fontWeight: 500, fontSize: size * 0.34,
+          fontFamily: bodyFont, fontWeight: 600, fontSize: size * 0.34,
           letterSpacing: 0.3, color: FEED_TEXT_LOW,
         }}
       >

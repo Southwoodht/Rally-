@@ -107,12 +107,12 @@ export function competitionLabel(c: Competition, entryCount: number, round: numb
 }
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
 const btn = (fill: string, ink: string): React.CSSProperties => ({
-  flex: 1, fontFamily: body, fontWeight: 500, fontSize: 13.5, padding: "11px 10px",
+  flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13.5, padding: "11px 10px",
   borderRadius: 10, border: "none", cursor: "pointer", background: fill, color: ink,
 });
 
@@ -124,7 +124,7 @@ const field: React.CSSProperties = {
 const segment = (on: boolean): React.CSSProperties => ({
   flex: 1, height: 36, borderRadius: 10, border: "none", cursor: "pointer",
   background: on ? FEED_LIME : FEED_RAISED, color: on ? FEED_LIME_INK : FEED_TEXT_MID,
-  fontFamily: body, fontSize: 14, fontWeight: 500,
+  fontFamily: body, fontSize: 14, fontWeight: 600,
 });
 
 /** "pairs" or "players" — the one word that differs between the two kinds. */
@@ -193,7 +193,7 @@ export function Competitions(props: Props) {
       <button key={c.id} onClick={() => setOpenId(c.id)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "11px 0", cursor: "pointer", textAlign: "left", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
         <Trophy size={18} color={c.status === "running" ? FEED_LIME : FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</span>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</span>
           <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>{sub}</span>
         </span>
         <ChevronRight size={16} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0 }} />
@@ -208,7 +208,7 @@ export function Competitions(props: Props) {
       <div className="sw-fix-side">
       <SurfaceCard radius={16} pad="14px 14px 6px" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>Competitions</span>
+          <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>Competitions</span>
           {canManage && (
             <button onClick={() => setCreating(true)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>
               <Plus size={14} strokeWidth={2.4} />New
@@ -361,7 +361,7 @@ function RowMatches({ pairId, results, pointsWin, pointsDraw, left, entryName, o
         const score = r.walkover ? "walkover" : (r.sets || []).map((x) => asA ? `${x.a}-${x.b}` : `${x.b}-${x.a}`).join(", ");
         return (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, width: 14, flexShrink: 0, color: outcome === "W" ? FEED_LIME : outcome === "L" ? DOT_LOSS : FEED_TEXT_HI }}>{outcome}</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, width: 14, flexShrink: 0, color: outcome === "W" ? FEED_LIME : outcome === "L" ? DOT_LOSS : FEED_TEXT_HI }}>{outcome}</span>
             <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
               <span style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {outcome === "W" ? "Beat " : outcome === "L" ? "Lost to " : "Drew with "}{entryName(opp)}
@@ -414,7 +414,7 @@ function Detail(props: Props & {
       </button>
 
       <SurfaceCard radius={16} pad="16px 14px" style={{ marginBottom: 14 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_TEXT_HI }}>{c.name}</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI }}>{c.name}</div>
         <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3 }}>
           {c.format === "league"
             ? `League · ${n} ${unit(kind, n)} · play each ${c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · ${c.pointsWin} for a win, ${c.pointsDraw} for a draw`
@@ -425,7 +425,7 @@ function Detail(props: Props & {
         {champ && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 12, padding: "12px 14px", marginTop: 14 }}>
             <Trophy size={20} strokeWidth={2} />
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15 }}>Won by {entryName(champ, false)}</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15 }}>Won by {entryName(champ, false)}</span>
           </div>
         )}
 
@@ -719,7 +719,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
 
   return (
     <SurfaceCard radius={16} pad="16px 14px">
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 14 }}>{preset ? preset.title : `New ${kind} competition`}</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 14 }}>{preset ? preset.title : `New ${kind} competition`}</div>
 
       <div style={{ ...label, marginBottom: 6 }}>Name</div>
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder={doubles ? "e.g. Winter Doubles 2026" : "e.g. Club Championship 2026"} style={{ ...field, marginBottom: 14 }} />

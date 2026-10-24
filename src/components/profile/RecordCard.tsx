@@ -44,7 +44,7 @@ export interface RecordCardProps {
 }
 
 // Appendix C: W-D-L labels are 13, the stat-row labels 12.
-const label: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID };
+const label: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID };
 
 function Tally({ n, colour, caption, onClick, active }: { n: number; colour: string; caption: string; onClick?: () => void; active?: boolean }) {
   const inner = (
@@ -113,13 +113,13 @@ export function RecordCard({ record, form, winRate, currentStreak, bestStreak, r
         <div style={{ borderTop: RULE, marginTop: 14, paddingTop: 6 }}>
           {rankings.map((r) => (
             <div key={r.label} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "8px 0" }}>
-              <span style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_MID, flexShrink: 0 }}>{r.label}</span>
+              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_MID, flexShrink: 0 }}>{r.label}</span>
               <span style={{ textAlign: "right", minWidth: 0 }}>
                 {/* 19/700 display. §5: the signed-in user's own league row
                     is the accent; the others are plain. */}
                 <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 19, color: r.emphasis ? FEED_LIME : FEED_TEXT_HI }}>{r.value}</span>
                 {r.qualifier && (
-                  <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginLeft: 6 }}>{r.qualifier}</span>
+                  <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginLeft: 6 }}>{r.qualifier}</span>
                 )}
               </span>
             </div>

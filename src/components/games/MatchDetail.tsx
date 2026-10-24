@@ -18,7 +18,7 @@ function Notice({ children, tone = "lime" }: { children: React.ReactNode; tone?:
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, padding: "9px 12px", borderRadius: 12, background: FEED_RAISED }}>
       <span style={{ width: 6, height: 6, borderRadius: 3, background: colour, flexShrink: 0 }} />
-      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_HI }}>{children}</span>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_HI }}>{children}</span>
     </div>
   );
 }
@@ -59,7 +59,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
         const s = side(which);
         return (
           <div key={which} style={{ display: "flex", gap: 8, marginTop: 8, fontFamily: body, fontSize: 12.5, lineHeight: 1.4 }}>
-            <span style={{ fontWeight: 500, color: FEED_TEXT_HI, flexShrink: 0 }}>{s.name}</span>
+            <span style={{ fontWeight: 600, color: FEED_TEXT_HI, flexShrink: 0 }}>{s.name}</span>
             <span style={{ ...tabular, color: FEED_TEXT_MID }}>{s.text}</span>
           </div>
         );
@@ -169,8 +169,8 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
 
   const Row = ({ label, children }: any) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "11px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, gap: 12 }}>
-      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>{label}</span>
-      <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_HI, textAlign: "right" }}>{children}</span>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>{label}</span>
+      <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, textAlign: "right" }}>{children}</span>
     </div>
   );
 
@@ -192,8 +192,8 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>Match detail</div>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", color: FEED_TEXT_MID, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 400, fontSize: 13, cursor: "pointer" }}>Close</button>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID }}>Match detail</div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: FEED_TEXT_MID, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 500, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
 
         <MatchCard

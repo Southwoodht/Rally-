@@ -47,7 +47,7 @@ import {
 type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels" | "disputes" | "suggest";
 
 const lbl: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 const fld: React.CSSProperties = {
@@ -55,7 +55,7 @@ const fld: React.CSSProperties = {
   padding: "10px 12px", width: "100%", boxSizing: "border-box",
 };
 const btn = (fill: string, ink: string): React.CSSProperties => ({
-  flex: 1, fontFamily: body, fontWeight: 500, fontSize: 14, padding: "11px 10px",
+  flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, padding: "11px 10px",
   borderRadius: 10, border: "none", cursor: "pointer", background: fill, color: ink,
 });
 const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
@@ -142,7 +142,7 @@ export function LeagueHub(props: any) {
     return (
       <div>
         <SurfaceCard radius={18} pad="18px 16px" style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{group?.name || "Your club"}</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>{group?.name || "Your club"}</div>
           <div style={{ ...note, marginTop: 4 }}>{active} players{doublesEnabled ? " · singles and doubles" : ""}</div>
           {leagueJoinCode && (
             <button onClick={invite} style={{ ...btn(FEED_LIME, FEED_LIME_INK), width: "100%", marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -160,7 +160,7 @@ export function LeagueHub(props: any) {
   const tile = (icon: React.ReactNode, title: string, onClick: () => void, primary = false) => (
     <button onClick={onClick} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10, background: primary ? FEED_LIME : FEED_CARD, color: primary ? FEED_LIME_INK : FEED_TEXT_HI, border: "none", borderRadius: 16, padding: "14px 12px", cursor: "pointer", textAlign: "left" }}>
       {icon}
-      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, lineHeight: 1.2 }}>{title}</span>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{title}</span>
     </button>
   );
 
@@ -196,7 +196,7 @@ export function LeagueHub(props: any) {
         <SurfaceCard radius={18} pad="12px 14px" style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>Club code — anyone can join with it</div>
-            <div style={{ fontFamily: body, fontSize: 24, fontWeight: 500, letterSpacing: 3, color: FEED_TEXT_HI, ...tabular }}>{leagueJoinCode}</div>
+            <div style={{ fontFamily: body, fontSize: 24, fontWeight: 600, letterSpacing: 3, color: FEED_TEXT_HI, ...tabular }}>{leagueJoinCode}</div>
           </div>
           <button
             onClick={async () => {
@@ -214,7 +214,7 @@ export function LeagueHub(props: any) {
       {showChecklist && (
         <SurfaceCard radius={18} pad="16px 14px 8px" style={{ marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>Getting started</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>Getting started</span>
             <button onClick={hideChecklist} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>Hide</button>
           </div>
           {steps.map((s, i) => (
@@ -277,7 +277,7 @@ export function LeagueHub(props: any) {
 function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSingles, onTurnOn }: any) {
   const option = (title: string, sub: string, onClick: () => void, disabled = false) => (
     <button disabled={disabled} onClick={onClick} style={{ display: "block", width: "100%", textAlign: "left", background: FEED_CARD, border: "none", borderRadius: 14, padding: "14px 14px", marginBottom: 10, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.55 : 1 }}>
-      <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>{title}</span>
+      <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI }}>{title}</span>
       <span style={{ display: "block", ...note, marginTop: 3 }}>{sub}</span>
     </button>
   );
@@ -294,7 +294,7 @@ function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSi
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 97 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_RAISED, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 34px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Start a competition</span>
+          <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>Start a competition</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 14, cursor: "pointer" }}>Close</button>
         </div>
         <div style={{ ...note, marginBottom: 14 }}>A league (everyone plays everyone, with a table) or a knockout (winners go through). You choose next.</div>
@@ -412,7 +412,7 @@ function SinglesFixturesPage({ players, fixtures, onGenerate, onClearFixtures, o
   return (
     <div>
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>Everyone plays everyone</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI }}>Everyone plays everyone</div>
         <div style={{ ...note, margin: "4px 0 12px" }}>
           Creates a match for every pair of the {active.length} active players. They show in Fixtures, and results go in as normal.
         </div>
@@ -427,7 +427,7 @@ function SinglesFixturesPage({ players, fixtures, onGenerate, onClearFixtures, o
       </SurfaceCard>
 
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 10 }}>Add one match</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 10 }}>Add one match</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
           <select value={a} onChange={(e) => setA(e.target.value)} style={{ ...fld, flex: 1 }}><option value="">Player…</option>{opts.map((p: any) => <option key={p.id} value={p.id}>{fullNameOf(p)}</option>)}</select>
           <span style={{ ...note }}>v</span>
@@ -503,7 +503,7 @@ function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSe
       <SurfaceCard radius={18} pad="16px 14px">
         {s ? (
           <>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{s.name}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>{s.name}</div>
             <div style={{ ...note, marginTop: 4 }}>{fmtDate(s.start)}{s.end ? " to " + fmtDate(s.end) : " · no end date"}</div>
             <div style={{ ...note, marginTop: 10 }}>Ending a season here removes it. Once supabase/schema_seasons.sql has been run, finished seasons are kept with their final standings.</div>
             <div style={{ marginTop: 14 }}>
@@ -519,7 +519,7 @@ function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSe
           </>
         ) : (
           <>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 4 }}>Start a season</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 4 }}>Start a season</div>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name, e.g. Winter 2026/27" style={{ ...fld, marginBottom: 10 }} />
             <div style={{ ...lbl, marginBottom: 6 }}>Starts</div>
             <input type="date" value={start} onChange={(e) => setStart(e.target.value)} style={{ ...dateFld, marginBottom: 10 }} />
@@ -542,7 +542,7 @@ function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSe
     <>
       {current ? (
         <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{current.name}</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>{current.name}</div>
           <div style={{ ...note, marginTop: 4 }}>
             {formatMatchDate(seasonWindow(current).start)}{current.endsOn ? " to " + formatMatchDate(seasonWindow(current).end) : " · no end date"} · {daysLeftLabel(current)}
           </div>
@@ -580,7 +580,7 @@ function SeasonsPage({ group, updateGroup, seasonsState, onStartSeason, onEditSe
         </SurfaceCard>
       ) : (
         <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 4 }}>Start a season</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, marginBottom: 4 }}>Start a season</div>
           <div style={{ ...note, marginBottom: 12 }}>
             Gives the table a This season view and a countdown on Home. Competitions can be added to it, and take its dates. No results are touched.
           </div>
@@ -819,14 +819,14 @@ function DataPage({ matches, onClearResults, onImport, isOwner, group, leagueId 
           — one club's own history, Sam v Cheese and all — into whichever
           league pressed it. It now opens the real importer. */}
       <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: FEED_TEXT_HI }}>Import old results</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI }}>Import old results</div>
         <div style={{ ...note, margin: "4px 0 12px" }}>Paste results from before the club used Southwood — from a spreadsheet, notes or a group chat. You check every one before it&apos;s added.</div>
         <button onClick={onImport} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%" }}>Import results</button>
       </SurfaceCard>
       {/* Two steps and the number out loud (§3). It sits alone on its own
           page now, rather than one mis-tap from the import button. */}
       <SurfaceCard radius={18} pad="16px 14px">
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15.5, color: DOT_LOSS }}>Clear all results</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: DOT_LOSS }}>Clear all results</div>
         <div style={{ ...note, margin: "4px 0 12px" }}>Deletes every singles result in this club and keeps the players. For starting completely fresh — it cannot be undone.</div>
         {!isOwner && !friendly ? (
           <div style={note}>Only the club's owner can clear results.</div>

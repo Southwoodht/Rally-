@@ -22,7 +22,7 @@ export default function Welcome() {
   };
   const primary: React.CSSProperties = {
     width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 14,
-    padding: "15px 16px", fontFamily: body, fontSize: 15, fontWeight: 500,
+    padding: "15px 16px", fontFamily: body, fontSize: 15, fontWeight: 600,
     cursor: "pointer",
   };
   const secondary: React.CSSProperties = {

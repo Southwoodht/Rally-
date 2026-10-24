@@ -1289,15 +1289,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   if (friendlyUnavailable) return (
     <div style={{ ...wrap, minHeight: "100vh", padding: "24px 18px 24px" }}>
       <div style={{ maxWidth: 520, margin: "0 auto" }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: CHALK }}>Friendlies aren&apos;t switched on yet</div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: MUTED, marginTop: 10, lineHeight: 1.55 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: CHALK }}>Friendlies aren&apos;t switched on yet</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14.5, color: MUTED, marginTop: 10, lineHeight: 1.55 }}>
           Matches outside a league need one database update that hasn&apos;t been
           run — <span style={{ color: CHALK }}>supabase/schema_friendly_players.sql</span>.
           Nothing is broken, and your clubs are unaffected.
         </div>
         <button
           onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}
-          style={{ width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 16, padding: "13px 14px", marginTop: 18, cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 15 }}
+          style={{ width: "100%", background: BALL, color: COURT, border: "none", borderRadius: 16, padding: "13px 14px", marginTop: 18, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15 }}
         >
           Back to your clubs
         </button>
@@ -2027,7 +2027,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     <SurfaceCard radius={18} pad="0" style={{ marginBottom: 14 }}>
       <button onClick={() => { setSport("doubles"); setMixerOpen(true); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: "16px", cursor: "pointer", textAlign: "left" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Club night mixer</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>Club night mixer</div>
           <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 2 }}>Doubles · tick who&apos;s here, get tonight&apos;s courts</div>
         </div>
         <ChevronRight size={18} color={FEED_TEXT_MID} />
@@ -2058,7 +2058,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           </div>
         )}
         {tab === "ladder" && !personal && pendingForMe > 0 && <button onClick={() => setTab("home")} style={{ width: "100%", background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", color: BALL, fontFamily: body, fontSize: 14, fontWeight: 600, textAlign: "left" }}>{pendingForMe} result{pendingForMe > 1 ? "s" : ""} waiting for you to agree →</button>}
-        {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><Globe size={18} /><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} /></button>}
+        {tab === "ladder" && <button onClick={() => setTab("global")} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14, cursor: "pointer", textAlign: "left" }}><Globe size={18} /><span style={{ flex: 1 }}><span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: CHALK }}>Global table</span><span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>Everyone you&apos;ve played, ranked on their own record</span></span><ChevronRight size={16} color={BALL} strokeWidth={2} style={{ flexShrink: 0 }} /></button>}
         {tab === "ladder" && (
           <div style={{ ...segmentTrack, marginBottom: 14 }}>
             <button onClick={() => setTableMode("standings")} style={segmentOption(tableView === "standings")}>Standings</button>
@@ -2070,14 +2070,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "ladder" && tableView === "divisions" && divisionComps.length === 0 && (
           <SurfaceCard radius={16} pad="16px">
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>No divisions yet</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>No divisions yet</div>
             <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>
               A division is a League competition — call them Division 1, Division 2 and so on. Each one shows here as its own
               table, like the football. Put them in a season to give the matches play-by dates.
             </div>
             <button
               onClick={startDivision}
-              style={{ marginTop: 12, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}
+              style={{ marginTop: 12, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}
             >
               Create a division
             </button>
@@ -2729,7 +2729,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 130, overflowY: "auto", paddingBottom: 40 }}>
           <div style={{ ...wrap, paddingTop: "calc(env(safe-area-inset-top) + 14px)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
-              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>Log a mixer game</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>Log a mixer game</span>
               <button onClick={() => { mixerLog.done(false); setMixerLog(null); }} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 15, cursor: "pointer" }}>Close</button>
             </div>
             <DoublesEntry
@@ -2759,7 +2759,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 130, overflowY: "auto", paddingBottom: 40 }}>
             <div style={{ ...wrap, paddingTop: "calc(env(safe-area-inset-top) + 14px)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 16px" }}>
-                <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>{mayEdit ? "Edit doubles result" : "Doubles result"}</span>
+                <span style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>{mayEdit ? "Edit doubles result" : "Doubles result"}</span>
                 <button onClick={close} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 15, cursor: "pointer" }}>Close</button>
               </div>
               {mayEdit ? (
@@ -2808,8 +2808,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <div style={{ ...listRow, cursor: "default" }}><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Theme</span><ThemePicker /></div>
               <button onClick={() => { setMenuOpen(false); setTab("myprofile"); }} style={listRow}><User size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Edit my profile</span><span style={{ color: MUTED }}>›</span></button>
               <button onClick={() => { setMenuOpen(false); setTab("settings"); }} style={listRow}><Gear size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>{canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"}</span><span style={{ color: MUTED }}>›</span></button>
-              {(canSetLevels || isFriendlyLeague(gid)) && <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>}
-              {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Trophies &amp; honours</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
+              {(canSetLevels || isFriendlyLeague(gid)) && <button onClick={() => { setMenuOpen(false); setLevelsFrom("profile"); setTab("levels"); }} style={listRow}><Clock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Level history</span>{missingLevelHistory > 0 && <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: COURT, background: BALL, borderRadius: 999, padding: "1px 8px" }}>{missingLevelHistory}</span>}<span style={{ color: MUTED }}>›</span></button>}
+              {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Trophies &amp; honours</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               {canManageMatches && !personal && !isFriendlyLeague(gid) && <button onClick={() => { setMenuOpen(false); setBoardOpen(true); }} style={listRow}><Tv size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Clubhouse TV</span><span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
               <a href="/privacy" style={{ ...listRow, textDecoration: "none" }}><Lock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Privacy</span><span style={{ color: MUTED }}>›</span></a>

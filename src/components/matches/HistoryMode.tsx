@@ -45,7 +45,7 @@ const fmtDate = (ts: number) =>
 function Chip({ grade, faded }: { grade: Grade | null; faded?: boolean }) {
   if (!grade) {
     return (
-      <span style={{ display: "inline-block", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, border: "1px solid " + FEED_RAISED, borderRadius: 999, padding: "2px 9px" }}>
+      <span style={{ display: "inline-block", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, border: "1px solid " + FEED_RAISED, borderRadius: 999, padding: "2px 9px" }}>
         {UNGRADED_LABEL}
       </span>
     );
@@ -55,7 +55,7 @@ function Chip({ grade, faded }: { grade: Grade | null; faded?: boolean }) {
   return (
     <span
       style={{
-        display: "inline-block", fontFamily: body, fontWeight: 500, fontSize: 11.5,
+        display: "inline-block", fontFamily: body, fontWeight: 600, fontSize: 11.5,
         color: lime ? FEED_ON_HERO : testing ? FEED_LIME : FEED_TEXT_MID,
         background: lime ? FEED_HERO : FEED_RAISED,
         borderRadius: 999, padding: "2px 9px",
@@ -82,7 +82,7 @@ function Ageing({ row }: { row: GradedRow }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
       <Icon size={13} color={better ? FEED_LIME : FEED_TEXT_LOW} strokeWidth={2} style={{ flexShrink: 0 }} />
-      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>
         {g.opponentCategory} then, {lower(g.opponentCategoryNow)} now — {better ? "aged well" : "aged badly"}
       </span>
     </div>
@@ -113,7 +113,7 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
       />
       <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
         <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          <span style={{ fontWeight: 500 }}>{VERB[row.outcome]}</span>{" "}
+          <span style={{ fontWeight: 600 }}>{VERB[row.outcome]}</span>{" "}
           {onOpenPlayer && row.opponent?.id ? (
             <button
               onClick={(e) => { e.stopPropagation(); onOpenPlayer(row.opponent.id); }}
@@ -123,7 +123,7 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
             </button>
           ) : name}
         </span>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>
           {fmtDate(row.date)}
         </span>
       </div>
@@ -132,7 +132,7 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
           ellipsis on any match that went to three sets, which loses the one
           thing the row is actually about. */}
       {row.score && (
-        <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3 }}>
+        <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3 }}>
           {row.score}
         </div>
       )}
@@ -142,7 +142,7 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
             but nobody has agreed it yet, and the row should not pretend
             otherwise. Counting a result and flagging it are different jobs. */}
         {row.pending && (
-          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "3px 9px" }}>
+          <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "3px 9px" }}>
             Unconfirmed
           </span>
         )}
@@ -156,7 +156,7 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
       </div>
 
       {!g.then && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 6 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 6 }}>
           No level recorded at the time
         </div>
       )}
@@ -174,17 +174,17 @@ export function UngradedBanner({ ungraded, total, onFix }: { ungraded: number; t
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <AlertCircle size={16} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0, marginTop: 2 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>
             {ungraded} of {total} can&apos;t be graded
           </div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 2 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 2 }}>
             Those opponents have no level history
           </div>
         </div>
         {onFix && (
           <button
             onClick={onFix}
-            style={{ background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "8px 16px", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 13, flexShrink: 0 }}
+            style={{ background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "8px 16px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 13, flexShrink: 0 }}
           >
             Fix
           </button>
@@ -206,8 +206,8 @@ export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels, trophie
   if (!q.total) {
     return (
       <SurfaceCard radius={18}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No matches yet.</div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No matches yet.</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
           Log a result and it appears here, graded against whoever you played.
         </div>
       </SurfaceCard>

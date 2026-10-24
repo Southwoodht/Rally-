@@ -72,7 +72,7 @@ export function MatchCard({ sport, dateLabel, format, winner, loser, drawn, cont
   // "Zaach dominates Sam · 10–2" when the score was one-sided
   // (core/domination.ts); otherwise the plain "Zaach won".
   const barText = drawn ? "Drew" : headline || shortNameOf(winner.player) + " won";
-  const metaStyle: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW };
+  const metaStyle: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW };
 
   return (
     <SurfaceCard clip>
@@ -111,11 +111,11 @@ export function MatchCard({ sport, dateLabel, format, winner, loser, drawn, cont
           cursor: onOpenMatch ? "pointer" : "default",
         }}
       >
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_LIME_INK, flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {barText}
         </span>
         {context && (
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME_INK_2, flexShrink: 0, whiteSpace: "nowrap" }}>{context}</span>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, flexShrink: 0, whiteSpace: "nowrap" }}>{context}</span>
         )}
       </div>
     </SurfaceCard>

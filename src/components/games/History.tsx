@@ -163,7 +163,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                         <button
                           onClick={() => !recent && onNudge(m.id)}
                           disabled={recent}
-                          style={{ marginTop: 8, width: "100%", fontFamily: body, fontWeight: 500, fontSize: 13, padding: "9px 10px", borderRadius: 10, border: "none", cursor: recent ? "default" : "pointer", background: recent ? PANEL2 : BALL, color: recent ? MUTED : COURT }}
+                          style={{ marginTop: 8, width: "100%", fontFamily: body, fontWeight: 600, fontSize: 13, padding: "9px 10px", borderRadius: 10, border: "none", cursor: recent ? "default" : "pointer", background: recent ? PANEL2 : BALL, color: recent ? MUTED : COURT }}
                         >
                           {recent ? "Nudged " + agoLabel(since!) : "Nudge " + other}
                         </button>
@@ -283,14 +283,14 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             if (!up.length) return null;
             return (
               <div style={{ marginBottom: 18 }}>
-                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 8 }}>Coming up</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID, marginBottom: 8 }}>Coming up</div>
                 {up.map((f) => { const p1 = Math.round(predictProb(f.p1, f.p2, matches, elo, players) * 100); return (
                   <div key={f.id} style={{ background: PANEL, border: "none", borderRadius: 14, padding: 12, marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{nm(f.p1)} v {nm(f.p2)}</span>
-                      <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{formatMatchDateTime(f.booked)}</span>
+                      <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{formatMatchDateTime(f.booked)}</span>
                     </div>
-                    <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_MID, marginBottom: 4 }}><span>{nm(f.p1)} {p1}%</span><span>{100 - p1}% {nm(f.p2)}</span></div>
+                    <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, marginBottom: 4 }}><span>{nm(f.p1)} {p1}%</span><span>{100 - p1}% {nm(f.p2)}</span></div>
                     <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: PANEL2 }}><div style={{ width: p1 + "%", background: BALL }} /><div style={{ width: (100 - p1) + "%", background: MUTED }} /></div>
                   </div>
                 ); })}

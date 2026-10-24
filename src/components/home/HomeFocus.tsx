@@ -78,7 +78,7 @@ const card: React.CSSProperties = {
   background: FEED_CARD, borderRadius: FEED_RADIUS, padding: FEED_PAD_Y + "px " + FEED_PAD + "px", minWidth: 0,
 };
 const quiet: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW,
+  fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW,
 };
 
 /**
@@ -267,7 +267,7 @@ function NextUpCard({ nextUp }: { nextUp: NextUp }) {
         <div style={{ ...quiet, ...tabular, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {when}{nextUp.venue ? " · " + nextUp.venue : ""}
         </div>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 22, letterSpacing: "-0.02em", color: FEED_TEXT_HI, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 22, letterSpacing: "-0.02em", color: FEED_TEXT_HI, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           vs {nextUp.opponent}
         </div>
         {nextUp.h2h && (

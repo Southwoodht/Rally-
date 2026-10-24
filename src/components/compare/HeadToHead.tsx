@@ -38,7 +38,7 @@ function FilterChip({ active, onClick, children }: any) {
 }
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
@@ -116,9 +116,9 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
     return (
       <div style={{ padding: "10px 0", borderBottom: last ? undefined : "0.5px solid " + FEED_HAIRLINE }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 500, color: aWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "left" }}>{av}</span>
-          <span style={{ flex: "none", textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{label}</span>
-          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 500, color: bWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "right" }}>{bv}</span>
+          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 600, color: aWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "left" }}>{av}</span>
+          <span style={{ flex: "none", textAlign: "center", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{label}</span>
+          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 600, color: bWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "right" }}>{bv}</span>
         </div>
         {both && total > 0 && (
           <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", marginTop: 7, background: FEED_RAISED }}>
@@ -201,7 +201,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
         </button>
       </div>
       {explainerOpen && (
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 14 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 14 }}>
           Pick any two players — this works even if they have never played each other.
         </div>
       )}
@@ -223,7 +223,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
           style={{
             display: "inline-flex", alignItems: "center", gap: 5, background: FEED_CARD, border: "none",
             borderRadius: 999, padding: "7px 12px", cursor: a || b ? "pointer" : "default",
-            fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, opacity: a || b ? 1 : 0.5,
+            fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, opacity: a || b ? 1 : 0.5,
           }}
         >
           <ArrowLeftRight size={13} strokeWidth={2} />Swap
@@ -265,16 +265,16 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             return (
               <div style={{ background: FEED_CARD, borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
                 <div style={{ ...sectionLabel, color: FEED_LIME, marginBottom: 5 }}>Rivalry · {rivalry.total} matches</div>
-                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, marginBottom: 3 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
-                <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, marginBottom: 3 }}>{leader ? `${leader} leads ${leadRec}` : `Tied ${rivalry.w}-${rivalry.d}-${rivalry.l}`}</div>
+                <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{streakName ? `Current streak: ${streakName} W${rivalry.streak.count} · ` : ""}Last meeting: {fmtDate(rivalry.lastMeeting)}</div>
               </div>
             );
           })()}
           <SurfaceCard radius={18} style={{ marginBottom: 12 }}>
-            <div style={{ textAlign: "center", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, letterSpacing: 0 }}>Predicted win</div>
+            <div style={{ textAlign: "center", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, letterSpacing: 0 }}>Predicted win</div>
             <div style={{ ...tabular, display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 8 }}>
-              <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: pctA >= 50 ? FEED_LIME : FEED_TEXT_MID }}>{pctA}%</span>
-              <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: pctA < 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - pctA}%</span>
+              <span style={{ fontFamily: body, fontSize: 34, fontWeight: 600, letterSpacing: "-0.04em", color: pctA >= 50 ? FEED_LIME : FEED_TEXT_MID }}>{pctA}%</span>
+              <span style={{ fontFamily: body, fontSize: 34, fontWeight: 600, letterSpacing: "-0.04em", color: pctA < 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - pctA}%</span>
             </div>
             {/* The underdog's half is the loss green, not a red: red against
                 lime frames the other player as an error state, and coral was
@@ -284,17 +284,17 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
               <div style={{ width: (100 - pctA) + "%", background: FEED_LOSS }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 6 }}>
-              <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(a)}</span>
-              <span style={{ flex: 1, minWidth: 0, textAlign: "right", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(b)}</span>
+              <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(a)}</span>
+              <span style={{ flex: 1, minWidth: 0, textAlign: "right", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(b)}</span>
             </div>
             {(explanation || venue) && (
               <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 14, paddingTop: 12 }}>
                 {venue && (
-                  <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, lineHeight: 1.5, marginBottom: explanation ? 6 : 0 }}>
+                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, lineHeight: 1.5, marginBottom: explanation ? 6 : 0 }}>
                     {venuePrediction?.confident ? `Factoring in results at ${venue}.` : `Not enough games at ${venue} yet to say — showing the overall prediction.`}
                   </div>
                 )}
-                {explanation && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{explanation}</div>}
+                {explanation && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{explanation}</div>}
               </div>
             )}
           </SurfaceCard>
@@ -307,7 +307,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             <SurfaceCard radius={16} style={{ marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                 <AlertCircle size={16} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0, marginTop: 1 }} />
-                <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
                   {thin.map((t: any) => t.name + " has played " + t.gp + (t.gp === 1 ? " match" : " matches")).join(", and ")}.
                   {" "}Treat the prediction as a rough guide.
                 </div>
@@ -335,8 +335,8 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
               <div key={i} style={{ flex: 1, minWidth: 0, paddingLeft: i ? 12 : 0, paddingRight: i ? 0 : 12, borderLeft: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                 <div style={{ ...sectionLabel, marginBottom: 7, textAlign: i ? "right" : "left" }}>Best wins</div>
                 {s.top3.length ? s.top3.map((w, j) => (
-                  <div key={j} style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_HI, padding: "4px 0", textAlign: i ? "right" : "left" }}><span style={{ ...tabular, color: FEED_TEXT_LOW }}>{j + 1}</span>  {nm(w.oid)} <span style={{ ...tabular, color: FEED_TEXT_MID }}>{w.yr}</span></div>
-                )) : <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, textAlign: i ? "right" : "left" }}>None yet</div>}
+                  <div key={j} style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, padding: "4px 0", textAlign: i ? "right" : "left" }}><span style={{ ...tabular, color: FEED_TEXT_LOW }}>{j + 1}</span>  {nm(w.oid)} <span style={{ ...tabular, color: FEED_TEXT_MID }}>{w.yr}</span></div>
+                )) : <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, textAlign: i ? "right" : "left" }}>None yet</div>}
               </div>
             ))}
           </div>
@@ -359,7 +359,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
                 />
               );
             });
-            const none = (t: string) => <GroupRow first title={<span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>{t}</span>} />;
+            const none = (t: string) => <GroupRow first title={<span style={{ fontWeight: 500, color: FEED_TEXT_MID }}>{t}</span>} />;
             return (
               <div key={pid} style={{ marginTop: 22 }}>
                 <GroupLabel>{first} · winning against</GroupLabel>
@@ -387,7 +387,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
               } as MatchHistoryItem;
             })} />
           ) : (
-            <GroupCard><GroupRow first title={<span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>Never played each other</span>} /></GroupCard>
+            <GroupCard><GroupRow first title={<span style={{ fontWeight: 500, color: FEED_TEXT_MID }}>Never played each other</span>} /></GroupCard>
           )}
         </>
       ) : <Empty msg="Pick two players to compare." />}

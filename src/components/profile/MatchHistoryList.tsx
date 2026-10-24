@@ -154,7 +154,7 @@ export function MatchHistoryList({ items, years, trophies }: {
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              <span style={{ fontWeight: 500 }}>{VERB[m.outcome]}</span>{" "}
+              <span style={{ fontWeight: 600 }}>{VERB[m.outcome]}</span>{" "}
               {m.opponentId && m.onOpenPlayer ? (
                 <button
                   onClick={(e) => { e.stopPropagation(); m.onOpenPlayer!(m.opponentId!); }}
@@ -165,14 +165,14 @@ export function MatchHistoryList({ items, years, trophies }: {
               ) : m.opponent}
             </div>
             {m.pending && (
-              <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
                 {/* It IS counted — unconfirmed results count from the moment
                     they're logged (core/matchStatus.ts, since 2026-09-10) —
                     so the line says what it did rather than "not counted". */}
                 Awaiting their ok{m.points != null ? <span style={tabular}> · {signed(m.points)} points</span> : null}
               </div>
             )}
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
               {m.date}{m.score ? " · " + m.score : ""}
             </div>
           </div>
@@ -180,14 +180,14 @@ export function MatchHistoryList({ items, years, trophies }: {
             m.onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); m.onEdit!(); }}
-                style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}
+                style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 14, flexShrink: 0 }}
               >
                 Edit
               </button>
             )
           ) : (
             m.points !== null && m.points !== undefined && (
-              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 15, color: m.points > 0.05 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0 }}>
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 15, color: m.points > 0.05 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0 }}>
                 {signed(m.points)}
               </span>
             )

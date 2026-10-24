@@ -56,15 +56,15 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
             {/* The section heading above already says "Verified trophies";
                 saying it again inside the card read as a stutter (Sam's
                 screenshot, 2026-10-23). */}
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>None yet</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>None yet</div>
             {action && (
-              <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>
                 {onGive ? "Record one when they win something at the club." : "Won something at the club? Claim it and an organiser checks it."}
               </div>
             )}
           </div>
           {action && (
-            <button onClick={action.run} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, flexShrink: 0 }}>
+            <button onClick={action.run} style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 14, flexShrink: 0 }}>
               {action.label}
             </button>
           )}
@@ -85,10 +85,10 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
         >
           <Trophy size={19} color={FEED_LIME} strokeWidth={1.8} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {t.result ? t.result + " — " + t.competition : t.competition}
             </div>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {[t.clubName || "Club", t.format === "doubles" ? "Doubles" : null, (t.wonOn && trophyDateLabel({ id: t.id, won_on: t.wonOn })) || t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
             </div>
           </div>
@@ -96,7 +96,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
             <button
               onClick={() => { if (confirming === t.id) { setConfirming(null); onRemove(t.id); } else setConfirming(t.id); }}
               onBlur={() => setConfirming((c) => (c === t.id ? null : c))}
-              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", flexShrink: 0, fontFamily: body, fontWeight: 400, fontSize: 13, color: confirming === t.id ? CLAY : FEED_TEXT_MID }}
+              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", flexShrink: 0, fontFamily: body, fontWeight: 500, fontSize: 13, color: confirming === t.id ? CLAY : FEED_TEXT_MID }}
             >
               {confirming === t.id ? "Remove it?" : "Remove"}
             </button>
@@ -106,7 +106,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
       {action && (
         <button
           onClick={action.run}
-          style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "12px 16px", cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 400, fontSize: 14, textAlign: "left" }}
+          style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "12px 16px", cursor: "pointer", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 14, textAlign: "left" }}
         >
           {onGive ? "Give another" : "Claim another"}
         </button>
@@ -155,13 +155,13 @@ export function SettingsList({ rows }: { rows: SettingsRow[] }) {
           >
             <Icon size={19} color={FEED_LIME} strokeWidth={1.8} style={{ flexShrink: 0 }} />
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI }}>{r.label}</span>
+              <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>{r.label}</span>
               {r.detail && (
-                <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</span>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</span>
               )}
             </span>
             {typeof r.count === "number" && (
-              <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, flexShrink: 0 }}>{r.count}</span>
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, flexShrink: 0 }}>{r.count}</span>
             )}
             <ChevronRight size={16} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
           </button>

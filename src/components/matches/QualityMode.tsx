@@ -23,7 +23,7 @@ import { FEED_DEEP, FEED_HERO, FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED
 const OPPONENTS_SHOWN = 8;
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
@@ -49,10 +49,10 @@ function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
   const total = at + below + unknown;
   return (
     <div style={{ background: FEED_LIME, borderRadius: 18, padding: 18 }}>
-      <div style={{ ...tight(20), fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_LIME_INK }}>
+      <div style={{ ...tight(20), fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_LIME_INK }}>
         {q.verdict || "Not enough to judge"}
       </div>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 6 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 6 }}>
         {shareSentence(q, v)}
       </div>
 
@@ -68,7 +68,7 @@ function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
             <div style={{ width: (below / total) * 100 + "%", background: FEED_LIME_INK_2, opacity: 0.35 }} />
             <div style={{ width: (unknown / total) * 100 + "%", background: FEED_RAISED }} />
           </div>
-          <div style={{ ...tabular, display: "flex", justifyContent: "space-between", gap: 8, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 6 }}>
+          <div style={{ ...tabular, display: "flex", justifyContent: "space-between", gap: 8, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 6 }}>
             <span>{at} at or above</span>
             <span>{below} below</span>
             {unknown > 0 && <span>{unknown} not graded</span>}
@@ -81,7 +81,7 @@ function Verdict({ q, v }: { q: MatchQuality; v: Voice }) {
               Saying the two totals out loud costs one line and is cheaper than
               picking one of them and being wrong on a different screen. */}
           {unknown > 0 && (
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_LIME_INK_2, opacity: 0.85, marginTop: 4 }}>
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME_INK_2, opacity: 0.85, marginTop: 4 }}>
               {q.graded} graded of {total} played — the percentage above is out of {q.graded}.
             </div>
           )}
@@ -123,7 +123,7 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_LOW }}>{title}</span>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_LOW }}>{title}</span>
           <ChevronDown
             size={12}
             color={lime ? FEED_LIME_INK_2 : FEED_TEXT_LOW}
@@ -131,10 +131,10 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
             style={{ flexShrink: 0, transform: on ? "rotate(180deg)" : undefined }}
           />
         </span>
-        <span style={{ ...tabular, ...tight(24), display: "block", fontFamily: body, fontWeight: 500, fontSize: 24, color: lime ? FEED_ON_HERO : FEED_TEXT_HI, marginTop: 4 }}>
+        <span style={{ ...tabular, ...tight(24), display: "block", fontFamily: body, fontWeight: 600, fontSize: 24, color: lime ? FEED_ON_HERO : FEED_TEXT_HI, marginTop: 4 }}>
           {n ? recordStr(r) : "–"}
         </span>
-        <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12.5, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_MID, marginTop: 3 }}>{rate}</span>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12.5, color: lime ? FEED_LIME_INK_2 : FEED_TEXT_MID, marginTop: 3 }}>{rate}</span>
       </button>
     );
   };
@@ -158,7 +158,7 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
             {open === "above" ? "At " + theirs(v) + " level or above" : "Below " + theirs(v) + " level"} · {list.length}
           </div>
           {list.length === 0 ? (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>
               Nobody yet.
             </div>
           ) : list.map((o, i) => (
@@ -171,10 +171,10 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
               }}
             >
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {fullNameOf(o.player)}
                 </span>
-                <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
                   {/* Past tense, because both halves of this are historical:
                       the category AND the gap come from the most recent
                       meeting, not from today. Beside a current Intermediate
@@ -192,13 +192,13 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
                   {o.cat ? o.cat + " then · " + o.phrase + " then" : "No level recorded"}
                 </span>
               </span>
-              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, flexShrink: 0 }}>
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, flexShrink: 0 }}>
                 {recordStr(o.record)}
               </span>
             </button>
           ))}
           {q.ungraded > 0 && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
               {q.ungraded} {q.ungraded === 1 ? "match is" : "matches are"} in neither half — no level was recorded for those opponents at the time.
             </div>
           )}
@@ -225,19 +225,19 @@ function ByLevel({ q, v }: { q: MatchQuality; v: Voice }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>{r.cat}</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>{r.cat}</span>
             {r.isMine && (
-              <span style={{ fontFamily: body, fontWeight: 400, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px" }}>
+              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px" }}>
                 {theirs(v)} level
               </span>
             )}
             <span style={{ flex: 1 }} />
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>{recordStr(r.record)}</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>{recordStr(r.record)}</span>
           </div>
           <div style={{ height: 5, borderRadius: 3, background: FEED_DEEP, overflow: "hidden", marginTop: 7 }}>
             <div style={{ width: (r.matches / most) * 100 + "%", height: "100%", background: r.gap >= 0 ? FEED_LIME : FEED_TEXT_LOW }} />
           </div>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 5 }}>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 5 }}>
             {r.matches} match{r.matches === 1 ? "" : "es"} · {r.winRate == null ? "not enough to judge" : r.winRate + "% won"}
           </div>
         </div>
@@ -268,12 +268,12 @@ function WinsFrom({ q, v }: { q: MatchQuality; v: Voice }) {
         {rows.map(([name, n, colour]) => (
           <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
             <span style={{ width: 8, height: 8, borderRadius: 4, background: colour, flexShrink: 0 }} />
-            <span style={{ flex: 1, fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_HI }}>{name}</span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>{n}</span>
+            <span style={{ flex: 1, fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI }}>{name}</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>{n}</span>
           </div>
         ))}
       </div>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 8 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 8 }}>
         {winsFromSentence(q, v)}
       </div>
     </SurfaceCard>
@@ -297,19 +297,19 @@ function Opponents({ q, onOpen }: { q: MatchQuality; onOpen?: (id: string) => vo
           }}
         >
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {fullNameOf(o.player)}
             </span>
-            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
+            <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
               {/* Past tense — see the note on the same line further up. */}
               {o.cat ? o.cat + " then · " + o.phrase + " then" : "No level recorded"}
             </span>
           </span>
           <span style={{ textAlign: "right", flexShrink: 0 }}>
-            <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI }}>
+            <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>
               {recordStr(o.record)}
             </span>
-            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 1 }}>
+            <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 1 }}>
               {o.lastGrade ? GRADE_LABEL[o.lastGrade] : "Not graded"}
             </span>
           </span>
@@ -318,7 +318,7 @@ function Opponents({ q, onOpen }: { q: MatchQuality; onOpen?: (id: string) => vo
       {rest > 0 && (
         <button
           onClick={() => setAll(true)}
-          style={{ background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME, display: "block", textAlign: "left" }}
+          style={{ background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME, display: "block", textAlign: "left" }}
         >
           {rest} more
         </button>
@@ -348,7 +348,7 @@ function OverTime({ q, v }: { q: MatchQuality; v: Voice }) {
             return (
               <div key={y.year} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
                 {isLast && !ungraded && (
-                  <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 6px" }}>
+                  <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 6px" }}>
                     {y.share}%
                   </span>
                 )}
@@ -359,7 +359,7 @@ function OverTime({ q, v }: { q: MatchQuality; v: Voice }) {
                     )}
                   </span>
                 </span>
-                <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 10.5, color: ungraded ? FEED_TEXT_DIM : FEED_TEXT_MID }}>
+                <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 10.5, color: ungraded ? FEED_TEXT_DIM : FEED_TEXT_MID }}>
                   {String(y.year).slice(2)}
                 </span>
               </div>
@@ -367,12 +367,12 @@ function OverTime({ q, v }: { q: MatchQuality; v: Voice }) {
           })}
         </div>
         {years.some((y) => y.share == null) && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 10 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 10 }}>
             A dimmed year is one with nothing gradeable in it.
           </div>
         )}
         {summary && (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 12 }}>{summary}</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 12 }}>{summary}</div>
         )}
       </SurfaceCard>
     </Section>
@@ -383,8 +383,8 @@ export function QualityMode({ q, v = YOU, onOpenPlayer }: { q: MatchQuality; v?:
   if (!q.total) {
     return (
       <SurfaceCard radius={18}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No matches yet.</div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No matches yet.</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
           {v.self ? "Log a result and this fills in." : "Nothing to judge yet."}
         </div>
       </SurfaceCard>
@@ -402,7 +402,7 @@ export function QualityMode({ q, v = YOU, onOpenPlayer }: { q: MatchQuality; v?:
       {q.opponents.length > 0 && <Section title="Every opponent"><Opponents q={q} onOpen={onOpenPlayer} /></Section>}
       <OverTime q={q} v={v} />
       <SurfaceTile style={{ marginTop: 20 }}>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
           Levels are compared by category, never by sub-level. Level is
           self-declared, and ranking Intermediate/High above Intermediate/Medium
           would be arithmetic performed on a guess.

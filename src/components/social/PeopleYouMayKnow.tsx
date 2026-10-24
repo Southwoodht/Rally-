@@ -111,7 +111,7 @@ export function PeopleYouMayKnow({
 
   const title = (
     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-      <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
         People you may know
       </span>
       {onSeeAll && (

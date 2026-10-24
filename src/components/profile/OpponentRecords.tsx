@@ -49,14 +49,14 @@ function Row({ r, accent, recordColour, onOpen, last }: any) {
       }}
     >
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {fullNameOf(r.player)}
         </span>
         {r.levelLabel && (
-          <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{r.levelLabel}</span>
+          <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{r.levelLabel}</span>
         )}
       </span>
-      <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 15, color: recordColour, flexShrink: 0 }}>
+      <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 15, color: recordColour, flexShrink: 0 }}>
         {r.w}–{r.d}–{r.l}
       </span>
     </button>
@@ -69,7 +69,7 @@ function Group({ title, items, accent, recordColour, visible, onOpen, onAll }: a
   const rest = items.length - shown.length;
   return (
     <div style={{ marginTop: 16 }}>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: accent, letterSpacing: 0, marginBottom: 6 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: accent, letterSpacing: 0, marginBottom: 6 }}>
         {title} · {items.length}
       </div>
       <SurfaceCard radius={14} pad={0} clip>
@@ -79,7 +79,7 @@ function Group({ title, items, accent, recordColour, visible, onOpen, onAll }: a
         {rest > 0 && (
           <button
             onClick={onAll}
-            style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "11px 14px", cursor: onAll ? "pointer" : "default", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, textAlign: "center" }}
+            style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: "11px 14px", cursor: onAll ? "pointer" : "default", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, textAlign: "center" }}
           >
             {rest} more
           </button>
@@ -98,15 +98,15 @@ export function OpponentRecords({ lead, behind, visible = 4, onOpen, onAll }: Op
     <div>
       <SurfaceCard radius={18}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 10 }}>
-          <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 32, lineHeight: 1, color: FEED_LIME }}>{ahead.length}</span>
-          <span style={{ fontFamily: body, fontWeight: 400, fontSize: 26, color: FEED_LOSS }}>–</span>
-          <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 32, lineHeight: 1, color: FEED_THEY_LEAD }}>{under.length}</span>
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 32, lineHeight: 1, color: FEED_LIME }}>{ahead.length}</span>
+          <span style={{ fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_LOSS }}>–</span>
+          <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 32, lineHeight: 1, color: FEED_THEY_LEAD }}>{under.length}</span>
         </div>
         {/* Required, not decorative. Without it "9 – 3" is read as a match
             record, which it emphatically is not — it counts people, not
             games, and the two numbers would be wrong by an order of
             magnitude if taken the other way. */}
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, textAlign: "center", marginTop: 8, lineHeight: 1.4 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, textAlign: "center", marginTop: 8, lineHeight: 1.4 }}>
           Opponents you lead — opponents who lead you
         </div>
         {(ahead.length > 0 || under.length > 0) && (

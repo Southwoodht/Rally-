@@ -149,17 +149,17 @@ export function RatingLine({
     <SurfaceCard radius={18} pad="14px" style={{ marginBottom: 12 }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 2 }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>
             {active === "progress" ? "Progress, all time" : "Elo, all time"}
           </div>
           {active === "progress"
-            ? <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{bandName(now)}</div>
+            ? <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{bandName(now)}</div>
             : <StatNumeral size={26} tone="hi">{Math.round(now)}</StatNumeral>}
         </div>
         {active === "elo" && t.peak && (
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Best ever</div>
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>Best ever</div>
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID }}>
               {Math.round(t.peak.rating)} · {formatMatchDate(t.peak.date)}
             </div>
           </div>
@@ -168,8 +168,8 @@ export function RatingLine({
           // Two level names on one phone-width row, so the right-hand one
           // never wraps: it shrinks to nothing before the headline does.
           <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW }}>Started</div>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>Started</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>
               {bandName(prog.points[0].progress)}
             </div>
           </div>
@@ -186,7 +186,7 @@ export function RatingLine({
               key={v}
               onClick={() => { setMode(v); setPicked(null); }}
               style={{
-                fontFamily: body, fontWeight: 500, fontSize: 12.5, padding: "5px 12px",
+                fontFamily: body, fontWeight: 600, fontSize: 12.5, padding: "5px 12px",
                 borderRadius: 999, border: "none", cursor: "pointer",
                 background: active === v ? FEED_LIME : FEED_RAISED,
                 color: active === v ? FEED_LIME_INK : FEED_TEXT_MID,
@@ -258,10 +258,10 @@ export function RatingLine({
             }}
           >
             <span style={{ width: 8, height: 8, borderRadius: 4, background: dotColour(sel.outcome), flexShrink: 0 }} />
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {sel.outcome === "W" ? "Beat " : sel.outcome === "L" ? "Lost to " : "Drew with "}{nameOf(sel.opponentId)}
             </span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0 }}>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0 }}>
               {formatMatchDate(sel.date)}
             </span>
             {/* In progress mode the band is already the headline, so naming
@@ -272,18 +272,18 @@ export function RatingLine({
                 it is worth saying. */}
             {active === "progress" ? (
               bandName(sel.progress) !== bandName(now) && (
-                <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0, whiteSpace: "nowrap" }}>
+                <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0, whiteSpace: "nowrap" }}>
                   {bandName(sel.progress)}
                 </span>
               )
             ) : (
-              <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: sel.delta >= 0 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, width: 52, textAlign: "right" }}>
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: sel.delta >= 0 ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0, width: 52, textAlign: "right" }}>
                 {(sel.delta >= 0 ? "+" : "−") + Math.abs(sel.delta).toFixed(1)}
               </span>
             )}
           </button>
         ) : (
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
             {active === "progress"
               ? prog.points.length + " matches since your level was first recorded. A promotion lifts you above everything below it."
               : t.points.length + " matches. Tap the line to see any one of them."}

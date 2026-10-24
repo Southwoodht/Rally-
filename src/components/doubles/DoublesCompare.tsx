@@ -26,7 +26,7 @@ import {
  */
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
@@ -68,9 +68,9 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
     return (
       <div style={{ padding: "10px 0", borderBottom: last ? undefined : "0.5px solid " + FEED_HAIRLINE }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 500, color: aWins ? FEED_LIME : FEED_TEXT_MID }}>{av}</span>
+          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 600, color: aWins ? FEED_LIME : FEED_TEXT_MID }}>{av}</span>
           <span style={{ flex: "none", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>{label}</span>
-          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 500, color: bWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "right" }}>{bv}</span>
+          <span style={{ ...tabular, flex: 1, minWidth: 0, fontFamily: body, fontSize: 16, fontWeight: 600, color: bWins ? FEED_LIME : FEED_TEXT_MID, textAlign: "right" }}>{bv}</span>
         </div>
         {both && total > 0 && (
           <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", marginTop: 7, background: FEED_RAISED }}>
@@ -91,7 +91,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
           </span>
         ))}
       </span>
-      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, textAlign: right ? "right" : "left", lineHeight: 1.3 }}>{pairName(p)}</span>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13.5, color: FEED_TEXT_HI, textAlign: right ? "right" : "left", lineHeight: 1.3 }}>{pairName(p)}</span>
     </div>
   );
 
@@ -144,8 +144,8 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
               </div>
               <div style={{ textAlign: "center", ...sectionLabel }}>Predicted win</div>
               <div style={{ ...tabular, display: "flex", alignItems: "baseline", justifyContent: "space-between", marginTop: 8 }}>
-                <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: favA ? FEED_LIME : FEED_TEXT_MID }}>{c.chanceA}%</span>
-                <span style={{ fontFamily: body, fontSize: 34, fontWeight: 500, letterSpacing: "-0.04em", color: !favA || c.chanceA === 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - c.chanceA}%</span>
+                <span style={{ fontFamily: body, fontSize: 34, fontWeight: 600, letterSpacing: "-0.04em", color: favA ? FEED_LIME : FEED_TEXT_MID }}>{c.chanceA}%</span>
+                <span style={{ fontFamily: body, fontSize: 34, fontWeight: 600, letterSpacing: "-0.04em", color: !favA || c.chanceA === 50 ? FEED_LIME : FEED_TEXT_MID }}>{100 - c.chanceA}%</span>
               </div>
               <div style={{ display: "flex", height: 8, borderRadius: 4, overflow: "hidden", background: FEED_RAISED, marginTop: 8 }}>
                 <div style={{ width: c.chanceA + "%", background: FEED_LIME }} />
@@ -224,7 +224,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
                 return (
                   <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "9px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                     <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI }}>{first(x.a)} v {first(x.b)}</span>
-                    <span style={{ ...tabular, fontFamily: body, fontSize: 14, fontWeight: 500, color: n && x.record.w > x.record.l ? FEED_LIME : FEED_TEXT_MID }}>
+                    <span style={{ ...tabular, fontFamily: body, fontSize: 14, fontWeight: 600, color: n && x.record.w > x.record.l ? FEED_LIME : FEED_TEXT_MID }}>
                       {n ? rec(x.record) : "never met"}
                     </span>
                   </div>

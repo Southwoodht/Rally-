@@ -102,7 +102,7 @@ const movementLabel = (delta: number): string => {
 // Sentence case, like the rest of the app. These two were the last labels
 // still shouting.
 const labelStyle: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_LIME_INK_2,
+  fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME_INK_2,
   letterSpacing: 0,
 };
 
@@ -115,7 +115,7 @@ const labelStyle: React.CSSProperties = {
  */
 // The caption: sentence case at 13px since 2026-10-22 — spaced capitals read as code (Sam).
 const unitStyle: React.CSSProperties = {
-  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_ON_HERO,
+  fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_ON_HERO,
   letterSpacing: 0, marginTop: 6,
   whiteSpace: "nowrap",
 };

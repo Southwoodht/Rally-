@@ -196,12 +196,12 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
             <Avatar player={selected} size={26} />
             {/* Full name, and it never wraps: a wrapped name changes the
                 control's height and the two pickers stop lining up. */}
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {selected.name}{selected.last ? " " + selected.last : ""}
             </span>
           </>
         ) : (
-          <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{placeholder}</span>
+          <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{placeholder}</span>
         )}
         <ChevronDown size={15} color={FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
       </button>

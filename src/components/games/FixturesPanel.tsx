@@ -30,12 +30,12 @@ import {
 // column always wanted.
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
 const actionBtn = (fill: string, ink: string): React.CSSProperties => ({
-  flex: 1, fontFamily: body, fontWeight: 500, fontSize: 13, padding: "10px 8px",
+  flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "10px 8px",
   borderRadius: 10, border: "none", cursor: "pointer", background: fill, color: ink,
   whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
 });
@@ -168,7 +168,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       {!booking ? (
         <button
           onClick={() => setBooking(true)}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}
         >
           <Plus size={17} strokeWidth={2.4} />Book a match
         </button>
@@ -199,7 +199,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
             <button onClick={bookNew} disabled={!newOpp} style={{ ...actionBtn(newOpp ? FEED_LIME : FEED_RAISED, newOpp ? FEED_LIME_INK : FEED_TEXT_LOW), cursor: newOpp ? "pointer" : "default" }}>Book it</button>
             <button onClick={() => { setBooking(false); setNewOpp(""); setNewWhen(""); }} style={actionBtn(FEED_RAISED, FEED_TEXT_MID)}>Cancel</button>
           </div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 10 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 10 }}>
             A booking is just an arrangement — nothing counts until somebody enters the result.
           </div>
         </SurfaceCard>
@@ -212,9 +212,9 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       <div>
         {bookPanel}
         <SurfaceCard radius={18}>
-          {emptyText ? <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{emptyText}</div> : <>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>Nothing booked yet.</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          {emptyText ? <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{emptyText}</div> : <>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>Nothing booked yet.</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             {canBookNew
               ? <>Book a match with anyone in the club above. A club owner can also set up a whole season at once in <span style={{ color: FEED_TEXT_HI }}>Menu → Run your club → Singles fixtures</span>.</>
               : <>A club owner can set these up in <span style={{ color: FEED_TEXT_HI }}>Menu → Run your club → Singles fixtures</span> — either an automatic round-robin or hand-picked matchups.</>}
@@ -259,17 +259,17 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
             <SurfaceCard key={f.id} radius={16} pad="12px 14px">
               <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
                 {labelFor?.(f) && (
-                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(f)}</div>
+                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(f)}</div>
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+                    <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
                       {nm(f.p1)}
                     </span>
                   </span>
-                  <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, flexShrink: 0 }}>v</span>
+                  <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, flexShrink: 0 }}>v</span>
                   <span style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
-                    <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+                    <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
                       {nm(f.p2)}
                     </span>
                   </span>
@@ -285,7 +285,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                         <div style={{ width: p1 + "%", background: FEED_LIME }} />
                         <div style={{ width: (100 - p1) + "%", background: DOT_LOSS }} />
                       </div>
-                      <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
+                      <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
                         <span>{p1}%</span>
                         <span style={{ color: FEED_TEXT_LOW }}>win chance</span>
                         <span>{100 - p1}%</span>
@@ -303,13 +303,13 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     // result somebody still owes the league.
                     const past = (timeOf(f.booked) as number) < Date.now();
                     return (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 500, fontSize: 11.5 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 600, fontSize: 11.5 }}>
                         <Calendar size={11} strokeWidth={2.2} />{when}
                       </span>
                     );
                   })()}
                   <span style={{ flex: 1 }} />
-                  <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
+                  <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
                     {open === f.id ? "Close" : timeOf(f.booked) != null && (timeOf(f.booked) as number) < Date.now() ? "Add the result" : "Book or enter result"}
                   </span>
                 </div>
@@ -349,7 +349,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                   {f.booked && (
                     <button
                       onClick={() => onBook(f.id, null)}
-                      style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
+                      style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
                     >
                       Clear booking
                     </button>
@@ -363,7 +363,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     <div style={{ paddingBottom: 16 }}>
                       {confirmRemove === f.id ? (
                         <div style={{ background: FEED_RAISED, borderRadius: 14, padding: 14 }}>
-                          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
+                          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
                             Cancel your match with {nm(f.p1 === meId ? f.p2 : f.p1)}?
                           </div>
                           <div style={{ display: "flex", gap: 8 }}>
@@ -401,7 +401,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     <button disabled={saving} onClick={() => submit(f, "p2")} style={actionBtn(FEED_RAISED, FEED_TEXT_HI)}>{nm(f.p2)} won</button>
                   </div>
                   {saveError && (
-                    <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>
+                    <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>
                       {saveError}
                     </div>
                   )}

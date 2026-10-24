@@ -63,7 +63,7 @@ export function Ladder(props: {
   const note: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 };
   const pill = (fill: string, ink: string): React.CSSProperties => ({
     background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px",
-    fontFamily: body, fontWeight: 500, fontSize: 13.5, cursor: busy ? "default" : "pointer", flexShrink: 0, opacity: busy ? 0.6 : 1,
+    fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: busy ? "default" : "pointer", flexShrink: 0, opacity: busy ? 0.6 : 1,
   });
 
   // ------------------------------------------------------------ no ladder yet
@@ -71,7 +71,7 @@ export function Ladder(props: {
     if (!canManage) return null;
     return (
       <SurfaceCard radius={18} pad="16px" style={{ marginBottom: 14 }}>
-        <div style={{ ...tight(18), fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>Singles ladder</div>
+        <div style={{ ...tight(18), fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>Singles ladder</div>
         <div style={{ ...note, marginTop: 6 }}>
           Challenge anyone up to {LADDER_REACH} places above you; win and you take their place. Singles only.
           It starts with the {props.startingOrder.length} people who have played singles in the last year, in rating
@@ -91,7 +91,7 @@ export function Ladder(props: {
       <SurfaceCard radius={18} pad="0" style={{ marginBottom: 14 }}>
         <button onClick={() => setOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: "16px", cursor: "pointer", textAlign: "left" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>{ladder.name}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>{ladder.name}</div>
             <div style={{ ...note, marginTop: 2 }}>
               {myPlace >= 0 ? `You're ${myPlace + 1} of ${order.length}` : `${order.length} on it · join at the bottom`}
               {openCount ? ` · ${openCount} ${openCount === 1 ? "challenge" : "challenges"} on` : ""}
@@ -110,7 +110,7 @@ export function Ladder(props: {
       <button onClick={() => setOpen(false)} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 14, cursor: "pointer", padding: "4px 0 10px" }}>
         <ChevronLeft size={16} /> Fixtures
       </button>
-      <div style={{ ...tight(22), fontFamily: body, fontWeight: 500, fontSize: 22, color: FEED_TEXT_HI }}>{ladder.name}</div>
+      <div style={{ ...tight(22), fontFamily: body, fontWeight: 600, fontSize: 22, color: FEED_TEXT_HI }}>{ladder.name}</div>
       <div style={{ ...note, marginTop: 4, marginBottom: 12 }}>
         Challenge anyone up to {LADDER_REACH} places above you. Win and you take their place; everyone in between
         moves down one. One challenge at a time, played within {LADDER_DAYS} days.

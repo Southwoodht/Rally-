@@ -65,10 +65,10 @@ export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
   return (
     <SurfaceCard radius={18} pad="14px" style={style || { marginTop: 16 }}>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
           Friends
         </span>
-        <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: FEED_TEXT_MID }}>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID }}>
           {/* The count of mutuals rather than of friends, on somebody else's
               profile — it is the number you opened the card for. On your own
               there is no such thing as a mutual, so it says the total. */}
@@ -91,14 +91,14 @@ export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
             <Avatar player={{ id: f.authId, name: f.name, avatarUrl: f.avatarUrl }} size={AVATAR} />
             {/* Two lines, not an ellipsis: "Samuel Hen…" cut off the half of
                 the name that says which Samuel. */}
-            <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_HI, lineHeight: 1.25, width: "100%", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_HI, lineHeight: 1.25, width: "100%", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
               {f.name}
             </span>
             {/* Marked rather than grouped. A separate "Mutual" section would
                 split one person's circle into two lists and make you read
                 both to answer "do I know anybody here". */}
             {!isMe && f.isMutual && (
-              <span style={{ fontFamily: body, fontWeight: 400, fontSize: 10.5, color: FEED_LIME, lineHeight: 1 }}>
+              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME, lineHeight: 1 }}>
                 you both know
               </span>
             )}
@@ -109,7 +109,7 @@ export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
       {rows.length > SHOWN && (
         <button
           onClick={() => setAll(!all)}
-          style={{ background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_LIME, display: "block", textAlign: "left" }}
+          style={{ background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME, display: "block", textAlign: "left" }}
         >
           {all ? "Show fewer" : rows.length - SHOWN + " more"}
         </button>

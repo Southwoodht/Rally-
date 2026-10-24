@@ -61,7 +61,7 @@ export function LevelStars({ level, label }: { level: any; label?: string }) {
           <TierStar key={i} fraction={stars === null ? 0 : stars - i} />
         ))}
       </span>
-      {label && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID }}>{label}</span>}
+      {label && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>{label}</span>}
     </span>
   );
 }
@@ -129,7 +129,7 @@ export function ProfileHeader({
             {fullNameOf(player)}
           </div>
           {meta && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>
           )}
           <div style={{ marginTop: 6 }}>
             {/* A UTR, when they have one, sits beside the stars it set

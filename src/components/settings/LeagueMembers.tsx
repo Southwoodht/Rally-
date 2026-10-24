@@ -72,7 +72,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
   if (problem) {
     return (
       <SurfaceCard radius={16} pad="14px" style={{ marginBottom: 12 }}>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{problem}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{problem}</div>
       </SurfaceCard>
     );
   }
@@ -80,14 +80,14 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
 
   return (
     <SurfaceCard radius={16} pad="14px" style={{ marginBottom: 12 }}>
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0, marginBottom: 10 }}>
         Who can do what{leagueName ? " in " + leagueName : ""}
       </div>
 
       {members.map((m) => (
         <div key={m.userId} style={{ padding: "9px 0", borderTop: "0.5px solid " + FEED_RAISED }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {m.name}{m.isMe ? " (you)" : ""}
             </span>
             {iAmOwner ? (
@@ -95,7 +95,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                 onClick={() => setOpen(open === m.userId ? null : m.userId)}
                 disabled={busy === m.userId}
                 style={{
-                  flexShrink: 0, fontFamily: body, fontWeight: 500, fontSize: 12.5, padding: "5px 11px",
+                  flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 12.5, padding: "5px 11px",
                   borderRadius: 999, border: "none", cursor: "pointer",
                   background: m.role === "member" ? FEED_RAISED : FEED_LIME,
                   color: m.role === "member" ? FEED_TEXT_MID : FEED_LIME_INK,
@@ -104,7 +104,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                 {m.role === "owner" ? "Owner" : m.role === "editor" ? "Editor" : "Member"}
               </button>
             ) : (
-              <span style={{ flexShrink: 0, fontFamily: body, fontWeight: 400, fontSize: 12.5, color: m.role === "member" ? FEED_TEXT_LOW : FEED_LIME }}>
+              <span style={{ flexShrink: 0, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: m.role === "member" ? FEED_TEXT_LOW : FEED_LIME }}>
                 {m.role === "owner" ? "Owner" : m.role === "editor" ? "Editor" : "Member"}
               </span>
             )}
@@ -121,10 +121,10 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                     border: "none", padding: "8px 0", cursor: "pointer",
                   }}
                 >
-                  <span style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: r.value === m.role ? FEED_LIME : FEED_TEXT_HI }}>
+                  <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13.5, color: r.value === m.role ? FEED_LIME : FEED_TEXT_HI }}>
                     {r.label}{r.value === m.role ? " · current" : ""}
                   </span>
-                  <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 1 }}>
+                  <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 1 }}>
                     {r.note}
                   </span>
                 </button>
@@ -153,14 +153,14 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
           {/* On the row that produced it, not at the foot of the screen —
               §4's "eight hundred pixels below the tap". */}
           {failed?.id === m.userId && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: DOT_LOSS, lineHeight: 1.45, marginTop: 6 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: DOT_LOSS, lineHeight: 1.45, marginTop: 6 }}>
               {failed.message}
             </div>
           )}
         </div>
       ))}
 
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
         {iAmOwner
           ? "A club always needs an owner, so you cannot step down until somebody else is one. Make them an owner first, then change yourself to editor or member."
           : "Only an owner can change these."}

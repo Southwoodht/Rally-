@@ -50,7 +50,7 @@ function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Compet
     try { const r = await f(); if (r) setMsg(r); } catch (e: any) { setMsg(e?.message || "That didn't save. Try again."); }
     setBusy(false); setConfirm(null);
   };
-  const pill = (fill: string, ink: string): React.CSSProperties => ({ background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 500, fontSize: 13.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, flexShrink: 0 });
+  const pill = (fill: string, ink: string): React.CSSProperties => ({ background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, flexShrink: 0 });
   const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
   const dateBox: React.CSSProperties = { flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "8px 10px", fontFamily: body, fontSize: 14, colorScheme: "dark" };
   return (
@@ -239,7 +239,7 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
         </GroupCard>
       )}
       {onAdd && (
-        <button onClick={onAdd} style={{ alignSelf: "flex-start", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}>
+        <button onClick={onAdd} style={{ alignSelf: "flex-start", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}>
           + Add a division
         </button>
       )}

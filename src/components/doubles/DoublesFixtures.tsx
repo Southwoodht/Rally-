@@ -56,12 +56,12 @@ interface Props {
 }
 
 const label: React.CSSProperties = {
-  fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
+  fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID,
   letterSpacing: 0,
 };
 
 const actionBtn = (fill: string, ink: string): React.CSSProperties => ({
-  flex: 1, fontFamily: body, fontWeight: 500, fontSize: 13, padding: "10px 8px",
+  flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "10px 8px",
   borderRadius: 10, border: "none", cursor: "pointer", background: fill, color: ink,
   whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
 });
@@ -169,7 +169,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
     // doubles table's failure card.
     return (
       <SurfaceCard radius={18}>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
           Couldn&apos;t load doubles bookings for this league just now.
         </div>
       </SurfaceCard>
@@ -190,7 +190,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
       {!booking ? (
         <button
           onClick={() => setBooking(true)}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 500, fontSize: 14.5, cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}
         >
           <Plus size={17} strokeWidth={2.4} />Book a doubles match
         </button>
@@ -217,8 +217,8 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
             </button>
             <button onClick={resetBooking} style={actionBtn(FEED_RAISED, FEED_TEXT_MID)}>Cancel</button>
           </div>
-          {bookError && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{bookError}</div>}
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 10 }}>
+          {bookError && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{bookError}</div>}
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 10 }}>
             A booking is just an arrangement — nothing counts until one of the four enters the result.
           </div>
         </SurfaceCard>
@@ -233,10 +233,10 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
       {upcoming.length === 0 ? (
         <SurfaceCard radius={18}>
           {emptyText ? (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{emptyText}</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{emptyText}</div>
           ) : (<>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No doubles booked.</div>
-          <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 6 }}>No doubles booked.</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             {played ? "Every doubles booking has a result." : "Book one above — pick the four and a time."}
           </div>
           </>)}
@@ -264,18 +264,18 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
               <SurfaceCard key={f.id} radius={16} pad="12px 14px">
                 <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
                   {tag && (
-                    <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tag}</div>
+                    <div style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tag}</div>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       {f.teamA.map((id) => (
-                        <span key={id} style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(id)}</span>
+                        <span key={id} style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(id)}</span>
                       ))}
                     </span>
-                    <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, flexShrink: 0 }}>v</span>
+                    <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, flexShrink: 0 }}>v</span>
                     <span style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
                       {f.teamB.map((id) => (
-                        <span key={id} style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(id)}</span>
+                        <span key={id} style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{nm(id)}</span>
                       ))}
                     </span>
                   </div>
@@ -286,7 +286,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                     <div style={{ width: pA + "%", background: FEED_LIME }} />
                     <div style={{ width: (100 - pA) + "%", background: DOT_LOSS }} />
                   </div>
-                  <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 400, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
+                  <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
                     <span>{pA}%</span>
                     <span style={{ color: FEED_TEXT_LOW }}>win chance</span>
                     <span>{100 - pA}%</span>
@@ -294,12 +294,12 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 9 }}>
                     {dateLabel && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 500, fontSize: 11.5 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 600, fontSize: 11.5 }}>
                         <Calendar size={11} strokeWidth={2.2} />{dateLabel}
                       </span>
                     )}
                     <span style={{ flex: 1 }} />
-                    <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
+                    <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
                       {open === f.id ? "Close" : past && iAmIn ? "Add the result" : "Details"}
                     </span>
                   </div>
@@ -316,7 +316,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                       <button
                         disabled={busy}
                         onClick={() => act(() => onReschedule(f.id, null), () => setWhenText(""))}
-                        style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
+                        style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, background: "transparent", border: "none", padding: "0 0 16px", cursor: "pointer", display: "block" }}
                       >
                         Clear time
                       </button>
@@ -326,7 +326,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                       <div style={{ paddingBottom: 16 }}>
                         {confirmCancel === f.id ? (
                           <div style={{ background: FEED_RAISED, borderRadius: 14, padding: 14 }}>
-                            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
+                            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 12 }}>
                               Cancel {pair(f.teamA)} v {pair(f.teamB)}? The other players with accounts will get a message.
                             </div>
                             <div style={{ display: "flex", gap: 8 }}>
@@ -381,13 +381,13 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                             </span>
                           </div>
                         ))}
-                        <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, fontWeight: 500, padding: "2px 0 10px", cursor: "pointer" }}>
+                        <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, fontWeight: 600, padding: "2px 0 10px", cursor: "pointer" }}>
                           + Add set
                         </button>
                         </>)}
                         <button
                           onClick={() => { setNoScore(!noScore); setPickedWinner(null); }}
-                          style={{ display: "block", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 12, fontWeight: 500, padding: "0 0 10px", cursor: "pointer" }}
+                          style={{ display: "block", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 12, fontWeight: 600, padding: "0 0 10px", cursor: "pointer" }}
                         >
                           {noScore ? "Enter the score instead" : "Don't know the score"}
                         </button>
@@ -404,11 +404,11 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                         </button>
                       </>
                     ) : (
-                      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+                      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
                         One of the four enters the result once it&apos;s played.
                       </div>
                     )}
-                    {rowError && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{rowError}</div>}
+                    {rowError && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: DOT_LOSS, marginTop: 10 }}>{rowError}</div>}
                   </div>
                 )}
               </SurfaceCard>
