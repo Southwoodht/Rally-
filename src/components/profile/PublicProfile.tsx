@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { hasProfileOpener, openProfile } from "@/lib/openProfile";
 import { ChevronLeft } from "lucide-react";
 import { GapInsight } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
@@ -47,7 +48,7 @@ type FriendState = "none" | "requested" | "incoming" | "friends" | "unknown";
  * is derived from the match list, the same way the real profile derives it
  * from the league.
  */
-export function PublicProfile({ id }: { id: string }) {
+export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: close instead of history.back(). */ onBack?: () => void }) {
   const [authId, setAuthId] = useState<string | null>(null);
   const [card, setCard] = useState<PublicPlayerCard | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
@@ -145,7 +146,7 @@ export function PublicProfile({ id }: { id: string }) {
     <div style={{ minHeight: "100vh", background: FEED_PAGE, paddingTop: "env(safe-area-inset-top)" }}>
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "8px 16px calc(40px + env(safe-area-inset-bottom))" }}>
         <button
-          onClick={() => window.history.back()}
+          onClick={() => (onBack ? onBack() : window.history.back())}
           aria-label="Back"
           style={{ display: "flex", alignItems: "center", gap: 2, background: "transparent", border: "none", color: FEED_TEXT_MID, cursor: "pointer", padding: "10px 6px 10px 0", fontFamily: body, fontWeight: 400, fontSize: 15 }}
         >
@@ -219,7 +220,9 @@ export function PublicProfile({ id }: { id: string }) {
           onOpen={(pid: string) => {
             if (typeof window === "undefined") return;
             const them = snapshot.players.find((pl: any) => pl.id === pid);
-            window.location.href = "/players/" + encodeURIComponent(them?.auth_id || pid);
+            const target = them?.auth_id || pid;
+            if (hasProfileOpener()) openProfile(target);
+            else window.location.href = "/players/" + encodeURIComponent(target);
           }}
         />
       );
@@ -396,7 +399,7 @@ export function PublicProfile({ id }: { id: string }) {
         authId={authId}
         isMe={isMe}
         style={{ marginBottom: 16 }}
-        onOpenProfile={(aid) => { if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(aid); }}
+        onOpenProfile={openProfile}
       />
 
       {s ? (

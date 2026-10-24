@@ -1,5 +1,6 @@
 "use client";
 import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
+import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
 import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, Lock, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
@@ -333,6 +334,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [otherStandings, setOtherStandings] = useState<Standing[]>([]);
   // Where /players/[id] sends you back to. Both carry an account id, because
   // that is the only identity a page outside a league has to work with.
+  // An account outside this club, shown over the app (PublicProfile).
+  const [publicProfileId, setPublicProfileId] = useState<string | null>(null);
   const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge" | "profile"; authId: string } | null>(null);
   // Who the booking form should open with already chosen.
   const [challengeWith, setChallengeWith] = useState<string | null>(null);
@@ -367,7 +370,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       else if (!IS_UUID.test(pendingIntent.authId)) {
         flash("They're in another of your clubs — switch to it to see their profile.");
       }
-      else if (typeof window !== "undefined") { window.location.replace("/players/" + encodeURIComponent(pendingIntent.authId)); return; }
+      // Somebody outside this club: their public profile, opened over the app
+      // rather than by loading /players/ (a full page load, which flashed
+      // the start page first — Sam, 2026-10-24).
+      else setPublicProfileId(pendingIntent.authId);
     } else if (pendingIntent.kind === "message") {
       setMsgWith(pendingIntent.authId);
       setTab("messages");
@@ -2786,6 +2792,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <a href="/privacy" style={{ ...listRow, textDecoration: "none" }}><Lock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Privacy</span><span style={{ color: MUTED }}>›</span></a>
             </div>
           </div>
+        </div>
+      )}
+      {publicProfileId && (
+        <div key={publicProfileId} style={{ position: "fixed", inset: 0, zIndex: 121, overflowY: "auto", WebkitOverflowScrolling: "touch", background: COURT }}>
+          <PublicProfile id={publicProfileId} onBack={() => setPublicProfileId(null)} />
         </div>
       )}
       {profilePlayer && (

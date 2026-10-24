@@ -15,16 +15,23 @@ import { loadSeasons } from "@/lib/seasons";
  */
 export function useSeasons(leagueId: string | null, legacy: any, enabled: boolean) {
   const [rows, setRows] = useState<Season[] | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  // Loaded FOR WHICH club. A plain boolean went true on the first run, before
+  // the club was known (enabled false), and stayed true when the real club
+  // arrived — so the old settings-blob season showed until the seasons table
+  // answered: Home's "2nd" for a moment before "4th" (Sam, 2026-10-24, still
+  // there after the first fix).
+  const key = (enabled ? "on" : "off") + "|" + (leagueId || "");
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const loaded = loadedFor === key;
 
   const reload = useCallback(async () => {
-    if (!enabled || !leagueId) { setRows(null); setLoaded(true); return; }
+    if (!enabled || !leagueId) { setRows(null); setLoadedFor(key); return; }
     try { setRows(await loadSeasons(leagueId)); }
     // A failed read keeps whatever was last known rather than pretending the
     // club has no seasons (§2: a failed read is never an empty result).
     catch { /* keep rows */ }
-    setLoaded(true);
-  }, [leagueId, enabled]);
+    setLoadedFor(key);
+  }, [leagueId, enabled, key]);
 
   useEffect(() => { void reload(); }, [reload]);
 

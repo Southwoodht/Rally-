@@ -18,3 +18,8 @@ export function openProfile(id: string): void {
   if (handler) { handler(id); return; }
   if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(id);
 }
+
+/** True inside the app, where a profile can open in place. */
+export function hasProfileOpener(): boolean {
+  return !!handler;
+}
