@@ -90,6 +90,8 @@
     "src/core/doubles/mixer.ts",
     "src/core/doubles/mixer.test.ts",
     "src/core/divisionOdds.ts",
-    "src/core/divisionOdds.test.ts"
+    "src/core/divisionOdds.test.ts",
+    "src/core/utr.ts",
+    "src/core/utr.test.ts"
   ]
 }

@@ -1,10 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS, START_ELO } from "@/core/constants";
+import { levelForUtr, parseUtr, utrLabel } from "@/core/utr";
 import { BALL, CHALK, COURT, LINE, MUTED, body, card, input, miniInput } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
 
 export function Onboarding({ me, onFinish }: any) {
   const yearNow = new Date().getFullYear();
@@ -13,6 +15,21 @@ export function Onboarding({ me, onFinish }: any) {
   const [gap, setGap] = useState(3);
   const [levels, setLevels] = useState<Record<number, { cat: string; sub: string }>>({});
   const [guide, setGuide] = useState(false);
+  // A UTR, if they have one: it sets their level for them and the level
+  // mapping is skipped (core/utr.ts). Optional, and most people won't.
+  const [utrText, setUtrText] = useState("");
+  const utr = parseUtr(utrText);
+  const utrBad = utrText.trim() !== "" && utr == null;
+  // Only asked once the database has the column (schema_player_utr.sql).
+  // Before that, saving a UTR would make the whole sign-up save fail, so the
+  // question is simply not there. No database at all (the dev preview) asks.
+  const [utrReady, setUtrReady] = useState(!supabase);
+  useEffect(() => {
+    if (!supabase) return;
+    let live = true;
+    Promise.resolve(supabase.from("players").select("utr").limit(1)).then((res: any) => { if (live) setUtrReady(!res?.error); }, () => {});
+    return () => { live = false; };
+  }, []);
   const sy = parseInt(startYear) || yearNow;
   const blocks: Array<{ from: number; to: number | null }> = [];
   for (let y = sy; y <= yearNow; y += gap) { const end = Math.min(y + gap - 1, yearNow); blocks.push({ from: y, to: end >= yearNow ? null : end }); }
@@ -24,7 +41,8 @@ export function Onboarding({ me, onFinish }: any) {
   const levelHistory = blocks.map((b, i) => ({ cat: levels[i]?.cat || "Beginner", sub: levels[i]?.sub || "Medium", from: b.from, to: b.to }));
   const finishMapped = () => setStep(3);
   const finishSkip = () => onFinish({ levelHistory: [{ cat: "Beginner", sub: "Low", from: sy, to: null }], initialRecord: { w: 0, d: 0, l: 0 }, initialElo: START_ELO });
-  const finishAll = () => onFinish({ levelHistory, initialRecord: { w: Number(wins) || 0, d: Number(draws) || 0, l: Number(losses) || 0 }, initialElo: Number(initialElo) || START_ELO });
+  const utrHistory = utr != null ? [{ ...levelForUtr(utr), from: sy, to: null }] : null;
+  const finishAll = () => onFinish({ levelHistory: utrHistory || levelHistory, initialRecord: { w: Number(wins) || 0, d: Number(draws) || 0, l: Number(losses) || 0 }, initialElo: Number(initialElo) || START_ELO, ...(utr != null ? { utr } : {}) });
   const setBlock = (i, cat, sub) => setLevels((L) => ({ ...L, [i]: { cat: cat ?? L[i]?.cat ?? "Beginner", sub: sub ?? L[i]?.sub ?? "Medium" } }));
   return (
     <div style={{ position: "fixed", inset: 0, background: COURT, zIndex: 100, overflowY: "auto" }}>
@@ -35,7 +53,17 @@ export function Onboarding({ me, onFinish }: any) {
         {step === 0 && (
           <div style={card}>
             <Field label="When did you start playing?"><input value={startYear} onChange={(e) => setStartYear(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="e.g. 2016" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
-            <BigBtn onClick={() => setStep(1)} color={BALL}>Continue</BigBtn>
+            {utrReady && <>
+            <Field label="Do you have a UTR? (optional)"><input value={utrText} onChange={(e) => setUtrText(e.target.value)} inputMode="decimal" placeholder="e.g. 3.2" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
+            <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, margin: "-4px 0 14px", lineHeight: 1.5 }}>
+              {utrBad
+                ? "A UTR is a number from 1 to 16.5."
+                : utr != null
+                  ? `${utrLabel(utr)} sets your level to ${levelForUtr(utr).cat} · ${levelForUtr(utr).sub}. It shows beside your stars.`
+                  : "Your Universal Tennis Rating, if you have one. No UTR? Leave it empty and pick your level next."}
+            </div>
+            </>}
+            <BigBtn onClick={() => { if (!utrBad) setStep(utr != null ? 3 : 1); }} color={BALL}>Continue</BigBtn>
           </div>
         )}
 
@@ -92,7 +120,7 @@ export function Onboarding({ me, onFinish }: any) {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <BigBtn onClick={finishAll} color={BALL}>Finish</BigBtn>
-                <button onClick={() => setStep(2)} style={{ background: "transparent", border: "none", borderRadius: 12, padding: "8px 12px", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13 }}>Back</button>
+                <button onClick={() => setStep(utr != null ? 0 : 2)} style={{ background: "transparent", border: "none", borderRadius: 12, padding: "8px 12px", color: MUTED, fontFamily: body, fontWeight: 600, fontSize: 13 }}>Back</button>
               </div>
             </div>
           </div>

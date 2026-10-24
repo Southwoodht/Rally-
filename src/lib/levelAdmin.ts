@@ -90,6 +90,24 @@ export async function setPlayerStart(playerId: string, elo: number | null, recor
   }
 }
 
+/**
+ * An organiser setting or clearing somebody's UTR, the same door as the level
+ * (schema_player_utr.sql). The caller sets the stars from it separately,
+ * through setPlayerLevel, so the level history dates the change.
+ */
+export async function setPlayerUtr(playerId: string, utr: number | null): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const result: any = await withSupabaseTimeout(
+    supabase.rpc("set_player_utr", { p_player_id: playerId, p_utr: utr }),
+    { error: { message: "timed out" } } as any,
+  );
+  if (result?.error) {
+    throw new Error(missingFn(result.error, "set_player_utr")
+      ? "UTR isn't switched on yet — supabase/schema_player_utr.sql hasn't been run."
+      : String(result.error.message || "Couldn't save that UTR."));
+  }
+}
+
 export interface LevelRequest {
   id: string;
   leagueId: string;

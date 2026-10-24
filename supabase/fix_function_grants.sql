@@ -63,6 +63,8 @@ begin
     'public.log_player_level()',
     -- Starting rating and record (schema_starting_record_organisers.sql).
     'public.set_player_start(text, numeric, jsonb)',
+    -- A player's UTR (schema_player_utr.sql).
+    'public.set_player_utr(text, numeric)',
     -- Moderation (schema_moderation.sql): renaming a player, removing a member.
     'public.set_player_name(text, text, text)',
     'public.remove_league_member(uuid, uuid)',
@@ -110,7 +112,7 @@ select f.proname                                 as function,
      'nudge_match', 'level_val', 'start_thread', 'unread_message_count',
      'find_league_by_code',
      'close_season_if_due', 'guard_competition_fixture',
-     'set_player_level', 'guard_player_level', 'log_player_level', 'set_player_start',
+     'set_player_level', 'guard_player_level', 'log_player_level', 'set_player_start', 'set_player_utr',
      'set_player_name', 'remove_league_member',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'

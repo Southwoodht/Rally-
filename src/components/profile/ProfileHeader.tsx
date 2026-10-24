@@ -3,6 +3,7 @@ import React from "react";
 import { ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { STAR_COUNT, starsForLevel } from "@/core/stars";
+import { utrLabel } from "@/core/utr";
 import { fullNameOf } from "@/lib/format";
 import { FEED_CARD, FEED_LIME, FEED_MUTED_FILL, FEED_TEXT_HI, FEED_TEXT_MID, body, display } from "@/lib/theme";
 
@@ -131,7 +132,10 @@ export function ProfileHeader({
             <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>
           )}
           <div style={{ marginTop: 6 }}>
-            <LevelStars level={player?.level} label={levelLabel} />
+            {/* A UTR, when they have one, sits beside the stars it set
+                (core/utr.ts) — a number people who know UTR trust, and
+                nothing at all for everyone else. */}
+            <LevelStars level={player?.level} label={[levelLabel, player?.utr != null ? utrLabel(player.utr) : null].filter(Boolean).join(" · ") || undefined} />
           </div>
         </div>
       </div>

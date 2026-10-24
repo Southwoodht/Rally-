@@ -84,6 +84,11 @@ const playerToRow = (leagueId: string, p: any) => ({
   inactive: !!p.inactive,
   initial_record: p.initialRecord ?? null,
   initial_elo: p.initialElo ?? null,
+  // Only sent when there is one (schema_player_utr.sql). A club whose
+  // database hasn't got the column yet then saves exactly as before, and
+  // only a player who typed a UTR at sign-up reaches it. An organiser
+  // changing or clearing one goes through set_player_utr instead.
+  ...(p.utr != null ? { utr: p.utr } : {}),
 });
 
 export const rowToPlayer = (r: any) => ({
@@ -114,6 +119,7 @@ export const rowToPlayer = (r: any) => ({
   inactive: !!r.inactive,
   initialRecord: r.initial_record ?? undefined,
   initialElo: r.initial_elo ?? undefined,
+  utr: r.utr != null ? Number(r.utr) : undefined,
 });
 
 const matchToRow = (leagueId: string, m: any) => (assertWritable(m), {

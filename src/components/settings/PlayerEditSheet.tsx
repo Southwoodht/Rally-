@@ -6,6 +6,7 @@ import { LevelGuide } from "@/components/profile/LevelGuide";
 import { TimelineEditor } from "@/components/settings/TimelineEditor";
 import { LEVELS, SUBS } from "@/core/constants";
 import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
+import { levelForUtr, parseUtr, utrLabel } from "@/core/utr";
 import { fullNameOf } from "@/lib/format";
 import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import {
@@ -54,6 +55,8 @@ interface Props {
    * through set_player_name. Absent: a claimed name stays theirs.
    */
   onRename?: (name: string, last: string) => Promise<void>;
+  /** An organiser setting or clearing their UTR; the level follows from it. */
+  onSetUtr?: (utr: number | null) => Promise<void>;
 }
 
 const lbl: React.CSSProperties = {
@@ -65,7 +68,7 @@ const fld: React.CSSProperties = {
   padding: "10px 12px", width: "100%", boxSizing: "border-box",
 };
 
-export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory, onSetStart, onRename }: Props) {
+export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory, onSetStart, onRename, onSetUtr }: Props) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [timeline, setTimeline] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -73,6 +76,17 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
   const [first, setFirst] = useState(p.name || "");
   const [surname, setSurname] = useState(p.last || "");
   const [savingName, setSavingName] = useState(false);
+  const [utrText, setUtrText] = useState(p.utr != null ? String(p.utr) : "");
+  const [savingUtr, setSavingUtr] = useState(false);
+  const utr = parseUtr(utrText);
+  const utrChanged = (utr ?? null) !== (p.utr ?? null);
+  const utrBad = utrText.trim() !== "" && utr == null;
+  const saveUtr = async () => {
+    if (!onSetUtr || utrBad) return;
+    setSavingUtr(true);
+    try { await onSetUtr(utr); } catch { /* the caller has said why */ }
+    setSavingUtr(false);
+  };
 
   // A shell's name saves as it is typed, so an offensive one is refused at
   // the keystroke rather than written and then caught.
@@ -101,6 +115,24 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
   // details are "theirs to change" no longer covers the level.
   const levelSection = onSetLevel ? (
     <>
+      {onSetUtr && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={lbl}>UTR, if they have one</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={utrText} onChange={(e) => setUtrText(e.target.value)} inputMode="decimal" placeholder="e.g. 3.2" style={{ ...fld, flex: 1 }} />
+            <button onClick={saveUtr} disabled={!utrChanged || utrBad || savingUtr} style={{ background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "0 16px", fontFamily: body, fontSize: 14, cursor: "pointer", opacity: !utrChanged || utrBad || savingUtr ? 0.4 : 1 }}>
+              {savingUtr ? "Saving…" : "Save"}
+            </button>
+          </div>
+          <div style={{ fontFamily: body, fontSize: 12, color: utrBad ? DOT_LOSS : FEED_TEXT_MID, lineHeight: 1.45, marginTop: 6 }}>
+            {utrBad
+              ? "A UTR is a number from 1 to 16.5."
+              : utr != null
+                ? `${utrLabel(utr)} sets their level to ${levelForUtr(utr).cat} · ${levelForUtr(utr).sub}.`
+                : "Their stars come from it when it's set. Leave it empty if they haven't got one."}
+          </div>
+        </div>
+      )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <div style={lbl}>Level</div>
         <button onClick={() => setGuide(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>What do the levels mean?</button>

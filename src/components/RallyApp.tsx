@@ -86,7 +86,8 @@ import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
 import { SEASON_RANK_GAMES, addDays, dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
 import { sealTimeline, withLevelChange } from "@/core/levels";
-import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, setPlayerStart, setPlayerName, type LevelRequest } from "@/lib/levelAdmin";
+import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, setPlayerStart, setPlayerName, setPlayerUtr, type LevelRequest } from "@/lib/levelAdmin";
+import { levelForUtr } from "@/core/utr";
 import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
 import { closeSeasonIfDue, createSeason, endSeason, updateSeason } from "@/lib/seasons";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
@@ -1489,6 +1490,18 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       flash("Starting record saved for " + fullNameOf(p));
     } catch (e: any) { flash(e?.message || "Couldn't save that."); throw e; }
   };
+  // A UTR (schema_player_utr.sql): saved through the organiser door, then the
+  // stars follow from it through setLevelFor, so the level history dates the
+  // change like any other. Clearing a UTR leaves the stars where they are.
+  const setUtrFor = async (id: string, utr: number | null) => {
+    const p = players.find((x) => x.id === id);
+    try {
+      await setPlayerUtr(id, utr);
+      patchPlayerLocal(id, { utr: utr ?? undefined });
+    } catch (e: any) { flash(e?.message || "Couldn't save that UTR."); throw e; }
+    if (utr != null) await setLevelFor(id, levelForUtr(utr));
+    else flash("UTR cleared for " + fullNameOf(p));
+  };
   const reloadLevelRequests = () => {
     if (!gid || isFriendlyLeague(gid) || gid === DEV_LEAGUE_ID) return;
     loadLevelRequests(gid).then(setLevelRequests).catch(() => {});
@@ -1522,6 +1535,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           level: last ? { cat: last.cat, sub: last.sub } : p.level,
           initialRecord: hist.initialRecord || p.initialRecord,
           initialElo: hist.initialElo || p.initialElo,
+          utr: hist.utr ?? p.utr,
         } : p));
       }
     }
@@ -2659,6 +2673,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onSetLevelFor={canSetLevels ? setLevelFor : undefined}
             onSetHistoryFor={canSetLevels ? setHistoryFor : undefined}
             onSetStartFor={canSetLevels ? setStartFor : undefined}
+            onSetUtrFor={canSetLevels ? setUtrFor : undefined}
             onRenameFor={canSetLevels ? setNameFor : undefined}
             onReload={boardRefresh}
             onStartDoublesCompetition={() => { setSport("doubles"); setTab("fixtures"); setCompCreateSignal((n) => n + 1); }}
