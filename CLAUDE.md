@@ -1266,8 +1266,8 @@ the club switcher, else the first letter. `listMyLeagues` asks for
 `logo_url` and retries without it on error, because naming a missing column
 fails the whole read and would empty everyone's club list.
 
-**Club locations (2026-10-24, NEEDS `schema_club_location.sql` run, then
-`fix_function_grants.sql`).** Sam: the app should know who is near whom.
+**Club locations (2026-10-24). `schema_club_location.sql` RUN the same
+day, verified (3, 4, false); its own revokes close all four to anon.** Sam: the app should know who is near whom.
 Agreed rule: **the position belongs to the club, never to a person** —
 juniors are in clubs. `leagues.lat/lng` rounded to 2 dp (~1 km) by
 `set_league_place()` and by `lib/place.ts` before anything leaves the
