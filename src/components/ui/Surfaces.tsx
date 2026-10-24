@@ -6,7 +6,7 @@ import { shortNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_DEEP, FEED_DOWN, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_PAD,
   FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_TILE_RADIUS,
-  FEED_UP, DOT_DRAW, DOT_LOSS, DOT_WIN, LINE, body, tabular, tight,
+  FEED_UP, FORM_DRAW, FORM_LOSS, FORM_WIN, LINE, body, tabular, tight,
 } from "@/lib/theme";
 
 // The scoreboard primitives, shared by the newsfeed cards and by the Table
@@ -151,12 +151,12 @@ export type FormResult = "W" | "D" | "L";
 /**
  * Recent results, oldest first.
  *
- * Three outcomes, three shapes rather than three opacities. A draw is not a
- * partial win — it is a third result — and encoding it as the middle of
- * 100% / 55% / 25% would be both untrue and unreadable: three steps of one
- * colour at this size collapse into two the moment somebody looks at their
- * phone outdoors. So a win is filled, a loss is a faint fill, and a draw is
- * a ring: categorically distinct at a glance and in any light.
+ * Three outcomes, three colours: green won, grey drew, red lost, on every
+ * theme and every card (FORM_* in lib/theme.ts). Not three opacities of one
+ * colour — a draw is a third result, not a partial win, and three steps of
+ * one colour at this size collapse into two outdoors. It used to be shapes
+ * on the hero card and outlined losses in Southwood; Sam asked for the
+ * plain three everywhere because they read at once.
  *
  * Folding draws into losses was the other option and it's worse — the stat
  * line beside this says 28-6-10, so six draws rendering as loss dots would
@@ -166,53 +166,27 @@ export type FormResult = "W" | "D" | "L";
  * Fewer than five results renders fewer dots, left aligned. No empty slots:
  * a placeholder for a match nobody has played is a promise, not a fact.
  */
-const DOT_COLOUR = { W: DOT_WIN, D: DOT_DRAW, L: DOT_LOSS };
+const DOT_COLOUR = { W: FORM_WIN, D: FORM_DRAW, L: FORM_LOSS };
 
-export function FormDots({ form, size = 10, ink, lossInk, tone = "colour" }: {
+export function FormDots({ form, size = 10 }: {
   form: FormResult[];
   size?: number;
-  /** The ink for a win when tone is "ink". */
+  /** Kept so existing callers compile; the dots no longer change colour by
+   *  card. They were "ink" on the hero card (one colour, shape for the
+   *  outcome) and outlined losses in Southwood, and Sam asked for plain
+   *  green / grey / red everywhere instead. */
   ink?: string;
-  /**
-   * The ink for a loss when tone is "ink".
-   *
-   * It used to be the win colour at 25% opacity, which is the trick §1 bans:
-   * an alpha only reads as "quieter" against a known background, and three of
-   * the four themes in Appendix A put this card on a light one. Two colours,
-   * both named, and the shape difference for a draw stays as it was.
-   */
   lossInk?: string;
-  /**
-   * "colour" — green won, grey drew, red lost. Three filled dots, readable
-   * at a glance and at a distance, for rows on a dark surface.
-   *
-   * "ink" — one colour, shape carrying the outcome, for the lime card where
-   * a green dot would vanish into the background it sits on. Same data, and
-   * the only reason there are two is that a palette which works on a dark
-   * row cannot work on a bright one.
-   */
   tone?: "colour" | "ink";
 }) {
   if (!form || !form.length) return null;
-  const colour = ink || FEED_TEXT_HI;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
       {form.slice(-5).map((r, i) => (
         <span
           key={i}
           aria-label={r === "W" ? "win" : r === "D" ? "draw" : "loss"}
-          style={{
-            width: size, height: size, borderRadius: size / 2, display: "block", flexShrink: 0,
-            // A loss is an outlined circle in Southwood (--loss-fill /
-            // --loss-border); the other themes keep their filled dot.
-            background: r === "L"
-              ? `var(--loss-fill, ${tone === "ink" ? (lossInk || colour) : DOT_COLOUR.L})`
-              : tone === "ink"
-                ? (r === "D" ? "transparent" : colour)
-                : DOT_COLOUR[r],
-            border: r === "L" ? "var(--loss-border, none)" : tone === "ink" && r === "D" ? "1.5px solid " + colour : undefined,
-            boxSizing: "border-box",
-          }}
+          style={{ width: size, height: size, borderRadius: size / 2, display: "block", flexShrink: 0, background: DOT_COLOUR[r] }}
         />
       ))}
     </span>

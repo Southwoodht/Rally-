@@ -1209,6 +1209,12 @@ Competitions card is on the left and the fixtures list on the right
 with no competitions card keeps the usual one column. The mixer row stays
 full width above both. That finishes Sam's three laptop screens.
 
+**Form dots are green / grey / red on every theme (2026-10-24, Sam: "just
+makes it easier").** `FormDots` reads `FORM_WIN` / `FORM_DRAW` / `FORM_LOSS`
+in `lib/theme.ts`, fixed hexes, and ignores `tone`, `ink`, `lossInk` and
+Southwood's `--loss-fill` ring. Don't route them back through theme
+variables. `DOT_*` are untouched (error text, the rating line) — separate.
+
 **Glitch fixes, merged 2026-10-24.** Motion animations use fill-mode
 `backwards`, never `both`: a held last frame leaves `translate: 0 0`, which
 makes the element the containing block for every position: fixed sheet inside

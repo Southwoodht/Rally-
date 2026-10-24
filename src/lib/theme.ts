@@ -226,6 +226,16 @@ export const FEED_THEY_LEAD_DIM = "var(--danger-dim)";
  */
 export const OUTCOME_RAIL = { W: "var(--win, var(--accent))", D: FEED_TEXT_LOW, L: FEED_THEY_LEAD };
 
+// The form dots (FormDots: last five results on the Table, Home, divisions)
+// are the same three colours on every theme — Sam, 2026-10-24: "just have
+// them green or red or grey, makes it easier". Fixed hexes, not theme
+// variables, so no theme can turn a win into a brass dot and a loss into a
+// ring. Each sits at 3:1 or better on both the cream page and the dark ink
+// pill of Southwood's hero card; the draw is quieter on purpose.
+export const FORM_WIN = "#24874B";
+export const FORM_DRAW = "#948E85";
+export const FORM_LOSS = "#D0382C";
+
 export const DOT_WIN = "var(--win, var(--accent))";
 export const DOT_DRAW = MUTED;
 // The same red as a rank drop, and for the same reason — both mean it went
