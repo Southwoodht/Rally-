@@ -1218,8 +1218,9 @@ green looks cheap"), so wherever they sit on a coloured card (leader row,
 Home's hero) they get a cream `FORM_CHIP` pill and `bare`; on a dark theme
 (New York, `--form-chip` in styles/themes.css) every set gets the pill.
 
-**UTR beside the stars (built 2026-10-24, NEEDS `schema_player_utr.sql`
-run, then `fix_function_grants.sql`).** Sam: "my stars are better but can't
+**UTR beside the stars (2026-10-24). RUN the same day, verified
+(numeric, true, true, false), then `fix_function_grants.sql` (anon false
+everywhere but is_league_member / is_club_admin, set_player_utr included).** Sam: "my stars are better but can't
 beat them, join them". `players.utr` numeric(4,2), 1–16.5, optional.
 `core/utr.ts` (tested) turns it into a level by bands — Beginner 1–3,
 Amateur 3–5, Intermediate 5–7, Advanced 7–9, Semi-pro 9–12, Pro 12+, thirds
