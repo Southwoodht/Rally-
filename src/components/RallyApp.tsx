@@ -1977,7 +1977,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const topRow = (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-        <RallyMark title="Southwood" />
+        {/* Hidden on a laptop, where the sidebar carries the mark. */}
+        <span className="sw-toprow-mark"><RallyMark title="Southwood" /></span>
         <button onClick={() => setGroupSheet(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 36, background: PANEL, border: "none", borderRadius: 18, padding: "0 12px", cursor: "pointer", color: BALL, fontFamily: body, fontWeight: 600, fontSize: 15, minWidth: 0 }}>
           <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{personal ? "Everyone I've played" : (group?.name || "Club")}</span> <ChevronDown size={13} style={{ flexShrink: 0 }} />
         </button>
@@ -2017,7 +2018,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <div ref={screenRef} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
+      <div ref={screenRef} className="sw-main" style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
             {topRow}
@@ -2799,7 +2800,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         </div>
       )}
       {publicProfileId && (
-        <div key={publicProfileId} style={{ position: "fixed", inset: 0, zIndex: 121, overflowY: "auto", WebkitOverflowScrolling: "touch", background: COURT }}>
+        <div key={publicProfileId} className="sw-overlay" style={{ position: "fixed", inset: 0, zIndex: 121, overflowY: "auto", WebkitOverflowScrolling: "touch", background: COURT }}>
           <PublicProfile id={publicProfileId} onBack={() => setPublicProfileId(null)} />
         </div>
       )}

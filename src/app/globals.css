@@ -130,3 +130,45 @@ body {
     animation: sw-screen-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 }
+
+/*
+ * THE LAPTOP LAYOUT (Sam, 2026-10-24: "all big companies have a full website
+ * version and then app versions"). One app; from 1024px wide it rearranges
+ * itself. Phones never reach these rules, so nothing below changes them.
+ *
+ *  - The bottom bar becomes a sidebar on the left: the mark and name at the
+ *    top, the four tabs as rows, and Add result as a full-width button.
+ *  - The content sits to the right of it, in a wider column.
+ *  - Full-screen views (a profile) open beside the sidebar, not over it.
+ *
+ * !important because the components style themselves inline, and inline
+ * styles beat any stylesheet rule without it. Bottom sheets and dialogs keep
+ * their phone shape on purpose: centred, they read as dialogs on a laptop.
+ */
+@media (min-width: 1024px) {
+  .sw-nav {
+    top: 0 !important; bottom: 0 !important; left: 0 !important; right: auto !important;
+    width: 248px !important; height: auto !important; max-width: none !important; margin: 0 !important;
+    flex-direction: column !important; justify-content: flex-start !important; align-items: stretch !important;
+    gap: 4px; padding: 28px 16px !important;
+    border-top: none !important; border-right: 1px solid var(--line);
+  }
+  .sw-nav-brand { order: -2; display: flex !important; align-items: center; gap: 10px; padding: 0 10px 22px; }
+  .sw-nav-item {
+    flex: 0 0 auto !important; flex-direction: row !important; justify-content: flex-start !important;
+    gap: 14px !important; padding: 12px 12px !important; border-radius: 12px; text-align: left;
+  }
+  .sw-nav-item span { font-size: 15.5px !important; }
+  .sw-nav-item.sw-on { background: var(--bg-raised, rgba(127,127,127,0.12)); }
+  .sw-nav-add-wrap { order: -1; flex: 0 0 auto !important; justify-content: stretch !important; margin-bottom: 14px; }
+  .sw-nav-add {
+    width: 100% !important; height: 46px !important; border-radius: 23px !important; margin-top: 0 !important;
+    display: flex !important; align-items: center; justify-content: center; gap: 8px;
+  }
+  .sw-nav-add svg { width: 20px; height: 20px; }
+  .sw-nav-add-label { display: inline !important; font-family: var(--font-body); font-weight: 700; font-size: 15px; }
+  .sw-main { max-width: 860px !important; margin-left: calc(248px + max(24px, (100vw - 248px - 860px) / 2)) !important; margin-right: auto !important; padding: 32px 32px 60px !important; }
+  .sw-overlay { left: 248px !important; }
+  .sw-overlay-inner { max-width: 860px !important; padding-left: 32px !important; padding-right: 32px !important; }
+  .sw-toprow-mark { display: none; }
+}

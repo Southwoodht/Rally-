@@ -35,8 +35,8 @@ import { FEED_PAGE, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
 export function ProfileModal({ player, onClose, profileYear, doubles, sport, onSport, ...shared }: any) {
   const showDoubles = !!doubles && sport === "doubles";
   return (
-    <div style={{ position: "fixed", inset: 0, background: FEED_PAGE, zIndex: 120, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-      <div style={{ maxWidth: 620, margin: "0 auto", padding: "calc(8px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))" }}>
+    <div className="sw-overlay" style={{ position: "fixed", inset: 0, background: FEED_PAGE, zIndex: 120, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+      <div className="sw-overlay-inner" style={{ maxWidth: 620, margin: "0 auto", padding: "calc(8px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom))" }}>
         {/* Back, on the left, where back lives — not a Close on the right,
             which is what a dismissible sheet has. */}
         <button
