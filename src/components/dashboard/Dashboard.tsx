@@ -6,10 +6,11 @@ import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/
 import { FRIENDLY_LEAGUE_ID } from "@/lib/leagueData";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
-import { BALL, CHALK, CLAY, COURT, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, FEED_THEY_LEAD, LINE, MUTED, PANEL, PANEL2, body, display, tabular } from "@/lib/theme";
+import { BALL, CHALK, COURT, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, FEED_THEY_LEAD, MUTED, PANEL, PANEL2, body, tabular } from "@/lib/theme";
 import { greetingFor } from "@/lib/format";
 import { ChevronRight, LogIn, Plus, Users } from "lucide-react";
 import RallyApp from "@/components/RallyApp";
+import { RallyMark } from "@/components/ui/RallyMark";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
 
@@ -208,8 +209,11 @@ export default function Dashboard({ session }: { session: Session }) {
     <div style={{ minHeight: "100vh", background: FEED_PAGE, padding: "18px 16px 40px", paddingTop: "calc(18px + env(safe-area-inset-top))", boxSizing: "border-box" }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 26 }}>
-          <div style={{ fontFamily: display, fontSize: 22, fontWeight: 700, color: FEED_LIME, textTransform: "uppercase", letterSpacing: 0.5, lineHeight: 1 }}>Southwood</div>
-          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", cursor: "pointer" }}>Log out</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <RallyMark size={26} title="Southwood" />
+            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>Southwood</span>
+          </div>
+          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, background: "none", border: "none", padding: "6px 0", cursor: "pointer" }}>Log out</button>
         </div>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_TEXT_HI, lineHeight: 1.15 }}>{greetingFor(displayName || "")}</div>
         <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, marginTop: 6, marginBottom: 22 }}>
@@ -218,7 +222,7 @@ export default function Dashboard({ session }: { session: Session }) {
         {error && <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_THEY_LEAD, background: FEED_CARD, borderRadius: 14, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
         {children}
         <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 34, textAlign: "center" }}>
-          Southwood · <a href="/privacy" style={{ color: FEED_TEXT_MID }}>Privacy</a>
+          <a href="/privacy" style={{ color: FEED_TEXT_MID, textDecoration: "none" }}>Privacy</a>
         </div>
       </div>
     </div>
@@ -261,7 +265,7 @@ export default function Dashboard({ session }: { session: Session }) {
     const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer" };
     const rule = "0.5px solid " + FEED_RAISED;
     const tileIcon = (child: React.ReactNode) => (
-      <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: display, fontWeight: 700, fontSize: 19 }}>{child}</span>
+      <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 17 }}>{child}</span>
     );
     const leaveBlock = (l: League) => leaving && leagues.length > 1 ? (
       confirmLeave === l.id ? (
@@ -289,9 +293,11 @@ export default function Dashboard({ session }: { session: Session }) {
                   {tileIcon((l.name || "?").trim().charAt(0).toUpperCase())}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
-                    <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
-                      {[n ? `${n.players} player${n.players === 1 ? "" : "s"} · ${n.matches} match${n.matches === 1 ? "" : "es"}` : null, l.location || null].filter(Boolean).join(" · ") || "Code " + l.join_code}
+                    {/* Words, not a dotted string — Sam found that read as code. */}
+                    <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
+                      {n ? `${n.players} ${n.players === 1 ? "player" : "players"}, ${n.matches} ${n.matches === 1 ? "match" : "matches"}` : l.location || "Your club"}
                     </div>
+                    {n && l.location && <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1 }}>{l.location}</div>}
                   </div>
                   {leaving && leagues.length > 1
                     ? (confirmLeave !== l.id && <button onClick={(e) => { e.stopPropagation(); setConfirmLeave(l.id); }} style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_THEY_LEAD, background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>Leave</button>)

@@ -3,7 +3,7 @@ import React from "react";
 import { Check, ChevronRight, LogIn, Plus, Users } from "lucide-react";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID,
-  FEED_PAGE, PANEL, body, display, tabular,
+  FEED_PAGE, PANEL, body, tabular,
 } from "@/lib/theme";
 
 /**
@@ -51,11 +51,11 @@ export function GroupSheet({
     </span>
   );
   const letter = (child: React.ReactNode) => (
-    <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: display, fontWeight: 700, fontSize: 19 }}>{child}</span>
+    <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 17 }}>{child}</span>
   );
   const go = <ChevronRight size={18} color={FEED_TEXT_LOW} style={{ flexShrink: 0 }} />;
   const count = (n?: { players: number; matches: number }) =>
-    n ? `${n.players} player${n.players === 1 ? "" : "s"} · ${n.matches} match${n.matches === 1 ? "" : "es"}` : null;
+    n ? `${n.players} ${n.players === 1 ? "player" : "players"}, ${n.matches} ${n.matches === 1 ? "match" : "matches"}` : null;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
@@ -76,7 +76,7 @@ export function GroupSheet({
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ ...title, display: "block" }}>{c.name}</span>
                   <span style={{ ...sub, display: "block" }}>
-                    {[n, c.location || null].filter(Boolean).join(" · ") || "\u00a0"}
+                    {n || c.location || "Your club"}
                   </span>
                 </span>
                 {on ? here : go}
