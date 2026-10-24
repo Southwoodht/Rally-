@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, LogIn, Plus, Users } from "lucide-react";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID,
-  PANEL, body, tabular,
+  FEED_PAGE, PANEL, body, display, tabular,
 } from "@/lib/theme";
 
 /**
@@ -11,7 +11,7 @@ import {
  *
  * It looks and works like the "Your clubs" landing page (Sam, 2026-10-24): a
  * card per club with its players and matches, Friendlies as a card of its
- * own, then Create and Join. Before, it was a list of the app's internal
+ * own, then Create and Join — clubs and "no club" as two sections. Before, it was a list of the app's internal
  * groups with a tick box — a different idea of a "club" from the one on the
  * landing page, which is how the two came to look nothing alike.
  *
@@ -50,47 +50,61 @@ export function GroupSheet({
       <Check size={14} color={FEED_LIME_INK} strokeWidth={3} />
     </span>
   );
+  const letter = (child: React.ReactNode) => (
+    <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: display, fontWeight: 700, fontSize: 19 }}>{child}</span>
+  );
   const go = <ChevronRight size={18} color={FEED_TEXT_LOW} style={{ flexShrink: 0 }} />;
   const count = (n?: { players: number; matches: number }) =>
     n ? `${n.players} player${n.players === 1 ? "" : "s"} · ${n.matches} match${n.matches === 1 ? "" : "es"}` : null;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "20px 16px 36px", boxSizing: "border-box", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 12, paddingLeft: 2 }}>Your clubs</div>
-
-        {(clubs || []).map((c) => {
-          const on = !friendly && c.id === currentClubId;
-          const n = count(sizes?.[c.id]);
-          return (
-            <button key={c.id} onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={card}>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ ...title, display: "block" }}>{c.name}</span>
-                <span style={{ ...sub, display: "block" }}>
-                  {[n, c.location || null, c.role === "owner" ? "Owner" : null].filter(Boolean).join(" · ") || " "}
+      <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "20px 16px 36px", boxSizing: "border-box", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
+        {/* Two sections, as on the landing page (Sam, 2026-10-24): clubs, with
+            Join and Create at the foot of their list; then no club. */}
+        <div style={{ padding: "0 4px", marginBottom: 8 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI }}>Clubs</div>
+          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Your club&apos;s table, rankings, divisions and fixtures.</div>
+        </div>
+        <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden", marginBottom: 24 }}>
+          {(clubs || []).map((c, i) => {
+            const on = !friendly && c.id === currentClubId;
+            const n = count(sizes?.[c.id]);
+            return (
+              <button key={c.id} onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={{ ...card, background: "transparent", borderRadius: 0, marginBottom: 0, borderTop: i ? "0.5px solid " + FEED_RAISED : "none" }}>
+                {letter((c.name || "?").trim().charAt(0).toUpperCase())}
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...title, display: "block" }}>{c.name}</span>
+                  <span style={{ ...sub, display: "block" }}>
+                    {[n, c.location || null].filter(Boolean).join(" · ") || "\u00a0"}
+                  </span>
                 </span>
-              </span>
-              {on ? here : go}
-            </button>
-          );
-        })}
+                {on ? here : go}
+              </button>
+            );
+          })}
+          <div style={{ display: "flex", borderTop: (clubs || []).length ? "0.5px solid " + FEED_RAISED : "none" }}>
+            <button onClick={onJoin} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}><LogIn size={16} /> Join a club</button>
+            <span style={{ width: 0.5, background: FEED_RAISED }} />
+            <button onClick={onCreate} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}><Plus size={16} /> Create a club</button>
+          </div>
+        </div>
 
-        {/* Friendlies: a card of its own, as on the landing page. */}
+        <div style={{ padding: "0 4px", marginBottom: 8 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI }}>No club</div>
+          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Just you and your mates. No table, no organisers.</div>
+        </div>
         <button
           onClick={() => { if (friendly) onClose(); else if (typeof window !== "undefined") window.location.href = onFriendly; }}
           style={card}
         >
+          {letter(<Users size={19} color={FEED_LIME} />)}
           <span style={{ flex: 1, minWidth: 0 }}>
             <span style={{ ...title, display: "block" }}>Friendlies</span>
-            <span style={{ ...sub, display: "block" }}>Matches outside any club</span>
+            <span style={{ ...sub, display: "block" }}>Log matches against anyone</span>
           </span>
           {friendly ? here : go}
         </button>
-
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          <button onClick={onCreate} style={{ flex: 1, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 16, padding: "14px 10px", fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}>Create</button>
-          <button onClick={onJoin} style={{ flex: 1, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 16, padding: "14px 10px", fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}>Join</button>
-        </div>
 
         {/* Sections inside this club — legacy, and only when there is a
             choice to make. */}
