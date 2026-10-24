@@ -73,6 +73,18 @@ export async function courtsNear(spot: Spot, km = 6): Promise<VenueHit[]> {
     const res = await within(fetch(`/api/courts?lat=${spot.lat}&lng=${spot.lng}&km=${km}`), 15000);
     if (res.ok) j = await res.json();
   } catch { /* fall through */ }
+  // If our server can't get through (map servers sometimes refuse cloud
+  // addresses), the phone asks a map server itself — a different address.
+  if (!j?.elements) {
+    const m = Math.round(km * 1000);
+    const query = `[out:json][timeout:8];nwr["sport"~"tennis"](around:${m},${spot.lat},${spot.lng})->.t;(.t;nwr(around.t:300)["leisure"="park"]["name"];);out center tags 300;`;
+    for (const server of ["https://overpass.kumi.systems/api/interpreter", "https://overpass-api.de/api/interpreter"]) {
+      try {
+        const res = await within(fetch(server, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(query) }), 10000);
+        if (res.ok) { j = await res.json(); if (j?.elements) break; }
+      } catch { /* next */ }
+    }
+  }
   if (!j?.elements) throw new Error("The court map didn't answer. Try again, or type the place.");
   const pos = (e: any): Spot | null =>
     e.lat != null ? { lat: e.lat, lng: e.lon } : e.center ? { lat: e.center.lat, lng: e.center.lon } : null;
@@ -126,22 +138,68 @@ export async function courtsNear(spot: Spot, km = 6): Promise<VenueHit[]> {
     .slice(0, 20);
 }
 
+/**
+ * Named tennis places — clubs, centres — from OpenStreetMap's place search
+ * (Nominatim), inside a box round the spot. A second source beside the
+ * court map: Sam's phone reached Nominatim every time while the court map
+ * answered nothing, and a club with "Tennis" in its name is the venue
+ * people mean most often. Park courts with no name only come from the map.
+ */
+export async function namedTennisNear(spot: Spot, km = 10): Promise<VenueHit[]> {
+  const dLat = km / 111, dLng = km / (111 * Math.max(0.2, Math.cos(toRad(spot.lat))));
+  const box = [spot.lng - dLng, spot.lat + dLat, spot.lng + dLng, spot.lat - dLat].map((n) => n.toFixed(4)).join(",");
+  const out: VenueHit[] = [];
+  for (const q of ["tennis", "racket club"]) {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=40&bounded=1&viewbox=${box}&q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
+      if (!res.ok) continue;
+      const rows: any[] = await res.json();
+      for (const r of rows) {
+        const name = r.name || String(r.display_name || "").split(",")[0];
+        if (!name) continue;
+        const at = { lat: Number(r.lat), lng: Number(r.lon) };
+        const a = r.address || {};
+        out.push({
+          name,
+          place: a.town || a.city || a.village || a.suburb || null,
+          lat: round4(at.lat), lng: round4(at.lng),
+          url: r.extratags?.website || r.extratags?.["contact:website"] || null,
+          members: r.extratags?.access === "private",
+          km: kmBetween(spot, at),
+        });
+      }
+    } catch { /* the other source may still answer */ }
+  }
+  return out;
+}
+
 /** Southwood clubs and mapped courts near a spot, clubs first. */
 export async function venuesNear(spot: Spot): Promise<{ hits: VenueHit[]; note: string | null }> {
-  const [clubs, courts] = await Promise.allSettled([clubsNear(spot, 15), courtsNear(spot, 6)]);
+  const [clubs, courts, named] = await Promise.allSettled([clubsNear(spot, 15), courtsNear(spot, 6), namedTennisNear(spot, 10)]);
   const hits: VenueHit[] = [];
   if (clubs.status === "fulfilled") {
     for (const c of clubs.value) hits.push({ name: c.name, place: c.location, km: c.km, club: true });
   }
-  if (courts.status === "fulfilled") {
-    // A club already listed from Southwood is not listed again from the map.
-    const taken = new Set(hits.map((h) => h.name.toLowerCase()));
-    for (const v of courts.value) if (!taken.has(v.name.toLowerCase())) hits.push(v);
+  // The two map sources overlap; one row per name, and a Southwood club is
+  // not listed again from the map.
+  const taken = new Set(hits.map((h) => h.name.toLowerCase()));
+  const fromMap = [
+    ...(courts.status === "fulfilled" ? courts.value : []),
+    ...(named.status === "fulfilled" ? named.value : []),
+  ].sort((a, b) => a.km - b.km);
+  for (const v of fromMap) {
+    const k = v.name.toLowerCase();
+    if (taken.has(k)) continue;
+    taken.add(k);
+    hits.push(v);
   }
-  const note = courts.status === "rejected"
-    ? "The court map didn't answer, so only Southwood clubs are shown. Try again in a moment."
-    : !hits.length ? "No courts found within 6 km. Search a town, or type the place." : null;
-  return { hits, note };
+  const mapRows = hits.filter((h) => !h.club).length;
+  const note = courts.status === "rejected" && !mapRows
+    ? "The court map didn't answer. Try again in a moment, or type the place."
+    : courts.status === "rejected"
+      ? "Clubs found by name; park courts didn't load this time."
+      : !hits.length ? "No courts found nearby. Search a town, or type the place." : null;
+  return { hits: hits.slice(0, 25), note };
 }
 
 /** A town or postcode to a spot, for "search somewhere else". */

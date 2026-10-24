@@ -66,6 +66,10 @@ export async function GET(req: Request) {
       { elements },
       { headers: { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" } },
     );
-  } catch { /* every server failed */ }
-  return NextResponse.json({ error: "map busy" }, { status: 503 });
+  } catch (e: any) {
+    // Say why, server by server, so opening this address in a browser
+    // tells us what is going wrong (Sam's searches all came back empty).
+    const why = (e?.errors || []).map((x: any, i: number) => `${SERVERS[i].split("/")[2]}: ${x?.name === "AbortError" ? "timed out" : x?.message || x}`);
+    return NextResponse.json({ error: "map busy", why }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
 }
