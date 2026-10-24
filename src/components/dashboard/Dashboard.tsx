@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
 import { FRIENDLY_LEAGUE_ID } from "@/lib/leagueData";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
+import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League, setLeaguePlace, clubsNear, type NearbyClub } from "@/lib/leagues";
+import { currentSpot, distanceLabel, placeName, type Spot } from "@/lib/place";
 import { BALL, CHALK, COURT, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, FEED_THEY_LEAD, MUTED, PANEL, PANEL2, body, display, tabular, LINE } from "@/lib/theme";
 import { greetingFor, ordinal } from "@/lib/format";
 import { myClubSummaries, playedAgo, type ClubSummary } from "@/lib/myLeaguePlaces";
@@ -25,6 +26,12 @@ export default function Dashboard({ session }: { session: Session }) {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [code, setCode] = useState("");
+  // A new club's pin, from "Use my location" (schema_club_location.sql).
+  const [spot, setSpot] = useState<Spot | null>(null);
+  const [locating, setLocating] = useState(false);
+  // Clubs near me, on the Join screen.
+  const [nearby, setNearby] = useState<NearbyClub[] | null>(null);
+  const [nearbyNote, setNearbyNote] = useState("");
 
   const displayName =
     (session.user.user_metadata as any)?.full_name ||
@@ -113,18 +120,46 @@ export default function Dashboard({ session }: { session: Session }) {
     setBusy(true);
     try {
       const l = await createLeague(name, location);
-      setName(""); setLocation("");
+      // The pin goes on after the club exists, through the organiser door. A
+      // database without the location file just keeps the typed place.
+      if (spot) {
+        try { await setLeaguePlace(l.id, location, spot); Object.assign(l, { lat: spot.lat, lng: spot.lng }); }
+        catch { /* the club is made; its pin can be set in Club settings */ }
+      }
+      setName(""); setLocation(""); setSpot(null);
       setLeagues((prev) => [...prev, l]);
       setActive(l); setView("app");
     } catch (e: any) { setError(e.message || "Couldn't create the club."); }
     setBusy(false);
   };
 
-  const doJoin = async () => {
+  const useMyLocation = async () => {
+    setError(""); setLocating(true);
+    try {
+      const at = await currentSpot();
+      setSpot(at);
+      const town = await placeName(at);
+      if (town) setLocation(town);
+    } catch (e: any) { setError(e.message); }
+    setLocating(false);
+  };
+
+  const findNearby = async () => {
+    setError(""); setNearbyNote(""); setLocating(true);
+    try {
+      const at = await currentSpot();
+      const found = await clubsNear(at, 40);
+      setNearby(found);
+      if (!found.length) setNearbyNote("No clubs on Southwood within 40 km have set their location yet.");
+    } catch (e: any) { setError(e.message); }
+    setLocating(false);
+  };
+
+  const doJoin = async (withCode?: string) => {
     setError("");
     setBusy(true);
     try {
-      const l = await joinLeague(code);
+      const l = await joinLeague(withCode || code);
       setCode("");
       setLeagues((prev) => prev.some((x) => x.id === l.id) ? prev : [...prev, l]);
       setActive(l); setView("app");
@@ -198,6 +233,7 @@ export default function Dashboard({ session }: { session: Session }) {
             setLeagues((ls) => ls.map((x) => (x.id === active.id ? { ...x, ...patch } : x)));
           }}
           clubLogo={(active as any).logo_url ?? null}
+          clubPlace={{ location: active.location ?? null, lat: (active as any).lat ?? null, lng: (active as any).lng ?? null, open: !!(active as any).open_to_join }}
           displayName={displayName}
           onManageLeagues={() => setView(leagues.length > 1 ? "picker" : "empty")}
           // The club sheet (Sam, 2026-10-24): the same cards as Your clubs.
@@ -251,7 +287,15 @@ export default function Dashboard({ session }: { session: Session }) {
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
       <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Create a club</div>
       <input style={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Club name, e.g. Seacourt Ladder" />
-      <input style={field} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location (optional)" />
+      <div style={{ display: "flex", gap: 8 }}>
+        <input style={{ ...field, flex: 1 }} value={location} onChange={(e) => { setLocation(e.target.value); }} placeholder="Where is it? e.g. Hayling Island" />
+        <button onClick={useMyLocation} disabled={locating} style={{ ...primary, width: "auto", flex: "0 0 auto", marginTop: 0, marginBottom: 10, padding: "0 14px", opacity: locating ? 0.6 : 1 }}>
+          {locating ? "Finding…" : spot ? "Located" : "Use my location"}
+        </button>
+      </div>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, margin: "-2px 2px 12px", lineHeight: 1.5 }}>
+        {spot ? "The club's pin is set to about a kilometre, so players nearby can find it. Your own location isn't kept." : "Optional. With your location, players near the club can find it."}
+      </div>
       <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doCreate}>{busy ? "Creating…" : "Create club"}</button>
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
     </div>
@@ -261,8 +305,31 @@ export default function Dashboard({ session }: { session: Session }) {
     <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: 20 }}>
       <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Join a club</div>
       <input style={{ ...field, fontFamily: body, letterSpacing: 1, textTransform: "uppercase" }} value={code} onChange={(e) => { const v = e.target.value; const m = /join=([A-Za-z0-9]+)/i.exec(v); setCode((m ? m[1] : v).toUpperCase().slice(0, 8)); }} placeholder="ABC123" />
-      <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={doJoin}>{busy ? "Joining…" : "Join club"}</button>
+      <button style={{ ...primary, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => doJoin()}>{busy ? "Joining…" : "Join club"}</button>
       <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 12, lineHeight: 1.5 }}>Type the club code, or paste the invite link. Organisers find both in Run your club.</div>
+      <div style={{ height: 1, background: LINE, margin: "18px 0 14px" }} />
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 15, color: CHALK, marginBottom: 6 }}>No code?</div>
+      {nearby === null ? (
+        <button style={{ ...ghost, marginTop: 0, opacity: locating ? 0.6 : 1 }} disabled={locating} onClick={findNearby}>{locating ? "Looking…" : "Find clubs near me"}</button>
+      ) : (
+        <div>
+          {nearby.map((c) => (
+            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderTop: "1px solid " + LINE }}>
+              <ClubMark club={c} size={40} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED }}>{[distanceLabel(c.km), c.location, `${c.players} ${c.players === 1 ? "player" : "players"}`].filter(Boolean).join(" · ")}</div>
+              </div>
+              {c.member
+                ? <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED }}>You&apos;re in</span>
+                : c.open_to_join && c.join_code
+                  ? <button disabled={busy} onClick={() => doJoin(c.join_code!)} style={{ ...primary, width: "auto", marginTop: 0, padding: "8px 18px", flex: "0 0 auto" }}>Join</button>
+                  : <span style={{ fontFamily: body, fontSize: 12, color: MUTED, textAlign: "right", maxWidth: 90 }}>Invite only, ask a member</span>}
+            </div>
+          ))}
+          {nearbyNote && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5 }}>{nearbyNote}</div>}
+        </div>
+      )}
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
     </div>
   );
@@ -377,7 +444,7 @@ export default function Dashboard({ session }: { session: Session }) {
           out to run a club. */}
       <div style={{ background: FEED_CARD, borderRadius: 20, padding: 22, marginBottom: 16 }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 22, letterSpacing: "-0.02em", color: FEED_TEXT_HI }}>
-          You&apos;re not in a league yet
+          You&apos;re not in a club yet
         </div>
         <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>
           Join one with a code or an invite link, or start your own for your club or your mates.

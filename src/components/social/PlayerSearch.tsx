@@ -4,7 +4,9 @@ import { ChevronLeft, Search as SearchIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { listFriends } from "@/lib/friends";
 import { currentUserId } from "@/lib/messages";
-import { searchLeaguePlayers, searchProfiles, type LeaguePlayerHit, type Profile } from "@/lib/profiles";
+import { distancesFrom, searchLeaguePlayers, searchProfiles, type LeaguePlayerHit, type Profile } from "@/lib/profiles";
+import { listMyLeagues } from "@/lib/leagues";
+import { distanceLabel } from "@/lib/place";
 import {
   FEED_CARD, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW,
   FEED_TEXT_MID, body, tight,
@@ -55,6 +57,10 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
   const [searching, setSearching] = useState(false);
   const [signedOut, setSignedOut] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Where "near" is measured from: your first club with a pin
+  // (schema_club_location.sql). Never the phone's own location.
+  const [home, setHome] = useState<{ lat: number; lng: number } | null>(null);
+  const [km, setKm] = useState<Record<string, number>>({});
 
   useEffect(() => {
     setRecents(readRecents());
@@ -66,6 +72,10 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
         // Outside AuthGate, same as the profile page.
         if (!mine) { if (live) setSignedOut(true); return; }
         if (live) setMeId(mine);
+        listMyLeagues().then((ls) => {
+          const pinned = ls.find((l) => l.lat != null && l.lng != null);
+          if (live && pinned) setHome({ lat: pinned.lat as number, lng: pinned.lng as number });
+        }).catch(() => {});
         const fs = await listFriends();
         if (live) setFriendIds(new Set(fs.map((f) => f.profile.id)));
       } catch { /* search still works without knowing who your friends are */ }
@@ -87,21 +97,29 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
         searchLeaguePlayers(term),
       ]);
       if (!live) return;
-      if (acc.status === "fulfilled") setRows(acc.value);
+      if (acc.status === "fulfilled") {
+        setRows(acc.value);
+        const d = await distancesFrom(acc.value.map((p) => p.id), home);
+        if (live) setKm(d);
+      }
       else { console.error("Account search failed", acc.reason); setRows([]); }
       if (lg.status === "fulfilled") setMates(lg.value);
       else { console.error("Club search failed", lg.reason); setMates([]); }
       setSearching(false);
     }, 200);
     return () => { live = false; clearTimeout(t); };
-  }, [q, meId]);
+  }, [q, meId, home]);
 
   const ordered = useMemo(() => {
     if (!rows) return null;
     const league = new Set(leagueAuthIds);
+    // Friends, then clubmates, then everyone else nearest first (people whose
+    // clubs have no pin last), then by name. Bob down the road above Bob in
+    // Spain; both still found.
     const rank = (p: Profile) => (friendIds.has(p.id) ? 0 : league.has(p.id) ? 1 : 2);
-    return [...rows].sort((a, b) => rank(a) - rank(b) || (a.display_name || "").localeCompare(b.display_name || ""));
-  }, [rows, friendIds, leagueAuthIds]);
+    const far = (p: Profile) => (km[p.id] ?? Infinity);
+    return [...rows].sort((a, b) => rank(a) - rank(b) || far(a) - far(b) || (a.display_name || "").localeCompare(b.display_name || ""));
+  }, [rows, friendIds, leagueAuthIds, km]);
 
   /**
    * League-mates who are not already in the account results.
@@ -221,7 +239,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
           row(
             p.id,
             p.display_name || "Player",
-            friendIds.has(p.id) ? "Friend" : leagueAuthIds.includes(p.id) ? "In your club" : null,
+            friendIds.has(p.id) ? "Friend" : leagueAuthIds.includes(p.id) ? "In your club" : km[p.id] != null ? "Plays " + distanceLabel(km[p.id]) + " away" : null,
             p.avatar_url,
             () => open(p),
           )

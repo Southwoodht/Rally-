@@ -63,6 +63,26 @@ export async function searchProfiles(query: string, excludeId?: string): Promise
   return excludeId ? rows.filter((r) => r.id !== excludeId) : rows;
 }
 
+/**
+ * How far each account's nearest club is from a spot, in km
+ * (players_near, schema_club_location.sql) — for putting the Bob down the
+ * road above the Bob in Spain. Accounts whose clubs have no pin are absent.
+ * Empty, never an error, when the function isn't there yet.
+ */
+export async function distancesFrom(ids: string[], spot: { lat: number; lng: number } | null): Promise<Record<string, number>> {
+  const out: Record<string, number> = {};
+  if (!supabase || !spot || !ids.length) return out;
+  try {
+    const res: any = await withSupabaseTimeout(
+      supabase.rpc("players_near", { p_ids: ids, p_lat: spot.lat, p_lng: spot.lng }),
+      FAILED as any,
+    );
+    if (res === (FAILED as any) || res.error) return out;
+    for (const r of res.data || []) out[r.auth_id] = r.km;
+  } catch { /* names only, as before */ }
+  return out;
+}
+
 export interface LeaguePlayerHit {
   /** The player ROW id — the app's own short id, not a uuid, and not an
    *  account. ?profile= takes either. */

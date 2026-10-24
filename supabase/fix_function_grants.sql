@@ -67,6 +67,11 @@ begin
     'public.set_player_utr(text, numeric)',
     -- A club logo (schema_club_logo.sql).
     'public.set_league_logo(uuid, text)',
+    -- Where a club is (schema_club_location.sql).
+    'public.set_league_place(uuid, text, double precision, double precision)',
+    'public.set_league_open(uuid, boolean)',
+    'public.clubs_near(double precision, double precision, double precision)',
+    'public.players_near(uuid[], double precision, double precision)',
     -- Moderation (schema_moderation.sql): renaming a player, removing a member.
     'public.set_player_name(text, text, text)',
     'public.remove_league_member(uuid, uuid)',
@@ -115,6 +120,7 @@ select f.proname                                 as function,
      'find_league_by_code',
      'close_season_if_due', 'guard_competition_fixture',
      'set_player_level', 'guard_player_level', 'log_player_level', 'set_player_start', 'set_player_utr', 'set_league_logo',
+     'set_league_place', 'set_league_open', 'clubs_near', 'players_near',
      'set_player_name', 'remove_league_member',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'

@@ -30,7 +30,7 @@ import { Onboarding } from "@/components/settings/Onboarding";
 import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
 import { PROVISIONAL_GAMES, globalKeyFor, globalRankFor } from "@/lib/globalTable";
-import { leaveLeague, listMyLeagues, setLeagueLogo } from "@/lib/leagues";
+import { leaveLeague, listMyLeagues, setLeagueLogo, setLeagueOpen, setLeaguePlace } from "@/lib/leagues";
 import { myClubSummaries, myLeaguePlaces, type ClubSummary } from "@/lib/myLeaguePlaces";
 import { RATING_UNIT_ALL, RATING_UNIT_SEASON, type Standing } from "@/components/home/StandingHero";
 import { glickoStandings } from "@/core/glicko";
@@ -172,7 +172,7 @@ function nextUpLine(pct: number | null): string {
 // for the coach, keep the code); true brings it straight back.
 const SHOW_LADDER = false;
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags, clubLogo, clubs, clubSizes, onSwitchClub, onClubAction }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags, clubLogo, clubPlace, clubs, clubSizes, onSwitchClub, onClubAction }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -2666,6 +2666,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             hasCompetition={comps.competitions.length > 0}
             onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
             clubLogo={clubLogo}
+            clubPlace={clubPlace}
+            onSetPlace={async (location: string, spot: { lat: number; lng: number } | null) => { await setLeaguePlace(leagueId, location, spot); onLeagueFlags?.({ location: location.trim() || null, lat: spot?.lat ?? null, lng: spot?.lng ?? null }); }}
+            onSetOpen={async (open: boolean) => { await setLeagueOpen(leagueId, open); onLeagueFlags?.({ open_to_join: open }); }}
             onSetLogo={async (logo: string | null) => { await setLeagueLogo(leagueId, logo); onLeagueFlags?.({ logo_url: logo }); }}
             isOwner={leagueRole === "owner"}
             levelRequests={canSetLevels ? levelRequests : null}

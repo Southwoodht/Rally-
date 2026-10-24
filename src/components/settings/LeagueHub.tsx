@@ -10,6 +10,7 @@ import { LevelSuggestionsPage, levelSuggestionsFor } from "@/components/settings
 import { Avatar } from "@/components/ui/Avatar";
 import { ClubMark } from "@/components/ui/ClubMark";
 import { readPhotoAsDataUrl } from "@/lib/photo";
+import { currentSpot, placeName } from "@/lib/place";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { levelNow } from "@/core/levels";
 import { isDisputed } from "@/core/matchStatus";
@@ -726,7 +727,31 @@ function LevelRequestsPage({ players, requests, onDecide, flash }: any) {
 // League settings
 // ---------------------------------------------------------------------------
 
-function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competitionsEnabled, onSetFlags, flash, clubLogo, onSetLogo, canManage, friendly }: any) {
+function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competitionsEnabled, onSetFlags, flash, clubLogo, onSetLogo, clubPlace, onSetPlace, onSetOpen, canManage, friendly }: any) {
+  // Where the club is (schema_club_location.sql): a town for people and a pin
+  // about a kilometre wide for "near", plus whether strangers nearby may join.
+  const [placeText, setPlaceText] = useState<string>(clubPlace?.location || "");
+  const [pinned, setPinned] = useState<boolean>(clubPlace?.lat != null);
+  const [open, setOpen] = useState<boolean>(!!clubPlace?.open);
+  const [placing, setPlacing] = useState(false);
+  const pinHere = async () => {
+    setPlacing(true);
+    try {
+      const at = await currentSpot();
+      const town = (await placeName(at)) || placeText;
+      await onSetPlace(town, at);
+      setPlaceText(town); setPinned(true); flash("Club location saved");
+    } catch (e: any) { flash(e?.message || "Couldn't set the location."); }
+    setPlacing(false);
+  };
+  const saveTyped = async () => {
+    try { await onSetPlace(placeText, pinned ? { lat: clubPlace?.lat, lng: clubPlace?.lng } : null); flash("Saved"); }
+    catch (e: any) { flash(e?.message || "Couldn't save that."); }
+  };
+  const flipOpen = async () => {
+    try { await onSetOpen(!open); setOpen(!open); flash(!open ? "Open to new players nearby" : "Invite only"); }
+    catch (e: any) { flash(e?.message || "Couldn't change that."); }
+  };
   const [busy, setBusy] = useState(false);
   const [logo, setLogo] = useState<string | null>(clubLogo ?? null);
   const [savingLogo, setSavingLogo] = useState(false);
@@ -765,6 +790,32 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
         <div style={{ ...lbl, marginBottom: 6 }}>Club name</div>
         <input value={group?.name || ""} onChange={(e) => updateGroup(group.id, { name: e.target.value })} style={fld} />
       </SurfaceCard>
+
+      {onSetPlace && canManage && !friendly && (
+        <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
+          <div style={{ ...lbl, marginBottom: 6 }}>Where the club is</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={placeText} onChange={(e) => setPlaceText(e.target.value)} onBlur={() => { if (placeText !== (clubPlace?.location || "")) void saveTyped(); }} placeholder="e.g. Hayling Island" style={{ ...fld, flex: 1 }} />
+            <button disabled={placing} onClick={pinHere} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), flex: "0 0 auto", padding: "10px 14px", opacity: placing ? 0.5 : 1 }}>
+              {placing ? "Finding…" : "Use my location"}
+            </button>
+          </div>
+          <div style={{ ...note, marginTop: 8 }}>
+            {pinned
+              ? "Pinned to about a kilometre. Players near the club can find it, and search puts nearby players first. Nobody's own location is kept."
+              : "Press Use my location while you're at the club, so players nearby can find it."}
+          </div>
+          {pinned && (
+            <button onClick={flipOpen} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", borderTop: "0.5px solid " + FEED_HAIRLINE, padding: "13px 0 2px", marginTop: 12, cursor: "pointer", textAlign: "left" }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ display: "block", fontFamily: body, fontSize: 15, color: FEED_TEXT_HI }}>Open to new players</span>
+                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, lineHeight: 1.45 }}>On: anyone nearby can join from Find clubs near me. Off: they see the club but need a code from a member.</span>
+              </span>
+              <Switch on={open} />
+            </button>
+          )}
+        </SurfaceCard>
+      )}
 
       {onSetLogo && canManage && !friendly && (
         <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>

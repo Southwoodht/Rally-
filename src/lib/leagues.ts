@@ -18,6 +18,11 @@ export interface League {
   competitions_enabled?: boolean;
   /** A small square image data URL (schema_club_logo.sql), or absent: the letter. */
   logo_url?: string | null;
+  /** The club's pin, about a kilometre wide (schema_club_location.sql). */
+  lat?: number | null;
+  lng?: number | null;
+  /** Listed with a Join button in Clubs near me. Off unless an organiser says. */
+  open_to_join?: boolean;
 }
 
 /** Human-friendly code: no 0/O/1/I so nobody mistypes it. */
@@ -57,10 +62,12 @@ export async function listMyLeagues(): Promise<League[]> {
     supabase!.from("league_members").select(`role, leagues (${c})`).order("joined_at", { ascending: true }),
     { data: [], error: null } as any,
   );
-  // logo_url only exists once schema_club_logo.sql has run, and naming a
-  // missing column fails the whole read — which would empty everyone's club
-  // list. So it is asked for, and on an error asked again without it.
-  let { data, error }: any = await read(cols + ", logo_url");
+  // logo_url and the location columns only exist once their SQL files have
+  // run, and naming a missing column fails the whole read — which would empty
+  // everyone's club list. So each is asked for, and on an error the read is
+  // tried again with less, down to the columns every database has.
+  let { data, error }: any = await read(cols + ", logo_url, lat, lng, open_to_join");
+  if (error) ({ data, error } = await read(cols + ", logo_url"));
   if (error) ({ data, error } = await read(cols));
   if (error) throw error;
   const rows = (data || [])
@@ -318,6 +325,47 @@ export async function setLeagueLogo(id: string, logo: string | null): Promise<vo
       ? "Club logos aren't switched on yet — supabase/schema_club_logo.sql hasn't been run."
       : msg || "Couldn't save that logo.");
   }
+}
+
+const missingFnMessage = (msg: string, fn: string, file: string, fallback: string) =>
+  /does not exist|schema cache|could not find/i.test(msg) && msg.includes(fn)
+    ? `That isn't switched on yet — supabase/${file} hasn't been run.`
+    : msg || fallback;
+
+/** An organiser setting where the club is (schema_club_location.sql). */
+export async function setLeaguePlace(id: string, location: string, spot: { lat: number; lng: number } | null): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("set_league_place", { p_league_id: id, p_location: location, p_lat: spot?.lat ?? null, p_lng: spot?.lng ?? null }),
+    { error: { message: "Timed out saving that." } } as any,
+  );
+  if (res?.error) throw new Error(missingFnMessage(String(res.error.message || ""), "set_league_place", "schema_club_location.sql", "Couldn't save the club's location."));
+}
+
+/** An organiser opening the club to new players found nearby, or closing it. */
+export async function setLeagueOpen(id: string, open: boolean): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("set_league_open", { p_league_id: id, p_open: open }),
+    { error: { message: "Timed out saving that." } } as any,
+  );
+  if (res?.error) throw new Error(missingFnMessage(String(res.error.message || ""), "set_league_open", "schema_club_location.sql", "Couldn't save that."));
+}
+
+export interface NearbyClub {
+  id: string; name: string; location: string | null; km: number; players: number;
+  open_to_join: boolean; join_code: string | null; logo_url: string | null; member: boolean;
+}
+
+/** Clubs with a pin near a spot, nearest first. */
+export async function clubsNear(spot: { lat: number; lng: number }, km = 40): Promise<NearbyClub[]> {
+  if (!supabase) return [];
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("clubs_near", { p_lat: spot.lat, p_lng: spot.lng, p_km: km }),
+    { data: null, error: { message: "Timed out looking for clubs." } } as any,
+  );
+  if (res?.error) throw new Error(missingFnMessage(String(res.error.message || ""), "clubs_near", "schema_club_location.sql", "Couldn't look for clubs."));
+  return res.data || [];
 }
 
 /**
