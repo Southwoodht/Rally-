@@ -1,9 +1,11 @@
 "use client";
-import React from "react";
-import { Check, ChevronRight, LogIn, Plus, Users } from "lucide-react";
+import React, { useState } from "react";
+import { Check, ChevronRight, LogIn, MoreHorizontal, Plus, Users } from "lucide-react";
+import { ordinal } from "@/lib/format";
+import { playedAgo, type ClubSummary } from "@/lib/myLeaguePlaces";
 import {
   FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID,
-  FEED_PAGE, LINE, PANEL, body, display, tabular,
+  FEED_PAGE, FEED_THEY_LEAD, LINE, PANEL, body, display, tabular,
 } from "@/lib/theme";
 
 /**
@@ -23,7 +25,7 @@ import {
  */
 export function GroupSheet({
   clubs, sizes, currentClubId, onSwitchClub, onCreate, onJoin, onManageLeagues, friendly, onFriendly = "/?league=friendly",
-  groups, currentId, onSwitch, onClose,
+  groups, currentId, onSwitch, onClose, summaries, onLeave,
 }: {
   clubs?: Array<{ id: string; name: string; location?: string | null; role?: string }>;
   sizes?: Record<string, { players: number; matches: number }>;
@@ -38,7 +40,13 @@ export function GroupSheet({
   currentId?: string | null;
   onSwitch?: (id: string) => void;
   onClose: () => void;
+  /** "4th · 1463 · 5 days ago" per club (lib/myLeaguePlaces.ts). */
+  summaries?: ClubSummary[];
+  /** Leave a club, from its ⋯ menu. */
+  onLeave?: (club: any) => Promise<void> | void;
 }) {
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState(false);
   const card: React.CSSProperties = {
     display: "flex", alignItems: "center", gap: 12, width: "100%", background: FEED_CARD, border: "none",
     borderRadius: 16, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", boxSizing: "border-box",
@@ -67,18 +75,46 @@ export function GroupSheet({
           {(clubs || []).map((c, i) => {
             const on = !friendly && c.id === currentClubId;
             const n = count(sizes?.[c.id]);
+            const sm = summaries?.find((x) => x.leagueId === c.id);
+            const you = sm
+              ? sm.clubMatches === 0
+                ? <span style={{ fontWeight: 600 }}>No matches yet</span>
+                : <>
+                    <span style={{ fontWeight: 700 }}>{sm.place ? ordinal(sm.place) : "Not ranked yet"}{sm.place && sm.rating != null ? " · " + sm.rating : ""}</span>
+                    <span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>{sm.lastPlayed ? " · " + playedAgo(sm.lastPlayed) : " · not played yet"}</span>
+                  </>
+              : null;
             return (
               <div key={c.id}>
-                <button onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={{ ...card, background: "transparent", borderRadius: 0, marginBottom: 0, gap: 16, padding: "16px 16px" }}>
+                <div role="button" onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={{ ...card, background: "transparent", borderRadius: 0, marginBottom: 0, gap: 16, padding: "16px 16px" }}>
                   <span style={{ width: 50, height: 50, borderRadius: 25, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_LIME, color: FEED_LIME_INK, fontFamily: display, fontWeight: 700, fontSize: 24 }}>
                     {(c.name || "?").trim().charAt(0).toUpperCase()}
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ ...title, display: "block" }}>{c.name}</span>
+                    {you && <span style={{ display: "block", fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, marginTop: 3, ...tabular }}>{you}</span>}
                     <span style={{ ...sub, display: "block" }}>{[n, c.location || null].filter(Boolean).join(" · ") || "Your club"}</span>
                   </span>
-                  {on ? here : go}
-                </button>
+                  {on && here}
+                  {onLeave && (
+                    <button aria-label={"More for " + c.name} onClick={(e) => { e.stopPropagation(); setMenuFor(menuFor === c.id ? null : c.id); setConfirm(false); }} style={{ width: 34, height: 34, borderRadius: 17, border: "none", background: menuFor === c.id ? FEED_PAGE : "transparent", display: "grid", placeItems: "center", cursor: "pointer", flexShrink: 0 }}>
+                      <MoreHorizontal size={20} color={FEED_TEXT_MID} />
+                    </button>
+                  )}
+                </div>
+                {menuFor === c.id && onLeave && (
+                  <div style={{ padding: "0 16px 16px 82px" }}>
+                    {(c as any).join_code && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginBottom: 10, ...tabular }}>Join code {(c as any).join_code}</div>}
+                    {(clubs || []).length > 1 && (confirm ? (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => onLeave(c)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_LIME_INK, background: FEED_THEY_LEAD, border: "none", borderRadius: 12, padding: "10px 12px", cursor: "pointer" }}>Leave {c.name}</button>
+                        <button onClick={() => setConfirm(false)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, background: FEED_PAGE, border: "none", borderRadius: 12, padding: "10px 12px", cursor: "pointer" }}>Stay</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setConfirm(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_THEY_LEAD, background: "none", border: "none", padding: 0, cursor: "pointer" }}>Leave this club</button>
+                    ))}
+                  </div>
+                )}
                 {i < (clubs || []).length - 1 && <div style={{ height: 1, background: LINE, marginLeft: 82 }} />}
               </div>
             );

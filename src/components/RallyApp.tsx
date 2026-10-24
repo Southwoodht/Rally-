@@ -28,8 +28,8 @@ import { Onboarding } from "@/components/settings/Onboarding";
 import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
 import { PROVISIONAL_GAMES, globalKeyFor, globalRankFor } from "@/lib/globalTable";
-import { myLeaguePlaces } from "@/lib/myLeaguePlaces";
-import { listMyLeagues } from "@/lib/leagues";
+import { leaveLeague, listMyLeagues } from "@/lib/leagues";
+import { myClubSummaries, myLeaguePlaces, type ClubSummary } from "@/lib/myLeaguePlaces";
 import { RATING_UNIT_ALL, RATING_UNIT_SEASON, type Standing } from "@/components/home/StandingHero";
 import { glickoStandings } from "@/core/glicko";
 import { setLevelEstimate } from "@/lib/levelAdmin";
@@ -314,6 +314,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [declinedCandidate, setDeclinedCandidate] = useState(false);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
   const [myAuthId, setMyAuthId] = useState<string | null>(null);
+  // The club sheet's "4th · 1463 · 5 days ago" lines, read when it opens.
+  const [clubSummaries, setClubSummaries] = useState<ClubSummary[]>([]);
+  useEffect(() => {
+    if (!groupSheet || !clubs?.length || !myAuthId) return;
+    let alive = true;
+    myClubSummaries(clubs, myAuthId).then((x) => { if (alive) setClubSummaries(x); }).catch(() => {});
+    return () => { alive = false; };
+  }, [groupSheet, clubs, myAuthId]); // eslint-disable-line react-hooks/exhaustive-deps
   // Friendlies need one migration that may not have been run yet. Saying so
   // beats the generic "couldn't load" screen, which points nowhere.
   const [friendlyUnavailable, setFriendlyUnavailable] = useState(false);
@@ -2787,7 +2795,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           // The club you are in is always listed, even if the list of clubs
           // has not arrived (an invite join, the dev league).
           clubs={(clubs || []).some((c: any) => c.id === leagueId) || isFriendlyLeague(gid) ? clubs : [{ id: leagueId, name: leagueName || group?.name || "Club", role: leagueRole }, ...(clubs || [])]}
-          sizes={clubSizes} currentClubId={leagueId} friendly={isFriendlyLeague(gid)}
+          sizes={clubSizes} currentClubId={leagueId} friendly={isFriendlyLeague(gid)} summaries={clubSummaries}
+          onLeave={async (c: any) => { await leaveLeague(c.id); if (typeof window !== "undefined") window.location.href = "/"; }}
           onSwitchClub={(c: any) => { setGroupSheet(false); setPersonal(false); onSwitchClub?.(c); }}
           onCreate={() => { setGroupSheet(false); onClubAction?.("create"); }}
           onJoin={() => { setGroupSheet(false); onClubAction?.("join"); }}

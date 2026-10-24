@@ -1,7 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import { SurfaceCard } from "@/components/ui/Surfaces";
-import { LeagueTable } from "@/components/competitions/Competitions";
+import { LeagueTable, type TableZones } from "@/components/competitions/Competitions";
 import { divisionOdds } from "@/core/divisionOdds";
 import { leagueTable } from "@/core/doubles/competition";
 import type { Competition, CompetitionKind, CompetitionPair, CompetitionResult } from "@/core/doubles/competition";
@@ -186,6 +185,18 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
     [competitions],
   );
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  // Who goes up and down: the season planner's own rule (core/promotion.ts,
+  // two each way, never more than half a division), so the table's arrows and
+  // "Plan next season" always agree.
+  const zonesFor = (i: number, size: number): TableZones | null => {
+    if (ordered.length < 2) return null;
+    const moving = Math.max(0, Math.min(2, Math.floor(size / 2)));
+    if (!moving) return null;
+    return {
+      up: i > 0 ? moving : 0, down: i < ordered.length - 1 ? moving : 0,
+      upTo: i > 0 ? ordered[i - 1].name : undefined, downTo: i < ordered.length - 1 ? ordered[i + 1].name : undefined,
+    };
+  };
   const entryName = (eid: string | null | undefined) => {
     const e = entries.find((x) => x.id === eid);
     if (!e) return "";
@@ -194,29 +205,31 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
       {ordered.map((c, i) => {
         const mine = entries.filter((e) => e.competitionId === c.id);
-        const tier = tierLabel(i, ordered.length);
         const dates = datesOf ? datesOf(c) : { startsOn: null, endsOn: null };
         const span = dateSpan(dates);
         return (
-          <SurfaceCard key={c.id} radius={16} pad="16px 14px">
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI, flex: 1, minWidth: 0 }}>{c.name}</span>
-              {manage && <button onClick={() => setManaging(managing === c.id ? null : c.id)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0, flexShrink: 0 }}>{managing === c.id ? "Done" : "Settings"}</button>}
-              {tier && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{tier}</span>}
-            </div>
-            <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
+          <div key={c.id}>
+            <GroupLabel right={manage && <button onClick={() => setManaging(managing === c.id ? null : c.id)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", padding: 0, flexShrink: 0 }}>{managing === c.id ? "Done" : "Settings"}</button>}>
+              {c.name}
+            </GroupLabel>
+            <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, padding: "0 4px", ...tabular }}>
               {mine.length} {kind === "doubles" ? "pairs" : "players"} · play each {c.legs === 1 ? "once" : c.legs === 2 ? "twice" : c.legs + " times"} · {c.pointsWin} for a win{span ? " · " + span : ""}
             </div>
             <LeagueTable
               kind={kind} entries={mine} results={resultsOf(c)} pointsWin={c.pointsWin} pointsDraw={c.pointsDraw}
               left={remainingOf(c)} meId={meId} entryName={entryName}
               onOpenEntry={(e) => onOpenPlayer(e.p1)}
+              zones={zonesFor(i, mine.length)}
             />
-            {manage && managing === c.id && <ManagePanel c={c} entries={mine} players={players} manage={manage} nameOf={(e) => entryName(e.id)} dates={dates} />}
-          </SurfaceCard>
+            {manage && managing === c.id && (
+              <GroupCard style={{ marginTop: 10, padding: "0 14px 14px" }}>
+                <ManagePanel c={c} entries={mine} players={players} manage={manage} nameOf={(e) => entryName(e.id)} dates={dates} />
+              </GroupCard>
+            )}
+          </div>
         );
       })}
       {oddsOf && <DivisionPredictions ordered={ordered} entries={entries} resultsOf={resultsOf} oddsOf={oddsOf} entryName={entryName} />}

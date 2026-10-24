@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trophy, X } from "lucide-react";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
-import { SurfaceCard } from "@/components/ui/Surfaces";
+import { FormDots, SurfaceCard, type FormResult } from "@/components/ui/Surfaces";
 import {
   bracketSize, champion, knockoutBracket, leagueTable, roundName, roundRobin, tiesReadyToDraw,
   type Competition, type CompetitionFormat, type CompetitionKind, type CompetitionPair,
@@ -12,7 +12,7 @@ import { formatMatchDate, fullNameOf } from "@/lib/format";
 import { addDays, dayNumber, londonDay, londonDayStart, roundDeadlines, tieState, type Season } from "@/core/seasons";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
-  FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
+  FEED_DOWN, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_UP, LINE, body, miniInput, tabular,
 } from "@/lib/theme";
 
 /**
@@ -238,50 +238,102 @@ export function Competitions(props: Props) {
  * all come from?" The points come from the same pointsWin / pointsDraw the
  * table adds up, so the list always sums to the Pts column.
  */
-export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, left, meId, entryName, onOpenEntry }: {
+/**
+ * Promotion and relegation for one division (Divisions passes it; the
+ * competition screen does not): how many rows go up and down, and where to.
+ * The counts follow the season planner (core/promotion.ts), so the table and
+ * the planner can never disagree about who moves.
+ */
+export interface TableZones { up: number; down: number; upTo?: string; downTo?: string }
+
+const zoneKey = (z: TableZones): string => [
+  z.up ? (z.up === 1 ? "Top place goes up" : `Top ${z.up} go up`) + (z.upTo ? " to " + z.upTo : "") : null,
+  z.down ? (z.down === 1 ? "Bottom place drops" : `Bottom ${z.down} drop`) + (z.downTo ? " to " + z.downTo : "") : null,
+].filter(Boolean).join(" · ");
+
+export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, left, meId, entryName, onOpenEntry, zones }: {
   kind: CompetitionKind; entries: CompetitionPair[]; results: CompetitionResult[];
   pointsWin: number; pointsDraw: number; left: Record<string, number> | null; meId: string;
   entryName: (id: string | null | undefined, short?: boolean) => string;
   /** Tap a row — the Divisions view opens the player's profile. */
   onOpenEntry?: (entry: CompetitionPair) => void;
+  zones?: TableZones | null;
 }) {
   const table = leagueTable(entries, results, pointsWin, pointsDraw);
   const [open, setOpen] = useState<string | null>(null);
-  // P, Left, W, D, L, Sets, Pts. "Left" is brief item 1's "played and
-  // remaining for each player"; it only appears where it can be counted.
-  const cols = left ? "20px 1fr 22px 26px 22px 22px 22px 32px 30px" : "22px 1fr 26px 26px 26px 26px 34px 34px";
+  // Last five results per entry, oldest first, from this competition only and
+  // counted the way the table counts (confirmed only).
+  const form = useMemo(() => {
+    const out: Record<string, FormResult[]> = {};
+    const counted = results.filter((r) => r.status === undefined || r.status === "confirmed")
+      .slice().sort((x, y) => (x.date ?? 0) - (y.date ?? 0));
+    for (const r of counted) {
+      for (const [id, asA] of [[r.pairA, true], [r.pairB, false]] as Array<[string, boolean]>) {
+        if (!id) continue;
+        const o: FormResult = r.winner === "draw" ? "D" : (r.winner === "A") === asA ? "W" : "L";
+        (out[id] = out[id] || []).push(o);
+      }
+    }
+    for (const id of Object.keys(out)) out[id] = out[id].slice(-5);
+    return out;
+  }, [results]);
+  // P, Left, W, D, L, Sets, Pts — every column kept (Sam, 2026-10-24).
+  const cols = left ? "22px 1fr 22px 28px 22px 22px 22px 34px 30px" : "22px 1fr 26px 26px 26px 26px 36px 34px";
+  const head: React.CSSProperties = { fontFamily: body, fontWeight: 600, fontSize: 10.5, letterSpacing: 1, textTransform: "uppercase", color: FEED_TEXT_MID, textAlign: "right" };
+  const tint = (c: string, pct: number) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
+  const n = table.length;
   return (
-    <div style={{ marginTop: 14 }}>
-      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, ...label, fontSize: 12, textTransform: "none", letterSpacing: 0, paddingBottom: 6 }}>
-        <span /><span>{kind === "doubles" ? "Pair" : "Player"}</span><span style={{ textAlign: "right" }}>P</span>{left && <span style={{ textAlign: "right" }}>Left</span>}<span style={{ textAlign: "right" }}>W</span><span style={{ textAlign: "right" }}>D</span><span style={{ textAlign: "right" }}>L</span><span style={{ textAlign: "right" }}>Sets</span><span style={{ textAlign: "right" }}>Pts</span>
+    <div style={{ marginTop: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: cols, gap: 4, padding: "0 8px 6px" }}>
+        <span /><span style={{ ...head, textAlign: "left" }}>{kind === "doubles" ? "Pair" : "Player"}</span><span style={head}>P</span>{left && <span style={head}>Left</span>}<span style={head}>W</span><span style={head}>D</span><span style={head}>L</span><span style={head}>Sets</span><span style={head}>Pts</span>
       </div>
-      {table.map((r) => {
+      <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid " + LINE }}>
+      {table.map((r, i) => {
         const entry = entries.find((p) => p.id === r.pairId);
         const isMine = !!entry && (entry.p1 === meId || entry.p2 === meId);
         const sd = r.setsFor - r.setsAgainst;
+        const up = !!zones && i < zones.up;
+        const down = !!zones && !up && i >= n - zones.down;
+        const fresh = r.played === 0;
+        const bg = isMine ? tint(FEED_TEXT_HI, 7) : up ? tint(FEED_UP, 10) : down ? tint(FEED_DOWN, 10) : "transparent";
+        const f = form[r.pairId] || [];
         return (
           <React.Fragment key={r.pairId}>
-          <div onClick={() => setOpen(open === r.pairId ? null : r.pairId)} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", ...tabular }}>
-            <span style={{ color: isMine ? FEED_LIME : FEED_TEXT_MID }}>{r.place}</span>
-            <span style={{ minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: isMine ? FEED_LIME : FEED_TEXT_HI }}>{entryName(r.pairId)}</span>
+          <div onClick={() => setOpen(open === r.pairId ? null : r.pairId)} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "9px 8px", background: bg, borderTop: i ? "1px solid " + LINE : "none", fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", opacity: fresh ? 0.55 : 1, ...tabular }}>
+            <span style={{ fontWeight: 600, color: FEED_TEXT_MID, display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.1 }}>
+              {r.place}
+              {(up || down) && <span style={{ fontSize: 9, color: up ? FEED_UP : FEED_DOWN, marginTop: 2 }}>{up ? "▲" : "▼"}</span>}
+            </span>
+            <span style={{ minWidth: 0 }}>
+              <span style={{ display: "block", fontWeight: isMine ? 700 : 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entryName(r.pairId)}</span>
+              {fresh
+                ? <span style={{ display: "block", fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>Not played yet</span>
+                : f.length > 0 && <span style={{ display: "block", marginTop: 4 }}><FormDots form={f} size={6} /></span>}
+            </span>
             <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
             {left && <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{left[r.pairId] || 0}</span>}
             <span style={{ textAlign: "right" }}>{r.won}</span>
             <span style={{ textAlign: "right" }}>{r.drawn}</span>
             <span style={{ textAlign: "right" }}>{r.lost}</span>
-            <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{sd > 0 ? "+" + sd : sd}</span>
-            <span style={{ textAlign: "right", fontWeight: 600 }}>{r.points}</span>
+            <span style={{ textAlign: "right", fontWeight: 600, color: sd > 0 ? FEED_UP : sd < 0 ? FEED_DOWN : FEED_TEXT_MID }}>{sd > 0 ? "+" + sd : sd}</span>
+            <span style={{ textAlign: "right", fontWeight: 700 }}>{r.points}</span>
           </div>
           {open === r.pairId && (
+            <div style={{ padding: "0 8px" }}>
             <RowMatches
               pairId={r.pairId} results={results} pointsWin={pointsWin} pointsDraw={pointsDraw}
               left={left ? left[r.pairId] || 0 : null} entryName={entryName}
               onOpen={onOpenEntry && entry ? () => onOpenEntry(entry) : undefined}
             />
+            </div>
           )}
           </React.Fragment>
         );
       })}
+      </div>
+      {zones && (zones.up > 0 || zones.down > 0) && n > 1 && (
+        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, padding: "8px 4px 0" }}>{zoneKey(zones)}</div>
+      )}
     </div>
   );
 }
