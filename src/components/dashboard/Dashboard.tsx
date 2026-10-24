@@ -6,7 +6,9 @@ import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/
 import { FRIENDLY_LEAGUE_ID } from "@/lib/leagueData";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { listMyLeagues, createLeague, joinLeague, leagueSizes, leaveLeague, League } from "@/lib/leagues";
-import { BALL, CHALK, CLAY, COURT, FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, display } from "@/lib/theme";
+import { BALL, CHALK, CLAY, COURT, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_DIVIDER, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, FEED_THEY_LEAD, LINE, MUTED, PANEL, PANEL2, body, display, tabular } from "@/lib/theme";
+import { greetingFor } from "@/lib/format";
+import { ChevronRight, LogIn, Plus, Users } from "lucide-react";
 import RallyApp from "@/components/RallyApp";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
@@ -28,6 +30,7 @@ export default function Dashboard({ session }: { session: Session }) {
 
   const [sizes, setSizes] = useState<Record<string, { players: number; matches: number }>>({});
   const [confirmLeave, setConfirmLeave] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
 
   const load = async () => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('__dev_auto') === '1') {
@@ -195,19 +198,28 @@ export default function Dashboard({ session }: { session: Session }) {
     );
   }
 
+  // The landing page (Sam, 2026-10-24: "nice but ugly — sexy it up"). The
+  // scoreboard system: a greeting set large, the busiest club as the hero
+  // card with its numbers loud, the rest as quieter cards, Friendlies with its
+  // own mark, and Join/Create as the two real buttons. Leaving a club moved
+  // behind "Leave a club" — it was a link on every card, the loudest thing on
+  // a page whose job is to open one.
   const shell = (children: React.ReactNode) => (
-    <div style={{ minHeight: "100vh", background: COURT, padding: "22px 18px 40px", paddingTop: "calc(22px + env(safe-area-inset-top))" }}>
+    <div style={{ minHeight: "100vh", background: FEED_PAGE, padding: "18px 16px 40px", paddingTop: "calc(18px + env(safe-area-inset-top))", boxSizing: "border-box" }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-          <div>
-            <div style={{ fontFamily: display, fontSize: 34, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -0.5, lineHeight: 1 }}>Southwood</div>
-            <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6 }}>Welcome, {(displayName || "").trim().split(/\s+/)[0]}.</div>
-          </div>
-          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Log out</button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 26 }}>
+          <div style={{ fontFamily: display, fontSize: 22, fontWeight: 700, color: FEED_LIME, textTransform: "uppercase", letterSpacing: 0.5, lineHeight: 1 }}>Southwood</div>
+          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", cursor: "pointer" }}>Log out</button>
         </div>
-        {error && <div style={{ fontFamily: body, fontSize: 13, color: CLAY, marginBottom: 12 }}>{error}</div>}
+        <div style={{ fontFamily: display, fontWeight: 600, fontSize: 34, color: FEED_TEXT_HI, lineHeight: 1.08, letterSpacing: -0.5 }}>{greetingFor(displayName || "")}</div>
+        <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, marginTop: 6, marginBottom: 22 }}>
+          {view === "picker" ? "Where are we playing today?" : view === "create" ? "Start a club for your courts or your mates." : view === "join" ? "Got a code or an invite link? In you come." : "Welcome to Southwood."}
+        </div>
+        {error && <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_THEY_LEAD, background: FEED_CARD, borderRadius: 14, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
         {children}
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 30, textAlign: "center" }}>Southwood</div>
+        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 34, textAlign: "center" }}>
+          Southwood · <a href="/privacy" style={{ color: FEED_TEXT_MID }}>Privacy</a>
+        </div>
       </div>
     </div>
   );
@@ -234,59 +246,107 @@ export default function Dashboard({ session }: { session: Session }) {
     </div>
   );
 
-  if (view === "picker") return shell(
-    <div>
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 10 }}>Your clubs</div>
-      {/* Several leagues can end up with the same name — created once each
-          time somebody tapped Create while setting things up. The counts are
-          what tell them apart, so they're shown before there's any chance to
-          leave the wrong one. */}
-      {leagues.map((l) => {
-        const n = sizes[l.id];
-        const empty = n && !n.players && !n.matches;
-        return (
-          <div key={l.id} style={{ ...tile, width: "100%", marginBottom: 8, display: "block", boxSizing: "border-box" as const }}>
-            <button onClick={() => { setActive(l); setView("app"); }} style={{ display: "block", width: "100%", background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}>
-              <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>{l.name}</div>
-              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>{l.location ? l.location + " · " : ""}Code <span style={{ fontFamily: body }}>{l.join_code}</span>{l.role === "owner" ? " · Owner" : ""}</div>
-              {n && (
-                <div style={{ fontFamily: body, fontSize: 12.5, fontWeight: 600, color: empty ? CLAY : MUTED, marginTop: 4 }}>
-                  {empty ? "Empty — nothing in it" : n.players + " player" + (n.players === 1 ? "" : "s") + " · " + n.matches + " match" + (n.matches === 1 ? "" : "es")}
-                </div>
-              )}
-            </button>
-            {leagues.length > 1 && (
-              confirmLeave === l.id ? (
-                <div style={{ marginTop: 10, borderTop: "1px solid var(--line)", paddingTop: 10 }}>
-                  <div style={{ fontFamily: body, fontSize: 12.5, color: CHALK, lineHeight: 1.45, marginBottom: 8 }}>
-                    Leave <strong>{l.name}</strong>? It stays exactly as it is — this only takes it off your list, and code <span style={{ fontFamily: body }}>{l.join_code}</span> gets you back in.
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={async () => { try { await leaveLeague(l.id); setConfirmLeave(null); await load(); } catch (e: any) { setError(e.message || "Couldn't leave."); } }} style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "8px 14px", cursor: "pointer" }}>Leave</button>
-                    <button onClick={() => setConfirmLeave(null)} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <button onClick={() => setConfirmLeave(l.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, background: "transparent", border: "none", padding: "8px 0 0", cursor: "pointer" }}>Leave this club</button>
-              )
-            )}
+  if (view === "picker") {
+    // The club with the most matches is the hero: it is almost always the
+    // one somebody opens, and its numbers are worth showing large.
+    const sized = (l: League) => sizes[l.id]?.matches ?? -1;
+    const hero = leagues.reduce<League | null>((best, l) => (!best || sized(l) > sized(best) ? l : best), null);
+    const rest = leagues.filter((l) => l !== hero);
+    const open = (l: League) => { if (leaving) return; setActive(l); setView("app"); };
+    const monogram = (name: string, onHero: boolean) => (
+      <span style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", background: onHero ? FEED_LIME_DIVIDER : FEED_PAGE, color: onHero ? FEED_ON_HERO : FEED_LIME, fontFamily: display, fontWeight: 700, fontSize: 22 }}>
+        {(name || "?").trim().charAt(0).toUpperCase()}
+      </span>
+    );
+    const leaveBlock = (l: League) => leaving && leagues.length > 1 ? (
+      confirmLeave === l.id ? (
+        <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 12, background: FEED_PAGE, borderRadius: 12, padding: 12 }}>
+          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 8 }}>
+            Leave {l.name}? It stays exactly as it is. Code {l.join_code} gets you back in.
           </div>
-        );
-      })}
-      <button
-        onClick={() => { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); }}
-        style={{ ...tile, width: "100%", marginBottom: 8, display: "block", boxSizing: "border-box" as const, textAlign: "left" }}
-      >
-        <div style={{ fontFamily: body, fontSize: 17, fontWeight: 700, color: CHALK }}>Friendlies</div>
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 3 }}>Matches outside any club</div>
-      </button>
-
-      <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-        <button style={tile} onClick={() => { setError(""); setView("create"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>Create</div></button>
-        <button style={tile} onClick={() => { setError(""); setView("join"); }}><div style={{ fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK }}>Join</div></button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={async () => { try { await leaveLeague(l.id); setConfirmLeave(null); await load(); } catch (e: any) { setError(e.message || "Couldn't leave."); } }} style={{ flex: 1, fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_LIME_INK, background: FEED_THEY_LEAD, border: "none", borderRadius: 10, padding: "9px 12px", cursor: "pointer" }}>Leave</button>
+            <button onClick={() => setConfirmLeave(null)} style={{ flex: 1, fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, background: FEED_RAISED, border: "none", borderRadius: 10, padding: "9px 12px", cursor: "pointer" }}>Stay</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={(e) => { e.stopPropagation(); setConfirmLeave(l.id); }} style={{ marginTop: 10, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_THEY_LEAD, background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>Leave this club</button>
+      )
+    ) : null;
+    const stat = (n: number | undefined, word: string, color: string, sub: string) => (
+      <div>
+        <div style={{ fontFamily: display, fontWeight: 600, fontSize: 30, lineHeight: 1, color, ...tabular }}>{n ?? "–"}</div>
+        <div style={{ fontFamily: body, fontSize: 12.5, color: sub, marginTop: 4 }}>{n === 1 ? word : word === "match" ? "matches" : word + "s"}</div>
       </div>
-    </div>
-  );
+    );
+
+    return shell(
+      <div>
+        {hero && (
+          <div role="button" onClick={() => open(hero)} style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: 24, padding: "18px 18px 16px", marginBottom: 10, cursor: leaving ? "default" : "pointer" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {monogram(hero.name, true)}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: body, fontWeight: 500, fontSize: 21, color: FEED_ON_HERO, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{hero.name}</div>
+                <div style={{ fontFamily: body, fontSize: 13, color: FEED_LIME_INK_2, marginTop: 2 }}>{[hero.location, hero.role === "owner" ? "Owner" : null].filter(Boolean).join(" · ") || "Your club"}</div>
+              </div>
+              {!leaving && <ChevronRight size={20} color={FEED_ON_HERO} />}
+            </div>
+            <div style={{ height: 1, background: FEED_LIME_DIVIDER, margin: "16px 0 14px" }} />
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 28 }}>
+              {stat(sizes[hero.id]?.players, "player", FEED_ON_HERO, FEED_LIME_INK_2)}
+              {stat(sizes[hero.id]?.matches, "match", FEED_ON_HERO, FEED_LIME_INK_2)}
+              <div style={{ flex: 1, textAlign: "right", fontFamily: body, fontSize: 12.5, color: FEED_LIME_INK_2, ...tabular }}>Code {hero.join_code}</div>
+            </div>
+            {leaveBlock(hero)}
+          </div>
+        )}
+
+        {rest.map((l) => {
+          const n = sizes[l.id];
+          return (
+            <div key={l.id} role="button" onClick={() => open(l)} style={{ background: FEED_CARD, borderRadius: 20, padding: "14px 16px", marginBottom: 10, cursor: leaving ? "default" : "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {monogram(l.name, false)}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
+                  <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
+                    {[n ? `${n.players} player${n.players === 1 ? "" : "s"} · ${n.matches} match${n.matches === 1 ? "" : "es"}` : null, l.role === "owner" ? "Owner" : null].filter(Boolean).join(" · ") || "Code " + l.join_code}
+                  </div>
+                </div>
+                {!leaving && <ChevronRight size={18} color={FEED_TEXT_MID} />}
+              </div>
+              {leaveBlock(l)}
+            </div>
+          );
+        })}
+
+        <div role="button" onClick={() => { if (!leaving) { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); } }} style={{ display: "flex", alignItems: "center", gap: 12, background: FEED_CARD, borderRadius: 20, padding: "14px 16px", marginBottom: 18, cursor: "pointer" }}>
+          <span style={{ width: 44, height: 44, borderRadius: 14, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE }}><Users size={20} color={FEED_LIME} /></span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Friendlies</div>
+            <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>You and your mates, no club needed</div>
+          </div>
+          <ChevronRight size={18} color={FEED_TEXT_MID} />
+        </div>
+
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => { setError(""); setView("join"); }} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "14px 12px", fontFamily: body, fontWeight: 500, fontSize: 15.5, cursor: "pointer" }}>
+            <LogIn size={17} /> Join a club
+          </button>
+          <button onClick={() => { setError(""); setView("create"); }} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "14px 12px", fontFamily: body, fontWeight: 500, fontSize: 15.5, cursor: "pointer" }}>
+            <Plus size={17} /> Create one
+          </button>
+        </div>
+
+        {leagues.length > 1 && (
+          <button onClick={() => { setLeaving(!leaving); setConfirmLeave(null); }} style={{ display: "block", margin: "18px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 13.5, cursor: "pointer" }}>
+            {leaving ? "Done" : "Leave a club"}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return shell(
     <>
