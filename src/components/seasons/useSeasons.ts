@@ -31,9 +31,16 @@ export function useSeasons(leagueId: string | null, legacy: any, enabled: boolea
   const installed = rows !== null;
   const seasons: Season[] = useMemo(() => {
     if (rows) return rows;
+    // Not the old settings-blob season while the real list is still on its
+    // way. Seacourt's blob still holds the deleted "Test League" season, so
+    // Home showed your place in it ("2nd") for a moment and then the real
+    // all-time one ("4th") — Sam, 2026-10-24. The blob is only the fallback
+    // for a database without the seasons table, i.e. after a load came back
+    // with nothing.
+    if (enabled && !loaded) return [];
     const l = leagueId ? seasonFromLegacy(leagueId, legacy) : null;
     return l ? [l] : [];
-  }, [rows, legacy, leagueId]);
+  }, [rows, legacy, leagueId, enabled, loaded]);
 
   const current = useMemo(() => activeSeason(seasons), [seasons]);
   const lastEnded = useMemo(

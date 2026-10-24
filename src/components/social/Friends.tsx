@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { openProfile } from "@/lib/openProfile";
 import { Avatar } from "@/components/ui/Avatar";
 import { PeopleYouMayKnow } from "@/components/social/PeopleYouMayKnow";
 import { inviteUrl } from "@/lib/invite";
@@ -136,7 +137,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
             {incoming.map((row) => (
               <div key={row.id} style={{ ...listRow, flexWrap: "wrap" }}>
                 <Avatar player={asPlayer(row.profile)} size={36} />
-                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
+                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} onClick={(e) => { e.preventDefault(); openProfile(row.profile.id); }} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {actionBtn("Accept", () => accept(row))}
                   {actionBtn("Decline", () => remove(row), "transparent", MUTED)}
@@ -181,7 +182,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
                   when they do not fit, which is the wrap. */
               <div key={row.id} style={{ ...listRow, flexWrap: "wrap" }}>
                 <Avatar player={asPlayer(row.profile)} size={36} />
-                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
+                <a href={"/?profile=" + encodeURIComponent(row.profile.id)} onClick={(e) => { e.preventDefault(); openProfile(row.profile.id); }} style={{ flex: 1, minWidth: 120, fontFamily: body, fontSize: 15, fontWeight: 600, color: CHALK, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.profile.display_name}</a>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {onMessage && actionBtn("Message", () => onMessage(row.profile.id), PANEL2, CHALK)}
                   {leagueJoinCode && actionBtn("Invite to club", () => inviteToLeague(row), PANEL2, CHALK)}

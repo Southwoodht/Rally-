@@ -1,5 +1,6 @@
 "use client";
 import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
+import { setProfileOpener } from "@/lib/openProfile";
 import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, Lock, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
@@ -378,6 +379,13 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
     setPendingIntent(null);
   }, [pendingIntent, loading, gdata.players]);
+
+  // Profile links inside the app open in place (lib/openProfile.ts) rather
+  // than reloading the page through ?profile=.
+  useEffect(() => {
+    setProfileOpener((id) => { setPendingIntent({ kind: "profile", authId: id }); });
+    return () => setProfileOpener(null);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1536,6 +1544,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const rec = wdl[meId];
     const standing = (() => {
       if (!rec || !rec.gp) return null;
+      // Not until the seasons are known: season or all time decides the
+      // place, and guessing first is what flashed "2nd" before "4th".
+      if (!seasonsState.loaded) return null;
       const cutoff = Date.now() - 365 * 86400000;
       const recent = new Set<string>();
       matches.forEach((m) => { if (countsAsPlayed(m) && m.date >= cutoff) { recent.add(m.p1); recent.add(m.p2); } });

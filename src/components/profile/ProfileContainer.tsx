@@ -1,5 +1,6 @@
 "use client";
 import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { openProfile } from "@/lib/openProfile";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
 import { RecordTrophyForm } from "@/components/profile/RecordTrophyForm";
@@ -380,7 +381,7 @@ export function ProfileContainer({
         <FriendsCard
           authId={player?.auth_id ?? null}
           isMe={isSelf}
-          onOpenProfile={(aid) => { if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(aid); }}
+          onOpenProfile={openProfile}
         />
         {/* Your own profile only: suggestions are about who YOU might know. */}
         {isSelf && myAuthId && (

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { openProfile } from "@/lib/openProfile";
 import { Avatar } from "@/components/ui/Avatar";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { friendsOf, listFriends, listIncomingRequests, listOutgoingRequests, sendFriendRequest } from "@/lib/friends";
@@ -27,9 +28,6 @@ import {
  *  the first twenty-five had not. */
 const FRIENDS_READ = 25;
 
-const openProfile = (authId: string) => {
-  if (typeof window !== "undefined") window.location.href = "/?profile=" + encodeURIComponent(authId);
-};
 
 export function PeopleYouMayKnow({
   meAuthId, mePlayerId, players, matches, leagueName, variant = "strip", limit, onSeeAll, flash,
