@@ -7,7 +7,12 @@
 // appears to happen. createImageBitmap decodes far more formats reliably
 // (including HEIC on modern mobile browsers), so it's tried first; the
 // FileReader/Image path is only a fallback for older browsers.
-export function readPhotoAsDataUrl(file: File, size: number): Promise<string> {
+//
+// `fit: "contain"` (a club logo) keeps the whole image inside the square on
+// a white ground instead of cropping it: a logo is often wider than tall,
+// and a transparent PNG saved as JPEG would otherwise turn its see-through
+// parts black.
+export function readPhotoAsDataUrl(file: File, size: number, opts: { fit?: "cover" | "contain" } = {}): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/") && !/\.(heic|heif)$/i.test(file.name)) { reject(new Error("not-an-image")); return; }
     const draw = (source: CanvasImageSource, w: number, h: number) => {
@@ -15,6 +20,15 @@ export function readPhotoAsDataUrl(file: File, size: number): Promise<string> {
       canvas.width = size; canvas.height = size;
       const ctx = canvas.getContext("2d");
       if (!ctx) { reject(new Error("no-canvas-context")); return; }
+      if (opts.fit === "contain") {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+        const scale = Math.min(size / w, size / h) * 0.86;
+        const dw = w * scale, dh = h * scale;
+        ctx.drawImage(source, 0, 0, w, h, (size - dw) / 2, (size - dh) / 2, dw, dh);
+        resolve(canvas.toDataURL("image/jpeg", 0.88));
+        return;
+      }
       const side = Math.min(w, h);
       const sx = (w - side) / 2, sy = (h - side) / 2;
       ctx.drawImage(source, sx, sy, side, side, 0, 0, size, size);

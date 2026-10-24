@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { ClubMark } from "@/components/ui/ClubMark";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
@@ -190,7 +191,13 @@ export default function Dashboard({ session }: { session: Session }) {
           // The switches in "Run your league" change the league row; the flags
           // above are read from it, so the app has to be told or the switch
           // would flip back on the next render.
-          onLeagueFlags={(patch: any) => setActive((a) => (a ? { ...a, ...patch } : a))}
+          onLeagueFlags={(patch: any) => {
+            setActive((a) => (a ? { ...a, ...patch } : a));
+            // The club list too, so the logo shows on the start page and in
+            // the club switcher without a reload.
+            setLeagues((ls) => ls.map((x) => (x.id === active.id ? { ...x, ...patch } : x)));
+          }}
+          clubLogo={(active as any).logo_url ?? null}
           displayName={displayName}
           onManageLeagues={() => setView(leagues.length > 1 ? "picker" : "empty")}
           // The club sheet (Sam, 2026-10-24): the same cards as Your clubs.
@@ -293,9 +300,7 @@ export default function Dashboard({ session }: { session: Session }) {
             return (
               <div key={l.id}>
                 <div role="button" onClick={() => { setActive(l); setView("app"); }} style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 16px", cursor: "pointer" }}>
-                  <span style={{ width: 54, height: 54, borderRadius: 27, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_LIME, color: FEED_LIME_INK, fontFamily: display, fontWeight: 700, fontSize: 26 }}>
-                    {(l.name || "?").trim().charAt(0).toUpperCase()}
-                  </span>
+                  <ClubMark club={l} size={54} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
                     {you && <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_HI, marginTop: 3, ...tabular }}>{you}</div>}

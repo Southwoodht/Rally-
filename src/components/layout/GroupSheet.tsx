@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { ClubMark } from "@/components/ui/ClubMark";
 import { Check, ChevronRight, LogIn, MoreHorizontal, Plus, Users } from "lucide-react";
 import { ordinal } from "@/lib/format";
 import { playedAgo, type ClubSummary } from "@/lib/myLeaguePlaces";
@@ -87,9 +88,7 @@ export function GroupSheet({
             return (
               <div key={c.id}>
                 <div role="button" onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={{ ...card, background: "transparent", borderRadius: 0, marginBottom: 0, gap: 16, padding: "16px 16px" }}>
-                  <span style={{ width: 50, height: 50, borderRadius: 25, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_LIME, color: FEED_LIME_INK, fontFamily: display, fontWeight: 700, fontSize: 24 }}>
-                    {(c.name || "?").trim().charAt(0).toUpperCase()}
-                  </span>
+                  <ClubMark club={c} size={50} />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ ...title, display: "block" }}>{c.name}</span>
                     {you && <span style={{ display: "block", fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, marginTop: 3, ...tabular }}>{you}</span>}

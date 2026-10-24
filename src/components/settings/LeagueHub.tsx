@@ -8,6 +8,8 @@ import { LeagueMembers } from "@/components/settings/LeagueMembers";
 import { PlayerEditSheet } from "@/components/settings/PlayerEditSheet";
 import { LevelSuggestionsPage, levelSuggestionsFor } from "@/components/settings/LevelSuggestions";
 import { Avatar } from "@/components/ui/Avatar";
+import { ClubMark } from "@/components/ui/ClubMark";
+import { readPhotoAsDataUrl } from "@/lib/photo";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { levelNow } from "@/core/levels";
 import { isDisputed } from "@/core/matchStatus";
@@ -724,8 +726,23 @@ function LevelRequestsPage({ players, requests, onDecide, flash }: any) {
 // League settings
 // ---------------------------------------------------------------------------
 
-function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competitionsEnabled, onSetFlags, flash }: any) {
+function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competitionsEnabled, onSetFlags, flash, clubLogo, onSetLogo, canManage, friendly }: any) {
   const [busy, setBusy] = useState(false);
+  const [logo, setLogo] = useState<string | null>(clubLogo ?? null);
+  const [savingLogo, setSavingLogo] = useState(false);
+  const logoInput = React.useRef<HTMLInputElement>(null);
+  // The club's logo (schema_club_logo.sql), shown in its circle on the start
+  // page and in the club switcher. Fitted whole on white, not cropped.
+  const saveLogo = async (next: string | null) => {
+    setSavingLogo(true);
+    try { await onSetLogo(next); setLogo(next); flash(next ? "Logo saved" : "Logo removed"); }
+    catch (e: any) { flash(e?.message || "Couldn't save that logo."); }
+    setSavingLogo(false);
+  };
+  const pickLogo = async (file: File) => {
+    try { await saveLogo(await readPhotoAsDataUrl(file, 256, { fit: "contain" })); }
+    catch { flash("Couldn't read that picture. Try a PNG or JPEG."); }
+  };
   const flip = async (patch: Record<string, boolean>, said: string) => {
     if (busy) return;
     setBusy(true);
@@ -748,6 +765,23 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
         <div style={{ ...lbl, marginBottom: 6 }}>Club name</div>
         <input value={group?.name || ""} onChange={(e) => updateGroup(group.id, { name: e.target.value })} style={fld} />
       </SurfaceCard>
+
+      {onSetLogo && canManage && !friendly && (
+        <SurfaceCard radius={18} pad="16px 14px" style={{ marginBottom: 14 }}>
+          <div style={{ ...lbl, marginBottom: 10 }}>Club logo</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <ClubMark club={{ name: group?.name, logo_url: logo }} size={56} />
+            <input ref={logoInput} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void pickLogo(f); e.target.value = ""; }} />
+            <div style={{ display: "flex", gap: 8, flex: 1, flexWrap: "wrap" }}>
+              <button disabled={savingLogo} onClick={() => logoInput.current?.click()} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), flex: "0 0 auto", padding: "10px 14px", opacity: savingLogo ? 0.5 : 1 }}>
+                {savingLogo ? "Saving…" : logo ? "Change logo" : "Upload a logo"}
+              </button>
+              {logo && <button disabled={savingLogo} onClick={() => void saveLogo(null)} style={{ ...btn("transparent", FEED_TEXT_MID), flex: "0 0 auto", padding: "10px 6px" }}>Remove</button>}
+            </div>
+          </div>
+          <div style={{ ...note, marginTop: 10 }}>Shown in the club&apos;s circle for everyone. Without one, it&apos;s the club&apos;s first letter.</div>
+        </SurfaceCard>
+      )}
 
       <SurfaceCard radius={18} pad="4px 14px" style={{ marginBottom: 10 }}>
         {toggle("Doubles", "A separate doubles table, ratings and profile. Singles is untouched.", !!doublesEnabled,

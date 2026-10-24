@@ -16,6 +16,8 @@ export interface League {
    */
   doubles_enabled?: boolean;
   competitions_enabled?: boolean;
+  /** A small square image data URL (schema_club_logo.sql), or absent: the letter. */
+  logo_url?: string | null;
 }
 
 /** Human-friendly code: no 0/O/1/I so nobody mistypes it. */
@@ -50,10 +52,16 @@ const ROLE_RANK: Record<string, number> = { owner: 3, editor: 2, member: 1 };
  */
 export async function listMyLeagues(): Promise<League[]> {
   if (!supabase) return [];
-  const { data, error } = await withSupabaseTimeout(
-    supabase.from("league_members").select("role, leagues (id, name, location, join_code, created_by, doubles_enabled, competitions_enabled)").order("joined_at", { ascending: true }),
+  const cols = "id, name, location, join_code, created_by, doubles_enabled, competitions_enabled";
+  const read = (c: string) => withSupabaseTimeout(
+    supabase!.from("league_members").select(`role, leagues (${c})`).order("joined_at", { ascending: true }),
     { data: [], error: null } as any,
   );
+  // logo_url only exists once schema_club_logo.sql has run, and naming a
+  // missing column fails the whole read — which would empty everyone's club
+  // list. So it is asked for, and on an error asked again without it.
+  let { data, error }: any = await read(cols + ", logo_url");
+  if (error) ({ data, error } = await read(cols));
   if (error) throw error;
   const rows = (data || [])
     .filter((r: any) => r.leagues)
@@ -290,6 +298,25 @@ export async function setLeagueFlags(
   if (res.error) throw res.error;
   if (!res.data || !res.data.length) {
     throw new Error("Only the person who created this club can change that.");
+  }
+}
+
+/**
+ * An owner or organiser setting the club's logo, or clearing it with null
+ * (schema_club_logo.sql). Through set_league_logo because the leagues UPDATE
+ * policy is the creator's alone.
+ */
+export async function setLeagueLogo(id: string, logo: string | null): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("set_league_logo", { p_league_id: id, p_logo: logo }),
+    { error: { message: "Timed out saving that." } } as any,
+  );
+  if (res?.error) {
+    const msg = String(res.error.message || "");
+    throw new Error(/does not exist|schema cache|could not find/i.test(msg) && msg.includes("set_league_logo")
+      ? "Club logos aren't switched on yet — supabase/schema_club_logo.sql hasn't been run."
+      : msg || "Couldn't save that logo.");
   }
 }
 

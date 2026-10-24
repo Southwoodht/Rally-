@@ -30,7 +30,7 @@ import { Onboarding } from "@/components/settings/Onboarding";
 import { YourMatches, type MatchesMode } from "@/components/matches/YourMatches";
 import { LevelRepair } from "@/components/settings/LevelRepair";
 import { PROVISIONAL_GAMES, globalKeyFor, globalRankFor } from "@/lib/globalTable";
-import { leaveLeague, listMyLeagues } from "@/lib/leagues";
+import { leaveLeague, listMyLeagues, setLeagueLogo } from "@/lib/leagues";
 import { myClubSummaries, myLeaguePlaces, type ClubSummary } from "@/lib/myLeaguePlaces";
 import { RATING_UNIT_ALL, RATING_UNIT_SEASON, type Standing } from "@/components/home/StandingHero";
 import { glickoStandings } from "@/core/glicko";
@@ -172,7 +172,7 @@ function nextUpLine(pct: number | null): string {
 // for the coach, keep the code); true brings it straight back.
 const SHOW_LADDER = false;
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags, clubs, clubSizes, onSwitchClub, onClubAction }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags, clubLogo, clubs, clubSizes, onSwitchClub, onClubAction }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -2665,6 +2665,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             doublesEnabled={!!doublesEnabled} competitionsEnabled={!!competitionsEnabled}
             hasCompetition={comps.competitions.length > 0}
             onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
+            clubLogo={clubLogo}
+            onSetLogo={async (logo: string | null) => { await setLeagueLogo(leagueId, logo); onLeagueFlags?.({ logo_url: logo }); }}
             isOwner={leagueRole === "owner"}
             levelRequests={canSetLevels ? levelRequests : null}
             onDecideLevelRequest={decideRequest}
