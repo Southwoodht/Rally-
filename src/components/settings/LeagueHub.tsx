@@ -6,6 +6,7 @@ import { ImportResults } from "@/components/settings/ImportResults";
 import { AccountCard } from "@/components/settings/AccountCard";
 import { LeagueMembers } from "@/components/settings/LeagueMembers";
 import { PlayerEditSheet } from "@/components/settings/PlayerEditSheet";
+import { LevelSuggestionsPage, levelSuggestionsFor } from "@/components/settings/LevelSuggestions";
 import { Avatar } from "@/components/ui/Avatar";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { levelNow } from "@/core/levels";
@@ -41,7 +42,7 @@ import {
  * account. Nothing on it is a control the database would then refuse them.
  */
 
-type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels" | "disputes";
+type Page = "home" | "players" | "singles" | "seasons" | "roles" | "settings" | "data" | "import" | "levels" | "disputes" | "suggest";
 
 const lbl: React.CSSProperties = {
   fontFamily: body, fontWeight: 400, fontSize: 13, color: FEED_TEXT_MID,
@@ -122,6 +123,7 @@ export function LeagueHub(props: any) {
   if (page === "singles") return <><>{back("Run your club")}</><SinglesFixturesPage {...props} fixtures={(fixtures || []).filter((f: any) => !f.competitionId)} /></>;
   if (page === "seasons") return <><>{back("Run your club")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
   if (page === "disputes") return <><>{back("Run your club")}</><DisputesPage players={players} matches={matches} onKeep={props.onKeepDisputed} onRemove={props.onRemoveDisputed} /></>;
+  if (page === "suggest") return <><>{back("Run your club")}</><LevelSuggestionsPage players={players} matches={matches} leagueId={leagueId} onSetLevel={props.onSetLevelFor} /></>;
   if (page === "levels") return <><>{back("Run your club")}</><LevelRequestsPage players={players} requests={props.levelRequests} onDecide={props.onDecideLevelRequest} flash={flash} /></>;
   if (page === "roles") return <><>{back("Run your club")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} onRemoved={props.onReload} /></>;
   if (page === "settings") return <><>{back("Run your club")}</><SettingsPage {...props} /></>;
@@ -171,6 +173,7 @@ export function LeagueHub(props: any) {
     </button>
   );
 
+  const suggestCount = !friendly && isCreator && props.onSetLevelFor ? levelSuggestionsFor(players || [], matches || []).length : 0;
   const toPlay = (fixtures || []).filter((f: any) => !f.done && !f.competitionId).length;
   const ic = (C: any) => <C size={18} color={FEED_LIME} strokeWidth={2} />;
 
@@ -235,6 +238,9 @@ export function LeagueHub(props: any) {
           {!friendly && row(ic(Trophy), "Arranged matches", toPlay ? `${toPlay} to play` : "Hand-picked singles matches, outside any competition", "singles")}
           {!friendly && props.onKeepDisputed && row(ic(Shield), "Disputed results", (() => { const n = (matches || []).filter((m: any) => isDisputed(m)).length; return n ? `${n} to decide` : "None"; })(), "disputes")}
           {!friendly && props.levelRequests && row(ic(Users), "Level requests", (() => { const n = props.levelRequests.filter((r: any) => r.status === "pending").length; return n ? `${n} waiting` : "None waiting"; })(), "levels")}
+          {/* Level suggestions: the club's creator only for now, so Sam can
+              check who it flags before other organisers see it. */}
+          {!friendly && isCreator && props.onSetLevelFor && row(ic(Users), "Level suggestions", suggestCount ? `${suggestCount} to look at` : "Everyone's stars match their results", "suggest")}
           {!friendly && row(ic(Shield), "Who helps run it", "Organisers and helpers", "roles")}
           {!friendly && row(ic(Settings2), "Club settings", `${group?.name || "Name"} · doubles ${doublesEnabled ? "on" : "off"}`, "settings")}
           {!friendly && row(ic(Upload), "Import old results", "Paste them from a spreadsheet or notes", "import")}

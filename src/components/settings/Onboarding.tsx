@@ -1,12 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
 import { LevelGuide } from "@/components/profile/LevelGuide";
 import { BigBtn, Field, Toggle } from "@/components/ui/atoms";
 import { LEVELS, SUBS, START_ELO } from "@/core/constants";
 import { levelForUtr, parseUtr, utrLabel } from "@/core/utr";
 import { BALL, CHALK, COURT, LINE, MUTED, body, card, input, miniInput } from "@/lib/theme";
-import { supabase } from "@/lib/supabase";
+import { useUtrReady } from "@/lib/utrReady";
 
 export function Onboarding({ me, onFinish }: any) {
   const yearNow = new Date().getFullYear();
@@ -20,16 +20,8 @@ export function Onboarding({ me, onFinish }: any) {
   const [utrText, setUtrText] = useState("");
   const utr = parseUtr(utrText);
   const utrBad = utrText.trim() !== "" && utr == null;
-  // Only asked once the database has the column (schema_player_utr.sql).
-  // Before that, saving a UTR would make the whole sign-up save fail, so the
-  // question is simply not there. No database at all (the dev preview) asks.
-  const [utrReady, setUtrReady] = useState(!supabase);
-  useEffect(() => {
-    if (!supabase) return;
-    let live = true;
-    Promise.resolve(supabase.from("players").select("utr").limit(1)).then((res: any) => { if (live) setUtrReady(!res?.error); }, () => {});
-    return () => { live = false; };
-  }, []);
+  // Only asked once the database has the column (lib/utrReady.ts).
+  const utrReady = useUtrReady();
   const sy = parseInt(startYear) || yearNow;
   const blocks: Array<{ from: number; to: number | null }> = [];
   for (let y = sy; y <= yearNow; y += gap) { const end = Math.min(y + gap - 1, yearNow); blocks.push({ from: y, to: end >= yearNow ? null : end }); }

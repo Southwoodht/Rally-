@@ -2647,7 +2647,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "profile" && !showDoubles && <ProfileScreen players={players} meId={meId} shared={shared} onSetMe={setMe} goH2H={() => setTab("h2h")} goEdit={() => setTab("myprofile")} goFriends={() => setTab("friends")} goQuality={() => { setMatchesFor(null); setMatchesMode("quality"); setTab("matches"); }} goHistory={() => { setMatchesFor(null); setMatchesMode("history"); setTab("matches"); }} />}
         {tab === "myprofile" && <SubHeader title="My profile" onBack={() => setTab("profile")} />}
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash}
-          canSetLevels={canSetLevels} onSetLevel={setLevelFor} onSetStart={canSetLevels ? setStartFor : undefined} friendly={isFriendlyLeague(gid)}
+          canSetLevels={canSetLevels} onSetLevel={setLevelFor} onSetStart={canSetLevels ? setStartFor : undefined} onSetUtr={canSetLevels ? setUtrFor : undefined} friendly={isFriendlyLeague(gid)}
           pendingRequest={(levelRequests || []).find((r) => r.playerId === meId && r.status === "pending") || null}
           onAskLevel={levelRequests ? askForLevel : undefined}
           played={matches.filter((m: any) => m.p1 === meId || m.p2 === meId).length} />}

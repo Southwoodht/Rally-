@@ -92,6 +92,8 @@
     "src/core/divisionOdds.ts",
     "src/core/divisionOdds.test.ts",
     "src/core/utr.ts",
-    "src/core/utr.test.ts"
+    "src/core/utr.test.ts",
+    "src/core/levelSuggest.ts",
+    "src/core/levelSuggest.test.ts"
   ]
 }

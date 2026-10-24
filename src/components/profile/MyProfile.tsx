@@ -1,10 +1,12 @@
 "use client";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { DeleteAccount } from "@/components/profile/DeleteAccount";
 import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import { Avatar } from "@/components/ui/Avatar";
 import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
+import { levelForUtr, parseUtr, utrLabel } from "@/core/utr";
+import { useUtrReady } from "@/lib/utrReady";
 import { readPhotoAsDataUrl } from "@/lib/photo";
 import { updateMyPublicProfile } from "@/lib/profiles";
 import { LevelRequestForm } from "@/components/profile/LevelRequestForm";
@@ -23,9 +25,11 @@ const startSummary = (p: any): string | null => {
   return parts.length ? parts.join(" · ").replace(/^./, (c) => c.toUpperCase()) : null;
 };
 
-export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, onSetStart, pendingRequest, onAskLevel, friendly, played = 0 }: any) {
+export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, onSetStart, onSetUtr, pendingRequest, onAskLevel, friendly, played = 0 }: any) {
   const me = players.find((p) => p.id === meId);
   const fileRef = useRef<HTMLInputElement>(null);
+  const utrReady = useUtrReady();
+  const [utrText, setUtrText] = useState("");
   if (!me) return <Empty msg="Pick who you are first." />;
   const setField = (key, val) => {
     // A name that reads as an offensive word is refused where it is typed.
@@ -117,6 +121,45 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
       )}
       {mayPick && !me.level && !canSetLevels && !friendly && (
         <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>Pick carefully: after this, only the organisers can change it.</div>
+      )}
+      {!friendly && utrReady && (
+        <>
+          <L>UTR</L>
+          {me.utr != null && !(canSetLevels && onSetUtr) ? (
+            // Yours once; after that it is the organisers', like the level.
+            <div style={{ fontFamily: body, fontSize: 15, color: CHALK, lineHeight: 1.5 }}>
+              {utrLabel(me.utr)}
+              <div style={{ fontSize: 12.5, color: MUTED }}>Set. Ask an organiser if it changes.</div>
+            </div>
+          ) : (() => {
+            const u = parseUtr(utrText);
+            const bad = utrText.trim() !== "" && u == null;
+            // Your own UTR sets your stars only while you have no level; with
+            // one, the stars are the organisers' and they see that the two
+            // disagree.
+            const save = () => {
+              if (u == null) return;
+              if (canSetLevels && onSetUtr) { onSetUtr(meId, u).catch(() => {}); setUtrText(""); return; }
+              setPlayers(players.map((p) => p.id === meId ? { ...p, utr: u, ...(p.level ? {} : { level: levelForUtr(u) }) } : p));
+              setUtrText("");
+              flash && flash(utrLabel(u) + " saved");
+            };
+            return (
+              <>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input value={utrText} onChange={(e) => setUtrText(e.target.value)} inputMode="decimal" placeholder={me.utr != null ? utrLabel(me.utr) : "e.g. 3.2"} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
+                  <button onClick={save} disabled={u == null} style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 14px", color: BALL, opacity: u == null ? 0.4 : 1, boxSizing: "border-box" as const }}>Save</button>
+                </div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>
+                  {bad ? "A UTR is a number from 1 to 16.5."
+                    : canSetLevels && onSetUtr ? "Your Universal Tennis Rating, if you have one. Saving it sets your stars from it."
+                    : me.level ? "Your Universal Tennis Rating, if you have one. It shows beside your stars; the organisers can match your stars to it. You can set it once."
+                    : "Your Universal Tennis Rating, if you have one. It sets your stars. You can set it once."}
+                </div>
+              </>
+            );
+          })()}
+        </>
       )}
       <L>Starting rating &amp; record</L>
       {friendly || onSetStart ? (

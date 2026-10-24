@@ -131,6 +131,14 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
                 ? `${utrLabel(utr)} sets their level to ${levelForUtr(utr).cat} · ${levelForUtr(utr).sub}.`
                 : "Their stars come from it when it's set. Leave it empty if they haven't got one."}
           </div>
+          {/* The UTR is a real number from outside; the stars can be moved
+              away from it (results, or by hand), so say when they disagree
+              rather than changing either. */}
+          {p.utr != null && p.level && (levelForUtr(p.utr).cat !== p.level.cat || levelForUtr(p.utr).sub !== p.level.sub) && (
+            <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_HI, lineHeight: 1.45, marginTop: 6 }}>
+              Their stars ({p.level.cat} · {p.level.sub}) no longer match {utrLabel(p.utr)} ({levelForUtr(p.utr).cat} · {levelForUtr(p.utr).sub}). Update the UTR if it&apos;s out of date.
+            </div>
+          )}
         </div>
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
