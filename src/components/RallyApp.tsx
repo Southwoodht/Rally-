@@ -3,7 +3,7 @@ import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirm
 import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
 import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, Lock, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, Lock, LogOut, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -2790,6 +2790,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               {canManageMatches && !personal && !isFriendlyLeague(gid) && <button onClick={() => { setMenuOpen(false); setBoardOpen(true); }} style={listRow}><Tv size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Clubhouse TV</span><span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
               <a href="/privacy" style={{ ...listRow, textDecoration: "none" }}><Lock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Privacy</span><span style={{ color: MUTED }}>›</span></a>
+              {/* Log out, where people look for it (Sam couldn't find it: it
+                  was only at the foot of Run your club). One tap — signing out
+                  loses nothing. */}
+              <button onClick={async () => { setMenuOpen(false); try { await supabase?.auth.signOut(); } catch {} if (typeof window !== "undefined") window.location.href = "/"; }} style={listRow}><LogOut size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Log out</span></button>
             </div>
           </div>
         </div>
