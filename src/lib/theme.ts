@@ -279,5 +279,5 @@ export const LEVEL_RAMP = [
 
 // Anything with digits lines up column-wise; anything big enough to show
 // loose tracking gets pulled in.
-export const tabular: CSSProperties = { fontVariantNumeric: "tabular-nums" };
+export const tabular: CSSProperties = { fontVariantNumeric: "tabular-nums lining-nums" };
 export const tight = (px: number): CSSProperties => (px > 18 ? { letterSpacing: px >= 26 ? "-0.03em" : "-0.02em" } : {});

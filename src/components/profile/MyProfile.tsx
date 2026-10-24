@@ -1,5 +1,7 @@
 "use client";
 import React, { useRef } from "react";
+import { DeleteAccount } from "@/components/profile/DeleteAccount";
+import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import { Avatar } from "@/components/ui/Avatar";
 import { Empty } from "@/components/ui/atoms";
 import { LEVELS, SUBS } from "@/core/constants";
@@ -21,11 +23,16 @@ const startSummary = (p: any): string | null => {
   return parts.length ? parts.join(" · ").replace(/^./, (c) => c.toUpperCase()) : null;
 };
 
-export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, onSetStart, pendingRequest, onAskLevel, friendly }: any) {
+export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSetLevel, onSetStart, pendingRequest, onAskLevel, friendly, played = 0 }: any) {
   const me = players.find((p) => p.id === meId);
   const fileRef = useRef<HTMLInputElement>(null);
   if (!me) return <Empty msg="Pick who you are first." />;
   const setField = (key, val) => {
+    // A name that reads as an offensive word is refused where it is typed.
+    if ((key === "name" || key === "last") && isOffensiveName([key === "name" ? val : me.name, key === "last" ? val : me.last].filter(Boolean).join(" "))) {
+      flash && flash(OFFENSIVE_NAME_MESSAGE);
+      return;
+    }
     setPlayers(players.map((p) => p.id === meId ? { ...p, [key]: val } : p));
     // A photo on a league row is only visible to that league. The account's
     // own profile row is what everybody else can read, and nothing had ever
@@ -127,6 +134,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
       )}
       {!friendly && <EmailsToggle flash={flash} />}
       <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only club owners can edit other players or club settings.</div>
+      <DeleteAccount played={played} />
     </div>
   );
 }

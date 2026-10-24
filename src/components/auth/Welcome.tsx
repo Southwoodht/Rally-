@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import { supabase } from "@/lib/supabase";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, display } from "@/lib/theme";
 
@@ -34,6 +35,7 @@ export default function Welcome() {
     reset();
     if (!email || !password) { setError("Email and password are required."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (isOffensiveName(name)) { setError(OFFENSIVE_NAME_MESSAGE); return; }
     setBusy(true);
     const { data, error } = await supabase!.auth.signUp({
       email, password, options: { data: { full_name: name || null } },

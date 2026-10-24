@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import { Calendar, Check, ChevronLeft, ChevronRight, Database, Link2, Settings2, Shield, Trophy, Upload, Users } from "lucide-react";
 import { ImportResults } from "@/components/settings/ImportResults";
 import { AccountCard } from "@/components/settings/AccountCard";
@@ -122,7 +123,7 @@ export function LeagueHub(props: any) {
   if (page === "seasons") return <><>{back("Run your club")}</><SeasonsPage group={group} updateGroup={updateGroup} seasonsState={props.seasonsState} onStartSeason={props.onStartSeason} onEditSeason={props.onEditSeason} onEndSeason={props.onEndSeason} flash={flash} /></>;
   if (page === "disputes") return <><>{back("Run your club")}</><DisputesPage players={players} matches={matches} onKeep={props.onKeepDisputed} onRemove={props.onRemoveDisputed} /></>;
   if (page === "levels") return <><>{back("Run your club")}</><LevelRequestsPage players={players} requests={props.levelRequests} onDecide={props.onDecideLevelRequest} flash={flash} /></>;
-  if (page === "roles") return <><>{back("Run your club")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} /></>;
+  if (page === "roles") return <><>{back("Run your club")}</><LeagueMembers leagueId={leagueId} leagueName={group?.name} onRemoved={props.onReload} /></>;
   if (page === "settings") return <><>{back("Run your club")}</><SettingsPage {...props} /></>;
   if (page === "data") return <><>{back("Run your club")}</><DataPage {...props} onImport={() => setPage("import")} /></>;
   if (page === "import") return (
@@ -301,7 +302,7 @@ function StartSheet({ competitions, doubles, isCreator, onClose, onDoubles, onSi
 // Players
 // ---------------------------------------------------------------------------
 
-function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash, leagueId, onSetLevelFor, onSetHistoryFor, onSetStartFor }: any) {
+function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash, leagueId, onSetLevelFor, onSetHistoryFor, onSetStartFor, onRenameFor }: any) {
   const friendly = isFriendlyLeague(leagueId);
   const [name, setName] = useState("");
   const [q, setQ] = useState("");
@@ -316,6 +317,7 @@ function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash
   const add = () => {
     const n = name.trim();
     if (!n) return;
+    if (isOffensiveName(n)) return flash(OFFENSIVE_NAME_MESSAGE);
     // A suggestion, never a decision (§3): an exact first-name match only
     // stops a double-tap creating the same person twice.
     if (players.some((p: any) => (p.name || "").toLowerCase() === n.toLowerCase() && !p.last)) return flash("There's already a " + n + " with no surname — add the surname to tell them apart.");
@@ -375,6 +377,7 @@ function PlayersPage({ players, setPlayers, matches, onRemovePlayer, meId, flash
           onSetStart={friendly
             ? async (elo, record) => { setPlayers(players.map((x: any) => (x.id === editingPlayer.id ? { ...x, initialElo: elo ?? undefined, initialRecord: record ?? undefined } : x))); }
             : onSetStartFor ? (elo, record) => onSetStartFor(editingPlayer.id, elo, record) : undefined}
+          onRename={!friendly && onRenameFor ? (n, l) => onRenameFor(editingPlayer.id, n, l) : undefined}
           onRemove={() => { onRemovePlayer(editingPlayer.id); setEditing(null); flash("Player removed"); }}
           onClose={() => setEditing(null)}
         />

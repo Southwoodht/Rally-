@@ -44,7 +44,7 @@ export function LegacyTable({ players, matches, onOpen }: any) {
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 46 }}>
-                  <div style={{ fontFamily: body, fontSize: 22, fontWeight: 700, color: i === 0 ? BALL : CHALK, fontVariantNumeric: "tabular-nums" }}>{r.matches}</div>
+                  <div style={{ fontFamily: body, fontSize: 22, fontWeight: 700, color: i === 0 ? BALL : CHALK, fontVariantNumeric: "tabular-nums lining-nums" }}>{r.matches}</div>
                   <div style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: MUTED }}>Matches</div>
                 </div>
               </button>

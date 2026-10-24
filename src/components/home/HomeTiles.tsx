@@ -75,39 +75,35 @@ export function HomeTiles({ nextUp, periods, onBook }: {
   const list = periods && periods.length ? periods : null;
   const labels = list ? list.map((p) => p.label) : ["This month"];
 
+  // One card, two halves, the number and its line side by side (Sam,
+  // 2026-10-24: "make the weekly record card more compact"). It was two
+  // tiles of three stacked rows each; the same facts now take one row.
   const pair = (i: number) => {
     const p = list?.[i];
+    const half = (heading: string, value: React.ReactNode, sub: string) => (
+      <div style={{ minWidth: 0 }}>
+        <div style={label}>{heading}</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 2, minWidth: 0 }}>
+          <span style={{ flexShrink: 0 }}>{value}</span>
+          <span style={{ ...line(FEED_TEXT_MID), marginTop: 0, minWidth: 0 }}>{sub}</span>
+        </div>
+      </div>
+    );
+    const none = <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_MID }}>None yet</span>;
     return (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 6 }}>
-        <div style={tile}>
-          <div style={label}>Won / lost</div>
-          <div style={{ marginTop: 4 }}>
-            {p
-              ? <StatNumeral size={22} tone={p.winRate === null ? "mid" : "hi"}>{p.w}–{p.l}</StatNumeral>
-              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>None yet</span>}
-          </div>
-          <div style={line(FEED_TEXT_MID)}>
-            {!p ? "Log one and this fills in" : p.winRate === null ? "Nothing played" : p.winRate + "% win rate"}
-          </div>
-        </div>
-        {/* Different people, not matches played. Six games against the same
-            person is a rivalry; six against six people is a season, and the
-            two are worth telling apart — which is the whole reason this sits
-            beside the record instead of repeating it. */}
-        <div style={tile}>
-          <div style={label}>Opponents</div>
-          <div style={{ marginTop: 4 }}>
-            {p
-              ? <StatNumeral size={22} tone={p.opponents ? "hi" : "mid"}>{p.opponents}</StatNumeral>
-              : <span style={{ fontFamily: body, fontWeight: 500, fontSize: 16, color: FEED_TEXT_MID }}>Nobody yet</span>}
-          </div>
-          {/* Who you beat against who beat you, in people rather than
-              matches. The count above is everybody you faced; this is how
-              that splits. */}
-          <div style={line(FEED_TEXT_MID)}>
-            {!p ? "Log one and this fills in" : !p.played ? "Nothing played" : p.beaten + " beat · " + p.lostTo + " lost to"}
-          </div>
-        </div>
+      <div style={{ ...tile, padding: "10px 14px", marginTop: 6, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {half(
+          "Won / lost",
+          p ? <StatNumeral size={20} tone={p.winRate === null ? "mid" : "hi"}>{p.w}–{p.l}</StatNumeral> : none,
+          !p ? "" : p.winRate === null ? "Nothing played" : p.winRate + "%",
+        )}
+        {/* Different people, not matches played: six games against one
+            person is a rivalry, six against six people is a season. */}
+        {half(
+          "Opponents",
+          p ? <StatNumeral size={20} tone={p.opponents ? "hi" : "mid"}>{p.opponents}</StatNumeral> : none,
+          !p || !p.played ? "" : p.beaten + " beat · " + p.lostTo + " lost to",
+        )}
       </div>
     );
   };

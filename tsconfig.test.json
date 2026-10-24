@@ -12,6 +12,8 @@
     ]
   },
   "include": [
+    "src/core/nameFilter.ts",
+    "src/core/nameFilter.test.ts",
     "src/core/tiebreak.ts",
     "src/core/rankDisplay.ts",
     "src/core/tiebreak.test.ts",

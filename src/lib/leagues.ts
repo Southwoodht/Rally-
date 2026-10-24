@@ -292,3 +292,27 @@ export async function setLeagueFlags(
     throw new Error("Only the person who created this club can change that.");
   }
 }
+
+/**
+ * An owner taking somebody out of the club (Sam, 2026-10-24).
+ *
+ * Through remove_league_member (schema_moderation.sql), which checks the
+ * caller is an owner, refuses owners and yourself, marks their player row not
+ * playing and deletes the membership. Their results stay, so nobody's rating
+ * moves.
+ */
+export async function removeLeagueMember(leagueId: string, userId: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("remove_league_member", { p_league_id: leagueId, p_user_id: userId }),
+    { error: { message: "timed out" } } as any,
+  );
+  if (res?.error) {
+    const msg = String(res.error.message || "");
+    throw new Error(
+      /could not find the function|schema cache/i.test(msg)
+        ? "Removing members isn't switched on yet — supabase/schema_moderation.sql hasn't been run."
+        : msg || "Couldn't remove them.",
+    );
+  }
+}

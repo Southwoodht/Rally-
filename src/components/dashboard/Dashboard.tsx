@@ -193,7 +193,7 @@ export default function Dashboard({ session }: { session: Session }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>
             <div style={{ fontFamily: display, fontSize: 34, fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -0.5, lineHeight: 1 }}>Southwood</div>
-            <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6 }}>Welcome, {displayName}.</div>
+            <div style={{ fontFamily: body, fontSize: 13.5, color: MUTED, marginTop: 6 }}>Welcome, {(displayName || "").trim().split(/\s+/)[0]}.</div>
           </div>
           <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 12, padding: "7px 10px", cursor: "pointer" }}>Log out</button>
         </div>

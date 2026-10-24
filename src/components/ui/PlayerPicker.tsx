@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import { Avatar } from "@/components/ui/Avatar";
 import { uid } from "@/lib/format";
 import { normalizePlayerName } from "@/lib/historyImport";
@@ -71,6 +72,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
   const tryCreate = () => {
     const nm = newName.trim();
     if (!nm) { setErr("Enter a name."); return; }
+    if (isOffensiveName(nm + " " + newLast)) { setErr(OFFENSIVE_NAME_MESSAGE); return; }
     const existing = findLikeness(nm, newLast.trim());
     if (existing && !collision) { setCollision(existing); return; }
     // No avatar: only an uploaded photo renders now, and a new player has

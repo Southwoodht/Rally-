@@ -7,6 +7,7 @@ import { TimelineEditor } from "@/components/settings/TimelineEditor";
 import { LEVELS, SUBS } from "@/core/constants";
 import { levelIsEstimated, levelNow, startIndex } from "@/core/levels";
 import { fullNameOf } from "@/lib/format";
+import { OFFENSIVE_NAME_MESSAGE, isOffensiveName } from "@/core/nameFilter";
 import {
   DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, NICKS, PANEL, body, miniInput,
@@ -48,6 +49,11 @@ interface Props {
   onSetHistory?: (history: any[]) => Promise<void>;
   /** An organiser setting the starting rating and carried-in record. Absent: not shown. */
   onSetStart?: (elo: number | null, record: { w: number; d: number; l: number } | null) => Promise<void>;
+  /**
+   * An owner or editor renaming a player who has an account (Sam, 2026-10-24),
+   * through set_player_name. Absent: a claimed name stays theirs.
+   */
+  onRename?: (name: string, last: string) => Promise<void>;
 }
 
 const lbl: React.CSSProperties = {
@@ -59,10 +65,32 @@ const fld: React.CSSProperties = {
   padding: "10px 12px", width: "100%", boxSizing: "border-box",
 };
 
-export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory, onSetStart }: Props) {
+export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove, onClose, onSetLevel, onSetHistory, onSetStart, onRename }: Props) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [timeline, setTimeline] = useState(false);
   const [guide, setGuide] = useState(false);
+  const [nameErr, setNameErr] = useState("");
+  const [first, setFirst] = useState(p.name || "");
+  const [surname, setSurname] = useState(p.last || "");
+  const [savingName, setSavingName] = useState(false);
+
+  // A shell's name saves as it is typed, so an offensive one is refused at
+  // the keystroke rather than written and then caught.
+  const typeName = (patch: { name?: string; last?: string }) => {
+    const full = [patch.name ?? p.name, patch.last ?? p.last].filter(Boolean).join(" ");
+    if (isOffensiveName(full)) { setNameErr(OFFENSIVE_NAME_MESSAGE); return; }
+    setNameErr("");
+    onChange(patch);
+  };
+  const nameChanged = first.trim() !== (p.name || "").trim() || surname.trim() !== (p.last || "").trim();
+  const saveName = async () => {
+    if (!onRename) return;
+    if (!first.trim()) { setNameErr("A first name is needed."); return; }
+    if (isOffensiveName(first + " " + surname)) { setNameErr(OFFENSIVE_NAME_MESSAGE); return; }
+    setNameErr(""); setSavingName(true);
+    try { await onRename(first, surname); } catch { /* the caller has said why */ }
+    setSavingName(false);
+  };
 
   const setLevel = (cat: string, sub?: string) => { void onSetLevel?.(cat ? { cat, sub: sub || "Medium" } : null); };
   const lvl = levelNow(p);
@@ -122,16 +150,17 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
           <div style={{ background: FEED_CARD, borderRadius: 14, padding: 14, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.55, marginBottom: 14 }}>
             <div style={{ color: FEED_TEXT_HI }}>{[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}</div>
             {lvl && <div>{lvl.cat} · {lvl.sub}{levelIsEstimated(p) ? " — your estimate" : ""}</div>}
-            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their level and starting record, which are yours to set" : ""}.</div>
+            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their name, level and starting record, which you can set" : ""}.</div>
           </div>
         ) : (
           <>
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <label style={{ flex: 1 }}><div style={lbl}>First name</div>
-                <input value={p.name || ""} onChange={(e) => onChange({ name: e.target.value })} style={fld} /></label>
+                <input value={p.name || ""} onChange={(e) => typeName({ name: e.target.value })} style={fld} /></label>
               <label style={{ flex: 1 }}><div style={lbl}>Surname</div>
-                <input value={p.last || ""} onChange={(e) => onChange({ last: e.target.value })} style={fld} /></label>
+                <input value={p.last || ""} onChange={(e) => typeName({ last: e.target.value })} style={fld} /></label>
             </div>
+            {nameErr && <div style={{ fontFamily: body, fontSize: 12.5, color: DOT_LOSS, margin: "-4px 0 12px" }}>{nameErr}</div>}
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <label style={{ flex: 1 }}><div style={lbl}>Age</div>
                 <input value={p.age || ""} inputMode="numeric" onChange={(e) => onChange({ age: e.target.value.replace(/[^0-9]/g, "") })} style={fld} /></label>
@@ -147,6 +176,26 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
               <button onClick={() => onChange({ nick: NICKS[Math.floor(Math.random() * NICKS.length)] })} style={{ ...fld, width: "auto", color: FEED_LIME, cursor: "pointer" }}>Surprise me</button>
             </div>
           </>
+        )}
+
+        {/* Their name is theirs, except that an owner or editor can correct
+            it — the moderation door (schema_moderation.sql). Saved on a tap,
+            not per keystroke, because it goes through the database. */}
+        {locked && onRename && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+              <label style={{ flex: 1 }}><div style={lbl}>First name</div>
+                <input value={first} onChange={(e) => { setFirst(e.target.value); setNameErr(""); }} style={fld} /></label>
+              <label style={{ flex: 1 }}><div style={lbl}>Surname</div>
+                <input value={surname} onChange={(e) => { setSurname(e.target.value); setNameErr(""); }} style={fld} /></label>
+            </div>
+            {nameErr && <div style={{ fontFamily: body, fontSize: 12.5, color: DOT_LOSS, marginBottom: 8 }}>{nameErr}</div>}
+            {nameChanged && (
+              <button onClick={saveName} disabled={savingName} style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "11px 8px", fontFamily: body, fontSize: 14, cursor: "pointer", opacity: savingName ? 0.6 : 1 }}>
+                {savingName ? "Saving…" : "Save name"}
+              </button>
+            )}
+          </div>
         )}
 
         {locked && levelSection && <div style={{ marginBottom: 6 }}>{levelSection}</div>}

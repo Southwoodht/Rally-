@@ -63,6 +63,9 @@ begin
     'public.log_player_level()',
     -- Starting rating and record (schema_starting_record_organisers.sql).
     'public.set_player_start(text, numeric, jsonb)',
+    -- Moderation (schema_moderation.sql): renaming a player, removing a member.
+    'public.set_player_name(text, text, text)',
+    'public.remove_league_member(uuid, uuid)',
     -- The doubles sanity trigger's function (schema_doubles.sql). Not an
     -- entry point — nothing calls it but the trigger — and the migration
     -- revokes it itself. It is listed anyway because `create or replace`

@@ -13,6 +13,12 @@ body {
   color: var(--text-hi);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  /* Even-height figures everywhere (Sam, 2026-10-24). London's display face,
+   * Cormorant, sets old-style figures by default, so a rating or a "4th"
+   * dipped below the line; lining figures keep every digit cap height.
+   * Inherited, and the `tabular` token repeats it because setting
+   * font-variant-numeric to one value resets the others. */
+  font-variant-numeric: lining-nums;
 }
 
 * {

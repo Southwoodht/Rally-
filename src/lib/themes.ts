@@ -53,14 +53,16 @@ export interface ThemeOption {
  * ids cost a migration and a broken week.
  */
 export const THEMES: ThemeOption[] = [
-  { id: "rally", name: "Southwood", caption: "Default", swatch: ["#16271F", "#F4EFE3", "#E9C46A"], status: "#16271F" },
+  { id: "rally", name: "Southwood", caption: "The original", swatch: ["#16271F", "#F4EFE3", "#E9C46A"], status: "#16271F" },
   { id: "paris", name: "Paris", caption: "Clay", swatch: ["#F3ECE2", "#B9502B", "#A8451F"], status: "#B9502B" },
-  { id: "sw19", name: "London", caption: "Grass", swatch: ["#F7F4EC", "#1F5B3A", "#1F5B3A"], status: "#1F5B3A" },
+  { id: "sw19", name: "London", caption: "Grass · default", swatch: ["#F7F4EC", "#1F5B3A", "#1F5B3A"], status: "#1F5B3A" },
   { id: "flushing", name: "New York", caption: "Night hard court", swatch: ["#0B1220", "#8FE3FF", "#FF8A5B"], status: "#0B1220" },
   { id: "melbourne", name: "Melbourne", caption: "Hard court", swatch: ["#EAF3FB", "#0B5FB5", "#0B5FB5"], status: "#0B5FB5" },
 ];
 
-export const DEFAULT_THEME: ThemeId = "rally";
+// London since 2026-10-24 (Sam), for new accounts and anyone who never
+// picked; supabase/schema_theme_london.sql moves the stored default with it.
+export const DEFAULT_THEME: ThemeId = "sw19";
 export const THEME_STORAGE_KEY = "rally-theme";
 
 export const isThemeId = (v: unknown): v is ThemeId =>

@@ -147,3 +147,23 @@ export async function decideLevelRequest(id: string, status: "approved" | "decli
   if (error) throw error;
   if (!data || !data.length) throw new Error("Only an organiser can decide a level request.");
 }
+
+/**
+ * An owner or editor renaming a player, signed up or not (Sam, 2026-10-24).
+ *
+ * Through set_player_name (schema_moderation.sql): the players UPDATE policy
+ * lets nobody touch somebody else's claimed row, which stays true; this door
+ * changes the name and surname only, for staff of that player's club.
+ */
+export async function setPlayerName(playerId: string, name: string, last: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const result: any = await withSupabaseTimeout(
+    supabase.rpc("set_player_name", { p_player_id: playerId, p_name: name, p_last: last }),
+    { error: { message: "timed out" } } as any,
+  );
+  if (result?.error) {
+    throw new Error(missingFn(result.error, "set_player_name")
+      ? "Renaming players isn't switched on yet — supabase/schema_moderation.sql hasn't been run."
+      : String(result.error.message || "Couldn't save that name."));
+  }
+}

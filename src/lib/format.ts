@@ -16,7 +16,10 @@ export const fmtDate = (ts) => new Date(ts).toLocaleDateString("en-GB", { day: "
 export const greetingFor = (name: string, at: Date = new Date()): string => {
   const h = at.getHours();
   const part = h < 12 ? "Morning" : h < 18 ? "Afternoon" : "Evening";
-  return name ? part + ", " + name : part;
+  // First name only, everywhere (Sam, 2026-10-24): "Morning, Samuel", never
+  // "Morning, Samuel Henry" when the fallback is an account's full name.
+  const first = (name || "").trim().split(/\s+/)[0];
+  return first ? part + ", " + first : part;
 };
 
 // The full name, for the few places with room for it and a reason to be
@@ -188,3 +191,10 @@ export const ordinalSuffix = (n: number): string => {
 };
 
 export const ordinal = (n: number): string => n + ordinalSuffix(n);
+
+// A deleted account's player row (Sam, 2026-10-24): the results stay, the
+// person goes. /api/account/delete renames the row to exactly this, with no
+// surname, and marks it not playing. Never offered on the claim screen.
+export const FORMER_PLAYER_NAME = "Former player";
+export const isFormerPlayer = (p: any): boolean =>
+  !!p && !p.auth_id && (p.name || "").trim() === FORMER_PLAYER_NAME && !(p.last || "").trim();

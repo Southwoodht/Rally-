@@ -135,7 +135,9 @@ function GapCard({ daysSince, waiting, lastMatch, onBook }: {
   // a match that does not exist.
   const never = daysSince == null;
   const n = never ? (waiting ?? 0) : daysSince;
-  const line = never ? "players waiting for a game" : "days since you last played";
+  const line = never
+    ? (n === 1 ? "player waiting for a game" : "players waiting for a game")
+    : (n === 1 ? "day since you last played" : "days since you last played");
 
   return (
     <div style={card}>

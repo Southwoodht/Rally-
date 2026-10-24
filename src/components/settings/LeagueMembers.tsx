@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { listLeagueMembers, setLeagueRole, type LeagueMember } from "@/lib/leagues";
+import { listLeagueMembers, removeLeagueMember, setLeagueRole, type LeagueMember } from "@/lib/leagues";
 import {
-  FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body,
+  DOT_LOSS, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body,
 } from "@/lib/theme";
 
 // Who is in the league and what they are allowed to do.
@@ -26,12 +26,13 @@ const ROLES: Array<{ value: "owner" | "editor" | "member"; label: string; note: 
   { value: "member", label: "Member", note: "Play, log your own results, read everything." },
 ];
 
-export function LeagueMembers({ leagueId, leagueName }: { leagueId: string; leagueName?: string }) {
+export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: string; leagueName?: string; onRemoved?: () => void }) {
   const [members, setMembers] = useState<LeagueMember[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [failed, setFailed] = useState<{ id: string; message: string } | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
 
   const load = async () => {
     try { setMembers(await listLeagueMembers(leagueId)); setProblem(null); }
@@ -48,6 +49,22 @@ export function LeagueMembers({ leagueId, leagueName }: { leagueId: string; leag
       await load();
     } catch (e: any) {
       setFailed({ id: m.userId, message: e?.message || "Couldn't change that role." });
+    }
+    setBusy(null);
+  };
+
+  // Removing somebody (Sam, 2026-10-24): owners only, never an owner, never
+  // yourself. Their results stay on their player record, which is hidden from
+  // the Table, so nobody's rating moves.
+  const remove = async (m: LeagueMember) => {
+    setBusy(m.userId); setFailed(null);
+    try {
+      await removeLeagueMember(leagueId, m.userId);
+      setConfirmRemove(null); setOpen(null);
+      await load();
+      onRemoved?.();
+    } catch (e: any) {
+      setFailed({ id: m.userId, message: e?.message || "Couldn't remove them." });
     }
     setBusy(null);
   };
@@ -112,13 +129,31 @@ export function LeagueMembers({ leagueId, leagueName }: { leagueId: string; leag
                   </span>
                 </button>
               ))}
+              {/* Two steps, and the confirm says what goes and what stays. */}
+              {!m.isMe && m.role !== "owner" && (
+                confirmRemove === m.userId ? (
+                  <div style={{ marginTop: 6, padding: 12, borderRadius: 12, background: FEED_RAISED }}>
+                    <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>
+                      Remove {m.name} from {leagueName || "the club"}? Their results stay, so nobody&apos;s rating changes, and they come off the Table. They can only come back with the join code.
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={() => remove(m)} disabled={busy === m.userId} style={{ flex: 1, background: DOT_LOSS, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "10px 8px", fontFamily: body, fontSize: 14, cursor: "pointer" }}>{busy === m.userId ? "Removing…" : "Remove"}</button>
+                      <button onClick={() => setConfirmRemove(null)} style={{ flex: 1, background: "transparent", color: FEED_TEXT_HI, border: "0.5px solid " + FEED_TEXT_LOW, borderRadius: 10, padding: "10px 8px", fontFamily: body, fontSize: 14, cursor: "pointer" }}>Keep</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmRemove(m.userId)} style={{ display: "block", background: "none", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: body, fontSize: 13.5, color: DOT_LOSS }}>
+                    Remove from the club
+                  </button>
+                )
+              )}
             </div>
           )}
 
           {/* On the row that produced it, not at the foot of the screen —
               §4's "eight hundred pixels below the tap". */}
           {failed?.id === m.userId && (
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: "FEED_THEY_LEAD", lineHeight: 1.45, marginTop: 6 }}>
+            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 12.5, color: DOT_LOSS, lineHeight: 1.45, marginTop: 6 }}>
               {failed.message}
             </div>
           )}

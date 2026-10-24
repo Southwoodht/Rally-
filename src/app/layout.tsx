@@ -90,7 +90,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   // Matches --bg-page. Not a variable: the browser reads this before any
   // stylesheet, to colour the status bar and the splash.
-  themeColor: "#16271F",
+  themeColor: "#1F5B3A",
   // WITHOUT THIS, env(safe-area-inset-*) IS ZERO ON iOS.
   //
   // The shell has carried padding-top: env(safe-area-inset-top) since the
@@ -108,16 +108,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     // default, so the app is correct even if this attribute never arrives —
     // and later the theme picker changes this one value and nothing else.
     // data-theme is set here AND by the boot script below. The attribute here
-    // is the server's guess (always rally); the script corrects it from
+    // is the server's guess (the default theme, London since 2026-10-24); the script corrects it from
     // localStorage before the first paint. Without the script, somebody on
     // paris loads a full screen of dark green and then watches it turn clay —
     // the single most visible thing a theme picker can get wrong.
     // suppressHydrationWarning is required, not tidying. The server always
-    // sends rally and the boot script always rewrites it before React looks,
+    // sends the default and the boot script always rewrites it before React looks,
     // so on any other theme React finds an attribute it did not render and
     // logs a mismatch on every single load. It suppresses this one element's
     // attribute diff and nothing inside it.
-    <html lang="en" data-theme="rally" className={FONT_VARS} suppressHydrationWarning>
+    <html lang="en" data-theme="sw19" className={FONT_VARS} suppressHydrationWarning>
       <head>
         {/* Inline and synchronous on purpose: anything deferred runs after
             the paint this exists to beat. */}

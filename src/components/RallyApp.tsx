@@ -79,12 +79,12 @@ import { buildSnapshots, weekEndingFor } from "@/core/snapshots";
 import { alreadyRecorded, loadSnapshots, recordWeek } from "@/lib/rankSnapshots";
 import { movementFor, type RankSnapshot } from "@/core/snapshots";
 import { computeOfficial } from "@/core/official";
-import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, shortNameOf, uid, winPct } from "@/lib/format";
+import { fmtDate, formatMatchDate, formatMatchDateTime, fullNameOf, greetingFor, isFormerPlayer, ordinal, shortNameOf, uid, winPct } from "@/lib/format";
 import { seasonForScreens, useSeasons } from "@/components/seasons/useSeasons";
 import { SeasonBanner } from "@/components/seasons/SeasonBanner";
 import { SEASON_RANK_GAMES, addDays, dayNumber, isDueToClose, londonDay, londonDayStart } from "@/core/seasons";
 import { sealTimeline, withLevelChange } from "@/core/levels";
-import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, setPlayerStart, type LevelRequest } from "@/lib/levelAdmin";
+import { decideLevelRequest, loadLevelRequests, requestLevelChange, setPlayerLevel, setPlayerStart, setPlayerName, type LevelRequest } from "@/lib/levelAdmin";
 import { seasonClosedPost, seasonPodium } from "@/core/seasonStandings";
 import { closeSeasonIfDue, createSeason, endSeason, updateSeason } from "@/lib/seasons";
 import { DoublesScoreline } from "@/components/doubles/DoublesScoreline";
@@ -164,6 +164,10 @@ function nextUpLine(pct: number | null): string {
   if (pct >= 35) return "Southwood's been wrong before.";
   return "Nobody's expecting this one. Show them.";
 }
+
+// The singles ladder card on Fixtures. Off for now (Sam, 2026-10-24: hide it
+// for the coach, keep the code); true brings it straight back.
+const SHOW_LADDER = false;
 
 export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
@@ -595,7 +599,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         return;
       }
 
-      const unclaimed = authId ? (data.players || []).filter((p) => !p.auth_id) : [];
+      // A deleted account's row is never offered: its results are somebody's
+      // history, and claiming it would hand them to a stranger.
+      const unclaimed = authId ? (data.players || []).filter((p) => !p.auth_id && !isFormerPlayer(p)) : [];
       if (authId && unclaimed.length > 0) {
         const candidate = nameToUse ? unclaimed.find((p) => normalizePlayerName(p.name || "") === normalizePlayerName(nameToUse)) || null : null;
         setClaimUI({ candidate, others: unclaimed, authId, nameToUse: nameToUse || "player", data, cur, gs, st });
@@ -1235,7 +1241,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             rating: place.rating,
             footer: place.provisional
               ? "Ranked at " + PROVISIONAL_GAMES + " matches"
-              : "of " + place.of + " ranked across every club",
+              : ordinal(place.rank ?? 0) + " of " + place.of + " across every club",
           });
         }
       } catch {}
@@ -1243,7 +1249,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const others = (await listMyLeagues()).filter((l: any) => l.id !== gid);
         if (others.length) {
           const places = await myLeaguePlaces(others, myAuthId);
-          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: RATING_UNIT_ALL, footer: "of " + pl.of + " placed" }));
+          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: RATING_UNIT_ALL, footer: ordinal(pl.place) + " of " + pl.of }));
         }
       } catch {}
       if (alive) setOtherStandings(found);
@@ -1439,6 +1445,14 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       patchPlayerLocal(id, { level, levelHistory: sealed });
     } catch (e: any) { flash(e?.message || "Couldn't save that history."); throw e; }
   };
+  // Renaming anybody in the club, signed up or not (Sam, 2026-10-24).
+  const setNameFor = async (id: string, name: string, last: string) => {
+    try {
+      await setPlayerName(id, name, last);
+      patchPlayerLocal(id, { name: name.trim(), last: last.trim() || undefined });
+      flash("Name saved");
+    } catch (e: any) { flash(e?.message || "Couldn't save that name."); throw e; }
+  };
   // Starting rating and record: the same organiser door (Sam, 2026-10-21).
   const setStartFor = async (id: string, elo: number | null, record: { w: number; d: number; l: number } | null) => {
     const p = players.find((x) => x.id === id);
@@ -1534,7 +1548,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         unit: useSeason ? RATING_UNIT_SEASON : RATING_UNIT_ALL,
         movement: null,
         form: (form[meId] || []).slice(-5),
-        footer: status === "placed" ? "of " + st.of + " placed" : null,
+        footer: status === "placed" ? ordinal(st.place[meId]) + " of " + st.of : null,
       };
     })();
 
@@ -2295,7 +2309,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "fixtures" && !showDoubles && (personal ? feed : (
           <div style={{ marginTop: 14 }}>
-            {competitionsEnabled && !comps.unavailable && !divisionPreset && (() => {
+            {SHOW_LADDER && competitionsEnabled && !comps.unavailable && !divisionPreset && (() => {
               // The singles ladder (core/ladder.ts). Its challenges are this
               // competition's fixtures, challenger as p1; the order is replayed
               // from them on every render, never stored.
@@ -2563,7 +2577,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "myprofile" && <MyProfile players={players} meId={meId} setPlayers={setPlayers} flash={flash}
           canSetLevels={canSetLevels} onSetLevel={setLevelFor} onSetStart={canSetLevels ? setStartFor : undefined} friendly={isFriendlyLeague(gid)}
           pendingRequest={(levelRequests || []).find((r) => r.playerId === meId && r.status === "pending") || null}
-          onAskLevel={levelRequests ? askForLevel : undefined} />}
+          onAskLevel={levelRequests ? askForLevel : undefined}
+          played={matches.filter((m: any) => m.p1 === meId || m.p2 === meId).length} />}
         {tab === "settings" && <SubHeader title={canManageMatches || isFriendlyLeague(gid) ? "Run your club" : "Club"} onBack={() => setTab("profile")} />}
         {tab === "settings" && (
           <LeagueHub
@@ -2586,6 +2601,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onSetLevelFor={canSetLevels ? setLevelFor : undefined}
             onSetHistoryFor={canSetLevels ? setHistoryFor : undefined}
             onSetStartFor={canSetLevels ? setStartFor : undefined}
+            onRenameFor={canSetLevels ? setNameFor : undefined}
+            onReload={boardRefresh}
             onStartDoublesCompetition={() => { setSport("doubles"); setTab("fixtures"); setCompCreateSignal((n) => n + 1); }}
             onStartSinglesCompetition={() => { setSport("singles"); setTab("fixtures"); setSinglesCreateSignal((n) => n + 1); }}
             onLogResult={() => setTab("add")}
