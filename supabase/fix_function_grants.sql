@@ -111,6 +111,7 @@ select f.proname                                 as function,
      'find_league_by_code',
      'close_season_if_due', 'guard_competition_fixture',
      'set_player_level', 'guard_player_level', 'log_player_level', 'set_player_start',
+     'set_player_name', 'remove_league_member',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )
