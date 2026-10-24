@@ -1,5 +1,28 @@
 # Rebuilding the app icons
 
+**2026-10-24: Sam's new icon.** Cream field (#F8F4EB → #E6DCC8), gold rim,
+the Fraunces BOLD S at DISPLAY size (opsz 144 — the default static file is
+the 9pt text cut, with heavier hairlines that did not match his mockup),
+and a gold ball with white seams. The favicon is now the same full icon:
+the old no-ball favicon rule below is superseded. Everything was built in a
+cloud session with the scripts in `scripts/icons/`, run from a scratch
+folder holding `@fontsource-variable/fraunces`, `opentype.js` and Python
+`fonttools`:
+
+```
+python3 -m fontTools.varLib.instancer fraunces-latin-full-normal.woff2 wght=700 opsz=144 SOFT=0 WONK=0 -o fr-144.ttf
+# then re-save fr-144.ttf with flavor=None (the instancer keeps woff2, which opentype.js cannot read)
+node outline-s.cjs      # writes s-path.txt: the S as a path, centred at x=43, baseline 82, size 84
+node build-svgs.cjs     # icon.svg and icon-maskable.svg (mark scaled 0.8 into the safe zone)
+node render-pngs.mjs    # every PNG size via Playwright's Chromium
+```
+
+favicon.ico is the 16/32/48 PNGs packed as PNG entries. The same S path is
+also in `src/components/ui/RallyMark.tsx` (theme text colour, no field) and
+`src/components/ui/LoadingScreen.tsx` (the splash, on the icon's cream).
+
+---
+
 **2026-09-27: the letter is an S now.** The app became Southwood and the R
 became an S: FRAUNCES 600's own S outline (filled, not stroked), chosen by
 Sam from four serif options. It is generated, not drawn: opentype.js reads

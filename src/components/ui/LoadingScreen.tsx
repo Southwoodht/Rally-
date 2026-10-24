@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useLayoutEffect, useRef } from "react";
-import { FEED_DEEP, FEED_LIME, FEED_PAGE, FEED_TEXT_MID, body, display } from "@/lib/theme";
+import { body } from "@/lib/theme";
 
 /**
  * The first thing anybody sees.
@@ -36,9 +36,9 @@ import { FEED_DEEP, FEED_LIME, FEED_PAGE, FEED_TEXT_MID, body, display } from "@
  * seams move; a rigid disc going up and down reads as a UI element, a
  * turning one reads as a ball.
  *
- * THE BALL IS THE ICON'S BALL: solid accent, two seams cut into it in the
- * page colour and clipped to the circle so their round caps cannot poke out
- * past the edge (the same clip the icon master uses, for the same reason).
+ * THE BALL IS THE ICON'S BALL (since 2026-10-24): gold, with the two white
+ * seams clipped to the circle, sitting beside the icon's S on the icon's
+ * cream. The S stays still; the ball is what bounces and rolls.
  *
  * THE SHADOW is phase-locked to the bounce — same duration, contact at
  * 0%/100%, apex at 50%. If one changes the other must. Its fill is
@@ -50,7 +50,12 @@ const CYCLE_MS = 1200;
 /** One full turn of the ball: two bounces, so it rolls, not spins. */
 const SPIN_MS = CYCLE_MS * 2;
 /** How high it goes. */
-const HEIGHT = 42;
+const HEIGHT = 34;
+
+/** The icon's own colours (public/icon.svg). */
+const SPLASH_BG = "#F8F4EB";
+const SPLASH_INK = "#1C2D23";
+const SPLASH_MUTED = "#6E6A5C";
 
 /** Layout effect in the browser (before paint), plain effect on the server. */
 const useBeforePaint = typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -126,38 +131,42 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
     });
   }, []);
 
+  // The icon on its own cream (Sam, 2026-10-24: the splash should match the
+  // home-screen icon): the S still, the gold ball beside it doing the
+  // bouncing, on the shared clock as before. Fixed colours rather than theme
+  // tokens, because this is the icon and the icon is the same in every theme.
   return (
-    <div ref={root} style={{ minHeight: "100vh", background: FEED_PAGE, display: "grid", placeItems: "center", padding: 24 }}>
+    <div ref={root} style={{ minHeight: "100vh", background: SPLASH_BG, display: "grid", placeItems: "center", padding: 24 }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <div className={firstRef.current ? "rally-arrive" : undefined} style={{ textAlign: "center" }}>
-        <div style={{ height: 40 + HEIGHT, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end" }}>
-          <div className="rally-hop" data-cycle={CYCLE_MS}>
-            <svg className="rally-roll" data-cycle={SPIN_MS} width="38" height="38" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
-              <defs>
-                <clipPath id="rally-loader-ball">
-                  <circle cx="12" cy="12" r="11" />
-                </clipPath>
-              </defs>
-              <circle cx="12" cy="12" r="11" fill={FEED_LIME} />
-              {/* The two seams, bowed towards each other as on the icon. */}
-              <g clipPath="url(#rally-loader-ball)" fill="none" stroke={FEED_PAGE} strokeWidth="1.9" strokeLinecap="round">
-                <path d="M3.6 3.4 Q10.2 12 3.6 20.6" />
-                <path d="M20.4 3.4 Q13.8 12 20.4 20.6" />
-              </g>
-            </svg>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
+          <svg width="74" height="102" viewBox="20 21 46 63" aria-hidden="true" style={{ display: "block" }}>
+            <path fill={SPLASH_INK} d="M44.28 82.84L44.28 82.84Q40.59 82.84 38.19 81.75Q35.80 80.66 34.45 79.56Q33.11 78.47 32.60 78.47L32.60 78.47Q32.23 78.47 31.45 79.17Q30.67 79.86 29.73 80.78Q28.78 81.71 27.96 82.40Q27.14 83.09 26.68 83.09L26.68 83.09Q26.43 83.09 26.09 82.86Q25.76 82.63 25.67 82.25L25.67 82.25L22.69 62.76Q22.65 62.47 22.69 62.30Q22.73 62.13 22.82 62.09L22.82 62.09Q22.95 62.01 23.09 62.11Q23.24 62.22 23.36 62.43L23.36 62.43Q27.44 70.32 30.88 74.55Q34.33 78.77 37.31 80.36Q40.29 81.96 43.06 81.96L43.06 81.96Q47.35 81.96 49.89 79.69Q52.43 77.42 52.43 72.80L52.43 72.80Q52.43 69.86 51.27 67.49Q50.12 65.12 47.39 63.18Q44.66 61.25 39.91 59.61L39.91 59.61Q33.11 57.26 29.01 54.34Q24.92 51.42 23.09 47.83Q21.26 44.24 21.26 39.79L21.26 39.79Q21.26 34.62 23.93 30.70Q26.60 26.77 31.32 24.56Q36.05 22.36 42.27 22.36L42.27 22.36Q45.50 22.36 47.64 23.12Q49.78 23.87 51.11 24.63Q52.43 25.38 53.10 25.38L53.10 25.38Q53.77 25.38 55.14 24.56Q56.50 23.75 57.81 22.93Q59.11 22.11 59.70 22.11L59.70 22.11Q59.91 22.11 60.14 22.25Q60.37 22.40 60.41 22.78L60.41 22.78L65.03 41.72Q65.07 42.06 65.03 42.18Q64.99 42.31 64.86 42.39L64.86 42.39Q64.78 42.44 64.61 42.35Q64.44 42.27 64.36 42.10L64.36 42.10Q59.86 34.54 56.27 30.45Q52.68 26.35 49.51 24.82Q46.34 23.28 43.19 23.28L43.19 23.28Q39.28 23.28 36.78 25.91Q34.28 28.53 34.28 33.03L34.28 33.03Q34.28 36.09 35.38 38.53Q36.47 40.97 39.03 42.94Q41.59 44.91 46.05 46.47L46.05 46.47Q53.19 48.99 57.32 51.84Q61.46 54.70 63.20 58.10Q64.95 61.50 64.95 65.70L64.95 65.70Q64.95 70.49 62.49 74.38Q60.03 78.26 55.41 80.55Q50.79 82.84 44.28 82.84Z" />
+          </svg>
+          <div style={{ height: 30 + HEIGHT, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", marginBottom: 2 }}>
+            <div className="rally-hop" data-cycle={CYCLE_MS}>
+              <svg className="rally-roll" data-cycle={SPIN_MS} width="28" height="28" viewBox="70.5 64.5 17 17" aria-hidden="true" style={{ display: "block" }}>
+                <defs>
+                  <radialGradient id="rally-loader-gold" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stopColor="#F0D488" /><stop offset="1" stopColor="#C99D3B" /></radialGradient>
+                  <clipPath id="rally-loader-ball"><circle cx="79" cy="73" r="8.5" /></clipPath>
+                </defs>
+                <circle cx="79" cy="73" r="8.5" fill="url(#rally-loader-gold)" />
+                <g clipPath="url(#rally-loader-ball)" fill="none" stroke="#FFFFFF" strokeWidth="1.3" strokeLinecap="round">
+                  <path d="M70.5 66.6 Q77.7 73 70.5 79.4" />
+                  <path d="M87.5 66.6 Q80.3 73 87.5 79.4" />
+                </g>
+              </svg>
+            </div>
+            <div className="rally-shadow" data-cycle={CYCLE_MS} style={{ width: 22, height: 5, borderRadius: "50%", background: "#CDBF9F", marginTop: 4 }} />
           </div>
-          <div className="rally-shadow" data-cycle={CYCLE_MS} style={{ width: 30, height: 6, borderRadius: "50%", background: FEED_DEEP, marginTop: 6 }} />
-        </div>
-
-        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, letterSpacing: "0.02em", textTransform: "uppercase", color: FEED_LIME, marginTop: 22, lineHeight: 1 }}>
-          Southwood
         </div>
         {/* The one thing that changes between the three screens. */}
-        <div key={label} className="rally-arrive" style={{ fontFamily: body, fontWeight: 400, fontSize: 13.5, color: FEED_TEXT_MID, marginTop: 8 }}>
+        <div key={label} className="rally-arrive" style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: SPLASH_MUTED, marginTop: 18 }}>
           {label}
         </div>
       </div>
     </div>
+
   );
 }

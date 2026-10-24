@@ -1,24 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Southwood">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><title>Southwood</title>
   <!--
-    Southwood app icon, maskable variant for Android adaptive icons: icon.svg
-    with the mark scaled 0.8 about the tile centre, so letter and ball sit
-    inside the circle every Android mask guarantees. The field is full-bleed
-    and unscaled. Declared in manifest.json with "purpose": "maskable" only.
+    Maskable: the whole mark scaled to 0.8 inside the safe zone, field full bleed. Southwood app icon (Sam's design, 2026-10-24): cream field, gold rim, the
+    Fraunces Bold S at display size (opsz 144) as an outlined path so it
+    renders without the font, and a gold ball with white seams. Square on
+    purpose: iOS and Android round the corners themselves. The S path was
+    generated from the variable font with fontTools (instancer wght=700
+    opsz=144) and opentype.js — see scripts/build-icons.md.
   -->
   <defs>
-    <linearGradient id="swm-field" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1E3529"/>
-      <stop offset="1" stop-color="#12211A"/>
-    </linearGradient>
-    <clipPath id="swm-ball"><circle cx="721.2" cy="684.0" r="108"/></clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8F4EB"/><stop offset="1" stop-color="#E6DCC8"/></linearGradient>
+    <radialGradient id="ball" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#F0D488"/><stop offset="1" stop-color="#C99D3B"/></radialGradient>
+    <clipPath id="clip"><circle cx="79" cy="73" r="8.5"/></clipPath>
   </defs>
-  <rect width="1024" height="1024" fill="url(#swm-field)"/>
-  <g transform="translate(512 512) scale(0.8) translate(-512 -512)">
-    <path d="M400.0 791.2L400.0 791.2Q368.6 791.2 346.0 783.8Q323.4 776.3 309.1 769.0Q294.7 761.7 287.8 761.7L287.8 761.7Q280.1 761.7 275.2 766.3Q270.2 770.9 265.8 776.9Q261.4 782.8 256.4 787.4Q251.4 792 244.1 792L244.1 792Q236.1 792 230.9 787.2Q225.7 782.4 223.8 771.3L223.8 771.3L197.4 646.4Q195.9 638.0 199.5 631.9Q203.1 625.8 211.6 623.1L211.6 623.1Q220.8 620.0 227.7 623.5Q234.6 626.9 239.5 636.9L239.5 636.9Q261.4 679.8 286.1 705.1Q310.8 730.3 337.6 741.1Q364.4 751.8 392.4 751.8L392.4 751.8Q431.4 751.8 454.0 731.5Q476.6 711.2 476.6 677.1L476.6 677.1Q477.0 654.9 466.7 637.1Q456.3 619.3 427.6 602.4Q398.9 585.5 342.6 567.2L342.6 567.2Q284.3 548.4 249.3 523.7Q214.3 499.0 198.5 466.0Q182.8 433.1 182.8 389.4L182.8 389.4Q182.8 343.1 204.9 307.8Q226.9 272.6 266.9 252.9Q306.9 233.1 360.6 233.1L360.6 233.1Q395.0 233.1 417.6 240.2Q440.2 247.3 454.8 254.6Q469.4 261.9 478.9 261.9L478.9 261.9Q487.4 261.9 492.0 254.4Q496.6 246.9 501.9 239.5Q507.3 232 518.0 232L518.0 232Q526.4 232 532.0 237.4Q537.5 242.7 541.7 257.3L541.7 257.3L577.8 382.9Q580.8 392.9 577.2 400.7Q573.5 408.6 564.7 411.3L564.7 411.3Q555.9 414.3 548.8 410.7Q541.7 407.0 537.2 398.2L537.2 398.2Q513.4 350.7 486.4 323.4Q459.4 296.0 430.7 284.1Q401.9 272.2 372.4 272.2L372.4 272.2Q333.4 272.2 310.2 294.6Q287.0 317.0 287.0 353.0L287.0 353.0Q287.0 374.9 297.2 393.6Q307.3 412.4 335.7 430.2Q364.0 448.0 417.6 468.0L417.6 468.0Q477.0 489.0 512.1 513.5Q547.1 538.0 562.2 568.9Q577.4 599.7 577.4 639.6L577.4 639.6Q577.4 681.3 556.3 715.8Q535.2 750.2 495.8 770.7Q456.3 791.2 400.0 791.2Z" fill="#F4EFE3"/>
-    <circle cx="721.2" cy="684.0" r="108" fill="#E9C46A"/>
-    <g clip-path="url(#swm-ball)" fill="none" stroke="#16271F" stroke-width="15" stroke-linecap="round">
-      <path d="M618.6 650.5Q675.8 638.6 687.7 581.4"/>
-      <path d="M823.8 717.5Q766.6 729.4 754.7 786.6"/>
-    </g>
+  <rect width="100" height="100" fill="url(#bg)"/>
+  <g transform="translate(10 10) scale(0.8)">
+  <rect x="6" y="6" width="88" height="88" rx="18" fill="none" stroke="#C99D3B" stroke-width="1.4"/>
+  <path d="M44.28 82.84L44.28 82.84Q40.59 82.84 38.19 81.75Q35.80 80.66 34.45 79.56Q33.11 78.47 32.60 78.47L32.60 78.47Q32.23 78.47 31.45 79.17Q30.67 79.86 29.73 80.78Q28.78 81.71 27.96 82.40Q27.14 83.09 26.68 83.09L26.68 83.09Q26.43 83.09 26.09 82.86Q25.76 82.63 25.67 82.25L25.67 82.25L22.69 62.76Q22.65 62.47 22.69 62.30Q22.73 62.13 22.82 62.09L22.82 62.09Q22.95 62.01 23.09 62.11Q23.24 62.22 23.36 62.43L23.36 62.43Q27.44 70.32 30.88 74.55Q34.33 78.77 37.31 80.36Q40.29 81.96 43.06 81.96L43.06 81.96Q47.35 81.96 49.89 79.69Q52.43 77.42 52.43 72.80L52.43 72.80Q52.43 69.86 51.27 67.49Q50.12 65.12 47.39 63.18Q44.66 61.25 39.91 59.61L39.91 59.61Q33.11 57.26 29.01 54.34Q24.92 51.42 23.09 47.83Q21.26 44.24 21.26 39.79L21.26 39.79Q21.26 34.62 23.93 30.70Q26.60 26.77 31.32 24.56Q36.05 22.36 42.27 22.36L42.27 22.36Q45.50 22.36 47.64 23.12Q49.78 23.87 51.11 24.63Q52.43 25.38 53.10 25.38L53.10 25.38Q53.77 25.38 55.14 24.56Q56.50 23.75 57.81 22.93Q59.11 22.11 59.70 22.11L59.70 22.11Q59.91 22.11 60.14 22.25Q60.37 22.40 60.41 22.78L60.41 22.78L65.03 41.72Q65.07 42.06 65.03 42.18Q64.99 42.31 64.86 42.39L64.86 42.39Q64.78 42.44 64.61 42.35Q64.44 42.27 64.36 42.10L64.36 42.10Q59.86 34.54 56.27 30.45Q52.68 26.35 49.51 24.82Q46.34 23.28 43.19 23.28L43.19 23.28Q39.28 23.28 36.78 25.91Q34.28 28.53 34.28 33.03L34.28 33.03Q34.28 36.09 35.38 38.53Q36.47 40.97 39.03 42.94Q41.59 44.91 46.05 46.47L46.05 46.47Q53.19 48.99 57.32 51.84Q61.46 54.70 63.20 58.10Q64.95 61.50 64.95 65.70L64.95 65.70Q64.95 70.49 62.49 74.38Q60.03 78.26 55.41 80.55Q50.79 82.84 44.28 82.84Z" fill="#1C2D23"/>
+  <circle cx="79" cy="73" r="8.5" fill="url(#ball)"/>
+  <g clip-path="url(#clip)" fill="none" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round">
+    <path d="M70.5 66.6 Q77.7 73 70.5 79.4"/>
+    <path d="M87.5 66.6 Q80.3 73 87.5 79.4"/>
+  </g>
   </g>
 </svg>
