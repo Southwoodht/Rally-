@@ -2,7 +2,7 @@
 import React from "react";
 import { Cycler } from "@/components/ui/Cycler";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
-import { FEED_HERO, FEED_LIME_DIVIDER, FEED_LIME_INK_2, FEED_LOSS_ON_HERO, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_WIN_ON_HERO, body, display, tabular } from "@/lib/theme";
+import { FEED_HERO, FEED_LIME_DIVIDER, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FORM_CHIP, body, display, tabular } from "@/lib/theme";
 
 // Where you stand, as the one thing you see first.
 //
@@ -191,10 +191,9 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
                   <span style={{ ...labelStyle, fontSize: 12.5, lineHeight: 1, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur.footer}</span>
                 ) : null}
               </span>
-              {/* Dots drawn ON cream need their own pair — the page's win and
-                  loss colours have nothing to sit against here. §1 names them
-                  --win-on-hero and --loss-on-hero. */}
-              {hasForm && <FormDots form={cur.form!} tone="ink" ink={FEED_WIN_ON_HERO} lossInk={FEED_LOSS_ON_HERO} />}
+              {/* The hero is a coloured card on some themes, so the dots get
+                  the same cream chip as the Table's leader row. */}
+              {hasForm && <span style={{ display: "inline-flex", background: FORM_CHIP, borderRadius: 999, padding: "4px 8px" }}><FormDots form={cur.form!} bare /></span>}
             </div>
           </>
         )}

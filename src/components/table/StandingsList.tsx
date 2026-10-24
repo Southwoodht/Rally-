@@ -6,7 +6,7 @@ import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
 import { levelNow } from "@/core/levels";
 import { fullNameOf } from "@/lib/format";
-import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, display as displayFont } from "@/lib/theme";
+import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, FORM_CHIP, display as displayFont } from "@/lib/theme";
 
 // The standings, in the same language as the newsfeed.
 //
@@ -129,14 +129,12 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
       </div>
       {p.form && p.form.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          {/* The dots sit on their own dark chip rather than switching to a
-              second palette. Drawn straight onto lime they had to become one
-              near-black ink, and a leader whose last five are all wins then
-              reads as five identical black marks — which is what Sam saw.
-              Give them the dark background they were designed for and the
-              same green, grey and red work here as everywhere else. */}
-          <span style={{ display: "inline-flex", background: FEED_LIME_INK, borderRadius: 999, padding: "5px 9px" }}>
-            <FormDots form={p.form} size={8} />
+          {/* The dots sit on their own cream chip, the same on every theme,
+              because they are the same deep green, grey and red everywhere
+              (FORM_* in lib/theme.ts) and those vanish on a dark or green
+              leader card. */}
+          <span style={{ display: "inline-flex", background: FORM_CHIP, borderRadius: 999, padding: "5px 9px" }}>
+            <FormDots form={p.form} size={8} bare />
           </span>
         </div>
       )}

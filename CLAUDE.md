@@ -1213,7 +1213,10 @@ full width above both. That finishes Sam's three laptop screens.
 makes it easier").** `FormDots` reads `FORM_WIN` / `FORM_DRAW` / `FORM_LOSS`
 in `lib/theme.ts`, fixed hexes, and ignores `tone`, `ink`, `lossInk` and
 Southwood's `--loss-fill` ring. Don't route them back through theme
-variables. `DOT_*` are untouched (error text, the rating line) — separate.
+variables. Deep on purpose (#1E5A38 / #8C867C / #A8261E — Sam: "light
+green looks cheap"), so wherever they sit on a coloured card (leader row,
+Home's hero) they get a cream `FORM_CHIP` pill and `bare`; on a dark theme
+(New York, `--form-chip` in styles/themes.css) every set gets the pill. `DOT_*` are untouched (error text, the rating line) — separate.
 
 **Glitch fixes, merged 2026-10-24.** Motion animations use fill-mode
 `backwards`, never `both`: a held last frame leaves `translate: 0 0`, which

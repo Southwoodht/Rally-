@@ -231,10 +231,15 @@ export const OUTCOME_RAIL = { W: "var(--win, var(--accent))", D: FEED_TEXT_LOW, 
 // them green or red or grey, makes it easier". Fixed hexes, not theme
 // variables, so no theme can turn a win into a brass dot and a loss into a
 // ring. Each sits at 3:1 or better on both the cream page and the dark ink
-// pill of Southwood's hero card; the draw is quieter on purpose.
-export const FORM_WIN = "#24874B";
-export const FORM_DRAW = "#948E85";
-export const FORM_LOSS = "#D0382C";
+// Sam again, same day: deep colours, "light green looks cheap". Deep green
+// and red vanish on a dark or green card, so wherever the dots sit on a
+// coloured card (the leader row, Home's hero) they get FORM_CHIP, a cream
+// pill, on every theme. On the cream chip and the cream page they hold 4.5:1
+// or better; the draw grey is the quiet one on purpose.
+export const FORM_WIN = "#1E5A38";
+export const FORM_DRAW = "#8C867C";
+export const FORM_LOSS = "#A8261E";
+export const FORM_CHIP = "#F6F2EA";
 
 export const DOT_WIN = "var(--win, var(--accent))";
 export const DOT_DRAW = MUTED;

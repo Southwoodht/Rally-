@@ -168,9 +168,12 @@ export type FormResult = "W" | "D" | "L";
  */
 const DOT_COLOUR = { W: FORM_WIN, D: FORM_DRAW, L: FORM_LOSS };
 
-export function FormDots({ form, size = 10 }: {
+export function FormDots({ form, size = 10, bare = false }: {
   form: FormResult[];
   size?: number;
+  /** Already on a cream chip (the leader card, Home's hero): skip the dark
+   *  theme's own chip so there aren't two. */
+  bare?: boolean;
   /** Kept so existing callers compile; the dots no longer change colour by
    *  card. They were "ink" on the hero card (one colour, shape for the
    *  outcome) and outlined losses in Southwood, and Sam asked for plain
@@ -181,7 +184,9 @@ export function FormDots({ form, size = 10 }: {
 }) {
   if (!form || !form.length) return null;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+    // --form-chip is set only by dark themes (styles/themes.css); everywhere
+    // else this is a plain row of dots exactly as before.
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, ...(bare ? {} : { background: "var(--form-chip, transparent)", padding: "var(--form-chip-pad, 0)", borderRadius: 999 }) }}>
       {form.slice(-5).map((r, i) => (
         <span
           key={i}

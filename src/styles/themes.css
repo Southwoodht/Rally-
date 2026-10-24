@@ -168,6 +168,11 @@
 }
 
 [data-theme="flushing"] {         /* New York hard court */
+  /* The form dots are deep green / grey / red on every theme (FORM_* in
+     lib/theme.ts), which vanish on these navy rows, so on a dark theme
+     every set of dots sits on the same cream chip the leader card uses. */
+  --form-chip: #F6F2EA;
+  --form-chip-pad: 3px 7px;
   --bg-page: #0B1220; --bg-bar: #111A2C; --bg-card: #152036; --bg-raised: #1A2640; --line: #1F2D4A;
   --text-hi: #EEF2F8; --text-mid: #9AA8C0; --text-initials: #C3CEDF;
   --text-dim: #6B7A93;
