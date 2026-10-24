@@ -2,7 +2,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { scoreProblem } from "@/core/sets";
 import { DEFAULT_DURATION_MINUTES, DURATION_CHOICES } from "@/core/booking";
-import { Calendar, MessageCircle, Plus, Search } from "lucide-react";
+import { Calendar, ExternalLink, MapPin, MessageCircle, Plus, Search } from "lucide-react";
+import { VenuePicker } from "@/components/games/VenuePicker";
+import { mapsUrl, venueLabel, type Venue } from "@/lib/venues";
+import { useColumnReady } from "@/lib/utrReady";
 import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
@@ -64,12 +67,17 @@ const timeOf = (v: any): number | null => {
 // the same four the doubles panel takes: "Club Champs · Semi-finals" on a
 // tie, no Draw button in a knockout, and no "Book a match" inside a
 // competition, which is for casual games.
-export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer, labelFor, noDraw, hideBooking, emptyText, onMessage }: any) {
+export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, canManage, challengeWith, onResolve, onBook, onAddFixture, onRemoveFixture, onCreatePlayer, labelFor, noDraw, hideBooking, emptyText, onMessage, homeVenue }: any) {
   const who = (id: string) => players.find((x: any) => x.id === id) || null;
   const nm = (id: string) => { const p = who(id); return p ? fullNameOf(p) : nameOf(id); };
   const prob = (a: string, b: string) => Math.round(predictProb(a, b, matches, elo, players) * 100);
   const [open, setOpen] = useState<string | null>(null);
   const [whenText, setWhenText] = useState("");
+  // Where (lib/venues.ts). Offered only once fixtures.venue exists, because a
+  // save naming a missing column fails the whole save (lib/utrReady.ts).
+  const venueReady = useColumnReady("fixtures", "venue");
+  const [newVenue, setNewVenue] = useState<Venue | null>(homeVenue || null);
+  const [rowVenue, setRowVenue] = useState<Venue | null>(null);
   // How long the booking is for. "How did it go?" is asked after it ends.
   // Saved only when it isn't the default (or the booking already had one),
   // so the default keeps working on a database without
@@ -131,7 +139,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   // one keeps it. Both halves matter: a score typed against Zaach must not
   // reappear under Hugh, and closing a row by accident should not throw away
   // what you had just typed into it.
-  const openRow = (f: any) => { if (open !== f.id) setScoreText(""); setSaveError(null); setOpen(open === f.id ? null : f.id); setWhenText(toInputValue(f.booked)); setMins(f.durationMinutes || DEFAULT_DURATION_MINUTES); setScoreText(""); };
+  const openRow = (f: any) => { setRowVenue(f.venue || homeVenue || null); if (open !== f.id) setScoreText(""); setSaveError(null); setOpen(open === f.id ? null : f.id); setWhenText(toInputValue(f.booked)); setMins(f.durationMinutes || DEFAULT_DURATION_MINUTES); setScoreText(""); };
 
   // Soonest booking first, then everything unbooked, then what's been played.
   // A list of arranged games is a diary, and a diary that isn't in order is
@@ -159,15 +167,15 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
 
   const bookNew = () => {
     if (!newOpp) return;
-    onAddFixture(meId, newOpp, newWhen ? new Date(newWhen).toISOString() : null, newWhen && mins !== DEFAULT_DURATION_MINUTES ? mins : undefined);
-    setNewOpp(""); setNewWhen(""); setBooking(false); setMins(DEFAULT_DURATION_MINUTES);
+    onAddFixture(meId, newOpp, newWhen ? new Date(newWhen).toISOString() : null, newWhen && mins !== DEFAULT_DURATION_MINUTES ? mins : undefined, venueReady && newVenue ? newVenue : undefined);
+    setNewOpp(""); setNewWhen(""); setBooking(false); setMins(DEFAULT_DURATION_MINUTES); setNewVenue(homeVenue || null);
   };
 
   const bookPanel = canBookNew && (
     <div style={{ marginBottom: 14 }}>
       {!booking ? (
         <button
-          onClick={() => setBooking(true)}
+          onClick={() => { setBooking(true); setNewVenue(homeVenue || null); }}
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}
         >
           <Plus size={17} strokeWidth={2.4} />Book a match
@@ -194,6 +202,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
             style={{ ...field, width: "100%", marginBottom: 12 }}
           />
           {newWhen && <><div style={{ ...label, marginBottom: 7 }}>How long</div>{lengthPicker}</>}
+          {venueReady && <><div style={{ ...label, marginBottom: 7 }}>Where</div><div style={{ marginBottom: 12 }}><VenuePicker value={newVenue} onChange={setNewVenue} /></div></>}
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={bookNew} disabled={!newOpp} style={{ ...actionBtn(newOpp ? FEED_LIME : FEED_RAISED, newOpp ? FEED_LIME_INK : FEED_TEXT_LOW), cursor: newOpp ? "pointer" : "default" }}>Book it</button>
@@ -308,6 +317,11 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                       </span>
                     );
                   })()}
+                  {f.venue?.name && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <MapPin size={11} strokeWidth={2.2} style={{ flexShrink: 0 }} />{venueLabel(f.venue)}
+                    </span>
+                  )}
                   <span style={{ flex: 1 }} />
                   <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME, flexShrink: 0 }}>
                     {open === f.id ? "Close" : timeOf(f.booked) != null && (timeOf(f.booked) as number) < Date.now() ? "Add the result" : "Book or enter result"}
@@ -339,13 +353,26 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                       style={{ ...field, flex: 1 }}
                     />
                     <button
-                      onClick={() => onBook(f.id, whenText ? new Date(whenText).toISOString() : null, whenText && (mins !== DEFAULT_DURATION_MINUTES || f.durationMinutes) ? mins : undefined)}
+                      onClick={() => onBook(f.id, whenText ? new Date(whenText).toISOString() : null, whenText && (mins !== DEFAULT_DURATION_MINUTES || f.durationMinutes) ? mins : undefined, venueReady ? rowVenue : undefined)}
                       style={{ ...actionBtn(FEED_LIME, FEED_LIME_INK), flex: "0 0 auto", padding: "10px 16px" }}
                     >
                       Book
                     </button>
                   </div>
                   {whenText && lengthPicker}
+                  {venueReady && <div style={{ marginBottom: 12 }}><VenuePicker value={rowVenue} onChange={setRowVenue} /></div>}
+                  {f.venue?.name && (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                      <a href={mapsUrl(f.venue)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13.5, textDecoration: "none" }}>
+                        <MapPin size={14} /> Open in Maps
+                      </a>
+                      {f.venue.url && (
+                        <a href={f.venue.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13.5, textDecoration: "none" }}>
+                          <ExternalLink size={14} /> Venue website
+                        </a>
+                      )}
+                    </div>
+                  )}
                   {f.booked && (
                     <button
                       onClick={() => onBook(f.id, null)}

@@ -862,9 +862,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
-  const addFixture = async (p1, p2, booked = null, mins?: number) => {
+  const addFixture = async (p1, p2, booked = null, mins?: number, venue?: any) => {
     const id = uid();
-    const ok = await saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id, p1, p2, done: false, booked, ...(mins ? { durationMinutes: mins } : {}) }] });
+    const ok = await saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id, p1, p2, done: false, booked, ...(mins ? { durationMinutes: mins } : {}), ...(venue ? { venue } : {}) }] });
     // A new match with a time on it is a challenge: "Sam has challenged you".
     if (ok !== false && booked && !isFriendlyLeague(gid)) void notifyFixture("challenge", id);
     return ok;
@@ -933,8 +933,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   };
   // `mins` is how long it was booked for. Only written when given, so a
   // database without schema_fixture_duration.sql keeps saving bookings.
-  const bookFixture = async (id, when, mins?: number) => {
-    const ok = await saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null, ...(mins ? { durationMinutes: mins } : {}) } : f) });
+  const bookFixture = async (id, when, mins?: number, venue?: any) => {
+    const ok = await saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f) => f.id === id ? { ...f, booked: when || null, ...(mins ? { durationMinutes: mins } : {}), ...(venue !== undefined ? { venue } : {}) } : f) });
     // "Match booked" to the other side (winter item 6), once the save is in.
     if (ok !== false && when && !isFriendlyLeague(gid)) void notifyFixture("booking", id);
     return ok;
@@ -1005,7 +1005,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const needsAgreement = iAmIn
       ? isClaimed(byId(fx.p1 === meId ? fx.p2 : fx.p1))
       : (isClaimed(byId(fx.p1)) || isClaimed(byId(fx.p2)));
-    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: needsAgreement ? "pending" : "confirmed", reportedBy: gdata.me, loggedAt: Date.now() };
+    // The booking's venue carries over to the result, so "favourite at this
+    // venue" fills itself in (lib/venues.ts).
+    const match = { id: mid, date: isNaN(played) ? Date.now() : played, p1: fx.p1, p2: fx.p2, winner, score: score || "", status: needsAgreement ? "pending" : "confirmed", reportedBy: gdata.me, loggedAt: Date.now(), ...(fx.venue?.name ? { venue: fx.venue.name } : {}) };
     return saveData({ ...gdata, matches: [...gdata.matches, match], fixtures: (gdata.fixtures || []).map((f) => f.id === fx.id ? { ...f, done: true, winner, matchId: mid, booked: null } : f) });
   };
 
@@ -1966,6 +1968,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     },
   });
   const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
+    homeVenue={!personal && !isFriendlyLeague(gid) ? { name: group?.name || leagueName || "Club", place: clubPlace?.location ?? null, lat: clubPlace?.lat ?? null, lng: clubPlace?.lng ?? null, club: true } : null}
     doublesMode={tab === "home" && homeDoubles}
     doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
