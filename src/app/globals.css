@@ -189,3 +189,15 @@ body {
   .sw-home { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 32px; align-items: start; }
   .sw-home-feed { padding-top: 12px; }
 }
+
+/* The Table with the player alongside, from 1280px. A profile opened from
+ * the Table (sw-split on the page, sw-beside on the profile) takes the right
+ * of the screen and the table keeps a phone-width column next to the
+ * sidebar, so you can go down the table tapping players without losing your
+ * place. Anywhere else, and on anything narrower, the profile opens over the
+ * page as before. */
+@media (min-width: 1280px) {
+  .sw-main.sw-split { max-width: 460px !important; margin-left: calc(248px + 24px) !important; padding-left: 8px !important; padding-right: 8px !important; }
+  .sw-overlay.sw-beside { left: calc(248px + 24px + 460px + 24px) !important; border-left: 1px solid var(--line); box-shadow: -12px 0 32px rgba(0,0,0,0.06); }
+  .sw-overlay.sw-beside .sw-overlay-inner { max-width: 640px !important; margin: 0 !important; }
+}

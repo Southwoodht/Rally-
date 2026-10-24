@@ -224,7 +224,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [groupSheet, setGroupSheet] = useState(false);
   // The content fades up on a tab change or a Back (ui/Motion.tsx); the
   // header stays put.
-  const screenRef = useScreenIn<HTMLDivElement>(tab + "|" + (profileId ?? "") + "|" + tableMode);
+  // On a wide laptop a profile opened from the Table sits beside it rather
+  // than over it (the foot of globals.css), so the table stays where it was
+  // and must not fade in again each time a different player is picked.
+  const besideTable = tab === "ladder" && !!profileId;
+  const besideNow = besideTable && typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches;
+  const screenRef = useScreenIn<HTMLDivElement>(tab + "|" + (besideNow ? "beside" : profileId ?? "") + "|" + tableMode);
 
   // Doubles. One load for the whole app; see useDoubles. With the flag off it
   // fetches nothing and every branch below collapses to what was there
@@ -2018,7 +2023,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
 
   return (
     <div style={wrap}>
-      <div ref={screenRef} className={"sw-main" + (tab === "home" ? " sw-wide" : "")} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
+      <div ref={screenRef} className={"sw-main" + (tab === "home" ? " sw-wide" : "") + (besideTable ? " sw-split" : "")} style={{ maxWidth: 620, margin: "0 auto", padding: "22px 16px 110px" }}>
         {main && (
           <header style={{ marginBottom: 18 }}>
             {topRow}
@@ -2806,6 +2811,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       )}
       {profilePlayer && (
         <ProfileModal
+          beside={besideTable}
           player={profilePlayer} {...shared} profileYear={profileYear} onClose={() => setProfileId(null)}
           sport={sport} onSport={setSport}
           doubles={!!doublesEnabled && !personal && !doubles.unavailable ? {
