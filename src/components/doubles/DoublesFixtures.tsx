@@ -8,7 +8,7 @@ import { predictDoubles, type DoublesStats } from "@/core/doubles/elo";
 import type { DoublesFixture } from "@/lib/doublesData";
 import { formatMatchDateTime, fullNameOf } from "@/lib/format";
 import {
-  DOT_LOSS, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
+  DOT_LOSS, FORM_LOSS, FORM_WIN, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
 } from "@/lib/theme";
 
@@ -283,8 +283,8 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                   {/* Rating only, no pair head-to-head — see predictDoubles
                       and the report's note on why that is right for pairs. */}
                   <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: FEED_RAISED }}>
-                    <div style={{ width: pA + "%", background: FEED_LIME }} />
-                    <div style={{ width: (100 - pA) + "%", background: DOT_LOSS }} />
+                    <div style={{ width: pA + "%", background: FORM_WIN }} />
+                    <div style={{ width: (100 - pA) + "%", background: FORM_LOSS }} />
                   </div>
                   <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
                     <span>{pA}%</span>

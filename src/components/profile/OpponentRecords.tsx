@@ -4,7 +4,7 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { fullNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_LIME, FEED_LOSS, FEED_TEXT_HI, FEED_TEXT_MID, FEED_THEY_LEAD,
-  FEED_THEY_LEAD_DIM, body, tabular,
+  FEED_THEY_LEAD_DIM, FORM_LOSS, FORM_WIN, body, tabular,
 } from "@/lib/theme";
 
 // Who you are ahead of and who is ahead of you, in one place.
@@ -111,14 +111,14 @@ export function OpponentRecords({ lead, behind, visible = 4, onOpen, onAll }: Op
         </div>
         {(ahead.length > 0 || under.length > 0) && (
           <div style={{ display: "flex", height: 6, borderRadius: 3, overflow: "hidden", marginTop: 12 }} role="img" aria-label={`${ahead.length} opponents you lead, ${under.length} who lead you`}>
-            {ahead.length > 0 && <span style={{ flex: ahead.length, background: FEED_LIME }} />}
-            {under.length > 0 && <span style={{ flex: under.length, background: FEED_THEY_LEAD_DIM }} />}
+            {ahead.length > 0 && <span style={{ flex: ahead.length, background: FORM_WIN }} />}
+            {under.length > 0 && <span style={{ flex: under.length, background: FORM_LOSS }} />}
           </div>
         )}
       </SurfaceCard>
 
-      <Group title="You lead" items={ahead} accent={FEED_LIME} recordColour={FEED_TEXT_HI} visible={visible} onOpen={onOpen} onAll={onAll} />
-      <Group title="They lead" items={under} accent={FEED_THEY_LEAD_DIM} recordColour={FEED_THEY_LEAD} visible={visible} onOpen={onOpen} onAll={onAll} />
+      <Group title="You lead" items={ahead} accent={FORM_WIN} recordColour={FEED_TEXT_HI} visible={visible} onOpen={onOpen} onAll={onAll} />
+      <Group title="They lead" items={under} accent={FORM_LOSS} recordColour={FEED_THEY_LEAD} visible={visible} onOpen={onOpen} onAll={onAll} />
     </div>
   );
 }

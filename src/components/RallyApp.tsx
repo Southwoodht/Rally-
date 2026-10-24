@@ -1882,7 +1882,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results,
     minGames: SEASON_RANK_GAMES,
   }).filter((h) => h.playerId === pid);
-  const shared = { seasonHonoursOf, players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId };
+  const shared = { seasonHonoursOf, players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId,
+    // Challenge from a profile: Fixtures, singles, the booking form open with
+    // them chosen. Cleared first so challenging the same person twice still
+    // reopens the form.
+    onChallenge: (pid: string) => { setProfileId(null); setSport("singles"); setTab("fixtures"); setChallengeWith(null); setTimeout(() => setChallengeWith(pid), 0); } };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
   // ---------------------------------------------------------- doubles Home

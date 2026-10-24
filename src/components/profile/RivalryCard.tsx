@@ -5,7 +5,7 @@ import { SurfaceCard } from "@/components/ui/Surfaces";
 import { fullNameOf } from "@/lib/format";
 import {
   FEED_CARD, FEED_DRAW, FEED_LIME, FEED_LOSS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID,
-  FEED_THEY_LEAD, FEED_WIN, body, tabular,
+  FEED_THEY_LEAD, FEED_WIN, FORM_DRAW, FORM_LOSS, FORM_WIN, body, tabular,
 } from "@/lib/theme";
 
 // One repeated fixture, as a card.
@@ -38,8 +38,7 @@ function Dot({ outcome }: { outcome: "W" | "D" | "L" }) {
       aria-label={outcome === "W" ? "win" : outcome === "D" ? "draw" : "loss"}
       style={{
         width: DOT, height: DOT, borderRadius: DOT / 2, display: "block", flexShrink: 0,
-        background: outcome === "D" ? "transparent" : outcome === "W" ? FEED_WIN : FEED_LOSS,
-        border: outcome === "D" ? "1.5px solid " + FEED_LIME : undefined,
+        background: outcome === "W" ? FORM_WIN : outcome === "D" ? FORM_DRAW : FORM_LOSS,
         boxSizing: "border-box",
       }}
     />
@@ -48,9 +47,9 @@ function Dot({ outcome }: { outcome: "W" | "D" | "L" }) {
 
 function SplitBar({ w, d, l }: { w: number; d: number; l: number }) {
   const parts = [
-    { n: w, colour: FEED_WIN, label: "won" },
-    { n: d, colour: FEED_DRAW, label: "drawn" },
-    { n: l, colour: FEED_LOSS, label: "lost" },
+    { n: w, colour: FORM_WIN, label: "won" },
+    { n: d, colour: FORM_DRAW, label: "drawn" },
+    { n: l, colour: FORM_LOSS, label: "lost" },
   ].filter((p) => p.n > 0);
   if (!parts.length) return null;
   return (

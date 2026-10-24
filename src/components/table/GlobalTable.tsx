@@ -190,6 +190,76 @@ function Distribution({ rows }: { rows: GlobalRow[] }) {
   );
 }
 
+/** A drawn globe, in the accent, for the world card. */
+function Globe({ size = 92 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <g fill="none" stroke={FEED_LIME} strokeWidth="2.2" strokeLinecap="round">
+        <circle cx="50" cy="50" r="40" />
+        <ellipse cx="50" cy="50" rx="16" ry="40" />
+        <ellipse cx="50" cy="50" rx="31" ry="40" opacity="0.55" />
+        <line x1="10" y1="50" x2="90" y2="50" />
+        <path d="M16 30 Q50 38 84 30" opacity="0.7" />
+        <path d="M16 70 Q50 62 84 70" opacity="0.7" />
+      </g>
+      {/* A ball in orbit. */}
+      <circle cx="82" cy="20" r="7" fill={FEED_LIME} />
+    </svg>
+  );
+}
+
+/** The top of the screen: how many people, how many clubs, a globe. */
+function WorldCard({ rows }: { rows: GlobalRow[] }) {
+  const clubs = rows.reduce((m, r) => Math.max(m, r.leagues || 0), 0);
+  const multi = rows.filter((r) => (r.leagues || 0) > 1).length;
+  return (
+    <SurfaceCard radius={22} pad="18px 18px" style={{ marginBottom: 14, display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ ...tabular, ...tight(40), fontFamily: body, fontWeight: 700, fontSize: 40, color: FEED_TEXT_HI, lineHeight: 1 }}>{rows.length}</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginTop: 6 }}>players ranked worldwide</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.45 }}>
+          Everyone you&apos;ve played, and everyone they&apos;ve played{multi ? ` · ${multi} play in ${clubs > 2 ? "several" : "two"} clubs` : ""}
+        </div>
+      </div>
+      <Globe />
+    </SurfaceCard>
+  );
+}
+
+const MEDAL = ["#B8955A", "#A7A9AC", "#A97142"];
+
+/** The top three: first in the middle and highest, gold, silver, bronze. */
+function Podium({ rows, ratings, myAuthId, openFor }: { rows: GlobalRow[]; ratings: string[]; myAuthId?: string | null; openFor: (r: GlobalRow) => (() => void) | undefined }) {
+  const order = rows.length >= 3 ? [1, 0, 2] : rows.length === 2 ? [1, 0] : [0];
+  const lift = [26, 0, 12];
+  return (
+    <SurfaceCard radius={22} pad="16px 10px 14px" style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 6 }}>
+        {order.map((i) => {
+          const r = rows[i];
+          const first = i === 0;
+          const size = first ? 72 : 56;
+          return (
+            <div key={r.key} onClick={openFor(r)} style={{ flex: 1, minWidth: 0, textAlign: "center", cursor: openFor(r) ? "pointer" : "default", paddingBottom: lift[i] }}>
+              <div style={{ position: "relative", width: size + 8, height: size + 8, margin: "0 auto" }}>
+                <span style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `3px solid ${MEDAL[i]}`, boxSizing: "border-box" }} />
+                <span style={{ position: "absolute", inset: 4 }}><Face row={r} size={size} /></span>
+                <span style={{ ...tabular, position: "absolute", right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, background: MEDAL[i], color: "#fff", fontFamily: body, fontWeight: 700, fontSize: 13, display: "grid", placeItems: "center", boxShadow: "0 0 0 2px var(--bg-card, #fff)" }}>{i + 1}</span>
+              </div>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: first ? 15.5 : 14, color: FEED_TEXT_HI, marginTop: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>
+                {r.name}{r.last ? " " + r.last.charAt(0) + "." : ""}
+              </div>
+              {!!myAuthId && r.key === myAuthId && <div style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", display: "inline-block", marginTop: 3 }}>you</div>}
+              <div style={{ ...tabular, fontFamily: body, fontWeight: 700, fontSize: first ? 20 : 17, color: FEED_TEXT_HI, marginTop: 4 }}>{ratings[i]}</div>
+              <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID }}>{rec(r)}</div>
+            </div>
+          );
+        })}
+      </div>
+    </SurfaceCard>
+  );
+}
+
 /** (4) The leader, on the accent card. */
 function LeaderCard({ r, rating, onOpen }: { r: GlobalRow; rating: string; onOpen?: () => void }) {
   const pct = winRate(r);
@@ -357,19 +427,25 @@ export function GlobalStandingsList({ rows, myAuthId, players, onOpenProfile, on
   const max = scores.length ? Math.max(...scores) : 1;
   const fractionOf = (v: number) => (!Number.isFinite(v) || max <= min ? 0 : Math.max(0, Math.min(1, (v - min) / (max - min))));
 
+  // A photo the global row lacks but your club has — your own, most often
+  // (Sam's row showed initials). The club's row for the same account or
+  // player supplies it.
+  const withFace = (r: GlobalRow): GlobalRow => (r.avatarUrl ? r : { ...r, avatarUrl: resolvePlayer(r.key, players)?.avatarUrl ?? null });
+
   const openFor = (r: GlobalRow) => {
     const p = onOpenProfile ? resolvePlayer(r.key, players) : null;
     return p && onOpenProfile ? () => onOpenProfile(p.id) : undefined;
   };
 
-  const leader = ranked[0];
-  const rest = ranked.slice(1);
+  // The top three on a podium, everyone else below.
+  const podium = ranked.slice(0, 3).map(withFace);
+  const rest = ranked.slice(3).map(withFace);
 
   return (
     <>
       <Header onBack={onBack} />
-      <Distribution rows={ranked} />
-      {leader && <LeaderCard r={leader} rating={display[0]} onOpen={openFor(leader)} />}
+      <WorldCard rows={ranked} />
+      {podium.length > 0 && <Podium rows={podium} ratings={display.slice(0, 3)} myAuthId={myAuthId} openFor={openFor} />}
 
       {rest.length > 0 && (
         <>
@@ -384,8 +460,8 @@ export function GlobalStandingsList({ rows, myAuthId, players, onOpenProfile, on
               <Row
                 key={r.key}
                 r={r}
-                place={i + 2}
-                rating={display[i + 1]}
+                place={i + 4}
+                rating={display[i + 3]}
                 fraction={fractionOf(r.score)}
                 isMe={!!myAuthId && r.key === myAuthId}
                 onOpen={openFor(r)}
@@ -395,7 +471,8 @@ export function GlobalStandingsList({ rows, myAuthId, players, onOpenProfile, on
         </>
       )}
 
-      <ProvisionalGroup rows={provisional} myKey={myAuthId} onOpenFor={openFor} />
+      <ProvisionalGroup rows={provisional.map(withFace)} myKey={myAuthId} onOpenFor={openFor} />
+      <div style={{ marginTop: 16 }}><Distribution rows={ranked} /></div>
     </>
   );
 }

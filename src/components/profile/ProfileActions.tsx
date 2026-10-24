@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Check, MessageSquare, UserPlus, UserX } from "lucide-react";
+import { Check, MessageSquare, Swords, UserPlus, UserX } from "lucide-react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { acceptFriendRequest, getFriendshipWith, removeFriendship, sendFriendRequest, type FriendRow } from "@/lib/friends";
 import {
@@ -85,27 +85,41 @@ export interface ProfileActionsProps {
   theirAuthId?: string | null;
   myAuthId?: string | null;
   onMessage?: (authId: string) => void;
+  /** Book a match against them: Fixtures, form open, them already chosen. */
+  onChallenge?: () => void;
 }
 
-export function ProfileActions({ theirAuthId, myAuthId, onMessage }: ProfileActionsProps) {
+export function ProfileActions({ theirAuthId, myAuthId, onMessage, onChallenge }: ProfileActionsProps) {
   if (!myAuthId) return null;
+  if (theirAuthId && theirAuthId === myAuthId) return null;
+
+  // Challenge first, for everybody in the club — somebody without an
+  // account can still be booked; the result just needs no agreement.
+  const challenge = onChallenge && (
+    <button style={lime} onClick={onChallenge}>
+      <Swords size={15} strokeWidth={2} />Challenge
+    </button>
+  );
 
   if (!theirAuthId) {
     return (
+      <>
+      {challenge && <div style={{ display: "flex", gap: 8, marginTop: 12 }}>{challenge}</div>}
       <SurfaceCard radius={16} style={{ marginTop: 12 }}>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
           They haven&apos;t claimed their profile yet, so there is no account to
           message or add as a friend.
         </div>
       </SurfaceCard>
+      </>
     );
   }
-  if (theirAuthId === myAuthId) return null;
 
   return (
     <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+      {challenge}
       {onMessage && (
-        <button style={lime} onClick={() => onMessage(theirAuthId)}>
+        <button style={challenge ? quiet : lime} onClick={() => onMessage(theirAuthId)}>
           <MessageSquare size={15} strokeWidth={2} />Message
         </button>
       )}

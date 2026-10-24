@@ -50,7 +50,7 @@ export function ProfileContainer({
   player, players, matches, elo, wdl, form, deltas, ratingBefore, meId, group, groups,
   viewer = "self", onOpen, onOpenMatch, onProposeEdit, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
-  myAuthId, onMessage, onOpenMatches, seasonHonoursOf,
+  myAuthId, onMessage, onChallenge, onOpenMatches, seasonHonoursOf,
   // False where the profile was reached from outside your league (search,
   // a friend's list): the database only lets an admin award inside a league
   // they are in, so the button would only ever fail there.
@@ -376,7 +376,7 @@ export function ProfileContainer({
           onOpenMatch={onOpenMatch}
         />
       }
-      actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage }}
+      actions={{ theirAuthId: player?.auth_id ?? null, myAuthId, onMessage, onChallenge: onChallenge && pid !== meId ? () => onChallenge(pid) : undefined }}
       friends={<>
         <FriendsCard
           authId={player?.auth_id ?? null}

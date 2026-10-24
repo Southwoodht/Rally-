@@ -224,8 +224,6 @@ export const FEED_THEY_LEAD_DIM = "var(--danger-dim)";
  * FEED_LOSS still exists and is still the right quiet green for a scoreline.
  * It is just not a colour anything can be drawn 3px wide in.
  */
-export const OUTCOME_RAIL = { W: "var(--win, var(--accent))", D: FEED_TEXT_LOW, L: FEED_THEY_LEAD };
-
 // The form dots (FormDots: last five results on the Table, Home, divisions)
 // are the same three colours on every theme — Sam, 2026-10-24: "just have
 // them green or red or grey, makes it easier". Fixed hexes, not theme
@@ -240,6 +238,11 @@ export const FORM_WIN = "#1E5A38";
 export const FORM_DRAW = "#8C867C";
 export const FORM_LOSS = "#A8261E";
 export const FORM_CHIP = "#F6F2EA";
+
+// Since 2026-10-24 the same deep green / grey / red as the form dots, on
+// every theme (Sam: the match history rails had been missed).
+export const OUTCOME_RAIL = { W: FORM_WIN, D: FORM_DRAW, L: FORM_LOSS };
+
 
 export const DOT_WIN = "var(--win, var(--accent))";
 export const DOT_DRAW = MUTED;
