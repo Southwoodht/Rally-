@@ -105,6 +105,12 @@ export default function Welcome() {
                 {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Log in"}
               </button>
 
+              {mode === "signup" && (
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, marginTop: 10, textAlign: "center" }}>
+                  By creating an account you agree to how we keep your details — read our <a href="/privacy" style={{ color: BALL }}>privacy page</a>.
+                </div>
+              )}
+
               {mode === "login" && (
                 <button
                   style={{ ...secondary, background: "transparent", border: "none", color: MUTED, fontSize: 12, marginTop: 12 }}

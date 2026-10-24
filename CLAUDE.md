@@ -1170,6 +1170,25 @@ leaves it still (Home's is rendered outside Home; HomeHeader takes `topRow`
 and omits its own row). Only the title under it changes. The menu is on
 every tab now; the theme picker lives in the menu.
 
+**Coach clean-up, branch `claude/continuation-luuz5s` (2026-10-24), NOT merged — preview first.**
+Sam's 17-point list. Needs `schema_moderation.sql` (expect 2, false, false),
+`schema_theme_london.sql` (DATA: moves everyone on 'rally' to 'sw19'; expect
+'sw19'::text, 0) and then `fix_function_grants.sql`. His rulings: London for
+everyone on the old default; divisions renamed/ended by buttons in division
+Settings (Rename / End this division — End voids unplayed ties, keeps the
+table); removed members and deleted accounts are hidden (not playing), results
+kept; a club creator deleting their account hands the club to another owner,
+or is refused with nothing changed (leagues.created_by is ON DELETE CASCADE —
+deleting a creator's login would delete the club). `/api/account/delete` needs
+`SUPABASE_SERVICE_ROLE_KEY` in the environment it runs in (Production has it).
+Deleted players become "Former player" (`isFormerPlayer`, never claimable).
+`core/nameFilter.ts` (tested) checks names on sign-up, My profile, add player,
+organiser edits — whole words and a few stems. The club sheet (`GroupSheet`)
+is now the landing page's cards; "Everyone I've played" left it. The singles
+ladder is behind `SHOW_LADDER = false`. `/privacy` page, linked from sign-up
+and the menu. Weekly roundup card compacted; lining figures globally
+(Cormorant, London's display face, sets old-style ones by default).
+
 **RUN on 2026-10-24, verified (1, integer): `schema_match_delete_shell_and_pending.sql`
 and `schema_fixture_duration.sql`.** History of the first, kept: until it
 was, deleting a match against a shell opponent, and Dispute/Cancel on a

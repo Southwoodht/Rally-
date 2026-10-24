@@ -20,6 +20,10 @@ export interface DivisionManage {
   onDelete: (c: Competition) => Promise<void>;
   /** Its own start and end (empty = the season's); returns what changed. */
   onDates?: (c: Competition, startsOn: string | null, endsOn: string | null) => Promise<string>;
+  /** A new name; returns what to say. */
+  onRename?: (c: Competition, name: string) => Promise<string>;
+  /** Finish it: off this tab, unplayed matches voided, results and table kept. */
+  onEnd?: (c: Competition) => Promise<void>;
 }
 
 /** "1 Oct – 31 Mar", "from 1 Oct", or null with no dates at all. */
@@ -33,6 +37,7 @@ function dateSpan(d: { startsOn: string | null; endsOn: string | null }): string
 
 function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Competition; entries: CompetitionPair[]; players: any[]; manage: DivisionManage; nameOf: (e: CompetitionPair) => string; dates: { startsOn: string | null; endsOn: string | null } }) {
   const [adding, setAdding] = useState("");
+  const [newName, setNewName] = useState(c.name);
   const [from, setFrom] = useState(dates.startsOn || "");
   const [to, setTo] = useState(dates.endsOn || "");
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -50,6 +55,21 @@ function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Compet
   const dateBox: React.CSSProperties = { flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "8px 10px", fontFamily: body, fontSize: 14, colorScheme: "dark" };
   return (
     <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 12, paddingTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+      {manage.onRename && (
+        <div>
+          <div style={{ ...note, color: FEED_TEXT_LOW, marginBottom: 4 }}>Name</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} aria-label="Division name" style={{ ...dateBox, colorScheme: undefined }} />
+            <button
+              disabled={busy || !newName.trim() || newName.trim() === c.name}
+              onClick={() => act(() => manage.onRename!(c, newName))}
+              style={{ ...pill(FEED_LIME, FEED_LIME_INK), opacity: busy || !newName.trim() || newName.trim() === c.name ? 0.5 : 1 }}
+            >
+              Rename
+            </button>
+          </div>
+        </div>
+      )}
       {manage.onDates && (
         <div>
           <div style={{ ...note, color: FEED_TEXT_LOW, marginBottom: 4 }}>Dates for this division</div>
@@ -101,6 +121,14 @@ function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Compet
           </div>
         ))}
       </div>}
+      {manage.onEnd && (
+        <div>
+          {confirm === "end"
+            ? <button disabled={busy} onClick={() => act(async () => { await manage.onEnd!(c); })} style={pill(FEED_RAISED, FEED_TEXT_HI)}>End {c.name}? Its table and results are kept</button>
+            : <button onClick={() => setConfirm("end")} style={{ background: "none", border: "none", color: FEED_TEXT_HI, fontFamily: body, fontSize: 13.5, cursor: "pointer", padding: 0 }}>End this division</button>}
+          <div style={{ ...note, marginTop: 4 }}>It leaves this tab, and matches it still had to play are called off. Nothing that was played is lost.</div>
+        </div>
+      )}
       <div>
         {confirm === "delete"
           ? <button disabled={busy} onClick={() => act(async () => { await manage.onDelete(c); })} style={pill(FEED_RAISED, DOT_LOSS)}>Delete {c.name} and its unplayed matches? Results stay.</button>

@@ -1,93 +1,116 @@
 "use client";
-import React, { useState } from "react";
-import { Trophy, Swords, Plus, Clock, User, Settings as Gear, ChevronLeft, ChevronDown, Check } from "lucide-react";
-import { BigBtn } from "@/components/ui/atoms";
-import { FEED_OVERLAY, PANEL, BALL, CHALK, CLAY, COURT, MUTED, PANEL2, body, input, listCard, listRow } from "@/lib/theme";
+import React from "react";
+import { Check, ChevronRight } from "lucide-react";
+import {
+  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_OVERLAY, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID,
+  PANEL, body, tabular,
+} from "@/lib/theme";
 
-export function GroupSheet({ groups, currentId, onSwitch, onAdd, onDelete, onClose, personal, onPersonal, friendly, onManageLeagues, onFriendly = "/?league=friendly" }: any) {
-  const [name, setName] = useState("");
+/**
+ * The club switcher, opened from the club pill on every tab.
+ *
+ * It looks and works like the "Your clubs" landing page (Sam, 2026-10-24): a
+ * card per club with its players and matches, Friendlies as a card of its
+ * own, then Create and Join. Before, it was a list of the app's internal
+ * groups with a tick box — a different idea of a "club" from the one on the
+ * landing page, which is how the two came to look nothing alike.
+ *
+ * "Everyone I've played" is gone from here: it lives on the Table as the
+ * Global table link.
+ *
+ * `groups` are the app's sections inside one club (shared storage). Almost
+ * every club has exactly one, so they are only listed when there is a choice.
+ */
+export function GroupSheet({
+  clubs, sizes, currentClubId, onSwitchClub, onCreate, onJoin, onManageLeagues, friendly, onFriendly = "/?league=friendly",
+  groups, currentId, onSwitch, onClose,
+}: {
+  clubs?: Array<{ id: string; name: string; location?: string | null; role?: string }>;
+  sizes?: Record<string, { players: number; matches: number }>;
+  currentClubId?: string;
+  onSwitchClub?: (club: any) => void;
+  onCreate?: () => void;
+  onJoin?: () => void;
+  onManageLeagues?: () => void;
+  friendly?: boolean;
+  onFriendly?: string;
+  groups?: Array<{ id: string; name: string }>;
+  currentId?: string | null;
+  onSwitch?: (id: string) => void;
+  onClose: () => void;
+}) {
+  const card: React.CSSProperties = {
+    display: "flex", alignItems: "center", gap: 12, width: "100%", background: FEED_CARD, border: "none",
+    borderRadius: 16, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", boxSizing: "border-box",
+  };
+  const title: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+  const sub: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
+  const here = (
+    <span style={{ width: 24, height: 24, borderRadius: 12, background: FEED_LIME, display: "grid", placeItems: "center", flexShrink: 0 }}>
+      <Check size={14} color={FEED_LIME_INK} strokeWidth={3} />
+    </span>
+  );
+  const go = <ChevronRight size={18} color={FEED_TEXT_LOW} style={{ flexShrink: 0 }} />;
+  const count = (n?: { players: number; matches: number }) =>
+    n ? `${n.players} player${n.players === 1 ? "" : "s"} · ${n.matches} match${n.matches === 1 ? "" : "es"}` : null;
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 90 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, border: "none", padding: "20px 18px 40px", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
-        {/* Not being in a league is a legitimate way to use Southwood: some people
-            just play the same handful of opponents and don't want a table with
-            a name and a season. Ticking this unticks every league. */}
-        <div style={{ ...listCard, marginBottom: 14 }}>
-          <div style={{ ...listRow, cursor: "default" }}>
-            <button onClick={onPersonal} style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
-              <span style={{ width: 22, height: 22, borderRadius: 10, display: "grid", placeItems: "center", background: personal ? BALL : PANEL2, border: "none" }}>{personal && <Check size={14} color={COURT} strokeWidth={3} />}</span>
-              <span>
-                <span style={{ display: "block", fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Everyone I&apos;ve played</span>
-                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>No club, no season — just the people you&apos;ve faced</span>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "20px 16px 36px", boxSizing: "border-box", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 12, paddingLeft: 2 }}>Your clubs</div>
+
+        {(clubs || []).map((c) => {
+          const on = !friendly && c.id === currentClubId;
+          const n = count(sizes?.[c.id]);
+          return (
+            <button key={c.id} onClick={() => (on ? onClose() : onSwitchClub?.(c))} style={card}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ ...title, display: "block" }}>{c.name}</span>
+                <span style={{ ...sub, display: "block" }}>
+                  {[n, c.location || null, c.role === "owner" ? "Owner" : null].filter(Boolean).join(" · ") || " "}
+                </span>
               </span>
+              {on ? here : go}
             </button>
-          </div>
-        </div>
-        {/* Friendlies. This sheet is the only league switcher reachable from
-            inside the app, and somebody with exactly one league never sees
-            the Dashboard at all — load() sends them straight in — so putting
-            this only on the Dashboard made it unreachable for most people,
-            Sam included. */}
-        <div style={{ ...listCard, marginBottom: 14 }}>
-          <div style={{ ...listRow, cursor: "default" }}>
-            <button
-              onClick={() => { if (typeof window !== "undefined") window.location.href = onFriendly; }}
-              style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", padding: 0, cursor: "pointer", textAlign: "left" }}
-            >
-              <span style={{ width: 22, height: 22, borderRadius: 10, display: "grid", placeItems: "center", background: friendly ? BALL : "transparent", border: friendly ? "none" : "1.5px solid " + MUTED }} />
-              <span>
-                <span style={{ display: "block", fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Just me and my mates</span>
-                <span style={{ display: "block", fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>Matches outside any club</span>
-              </span>
-            </button>
-          </div>
+          );
+        })}
+
+        {/* Friendlies: a card of its own, as on the landing page. */}
+        <button
+          onClick={() => { if (friendly) onClose(); else if (typeof window !== "undefined") window.location.href = onFriendly; }}
+          style={card}
+        >
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ ...title, display: "block" }}>Friendlies</span>
+            <span style={{ ...sub, display: "block" }}>Matches outside any club</span>
+          </span>
+          {friendly ? here : go}
+        </button>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <button onClick={onCreate} style={{ flex: 1, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 16, padding: "14px 10px", fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}>Create</button>
+          <button onClick={onJoin} style={{ flex: 1, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 16, padding: "14px 10px", fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}>Join</button>
         </div>
 
-        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 16, color: CHALK, marginBottom: 14 }}>Your clubs</div>
-        <div style={listCard}>
-          {groups.map((g) => {
-            const on = !personal && g.id === currentId;
-            return (
-              <div key={g.id} style={{ ...listRow, cursor: "default" }}>
-                <button onClick={() => onSwitch(g.id)} style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
-                  <span style={{ width: 22, height: 22, borderRadius: 10, display: "grid", placeItems: "center", background: on ? BALL : PANEL2, border: "none" }}>{on && <Check size={14} color={COURT} strokeWidth={3} />}</span>
-                  <span style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>{g.name}</span>
-                </button>
-                {groups.length > 1 && <button onClick={() => onDelete(g.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: CLAY, background: "transparent", border: "none", borderRadius: 8, padding: "4px 8px", cursor: "pointer" }}>Delete</button>}
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="New club name…" onKeyDown={(e) => { if (e.key === "Enter" && name.trim()) { onAdd(name.trim()); setName(""); } }} style={{ ...input, marginBottom: 0, boxSizing: "border-box" as const }} />
-          <BigBtn onClick={() => { if (name.trim()) { onAdd(name.trim()); setName(""); } }} color={BALL} grow={false}>Create</BigBtn>
-        </div>
-        {friendly && (
-          <button
-            onClick={() => { if (typeof window !== "undefined") window.location.href = "/"; }}
-            style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15 }}
-          >
-            Back to your clubs
-          </button>
+        {/* Sections inside this club — legacy, and only when there is a
+            choice to make. */}
+        {groups && groups.length > 1 && !friendly && (
+          <div style={{ marginTop: 18 }}>
+            <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_LOW, marginBottom: 8, paddingLeft: 2 }}>Sections in this club</div>
+            {groups.map((g) => (
+              <button key={g.id} onClick={() => onSwitch?.(g.id)} style={{ ...card, padding: "11px 16px" }}>
+                <span style={{ ...title, fontSize: 15, flex: 1 }}>{g.name}</span>
+                {g.id === currentId ? here : go}
+              </button>
+            ))}
+          </div>
         )}
-        {/* The one thing this sheet could not do, and the only reason the
-            duplicate bar at the top of every screen existed.
 
-            The list above is the app's `groups`, out of shared storage. Join
-            codes, leaving a league and joining one by code all belong to the
-            real `leagues` rows, which only the Dashboard reads — so they are
-            a different screen, not a section that could be inlined here.
-            This is the way through to it. */}
-        {onManageLeagues && (
-          <button
-            onClick={onManageLeagues}
-            style={{ width: "100%", background: PANEL2, color: CHALK, border: "none", borderRadius: 14, padding: "12px 14px", marginTop: 14, cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15, textAlign: "left" }}
-          >
-            Join or leave a club
-            <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 12, color: MUTED, marginTop: 2 }}>Enter a code, see your join codes, or leave one</span>
+        {onManageLeagues && (clubs || []).length > 1 && (
+          <button onClick={onManageLeagues} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 13.5, cursor: "pointer" }}>
+            Leave a club or see join codes
           </button>
         )}
-        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 10 }}>Each club keeps its own players, results and rankings — your mates and your work crew stay totally separate.</div>
       </div>
     </div>
   );

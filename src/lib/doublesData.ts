@@ -436,6 +436,14 @@ export async function drawTies(
   return (data || []).map(rowToDoublesFixture);
 }
 
+/** A division's or competition's name (Sam, 2026-10-24: "2026 Rewind – Division 1"). */
+export async function renameCompetition(id: string, name: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const n = name.trim();
+  if (!n) throw new Error("A name is needed.");
+  await run(supabase.from("doubles_competitions").update({ name: n }).eq("id", id), "renaming the competition");
+}
+
 export async function finishCompetition(id: string, finished: boolean): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   await run(supabase.from("doubles_competitions").update({ status: finished ? "finished" : "running" }).eq("id", id), "updating the competition");

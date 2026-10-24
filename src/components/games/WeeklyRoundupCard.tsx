@@ -3,7 +3,7 @@ import React from "react";
 import { Award, Flame, TrendingUp } from "lucide-react";
 import { Cycler } from "@/components/ui/Cycler";
 import { MovementIndicator, StatNumeral, SurfaceCard, SurfaceTile } from "@/components/ui/Surfaces";
-import { FEED_HAIRLINE, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight } from "@/lib/theme";
+import { FEED_HAIRLINE, FEED_LIME, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular } from "@/lib/theme";
 
 // The Sunday-night roundup: one card, the week in about six seconds.
 //
@@ -119,10 +119,13 @@ export function WeeklyRoundupCard({ periods }: WeeklyRoundupCardProps) {
  * component's own paddings, listed where they are used so a layout change
  * that breaks the arithmetic is at least next to it.
  */
-const ROW_H = 40;          // 15px line + 9px padding either side, plus a hairline
-const HEAD_H = 196;        // title, the two tiles, and the "Results" label
+// Compact since 2026-10-24 (Sam: "make the weekly record card more
+// compact"): the record and rank sit in one short row beside their labels,
+// and the result rows are tighter. These heights follow.
+const ROW_H = 31;          // 14px line + 6px padding either side, plus a hairline
+const HEAD_H = 118;        // title, the record row, and the "Club results" label
 const MORE_H = 22;         // "and 54 more"
-const HIGHLIGHT_H = 62;    // the tile, plus its margin
+const HIGHLIGHT_H = 52;    // the tile, plus its margin
 
 function bodyHeightFor(periods: RoundupPeriod[]): number {
   return periods.reduce((tallest, p) => {
@@ -142,30 +145,26 @@ function Period({ p }: { p: RoundupPeriod }) {
 
   return (
     <>
-      <div style={{ ...tight(26), fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_TEXT_HI, marginTop: 2, marginBottom: 14 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 20, color: FEED_TEXT_HI, marginTop: 2, marginBottom: 10 }}>
         {title}
       </div>
 
-      {/* Two, never three. At phone width a third tile turns readable
-          numbers into a row of cramped ones. */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-        <SurfaceTile>
-          <div style={labelStyle}>Won / lost</div>
-          <div style={{ marginTop: 4 }}>
-            <StatNumeral size={32} tone="lime">{record.w}–{record.l}</StatNumeral>
-          </div>
+      {/* Two, never three, each number with its label beside it rather than
+          above — one short row instead of two tall tiles. */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+        <SurfaceTile style={{ padding: "8px 12px", display: "flex", alignItems: "baseline", gap: 8 }}>
+          <StatNumeral size={24} tone="lime">{record.w}–{record.l}</StatNumeral>
+          <span style={labelStyle}>won / lost</span>
         </SurfaceTile>
-        <SurfaceTile>
-          <div style={labelStyle}>Rank</div>
-          <div style={{ marginTop: 4 }}>
-            <StatNumeral size={32} tone="hi">
-              {rank == null ? "–" : <>
-                {rank}
-                <span style={{ fontSize: 15, verticalAlign: "super", marginLeft: 1 }}>{ordinal(rank)}</span>
-              </>}
-            </StatNumeral>
-          </div>
-          {movement && <div style={{ marginTop: 4 }}><MovementIndicator delta={movement.placesGained} size={12} /></div>}
+        <SurfaceTile style={{ padding: "8px 12px", display: "flex", alignItems: "baseline", gap: 8 }}>
+          <StatNumeral size={24} tone="hi">
+            {rank == null ? "–" : <>
+              {rank}
+              <span style={{ fontSize: 13, verticalAlign: "super", marginLeft: 1 }}>{ordinal(rank)}</span>
+            </>}
+          </StatNumeral>
+          <span style={labelStyle}>rank</span>
+          {movement && <span style={{ marginLeft: "auto" }}><MovementIndicator delta={movement.placesGained} size={12} /></span>}
         </SurfaceTile>
       </div>
 
@@ -190,16 +189,16 @@ function Period({ p }: { p: RoundupPeriod }) {
           <div
             key={i}
             style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "9px 0",
+              display: "flex", alignItems: "center", gap: 10, padding: "6px 0",
               borderTop: i === 0 ? "none" : "1px solid " + FEED_HAIRLINE,
             }}
           >
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               <span style={{ fontWeight: 500 }}>{r.winnerName}</span>
               <span style={{ fontWeight: 400, color: FEED_TEXT_LOW }}>{r.drawn ? " drew with " : " beat "}</span>
               <span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>{r.loserName}</span>
             </span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_MID, flexShrink: 0 }}>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, flexShrink: 0 }}>
               {r.score || "—"}
             </span>
           </div>
@@ -214,7 +213,7 @@ function Period({ p }: { p: RoundupPeriod }) {
       )}
 
       {highlight && HighlightIcon && (
-        <SurfaceTile style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+        <SurfaceTile style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, padding: "10px 12px" }}>
           <HighlightIcon size={18} color={FEED_LIME} strokeWidth={2} />
           <span style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}>{highlight.sentence}</span>
         </SurfaceTile>

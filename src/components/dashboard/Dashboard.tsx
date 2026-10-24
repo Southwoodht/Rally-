@@ -63,7 +63,7 @@ export default function Dashboard({ session }: { session: Session }) {
       const mine = await listMyLeagues();
       setLeagues(mine);
       // Only worth asking when there's a choice to make.
-      if (mine.length > 1) leagueSizes(mine.map((l) => l.id)).then(setSizes).catch(() => {});
+      if (mine.length) leagueSizes(mine.map((l) => l.id)).then(setSizes).catch(() => {});
       if (mine.length === 1) { setActive(mine[0]); setView("app"); }
       else if (mine.length > 1) setView("picker");
       else setView("empty");
@@ -165,6 +165,9 @@ export default function Dashboard({ session }: { session: Session }) {
       // longer a bar for the strip to be an extension of.
       <div style={{ background: COURT, paddingTop: "env(safe-area-inset-top)" }}>
         <RallyApp
+          // A fresh app per club: switching from the club sheet changes the
+          // league under it, and everything inside reads its league on mount.
+          key={active.id}
           leagueId={active.id}
           leagueName={active.name}
           leagueRole={active.role}
@@ -176,6 +179,11 @@ export default function Dashboard({ session }: { session: Session }) {
           onLeagueFlags={(patch: any) => setActive((a) => (a ? { ...a, ...patch } : a))}
           displayName={displayName}
           onManageLeagues={() => setView(leagues.length > 1 ? "picker" : "empty")}
+          // The club sheet (Sam, 2026-10-24): the same cards as Your clubs.
+          clubs={leagues}
+          clubSizes={sizes}
+          onSwitchClub={(l: any) => { if (l.id !== active.id) setActive(l); }}
+          onClubAction={(v: "create" | "join") => { setError(""); setView(v); }}
           // Absent means off. A League built anywhere but listMyLeagues — the
           // dev stub, a fresh join response — carries no flags at all, and
           // that has to read as "not switched on" rather than as undefined

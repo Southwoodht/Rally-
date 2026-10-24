@@ -1,7 +1,7 @@
 "use client";
 import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, HelpCircle, Lock, MessageCircle, Plus, Search, Settings as Gear, Swords, Trophy, Tv, User, Users } from "lucide-react";
 import { storage } from "@/lib/storage";
 import { ClubAdminReview } from "@/components/admin/ClubAdminReview";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -54,10 +54,10 @@ import { FixturesPanel } from "@/components/games/FixturesPanel";
 import { doublesCompetitionView, singlesCompetitionView } from "@/core/doubles/competitionAdapters";
 import { leagueTable } from "@/core/doubles/competition";
 import { useCompetitions } from "@/components/doubles/useCompetitions";
-import { addCompetitionEntry, addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeCompetitionEntry, removeLadderEntry, setCompetitionDates } from "@/lib/doublesData";
+import { addCompetitionEntry, addLadderEntry, createCompetition, deleteCompetition, drawTies, finishCompetition, removeCompetitionEntry, renameCompetition, removeLadderEntry, setCompetitionDates } from "@/lib/doublesData";
 import { backfillTies, divisionDates, tiesOutsideWindow } from "@/core/backfill";
 import { Ladder } from "@/components/competitions/Ladder";
-import { Divisions } from "@/components/competitions/Divisions";
+import { Divisions, type DivisionManage } from "@/components/competitions/Divisions";
 import { PlanNextSeason } from "@/components/competitions/PlanNextSeason";
 import type { ProposedDivision } from "@/core/promotion";
 import { seasonHonours } from "@/core/seasonHonours";
@@ -169,7 +169,7 @@ function nextUpLine(pct: number | null): string {
 // for the coach, keep the code); true brings it straight back.
 const SHOW_LADDER = false;
 
-export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags }: any) {
+export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinCode, displayName, onManageLeagues, doublesEnabled, competitionsEnabled, leagueCreatedBy, onLeagueFlags, clubs, clubSizes, onSwitchClub, onClubAction }: any) {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; requireSetup?: boolean; season?: any }>>([]);
   const [gid, setGid] = useState<string | null>(null);
   const [gdata, setGdata] = useState<LeagueData>(emptyLeagueData);
@@ -1894,6 +1894,33 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     onOpenPlayer: openProfile,
   } : null;
 
+  // Rename and End for any division (Sam, 2026-10-24: "2026 Rewind –
+  // Division 1", and end Division Everyone). Ending marks it finished, which
+  // takes it off the Divisions tab, and voids the matches it still had to
+  // play so they leave Fixtures; its results and table are kept.
+  const withDivisionNaming = (m: DivisionManage): DivisionManage => ({
+    ...m,
+    onRename: async (c, name) => {
+      await renameCompetition(c.id, name);
+      await comps.reload();
+      return "Renamed.";
+    },
+    onEnd: async (c) => {
+      if (c.kind === "doubles") {
+        for (const f of doubles.fixtures.filter((f: any) => f.competitionId === c.id && !f.done && !f.outcome)) await doubles.setTie(f.id, { outcome: "void" });
+      } else {
+        const open = (gdata.fixtures || []).filter((f: any) => f.competitionId === c.id && !f.done && !f.outcome);
+        if (open.length) {
+          const ids = new Set(open.map((f: any) => f.id));
+          const ok = await saveData({ ...gdata, fixtures: (gdata.fixtures || []).map((f: any) => (ids.has(f.id) ? { ...f, outcome: "void" } : f)) });
+          if (!ok) throw new Error("Couldn't close its matches. Nothing was ended.");
+        }
+      }
+      await finishCompetition(c.id, true);
+      comps.statusChanged(c.id, "finished");
+      flash("Ended " + c.name);
+    },
+  });
   const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
     doublesMode={tab === "home" && homeDoubles}
     doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;
@@ -2104,7 +2131,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onAdd={leagueRole === "owner" || leagueRole === "editor" ? startDivision : undefined}
             onPlanNext={leagueRole === "owner" || leagueRole === "editor" ? () => setPlanningNext(true) : undefined}
             datesOf={(c) => divisionDates(c, seasonsState.seasons.find((x) => x.id === c.seasonId))}
-            manage={leagueRole === "owner" || leagueRole === "editor" ? (showDoubles ? {
+            manage={leagueRole === "owner" || leagueRole === "editor" ? withDivisionNaming((showDoubles ? {
               onDelete: async (c) => { await deleteCompetition(c.id); comps.removed(c.id); flash("Deleted " + c.name); },
               // Doubles: the dates and the deadlines on matches still to play.
               onDates: async (c, startsOn, endsOn) => {
@@ -2201,7 +2228,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 setGdata((g: any) => ({ ...g, fixtures: (g.fixtures || []).filter((f: any) => f.competitionId !== c.id) }));
                 flash("Deleted " + c.name);
               },
-            }) : undefined}
+            })) : undefined}
           />
         )}
         {/* Doubles compares two PAIRS; singles stays exactly as it was. */}
@@ -2737,6 +2764,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               {<button onClick={() => { setMenuOpen(false); setTab("clubadmin"); }} style={listRow}><Trophy size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Trophies &amp; honours</span>{!isClubAdmin && <span style={{ fontFamily: body, fontWeight: 400, fontSize: 12, color: FEED_TEXT_MID }}>Set up</span>}<span style={{ color: MUTED }}>›</span></button>}
               {canManageMatches && !personal && !isFriendlyLeague(gid) && <button onClick={() => { setMenuOpen(false); setBoardOpen(true); }} style={listRow}><Tv size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Clubhouse TV</span><span style={{ color: MUTED }}>›</span></button>}
               <button onClick={() => { setMenuOpen(false); setTab("help"); }} style={listRow}><HelpCircle size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Help</span><span style={{ color: MUTED }}>›</span></button>
+              <a href="/privacy" style={{ ...listRow, textDecoration: "none" }}><Lock size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Privacy</span><span style={{ color: MUTED }}>›</span></a>
             </div>
           </div>
         </div>
@@ -2754,7 +2782,19 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       )}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
       {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
-      {groupSheet && <GroupSheet friendly={isFriendlyLeague(gid)} groups={groups} currentId={gid} personal={personal} onPersonal={() => { setPersonal(!personal); setGroupSheet(false); setProfileId(null); }} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }} onAdd={addGroup} onDelete={deleteGroup} onManageLeagues={onManageLeagues} onClose={() => setGroupSheet(false)} />}
+      {groupSheet && (
+        <GroupSheet
+          // The club you are in is always listed, even if the list of clubs
+          // has not arrived (an invite join, the dev league).
+          clubs={(clubs || []).some((c: any) => c.id === leagueId) || isFriendlyLeague(gid) ? clubs : [{ id: leagueId, name: leagueName || group?.name || "Club", role: leagueRole }, ...(clubs || [])]}
+          sizes={clubSizes} currentClubId={leagueId} friendly={isFriendlyLeague(gid)}
+          onSwitchClub={(c: any) => { setGroupSheet(false); setPersonal(false); onSwitchClub?.(c); }}
+          onCreate={() => { setGroupSheet(false); onClubAction?.("create"); }}
+          onJoin={() => { setGroupSheet(false); onClubAction?.("join"); }}
+          groups={groups} currentId={gid} onSwitch={(id: string) => { setPersonal(false); switchGroup(id); }}
+          onManageLeagues={onManageLeagues} onClose={() => setGroupSheet(false)}
+        />
+      )}
       {!onboarded && meId && <Onboarding me={me} onFinish={finishOnboarding} />}
       {/* After onboarding, never on top of it; once, or when asked from Help. */}
       {meId && onboarded && (tourOpen || tourSeen === false) && (
