@@ -1171,9 +1171,10 @@ and omits its own row). Only the title under it changes. The menu is on
 every tab now; the theme picker lives in the menu.
 
 **Coach clean-up, branch `claude/continuation-luuz5s` (2026-10-24), NOT merged — preview first.**
-Sam's 17-point list. Needs `schema_moderation.sql` (expect 2, false, false),
-`schema_theme_london.sql` (DATA: moves everyone on 'rally' to 'sw19'; expect
-'sw19'::text, 0) and then `fix_function_grants.sql`. His rulings: London for
+Sam's 17-point list. **RUN 2026-10-24, all verified:** `schema_moderation.sql`
+(2, false, false), `schema_theme_london.sql` (DATA: everyone on 'rally' moved to
+'sw19'; 'sw19'::text, 0) and `fix_function_grants.sql` (anon false everywhere
+but is_league_member / is_club_admin). His rulings: London for
 everyone on the old default; divisions renamed/ended by buttons in division
 Settings (Rename / End this division — End voids unplayed ties, keeps the
 table); removed members and deleted accounts are hidden (not playing), results
