@@ -1281,8 +1281,8 @@ Club settings have "Use my location" (browser geolocation, town name from
 OpenStreetMap's Nominatim reverse lookup, best effort). `listMyLeagues`
 steps down logo+location → logo → base columns on error.
 
-**Where on bookings (2026-10-24, NEEDS `schema_fixture_venue.sql`, one
-`fixtures.venue jsonb` column, no function).** Sam: "like LTA Rally —
+**Where on bookings (2026-10-24). `schema_fixture_venue.sql` RUN the same
+day, verified (jsonb): one `fixtures.venue jsonb` column, no function.** Sam: "like LTA Rally —
 location of the match, then the nearest clubs". `games/VenuePicker.tsx`:
 defaults to the club you book in (`homeVenue` from RallyApp via History),
 Change opens courts near you (phone location used for the search only):
