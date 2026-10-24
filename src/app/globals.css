@@ -188,6 +188,11 @@ body {
   .sw-main.sw-wide { max-width: 1180px !important; margin-left: calc(248px + max(24px, (100vw - 248px - 1180px) / 2)) !important; }
   .sw-home { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 32px; align-items: start; }
   .sw-home-feed { padding-top: 12px; }
+  /* Fixtures likewise: the competitions card on the left, the fixtures
+   * themselves on the right. The page widens only while the two are there
+   * (:has), so an open competition or the create form keeps the usual width. */
+  .sw-main:has(.sw-fix) { max-width: 1180px !important; margin-left: calc(248px + max(24px, (100vw - 248px - 1180px) / 2)) !important; }
+  .sw-fix { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 32px; align-items: start; }
 }
 
 /* The Table with the player alongside, from 1280px. A profile opened from

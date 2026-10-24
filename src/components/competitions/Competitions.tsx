@@ -201,8 +201,11 @@ export function Competitions(props: Props) {
     );
   };
 
+  // sw-fix does nothing on a phone (the card, then the fixtures under it).
+  // On a wide laptop (the foot of globals.css) it puts the two side by side.
   return (
-    <>
+    <div className="sw-fix">
+      <div className="sw-fix-side">
       <SurfaceCard radius={16} pad="14px 14px 6px" style={{ marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <span style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>Competitions</span>
@@ -221,8 +224,9 @@ export function Competitions(props: Props) {
         {finished.length > 0 && <div style={{ ...label, padding: "12px 0 2px" }}>Finished</div>}
         {finished.map(row)}
       </SurfaceCard>
-      {props.children}
-    </>
+      </div>
+      <div className="sw-fix-main">{props.children}</div>
+    </div>
   );
 }
 
