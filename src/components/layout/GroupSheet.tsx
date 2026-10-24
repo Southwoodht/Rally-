@@ -43,15 +43,15 @@ export function GroupSheet({
     display: "flex", alignItems: "center", gap: 12, width: "100%", background: FEED_CARD, border: "none",
     borderRadius: 16, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", boxSizing: "border-box",
   };
-  const title: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
-  const sub: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
+  const title: React.CSSProperties = { fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+  const sub: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
   const here = (
     <span style={{ width: 24, height: 24, borderRadius: 12, background: FEED_LIME, display: "grid", placeItems: "center", flexShrink: 0 }}>
       <Check size={14} color={FEED_LIME_INK} strokeWidth={3} />
     </span>
   );
   const letter = (child: React.ReactNode) => (
-    <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 17 }}>{child}</span>
+    <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 700, fontSize: 17 }}>{child}</span>
   );
   const go = <ChevronRight size={18} color={FEED_TEXT_LOW} style={{ flexShrink: 0 }} />;
   const count = (n?: { players: number; matches: number }) =>
@@ -63,8 +63,8 @@ export function GroupSheet({
         {/* Two sections, as on the landing page (Sam, 2026-10-24): clubs, with
             Join and Create at the foot of their list; then no club. */}
         <div style={{ padding: "0 4px", marginBottom: 8 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI }}>Clubs</div>
-          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Your club&apos;s table, rankings, divisions and fixtures.</div>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, letterSpacing: -0.2 }}>Clubs</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Your club&apos;s table, rankings, divisions and fixtures.</div>
         </div>
         <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden", marginBottom: 24 }}>
           {(clubs || []).map((c, i) => {
@@ -84,15 +84,15 @@ export function GroupSheet({
             );
           })}
           <div style={{ display: "flex", borderTop: (clubs || []).length ? "0.5px solid " + FEED_RAISED : "none" }}>
-            <button onClick={onJoin} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}><LogIn size={16} /> Join a club</button>
+            <button onClick={onJoin} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 15, cursor: "pointer" }}><LogIn size={16} /> Join a club</button>
             <span style={{ width: 0.5, background: FEED_RAISED }} />
-            <button onClick={onCreate} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}><Plus size={16} /> Create a club</button>
+            <button onClick={onCreate} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 15, cursor: "pointer" }}><Plus size={16} /> Create a club</button>
           </div>
         </div>
 
         <div style={{ padding: "0 4px", marginBottom: 8 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI }}>No club</div>
-          <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Just you and your mates. No table, no organisers.</div>
+          <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, letterSpacing: -0.2 }}>No club</div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Just you and your mates. No table, no organisers.</div>
         </div>
         <button
           onClick={() => { if (friendly) onClose(); else if (typeof window !== "undefined") window.location.href = onFriendly; }}
@@ -121,7 +121,7 @@ export function GroupSheet({
         )}
 
         {onManageLeagues && (clubs || []).length > 1 && (
-          <button onClick={onManageLeagues} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 13.5, cursor: "pointer" }}>
+          <button onClick={onManageLeagues} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>
             Leave a club or see join codes
           </button>
         )}

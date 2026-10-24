@@ -1454,7 +1454,13 @@ introduce a colour that isn't a token.
 
 The shape of it: a dark green page, cards a step lighter, numbers large and
 quiet-coloured, words small. Emphasis is **size and colour, never weight** —
-nothing above 500, where the old screens ran at 700 and 800. A number is the
+nothing above 500, where the old screens ran at 700 and 800.
+
+**Sam, 2026-10-24: the thin weights read "like Word or a spreadsheet or
+code" — he wants it bolder.** The landing page and club sheet now run 700
+for headings and the greeting, 600 for names and buttons, 500 for small
+text. He said the rest of the app is next; this rule is being superseded
+screen by screen, so follow his newer ask over the line above. A number is the
 loudest thing on any card and the label under it is the smallest.
 
 ### The tokens

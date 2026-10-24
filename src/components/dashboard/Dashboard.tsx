@@ -211,17 +211,17 @@ export default function Dashboard({ session }: { session: Session }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 26 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <RallyMark size={26} title="Southwood" />
-            <span style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI }}>Southwood</span>
+            <span style={{ fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI, letterSpacing: -0.2 }}>Southwood</span>
           </div>
-          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, background: "none", border: "none", padding: "6px 0", cursor: "pointer" }}>Log out</button>
+          <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_MID, background: "none", border: "none", padding: "6px 0", cursor: "pointer" }}>Log out</button>
         </div>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 26, color: FEED_TEXT_HI, lineHeight: 1.15 }}>{greetingFor(displayName || "")}</div>
-        <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, marginTop: 6, marginBottom: 22 }}>
+        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 28, color: FEED_TEXT_HI, lineHeight: 1.15, letterSpacing: -0.4 }}>{greetingFor(displayName || "")}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_MID, marginTop: 6, marginBottom: 22 }}>
           {view === "picker" ? "Pick where you're playing." : view === "create" ? "Start a club for your courts or your mates." : view === "join" ? "Got a code or an invite link? In you come." : "Welcome to Southwood."}
         </div>
         {error && <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_THEY_LEAD, background: FEED_CARD, borderRadius: 14, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
         {children}
-        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 34, textAlign: "center" }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 34, textAlign: "center" }}>
           <a href="/privacy" style={{ color: FEED_TEXT_MID, textDecoration: "none" }}>Privacy</a>
         </div>
       </div>
@@ -258,14 +258,14 @@ export default function Dashboard({ session }: { session: Session }) {
     const open = (l: League) => { if (leaving) return; setActive(l); setView("app"); };
     const section = (title: string, caption: string) => (
       <div style={{ padding: "0 4px", marginBottom: 8 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 19, color: FEED_TEXT_HI }}>{title}</div>
-        <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>{caption}</div>
+        <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, letterSpacing: -0.2 }}>{title}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>{caption}</div>
       </div>
     );
     const row: React.CSSProperties = { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer" };
     const rule = "0.5px solid " + FEED_RAISED;
     const tileIcon = (child: React.ReactNode) => (
-      <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 17 }}>{child}</span>
+      <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 700, fontSize: 17 }}>{child}</span>
     );
     const leaveBlock = (l: League) => leaving && leagues.length > 1 ? (
       confirmLeave === l.id ? (
@@ -292,12 +292,12 @@ export default function Dashboard({ session }: { session: Session }) {
                 <div role="button" onClick={() => open(l)} style={{ ...row, cursor: leaving ? "default" : "pointer" }}>
                   {tileIcon((l.name || "?").trim().charAt(0).toUpperCase())}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
+                    <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
                     {/* Words, not a dotted string — Sam found that read as code. */}
-                    <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
+                    <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
                       {n ? `${n.players} ${n.players === 1 ? "player" : "players"}, ${n.matches} ${n.matches === 1 ? "match" : "matches"}` : l.location || "Your club"}
                     </div>
-                    {n && l.location && <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1 }}>{l.location}</div>}
+                    {n && l.location && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1 }}>{l.location}</div>}
                   </div>
                   {leaving && leagues.length > 1
                     ? (confirmLeave !== l.id && <button onClick={(e) => { e.stopPropagation(); setConfirmLeave(l.id); }} style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_THEY_LEAD, background: "transparent", border: "none", padding: 0, cursor: "pointer" }}>Leave</button>)
@@ -308,11 +308,11 @@ export default function Dashboard({ session }: { session: Session }) {
             );
           })}
           <div style={{ display: "flex", borderTop: leagues.length ? rule : "none" }}>
-            <button onClick={() => { setError(""); setView("join"); }} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}>
+            <button onClick={() => { setError(""); setView("join"); }} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
               <LogIn size={16} /> Join a club
             </button>
             <span style={{ width: 0.5, background: FEED_RAISED }} />
-            <button onClick={() => { setError(""); setView("create"); }} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 500, fontSize: 15, cursor: "pointer" }}>
+            <button onClick={() => { setError(""); setView("create"); }} style={{ flex: 1, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, background: "transparent", border: "none", padding: "14px 10px", color: FEED_LIME, fontFamily: body, fontWeight: 600, fontSize: 15, cursor: "pointer" }}>
               <Plus size={16} /> Create a club
             </button>
           </div>
@@ -322,14 +322,14 @@ export default function Dashboard({ session }: { session: Session }) {
         <div role="button" onClick={() => { if (!leaving) { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); } }} style={{ ...row, background: FEED_CARD, borderRadius: 20 }}>
           {tileIcon(<Users size={19} color={FEED_LIME} />)}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI }}>Friendlies</div>
-            <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>Log matches against anyone</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>Friendlies</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>Log matches against anyone</div>
           </div>
           <ChevronRight size={18} color={FEED_TEXT_MID} />
         </div>
 
         {leagues.length > 1 && (
-          <button onClick={() => { setLeaving(!leaving); setConfirmLeave(null); }} style={{ display: "block", margin: "22px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 13.5, cursor: "pointer" }}>
+          <button onClick={() => { setLeaving(!leaving); setConfirmLeave(null); }} style={{ display: "block", margin: "22px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>
             {leaving ? "Done" : "Leave a club"}
           </button>
         )}
