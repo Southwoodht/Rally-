@@ -159,6 +159,21 @@ ok(st("Sam").kind === "new", "'Sam' is not 'Samuel' — a person links them, not
 ok(st("Hugh Jones").kind === "new", "nobody like them: new");
 ok(splitName("Hugh de Montfort").name === "Hugh" && splitName("Hugh de Montfort").last === "de Montfort", "surname keeps its particles");
 
+// --------------------------------- a "vs" heading over "Winner:" lines (Sam's notes)
+{
+  const r = parseResults("Sam Henry vs Charlie Easey — 2024\n\n08/06/2024 — Winner: Charlie Easey\n13/06/2024 — Winner: Sam Henry\n01/07/2024 — Winner: Charlie", [], NOW);
+  ok(r.rows.length === 3 && r.unreadable.length === 0, `three results from a heading and winner lines, got ${r.rows.length} and ${r.unreadable.length} unreadable`);
+  ok(r.rows[0].left === "Sam Henry" && r.rows[0].right === "Charlie Easey" && r.rows[0].winner === "right", "the heading names the pair, the line the winner");
+  ok(r.rows[1].winner === "left" && r.rows[1].date === day(2024, 6, 13), "dated by its own line");
+  ok(r.rows[2].winner === "right", "a first name is enough when only one of the pair has it");
+  const bad = parseResults("Sam Henry vs Charlie Easey\n08/06/2024 — Winner: Zaach", [], NOW);
+  ok(bad.rows.length === 0 && bad.unreadable.length === 1, "a winner who isn't either player is never guessed");
+}
+{
+  const r = parseResults("Sam v Charlie 6-4", ["Sam", "Charlie"], NOW);
+  ok(r.rows.length === 1, "without Winner: lines a plain 'v' line is still a match");
+}
+
 // ------------------------------------------------------------- duplicates
 const existing = [{ p1: "sam", p2: "zaach", date: day(2019, 3, 12) + 3600000, winner: "p2" }];
 ok(isAlreadyIn("zaach", "sam", day(2019, 3, 12), "p1", existing), "same day, same pair, same winner, either way round");

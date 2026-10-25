@@ -1402,7 +1402,18 @@ listed, placed by the legacy record), share card lines, match detail (no
 rating before/after). Not in the feed. Organisers delete one at once.
 Backfill: `diagnose_sam_chris.sql` then **`data_sam_chris_legacy.sql` (DATA,
 guarded: exactly 4 confirmed Sam v Chris Buckley 2017–2020 matches or it
-changes nothing)** — not yet run.
+changes nothing)**. Sam ran both on 2026-10-25 (diagnostic: 4 Sam wins,
+26 Aug 2017/18/20 and 19 Aug 2019; Chris has 10 matches, so 6 stay rated).
+
+**Import old results for everyone (2026-10-25).** Members get "Import your
+old results" on their Run your club screen; `ImportResults` `ownOnly`
+refuses rows they didn't play in and lands results against somebody with
+an account as `pending` (Log a result's rule); organisers' imports land
+`confirmed` as before. The parser now reads Sam's notes layout — a
+"Sam Henry vs Charlie Easey — 2024" heading over "08/06/2024 — Winner:
+Charlie Easey" lines — only when the paste contains "Winner:" lines, so a
+bare "Sam v Charlie" is still a match to ask about. A winner who is
+neither of the pair is unreadable, never guessed (tested).
 
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to

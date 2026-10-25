@@ -51,11 +51,15 @@ const chip = (on: boolean): React.CSSProperties => ({
 const keyOf = (written: string) => written.trim().toLowerCase().replace(/\s+/g, " ");
 const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
-export function ImportResults({ players, matches, meId, leagueName, onImport, onBack }: {
+export function ImportResults({ players, matches, meId, leagueName, onImport, onBack, ownOnly }: {
   players: any[];
   matches: any[];
   meId?: string | null;
   leagueName?: string;
+  /** A member rather than an organiser (Sam, 2026-10-25: "should be available
+   *  for everyone"): only results they played in, and any against somebody
+   *  with an account wait for that person's OK, like Log a result. */
+  ownOnly?: boolean;
   /** Saves players first, then matches (saveData's order). True when it all landed. */
   onImport: (newPlayers: any[], newMatches: any[]) => Promise<boolean>;
   onBack: () => void;
@@ -136,6 +140,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
     let duplicate = false;
     if (!p1 || !p2) problem = "A name still needs choosing";
     else if (p1 === p2) problem = "Both names are the same player";
+    else if (ownOnly && p1 !== meId && p2 !== meId) problem = "Not your match — an organiser can add other people's";
     else if (date > Date.now() + 86400000) problem = "Dated in the future";
     else if (!winner) problem = "Who won?";
     else duplicate = isAlreadyIn(p1, p2, date, winner === "left" ? "p1" : winner === "right" ? "p2" : "draw", baseline);
@@ -151,6 +156,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
     let problem: string | null = null;
     if (!p1 || !p2) problem = "A name still needs choosing";
     else if (p1 === p2) problem = "Both names are the same player";
+    else if (ownOnly && p1 !== meId && p2 !== meId) problem = "Not your match — an organiser can add other people's";
     return { r, p1, p2, n, problem, out: !!excludedRec[r.line] };
   }), [parsed, picks, excludedRec, newIds]); // eslint-disable-line react-hooks/exhaustive-deps
   const readyRec = checkedRec.filter((c) => !c.problem && !c.out);
@@ -175,6 +181,14 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
     });
     const real = (id: string) => realIds[id] || id;
     const now = Date.now();
+    // A member's import follows Log a result's rule: against somebody with
+    // an account it waits for their OK. An organiser's lands confirmed, as
+    // it always has — they are the club's record-keepers.
+    const statusFor = (a: string, b: string) => {
+      if (!ownOnly) return "confirmed";
+      const other = byId.get(a === meId ? b : a);
+      return other?.auth_id ? "pending" : "confirmed";
+    };
     const fromRecords = readyRec.flatMap((c) => expandRecord(c.r, undatedT).map((x) => ({
       id: uid(),
       date: x.date,
@@ -182,7 +196,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       p2: real(c.p2!),
       winner: x.winner === "left" ? "p1" : x.winner === "right" ? "p2" : "draw",
       score: "",
-      status: "confirmed",
+      status: statusFor(c.p1!, c.p2!),
       reportedBy: meId || null,
       loggedAt: now,
     })));
@@ -193,7 +207,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       p2: real(c.p2!),
       winner: c.winner === "left" ? "p1" : c.winner === "right" ? "p2" : "draw",
       score: c.r.sets ? formatSets(c.r.sets) : "",
-      status: "confirmed",
+      status: statusFor(c.p1!, c.p2!),
       reportedBy: meId || null,
       loggedAt: now,
     }))];
@@ -443,7 +457,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
       {confirming ? (
         <SurfaceCard radius={18} pad="16px 14px">
           <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12, ...tabular }}>
-            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this club"}? They count straight away — nobody is asked to confirm results from before the club used Southwood.
+            Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this club"}? {ownOnly ? "Results against somebody with an account wait for their OK, like any result you log; the rest count straight away." : "They count straight away — nobody is asked to confirm results from before the club used Southwood."}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button disabled={saving} onClick={save} style={{ ...btn(FEED_LIME, FEED_LIME_INK, saving), flex: 1 }}>{saving ? "Adding…" : `Add ${total}`}</button>

@@ -294,6 +294,13 @@ export function parseResults(text: string, knownNames: string[] = [], now = new 
   // A date on a line of its own ("Saturday 12 March 2019") applies to the
   // lines under it, which is how a results book is laid out.
   let carriedDate: number | null = null;
+  // "Sam Henry vs Charlie Easey — 2024" over a list of "08/06/2024 —
+  // Winner: Charlie Easey" lines (Sam's own notes, 2026-10-25): the heading
+  // names the pair and each line under it names only the winner. Only read
+  // that way when the paste really has "Winner:" lines, so a plain "Sam v
+  // Charlie" is still a match to ask about rather than a heading.
+  const hasWinnerLines = lines.some((l) => /\b(?:winner|won by)\s*[:：]/i.test(l));
+  let carriedPair: [string, string] | null = null;
 
   // Longest first, so "Charlie Henry" wins over "Charlie" when both are known.
   const known = Array.from(new Set(knownNames.map((n) => n.trim()).filter(Boolean))).sort((a, b) => b.length - a.length);
@@ -352,6 +359,34 @@ export function parseResults(text: string, knownNames: string[] = [], now = new 
         return;
       }
       // Otherwise fall through and read it as free text.
+    }
+
+    // --- "Winner: Name" under a "Name vs Name" heading --------------------
+    if (hasWinnerLines) {
+      const w = /^(.*?)\s*[—–-]?\s*\b(?:winner|won by)\s*[:：]\s*(.+)$/i.exec(raw);
+      if (w) {
+        if (!carriedPair) {
+          unreadable.push({ line, raw, reason: "A winner with no players — put “Name vs Name” on a line above" });
+          return;
+        }
+        const wd = findDate(w[1], now);
+        const { sets, rest } = takeSets(w[2]);
+        const who = tidyName(rest).toLowerCase();
+        const is = (n: string) => { const x = n.toLowerCase(); return x === who || x.split(" ")[0] === who || (who.length > 2 && x.startsWith(who)); };
+        const side: Side | null = /^(draw|drawn|tie)$/.test(who) ? "draw" : is(carriedPair[0]) && !is(carriedPair[1]) ? "left" : is(carriedPair[1]) && !is(carriedPair[0]) ? "right" : null;
+        if (!side) {
+          unreadable.push({ line, raw, reason: `“${tidyName(rest)}” isn't ${carriedPair[0]} or ${carriedPair[1]}` });
+          return;
+        }
+        finish(line, raw, wd ? wd.t : carriedDate, carriedPair[0], carriedPair[1], side, sets, false);
+        return;
+      }
+      const head = raw.replace(/\s*[—–-]\s*(?:19|20)\d{2}\s*$/, "");
+      const pair = head.split(/\s+(?:v|vs\.?|versus)\s+/i);
+      if (pair.length === 2 && !/\d/.test(head) && tidyName(pair[0]) && tidyName(pair[1])) {
+        carriedPair = [tidyName(pair[0]), tidyName(pair[1])];
+        return;
+      }
     }
 
     // --- free text ----------------------------------------------------------

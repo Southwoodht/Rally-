@@ -134,7 +134,7 @@ export function LeagueHub(props: any) {
   if (page === "import") return (
     <ImportResults
       players={players} matches={matches} meId={meId} leagueName={group?.name}
-      onImport={props.onImportResults} onBack={() => setPage("home")}
+      onImport={props.onImportResults} onBack={() => setPage("home")} ownOnly={!canManage}
     />
   );
 
@@ -148,6 +148,11 @@ export function LeagueHub(props: any) {
           {leagueJoinCode && (
             <button onClick={invite} style={{ ...btn(FEED_LIME, FEED_LIME_INK), width: "100%", marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <Link2 size={17} strokeWidth={2.2} />Invite someone
+            </button>
+          )}
+          {props.onImportResults && (
+            <button onClick={() => setPage("import")} style={{ ...btn(FEED_RAISED, FEED_TEXT_HI), width: "100%", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Upload size={17} strokeWidth={2.2} />Import your old results
             </button>
           )}
           <div style={{ ...note, marginTop: 12 }}>The club&apos;s organisers look after players, competitions and settings.</div>
