@@ -1366,7 +1366,8 @@ counts only placed players (5+ matches and ± ≤ 130), not everyone listed.
 **Unbeaten %** = (wins + draws) ÷ played, beside win rate on the record card
 (own and public profile; tiles read win rate · unbeaten · streak · best run)
 and in the share card's brass box under "won" (Sam: "my 65% don't sound
-great"). The season card (`SeasonBanner`) leads with the days-left number,
+great"). The card lists every achievement or trophy its heading counts (up
+to 12 / 6, then "+N more"), growing taller to fit. The season card (`SeasonBanner`) leads with the days-left number,
 months either end of the bar, today marked and "% through" (Sam: "looks a
 bit spreadsheet"). Home's next match printed "[object Object]" for a venue
 — `nextUp.venue` is now `venueLabel()`; a venue on a fixture is an object.

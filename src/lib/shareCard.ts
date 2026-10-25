@@ -92,7 +92,12 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
   const ROW = 46, MAX_ROWS = 12;
   const rows = Math.min(MAX_ROWS, Math.max(1, d.beats.length, d.losesTo.length));
   const top = 902 + (rows - 1) * ROW + 44;
-  const lower = d.trophies.length ? Math.min(3, d.trophies.length) : Math.max(1, Math.ceil(Math.min(4, d.achievements.done.length) / 2));
+  // Everything the heading counts is listed (a review: "6 of 9 but only
+  // lists 4 looks like a bug"), up to a cap, then "+N more" on its own line.
+  const TROPHY_CAP = 6, ACH_CAP = 12;
+  const trophyRows = Math.min(TROPHY_CAP, d.trophies.length) + (d.trophies.length > TROPHY_CAP ? 1 : 0);
+  const achRows = Math.ceil(Math.min(ACH_CAP, d.achievements.done.length) / 2) + (d.achievements.done.length > ACH_CAP ? 1 : 0);
+  const lower = Math.max(1, d.trophies.length ? trophyRows : achRows);
   const H = Math.max(1350, top + 98 + (lower - 1) * 42 + 60 + 84);
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
@@ -231,19 +236,27 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
   c.textAlign = "left";
   if (d.trophies.length) {
     c.fillStyle = INK; c.font = `700 30px ${body}`; c.fillText(`Trophies · ${d.trophies.length}`, 120, top + 52);
-    d.trophies.slice(0, 3).forEach((t, i) => {
+    d.trophies.slice(0, TROPHY_CAP).forEach((t, i) => {
       const y = top + 98 + i * 42;
       drawCup(c, 132, y - 10, BRASS);
       c.fillStyle = INK; c.font = `600 27px ${body}`; c.fillText(fit(c, t, W - 120 - 160), 160, y);
     });
+    if (d.trophies.length > TROPHY_CAP) {
+      c.fillStyle = MID; c.font = `600 25px ${body}`;
+      c.fillText(`+${d.trophies.length - TROPHY_CAP} more`, 160, top + 98 + TROPHY_CAP * 42);
+    }
   } else {
     c.fillStyle = INK; c.font = `700 30px ${body}`;
     c.fillText(`Achievements · ${d.achievements.done.length} of ${d.achievements.total}`, 120, top + 52);
-    d.achievements.done.slice(0, 4).forEach((a, i) => {
+    d.achievements.done.slice(0, ACH_CAP).forEach((a, i) => {
       const x = 120 + (i % 2) * 420, y = top + 98 + Math.floor(i / 2) * 42;
       c.fillStyle = BRASS; c.beginPath(); c.arc(x + 10, y - 9, 8, 0, Math.PI * 2); c.fill();
       c.fillStyle = INK; c.font = `600 27px ${body}`; c.fillText(fit(c, a, 380), x + 30, y);
     });
+    if (d.achievements.done.length > ACH_CAP) {
+      c.fillStyle = MID; c.font = `600 25px ${body}`;
+      c.fillText(`+${d.achievements.done.length - ACH_CAP} more`, 150, top + 98 + (ACH_CAP / 2) * 42);
+    }
   }
 
   // Footer.
