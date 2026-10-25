@@ -12,9 +12,12 @@ import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/Pro
 import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Share } from "lucide-react";
+import { fullNameOf } from "@/lib/format";
+import { utrLabel } from "@/core/utr";
+import { shareProfileCard } from "@/lib/shareCard";
 import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
-import { FEED_LIME, FEED_TEXT_HI, body } from "@/lib/theme";
+import { FEED_LIME, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
 
 // The whole profile, in one order, taking finished props.
 //
@@ -127,6 +130,7 @@ export function ProfileView(p: ProfileViewProps) {
       )}
 
       <RecordCard {...p.record} onFilter={setFilter} activeFilter={filter} />
+      <ShareCardButton p={p} isSelf={isSelf} />
 
       {filter && (
         <div style={{ marginTop: 12 }}>
@@ -223,6 +227,47 @@ export function ProfileView(p: ProfileViewProps) {
       {isSelf && p.settings && p.settings.length > 0 && (
         <Section title="Settings"><SettingsList rows={p.settings} /></Section>
       )}
+    </div>
+  );
+}
+
+/**
+ * Share card (lib/shareCard.ts): this profile as one picture, from exactly
+ * what the screen above shows.
+ */
+function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }) {
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const player = p.header.player;
+  const go = async () => {
+    if (busy) return;
+    setBusy(true); setNote("");
+    try {
+      const level = [p.header.levelLabel, player?.utr != null ? utrLabel(player.utr) : null].filter(Boolean).join(" · ");
+      const r = await shareProfileCard({
+        name: fullNameOf(player) || "Player",
+        photo: player?.avatarUrl || null,
+        club: p.header.leagueName || "",
+        level: level || null,
+        record: p.record.record,
+        winRate: p.record.winRate,
+        rankings: (p.record.rankings || []).map((x) => ({ label: x.label, value: x.value })),
+        form: (p.record.form || []).map((f) => f.outcome),
+        bestWins: (p.bestWins || []).map((b) => ({ name: fullNameOf(b.opponent) || "Somebody", sub: b.subtitle })),
+        achievements: { done: (p.achievements || []).filter((a) => a.earned).map((a) => a.label), total: (p.achievements || []).length },
+      });
+      if (r === "saved") setNote("Saved as a picture. Find it in your downloads to share.");
+    } catch (e: any) {
+      setNote(e?.message || "Couldn't make the card.");
+    }
+    setBusy(false);
+  };
+  return (
+    <div style={{ marginTop: 12 }}>
+      <button onClick={go} disabled={busy} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 14, padding: "12px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer", opacity: busy ? 0.55 : 1 }}>
+        <Share size={16} strokeWidth={2} />{busy ? "Making the card…" : isSelf ? "Share my card" : "Share their card"}
+      </button>
+      {note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 6, textAlign: "center" }}>{note}</div>}
     </div>
   );
 }

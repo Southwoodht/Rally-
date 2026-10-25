@@ -44,13 +44,16 @@ export async function POST(req: Request) {
   }
 
   const when = formatMatchDateTime(f.booked);
+  // "Seacourt · Hayling Island" — the venue picked on the booking, if any.
+  const v = (f as any).venue;
+  const where = v?.name ? (v.place && !String(v.name).toLowerCase().includes(String(v.place).toLowerCase()) ? `${v.name}, ${v.place}` : v.name) : null;
   const url = appUrl(new URL(req.url).origin);
   let sent = 0;
   for (const p of players) {
     if (!p.auth_id || p.auth_id === callerId) continue;
     const other = players.find((x) => x.id !== p.id);
     const by = me ? firstName(me) : fullName(other);
-    const mail = kind === "challenge" ? challengeEmail(by, when, url) : bookingEmail(by, when, url);
+    const mail = kind === "challenge" ? challengeEmail(by, when, url, where) : bookingEmail(by, when, url, where);
     const r = await sendOnce(db, { authId: p.auth_id, kind, ref: `${f.id}:${f.booked}`, ...mail });
     if (r === "sent") sent++;
   }

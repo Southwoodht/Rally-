@@ -22,12 +22,15 @@ ${body}
   return { subject: "", html, text };
 }
 
-export function challengeEmail(from: string, when: string, url: string): Email {
-  return { ...wrap([`${from} has challenged you — ${when}.`, "Open Southwood to see it, or to move or cancel it."], { label: "Open Southwood", url }), subject: `${from} has challenged you — ${when}` };
+// `where` is the booking's venue (fixtures.venue), when it has one.
+export function challengeEmail(from: string, when: string, url: string, where?: string | null): Email {
+  const at = where ? ` at ${where}` : "";
+  return { ...wrap([`${from} has challenged you for a game — ${when}${at}.`, "Open Southwood to see it, or to move or cancel it."], { label: "Open Southwood", url }), subject: `${from} has challenged you for a game — ${when}` };
 }
 
-export function bookingEmail(by: string, when: string, url: string): Email {
-  return { ...wrap([`${by} has booked your match — ${when}.`, "If that doesn't work for you, you can change it in Southwood."], { label: "See the booking", url }), subject: `Match booked — ${when}` };
+export function bookingEmail(by: string, when: string, url: string, where?: string | null): Email {
+  const at = where ? ` at ${where}` : "";
+  return { ...wrap([`${by} has booked your match — ${when}${at}.`, "If that doesn't work for you, you can change it in Southwood."], { label: "See the booking", url }), subject: `Match booked — ${when}` };
 }
 
 export function resultReminderEmail(opponent: string, when: string, url: string): Email {

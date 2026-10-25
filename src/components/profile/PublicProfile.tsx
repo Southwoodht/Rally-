@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { hasProfileOpener, openProfile } from "@/lib/openProfile";
 import { ChevronLeft } from "lucide-react";
+import { CrossedRackets } from "@/components/ui/CrossedRackets";
 import { GapInsight } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -56,6 +57,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
   const [friendRowId, setFriendRowId] = useState<string | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unclaimed" | "unresolved" | "missing" | "signedOut">("loading");
   const [busy, setBusy] = useState(false);
+  const [noChallenge, setNoChallenge] = useState(false);
   /**
    * The whole league behind them, when we can get it.
    *
@@ -383,11 +385,20 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
 
       {!isMe && (
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <a href={"/?challenge=" + encodeURIComponent(card.id)} style={pill(FEED_LIME, FEED_LIME_INK)}>Challenge</a>
+          {/* Not a link any more: /?challenge= reloaded the app, landed on
+              Home and said "you'll need a club in common" (Sam, 2026-10-25).
+              This page is for people outside your clubs, so say so here. */}
+          <button onClick={() => setNoChallenge(!noChallenge)} style={{ ...pill(FEED_LIME, FEED_LIME_INK), display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}><CrossedRackets size={16} />Challenge</button>
           <a href={"/?message=" + encodeURIComponent(card.id)} style={pill(FEED_RAISED, FEED_TEXT_HI)}>Message</a>
           <button onClick={onFriend} disabled={busy || friendState === "friends" || friendState === "requested"} style={pill(FEED_RAISED, FEED_TEXT_HI)}>
             {friendLabel}
           </button>
+        </div>
+      )}
+
+      {noChallenge && !isMe && (
+        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "12px 14px", margin: "-6px 0 16px", fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
+          You can challenge people in your clubs, and {(asPlayer?.name || "they").split(" ")[0]} isn&apos;t in one of yours yet. Message them to arrange a game, or send them your club&apos;s invite link.
         </div>
       )}
 

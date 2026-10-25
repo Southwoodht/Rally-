@@ -192,12 +192,24 @@ function Distribution({ rows }: { rows: GlobalRow[] }) {
 
 /** A drawn globe, in the accent, for the world card. */
 function Globe({ size = 92 }: { size?: number }) {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    try { setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch { /* animate */ }
+  }, []);
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ flexShrink: 0 }}>
       <g fill="none" stroke={FEED_LIME} strokeWidth="2.2" strokeLinecap="round">
         <circle cx="50" cy="50" r="40" />
-        <ellipse cx="50" cy="50" rx="16" ry="40" />
-        <ellipse cx="50" cy="50" rx="31" ry="40" opacity="0.55" />
+        {/* The meridians sweep across once when the page opens — the globe
+            turns half a revolution and settles, rather than spinning on a
+            screen somebody is reading. SVG's own animation, so it looks
+            the same on every phone; reduced motion skips it. */}
+        <ellipse cx="50" cy="50" rx="16" ry="40">
+          {!reduced && <animate attributeName="rx" values="40;0;16" keyTimes="0;0.6;1" dur="2.4s" fill="freeze" />}
+        </ellipse>
+        <ellipse cx="50" cy="50" rx="31" ry="40" opacity="0.55">
+          {!reduced && <animate attributeName="rx" values="12;40;31" keyTimes="0;0.45;1" dur="2.4s" fill="freeze" />}
+        </ellipse>
         <line x1="10" y1="50" x2="90" y2="50" />
         <path d="M16 30 Q50 38 84 30" opacity="0.7" />
         <path d="M16 70 Q50 62 84 70" opacity="0.7" />
@@ -231,7 +243,8 @@ const MEDAL = ["#B8955A", "#A7A9AC", "#A97142"];
 /** The top three: first in the middle and highest, gold, silver, bronze. */
 function Podium({ rows, ratings, myAuthId, openFor }: { rows: GlobalRow[]; ratings: string[]; myAuthId?: string | null; openFor: (r: GlobalRow) => (() => void) | undefined }) {
   const order = rows.length >= 3 ? [1, 0, 2] : rows.length === 2 ? [1, 0] : [0];
-  const lift = [26, 0, 12];
+  // First highest, second next, third lowest (Sam: third sat above second).
+  const lift = [26, 12, 0];
   return (
     <SurfaceCard radius={22} pad="16px 10px 14px" style={{ marginBottom: 14 }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 6 }}>

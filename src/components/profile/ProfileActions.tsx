@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Check, MessageSquare, Swords, UserPlus, UserX } from "lucide-react";
+import { Check, MessageSquare, UserPlus, UserX } from "lucide-react";
+import { CrossedRackets } from "@/components/ui/CrossedRackets";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { acceptFriendRequest, getFriendshipWith, removeFriendship, sendFriendRequest, type FriendRow } from "@/lib/friends";
 import {
@@ -97,7 +98,7 @@ export function ProfileActions({ theirAuthId, myAuthId, onMessage, onChallenge }
   // account can still be booked; the result just needs no agreement.
   const challenge = onChallenge && (
     <button style={lime} onClick={onChallenge}>
-      <Swords size={15} strokeWidth={2} />Challenge
+      <CrossedRackets size={16} />Challenge
     </button>
   );
 

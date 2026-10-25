@@ -21,6 +21,7 @@ import { GroupSheet } from "@/components/layout/GroupSheet";
 import { SubHeader } from "@/components/layout/SubHeader";
 import { MyProfile } from "@/components/profile/MyProfile";
 import { ProfileModal } from "@/components/profile/ProfileModal";
+import { ChallengeSheet } from "@/components/profile/ChallengeSheet";
 import { MatchDetail } from "@/components/games/MatchDetail";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { Friends } from "@/components/social/Friends";
@@ -345,6 +346,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const [pendingIntent, setPendingIntent] = useState<{ kind: "message" | "challenge" | "profile"; authId: string } | null>(null);
   // Who the booking form should open with already chosen.
   const [challengeWith, setChallengeWith] = useState<string | null>(null);
+  const [challengeSheet, setChallengeSheet] = useState<string | null>(null);
 
   // Acting on where the profile page sent us, once the league is loaded.
   //
@@ -862,7 +864,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const posts = gdata.posts || [];
   const addPost = (text, isAnnouncement) => saveData({ ...gdata, posts: [...(gdata.posts || []), { id: uid(), by: gdata.me, text, date: Date.now(), isAnnouncement: !!isAnnouncement }] });
   const removePost = (id) => saveData({ ...gdata, posts: (gdata.posts || []).filter((x) => x.id !== id) });
-  const addFixture = async (p1, p2, booked = null, mins?: number, venue?: any) => {
+  const addFixture = async (p1, p2, booked: string | null = null, mins?: number, venue?: any) => {
     const id = uid();
     const ok = await saveData({ ...gdata, fixtures: [...(gdata.fixtures || []), { id, p1, p2, done: false, booked, ...(mins ? { durationMinutes: mins } : {}), ...(venue ? { venue } : {}) }] });
     // A new match with a time on it is a challenge: "Sam has challenged you".
@@ -1883,10 +1885,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     minGames: SEASON_RANK_GAMES,
   }).filter((h) => h.playerId === pid);
   const shared = { seasonHonoursOf, players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId,
-    // Challenge from a profile: Fixtures, singles, the booking form open with
-    // them chosen. Cleared first so challenging the same person twice still
-    // reopens the form.
-    onChallenge: (pid: string) => { setProfileId(null); setSport("singles"); setTab("fixtures"); setChallengeWith(null); setTimeout(() => setChallengeWith(pid), 0); } };
+    // Challenge from a profile opens ChallengeSheet over it (When, how long,
+    // Where, Send) — no trip to Fixtures (Sam, 2026-10-25).
+    onChallenge: (pid: string) => setChallengeSheet(pid) };
   // Home brings its own header — a greeting and a league name, not a page
   // title — so the shared one sits this tab out rather than stacking two.
   // ---------------------------------------------------------- doubles Home
@@ -1971,8 +1972,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       flash("Ended " + c.name);
     },
   });
+  // The club as a venue: where a booking or challenge defaults to.
+  const clubVenue = !personal && !isFriendlyLeague(gid) ? { name: group?.name || leagueName || "Club", place: clubPlace?.location ?? null, lat: clubPlace?.lat ?? null, lng: clubPlace?.lng ?? null, club: true } : null;
   const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
-    homeVenue={!personal && !isFriendlyLeague(gid) ? { name: group?.name || leagueName || "Club", place: clubPlace?.location ?? null, lat: clubPlace?.lat ?? null, lng: clubPlace?.lng ?? null, club: true } : null}
+    homeVenue={clubVenue}
     doublesMode={tab === "home" && homeDoubles}
     doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;
   const main = tab === "ladder" || tab === "add" || tab === "fixtures" || tab === "profile";
@@ -2836,6 +2839,23 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           <PublicProfile id={publicProfileId} onBack={() => setPublicProfileId(null)} />
         </div>
       )}
+      {challengeSheet && (() => {
+        const them = players.find((p: any) => p.id === challengeSheet);
+        if (!them || !meId) return null;
+        return (
+          <ChallengeSheet
+            name={fullNameOf(them)}
+            hasAccount={!!them.auth_id}
+            homeVenue={clubVenue}
+            onClose={() => setChallengeSheet(null)}
+            onSend={async (whenIso, mins, venue) => {
+              const ok = await addFixture(meId, them.id, whenIso, mins, venue || undefined);
+              if (ok !== false) flash("Challenge sent to " + (them.name || fullNameOf(them)));
+              return ok;
+            }}
+          />
+        );
+      })()}
       {profilePlayer && (
         <ProfileModal
           beside={besideTable}
