@@ -38,6 +38,9 @@ export interface RecordCardProps {
   form?: FormBarItem[];
   /** 0-100, already rounded. */
   winRate: number;
+  /** Wins and draws over played, 0-100 (Sam: "my 65% don't sound great").
+   *  Left out, the tile is too. */
+  unbeatenRate?: number;
   currentStreak: number;
   bestStreak: number;
   rankings?: RankingRow[];
@@ -68,7 +71,7 @@ function Tally({ n, colour, caption, onClick, active }: { n: number; colour: str
   );
 }
 
-export function RecordCard({ record, form, winRate, currentStreak, bestStreak, rankings, onFilter, activeFilter }: RecordCardProps) {
+export function RecordCard({ record, form, winRate, unbeatenRate, currentStreak, bestStreak, rankings, onFilter, activeFilter }: RecordCardProps) {
   const tap = (o: Exclude<OutcomeFilter, null>) =>
     onFilter ? () => onFilter(activeFilter === o ? null : o) : undefined;
   return (
@@ -92,19 +95,25 @@ export function RecordCard({ record, form, winRate, currentStreak, bestStreak, r
         </div>
       )}
 
-      {/* c — the three that need no explaining */}
-      <div style={{ borderTop: RULE, marginTop: 14, paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+      {/* c — the ones that need no explaining */}
+      <div style={{ borderTop: RULE, marginTop: 14, paddingTop: 14, display: "grid", gridTemplateColumns: unbeatenRate != null ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: 6 }}>
         <div style={{ textAlign: "center" }}>
           <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_TEXT_HI }}>{winRate}%</span>
           <div style={{ ...label, marginTop: 3 }}>win rate</div>
         </div>
+        {unbeatenRate != null && (
+          <div style={{ textAlign: "center" }}>
+            <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_TEXT_HI }}>{unbeatenRate}%</span>
+            <div style={{ ...label, marginTop: 3 }}>unbeaten</div>
+          </div>
+        )}
         <div style={{ textAlign: "center" }}>
           <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_LIME }}>{currentStreak}</span>
-          <div style={{ ...label, marginTop: 3 }}>current streak</div>
+          <div style={{ ...label, marginTop: 3 }}>{unbeatenRate != null ? "streak" : "current streak"}</div>
         </div>
         <div style={{ textAlign: "center" }}>
           <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_TEXT_HI }}>{bestStreak}</span>
-          <div style={{ ...label, marginTop: 3 }}>best streak</div>
+          <div style={{ ...label, marginTop: 3 }}>{unbeatenRate != null ? "best run" : "best streak"}</div>
         </div>
       </div>
 

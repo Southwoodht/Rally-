@@ -321,7 +321,7 @@ export function ProfileContainer({
       : null;
 
     return {
-      record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
+      record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, unbeatenRate: r.gp ? Math.round(((r.w + r.d) / r.gp) * 100) : undefined, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
       gap, playingStyle, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
       historyTotal: mine.length, meta,
       pointsSummary: (() => {

@@ -251,6 +251,7 @@ function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }
         level: level || null,
         record: p.record.record,
         winRate: p.record.winRate,
+        unbeatenRate: p.record.unbeatenRate ?? null,
         rankings: (p.record.rankings || []).map((x) => ({ label: x.label, value: x.value })),
         form: (p.record.form || []).map((f) => f.outcome),
         beats: [...(p.opponents?.lead || [])].sort((a, b) => b.w - a.w || a.l - b.l)

@@ -17,6 +17,8 @@ export interface ShareCardData {
   level?: string | null;
   record: { w: number; d: number; l: number };
   winRate: number;
+  /** Wins and draws over played; null hides it. */
+  unbeatenRate?: number | null;
   rankings: Array<{ label: string; value: string }>;
   form: Array<"W" | "D" | "L">;
   /** Head to head against named players: the ones you lead, and the ones
@@ -150,9 +152,22 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
     c.fillStyle = col.colour; c.font = `700 120px ${display}`; c.fillText(String(col.n), x, 540);
     c.fillStyle = MID; c.font = `600 28px ${body}`; c.fillText(col.label, x, 582);
   });
-  roundRect(c, 700, 430, 260, 170, 28); c.fillStyle = BRASS; c.fill();
-  c.textAlign = "center"; c.fillStyle = "#FFFDF8"; c.font = `700 92px ${display}`; c.fillText(d.winRate + "%", 830, 540);
-  c.font = `600 26px ${body}`; c.fillText("win rate", 830, 580);
+  roundRect(c, 690, 430, 270, 170, 28); c.fillStyle = BRASS; c.fill();
+  c.fillStyle = "#FFFDF8";
+  if (d.unbeatenRate != null) {
+    // Two lines: won, then unbeaten (Sam: "my unbeaten would look better").
+    const pair = (n: number, label: string, y: number) => {
+      c.textAlign = "left"; c.font = `700 54px ${display}`; c.fillText(n + "%", 712, y);
+      const w = c.measureText(n + "%").width;
+      c.font = `600 23px ${body}`; c.fillText(label, 712 + w + 10, y - 6);
+    };
+    pair(d.winRate, "won", 500);
+    c.globalAlpha = 0.35; c.fillRect(716, 516, 218, 2); c.globalAlpha = 1;
+    pair(d.unbeatenRate, "unbeaten", 582);
+  } else {
+    c.textAlign = "center"; c.font = `700 92px ${display}`; c.fillText(d.winRate + "%", 825, 540);
+    c.font = `600 26px ${body}`; c.fillText("win rate", 825, 580);
+  }
 
   // Three tiles: head to head (people you have the better of, against
   // people who have the better of you — Sam's "10–3"), then the rankings.
@@ -170,7 +185,13 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
     },
   }, ...d.rankings.slice(0, 2).map((r) => ({
     label: r.label,
-    draw: (cx: number, y: number) => { c.textAlign = "center"; c.fillStyle = INK; c.font = `700 44px ${display}`; c.fillText(fit(c, r.value, 250), cx, y); },
+    draw: (cx: number, y: number) => {
+      // Shrinks to fit ("2nd of 6 ranked") before it would cut a word.
+      c.textAlign = "center"; c.fillStyle = INK;
+      let size = 44;
+      do { c.font = `700 ${size}px ${display}`; size -= 2; } while (size > 26 && c.measureText(r.value).width > tw - 28);
+      c.fillText(fit(c, r.value, tw - 28), cx, y);
+    },
   }))];
   const tw = (W - 240 - (tiles.length - 1) * 24) / tiles.length;
   tiles.forEach((t, i) => {

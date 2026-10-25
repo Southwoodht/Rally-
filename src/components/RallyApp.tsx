@@ -21,6 +21,7 @@ import { GroupSheet } from "@/components/layout/GroupSheet";
 import { SubHeader } from "@/components/layout/SubHeader";
 import { MyProfile } from "@/components/profile/MyProfile";
 import { ProfileModal } from "@/components/profile/ProfileModal";
+import { venueLabel } from "@/lib/venues";
 import { PlayerSearch } from "@/components/social/PlayerSearch";
 import { ChallengeSheet } from "@/components/profile/ChallengeSheet";
 import { MatchDetail } from "@/components/games/MatchDetail";
@@ -1862,7 +1863,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       nextUp: bookedNext ? {
         opponent: nextUp.opponent,
         when: bookedNext.booked,
-        venue: (bookedNext as any).venue ?? null,
+        venue: (() => { const v = (bookedNext as any).venue; return typeof v === "string" ? v : venueLabel(v) || null; })(),
         h2h: h2hLine(bookedNext.p1 === meId ? bookedNext.p2 : bookedNext.p1),
       } : null,
     };

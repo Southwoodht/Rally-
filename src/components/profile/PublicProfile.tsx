@@ -257,6 +257,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
 
   const played = (s?.wins ?? 0) + (s?.draws ?? 0) + (s?.losses ?? 0);
   const winRate = played ? Math.round(((s?.wins ?? 0) / played) * 100) : 0;
+  const unbeatenRate = played ? Math.round((((s?.wins ?? 0) + (s?.draws ?? 0)) / played) * 100) : undefined;
 
   // recent is newest-first, so the current streak reads straight off the top.
   let currentStreak = 0;
@@ -419,6 +420,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
             record={{ w: s.wins, d: s.draws, l: s.losses }}
             form={form}
             winRate={winRate}
+            unbeatenRate={unbeatenRate}
             currentStreak={currentStreak}
             bestStreak={bestStreak}
           />
