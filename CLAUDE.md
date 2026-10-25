@@ -1338,7 +1338,7 @@ How long and Where, and sends through RallyApp's `addFixture` — the same
 fixture a booking makes, so `/api/notify` emails the other side "Sam has
 challenged you for a game — Mon 27 Oct · 5:00pm at Seacourt". Both
 challenge and booking emails now carry the venue. Icon is
-`ui/CrossedRackets.tsx` (Sam: rackets, not swords). On a PublicProfile
+`ui/CrossedRackets.tsx` (Sam: rackets, not swords; redrawn the same day — open heads, no strings, crossed low in the handles at ±40°, a ball between the heads so it never reads as scissors). On a PublicProfile
 (not in your clubs) Challenge explains instead of reloading the app.
 Global podium lifts are 26/12/0 (3rd had sat above 2nd); the globe's
 meridians turn once on load (SMIL, skipped under reduced motion), not
