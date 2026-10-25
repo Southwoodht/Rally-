@@ -13,6 +13,7 @@ import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { officialTimeline } from "@/core/officialTimeline";
 import { glickoStandings } from "@/core/glicko";
+import { opponentStrength } from "@/core/official";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 import { topRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
@@ -204,26 +205,29 @@ export function ProfileContainer({
         onOpen,
       }));
 
+    const { strength: strengthOf } = opponentStrength(players || [], matches || []);
     const bestWins = played
       .filter((m: any) => outcome(m) === "W")
       .map((m: any) => {
         const oid = m.p1 === pid ? m.p2 : m.p1;
         const lv = levelAt(byId[oid], m.date);
-        // Ranked on the Table's rating as it stood going into the match,
-        // less its ± — what the opponent had PROVEN by then. The old Elo
-        // ranking undervalued anyone who had lost a lot to Zaach (the §9
-        // level-multiplier flaw), and the bare rating would rank a newcomer
-        // at 1500 ± 350 as a big scalp before anyone knew what they were.
-        const then = st.table.before[m.id]?.[oid];
+        // Ranked on how strong the opponent was — everything they have
+        // ever played, blended with their level on the day — the same
+        // measure Official points use (core/official.ts opponentStrength).
+        // Tried and dropped the same day: Glicko as it stood going into the
+        // match. Sam's own pick was Charlie Henry and Adrian 2019; that put
+        // up Charlie Easey and George, because in 2019 the app had barely
+        // seen Adrian and George has no level to anchor him.
         return {
           matchId: m.id,
           opponent: byId[oid],
-          rating: then ? then.rating - then.rd : -Infinity,
-          subtitle: [lv?.cat || "Level not recorded", then ? "rated " + Math.round(then.rating) + " then" : null, new Date(m.date).getFullYear()].filter(Boolean).join(" · "),
+          rating: (() => { const v = strengthOf(oid, m.date); return Number.isFinite(v) ? v : -Infinity; })(),
+          date: m.date,
+          subtitle: (lv?.cat || "Level not recorded") + " · " + new Date(m.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }),
         };
       })
       .filter((w: any) => w.opponent)
-      .sort((a: any, b: any) => b.rating - a.rating)
+      .sort((a: any, b: any) => b.rating - a.rating || b.date - a.date)
       .slice(0, 3)
       .map(({ matchId, opponent, subtitle }: any) => ({ matchId, opponent, subtitle }));
 

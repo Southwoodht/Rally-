@@ -57,14 +57,18 @@ import { computeRatings, type Edge } from "./rating";
  * Only matches between two players in `players` count, the same rule as
  * computeStats — narrowing the roster scopes the results.
  */
-export function computeOfficial(players: any[], matches: any[], wdl: Record<string, any>): Record<string, number> {
+/**
+ * How strong an opponent was when you played them — the network rating over
+ * ALL their results, blended with their level at that date. Hindsight on
+ * purpose: by the time anyone reads it, the app knows what a 2019 opponent
+ * turned out to be, which a rating-at-the-time cannot (Adrian in 2019 had
+ * barely played, so Glicko then called him a guess). Official points and
+ * Best wins both read this, so the two can never disagree about who was good.
+ */
+export function opponentStrength(players: any[], matches: any[]): { strength: (oppId: string, at: number) => number; mean: number } {
   const byId: Record<string, any> = {};
   players.forEach((p) => { byId[p.id] = p; });
   const counted = matches.filter((m) => countsAsPlayed(m) && m.winner && byId[m.p1] && byId[m.p2]);
-
-  // Strength from results — built exactly as the Strength table builds it,
-  // so the two can never disagree about who is good. Win, draw or loss only:
-  // scores feed predictions, never ratings (Sam, 2026-10-22).
   const edges: Edge[] = [];
   const played: Record<string, number> = {};
   for (const m of counted) {
@@ -77,7 +81,6 @@ export function computeOfficial(players: any[], matches: any[], wdl: Record<stri
   const results = computeRatings(edges);
   const rated = Object.keys(results);
   const mean = rated.length ? rated.reduce((a, k) => a + results[k], 0) / rated.length : 6;
-
   const strength = (oppId: string, at: number): number => {
     const r = results[oppId];
     const lv = levelVal(levelAt(byId[oppId], at));
@@ -85,6 +88,18 @@ export function computeOfficial(players: any[], matches: any[], wdl: Record<stri
     const n = played[oppId] || 0;
     return (n * r + OFFICIAL_LEVEL_TRUST * lv) / (n + OFFICIAL_LEVEL_TRUST);
   };
+  return { strength, mean };
+}
+
+export function computeOfficial(players: any[], matches: any[], wdl: Record<string, any>): Record<string, number> {
+  const byId: Record<string, any> = {};
+  players.forEach((p) => { byId[p.id] = p; });
+  const counted = matches.filter((m) => countsAsPlayed(m) && m.winner && byId[m.p1] && byId[m.p2]);
+
+  // Strength from results, exactly as the Strength table builds it
+  // (opponentStrength above). Win, draw or loss only: scores feed
+  // predictions, never ratings (Sam, 2026-10-22).
+  const { strength, mean } = opponentStrength(players, matches);
 
   const earned: Record<string, number> = {};
   const cost: Record<string, number> = {};
