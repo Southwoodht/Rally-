@@ -31,7 +31,7 @@ export interface ShareCardData {
 
 export interface H2H { name: string; w: number; d: number; l: number }
 
-const W = 1080, H = 1350;
+const W = 1080;
 const CREAM = "#F8F4EB", CARD = "#FFFDF8", INK = "#2A2118", MID = "#7A6B58", BRASS = "#B8955A", LINE = "#E6DCC8";
 const WIN = "#1E5A38", DRAW = "#8C867C", LOSS = "#A8261E";
 
@@ -85,6 +85,13 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
   const display = fontFor("var(--font-display)", "Georgia, serif");
   try { await (document as any).fonts?.ready; } catch { /* draw anyway */ }
 
+  // Every name on both lists (Sam: "it doesn't show my full list"), so the
+  // card grows past 1350 when the lists need it, up to a phone-story 1920.
+  const ROW = 46, MAX_ROWS = 12;
+  const rows = Math.min(MAX_ROWS, Math.max(1, d.beats.length, d.losesTo.length));
+  const top = 902 + (rows - 1) * ROW + 44;
+  const lower = d.trophies.length ? Math.min(3, d.trophies.length) : Math.max(1, Math.ceil(Math.min(4, d.achievements.done.length) / 2));
+  const H = Math.max(1350, top + 98 + (lower - 1) * 42 + 60 + 84);
   const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
   const c = cv.getContext("2d")!;
@@ -115,14 +122,23 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
   c.restore();
   c.lineWidth = 6; c.strokeStyle = BRASS; c.beginPath(); c.arc(cx, cy, r + 3, 0, Math.PI * 2); c.stroke();
 
-  // Name and level.
+  // Name, level and the last five under it.
   c.textBaseline = "alphabetic"; c.textAlign = "left";
   c.fillStyle = INK; c.font = `700 62px ${display}`;
-  c.fillText(fit(c, d.name, W - 120 - 350), 350, 280);
-  if (d.level) { c.fillStyle = MID; c.font = `600 30px ${body}`; c.fillText(fit(c, d.level, W - 120 - 350), 350, 332); }
+  c.fillText(fit(c, d.name, W - 120 - 350), 350, 270);
+  if (d.level) { c.fillStyle = MID; c.font = `600 30px ${body}`; c.fillText(fit(c, d.level, W - 120 - 350), 350, 320); }
+  if (d.form.length) {
+    const dots = d.form.slice(-5), size = 22, gap = 12;
+    c.fillStyle = MID; c.font = `600 24px ${body}`; c.fillText("Last 5", 350, 372);
+    let x = 350 + c.measureText("Last 5").width + 18 + size / 2;
+    for (const o of dots) {
+      c.fillStyle = o === "W" ? WIN : o === "D" ? DRAW : LOSS;
+      c.beginPath(); c.arc(x, 364, size / 2, 0, Math.PI * 2); c.fill();
+      x += size + gap;
+    }
+  }
 
-  // The record, and the win percentage beside it — the two numbers a
-  // show-off card is for.
+  // The record, and the win percentage beside it.
   const cols = [
     { n: d.record.w, label: "won", colour: WIN },
     { n: d.record.d, label: "drawn", colour: INK },
@@ -131,64 +147,79 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
   cols.forEach((col, i) => {
     const x = 195 + i * 190;
     c.textAlign = "center";
-    c.fillStyle = col.colour; c.font = `700 120px ${display}`; c.fillText(String(col.n), x, 530);
-    c.fillStyle = MID; c.font = `600 28px ${body}`; c.fillText(col.label, x, 572);
+    c.fillStyle = col.colour; c.font = `700 120px ${display}`; c.fillText(String(col.n), x, 540);
+    c.fillStyle = MID; c.font = `600 28px ${body}`; c.fillText(col.label, x, 582);
   });
-  roundRect(c, 700, 420, 260, 170, 28); c.fillStyle = BRASS; c.fill();
-  c.textAlign = "center"; c.fillStyle = "#FFFDF8"; c.font = `700 92px ${display}`; c.fillText(d.winRate + "%", 830, 530);
-  c.font = `600 26px ${body}`; c.fillText("win rate", 830, 570);
+  roundRect(c, 700, 430, 260, 170, 28); c.fillStyle = BRASS; c.fill();
+  c.textAlign = "center"; c.fillStyle = "#FFFDF8"; c.font = `700 92px ${display}`; c.fillText(d.winRate + "%", 830, 540);
+  c.font = `600 26px ${body}`; c.fillText("win rate", 830, 580);
 
-  // Rankings and the last five, one line.
-  const bits = d.rankings.slice(0, 2).map((x) => `${x.label} ${x.value}`);
-  c.textAlign = "left"; c.fillStyle = INK; c.font = `600 28px ${body}`;
-  c.fillText(fit(c, bits.join("   ·   "), 560), 120, 650);
-  if (d.form.length) {
-    const dots = d.form.slice(-5), size = 24, gap = 14;
-    let x = W - 120 - (dots.length * size + (dots.length - 1) * gap) + size / 2;
-    c.textAlign = "right"; c.fillStyle = MID; c.font = `600 24px ${body}`;
-    c.fillText("Last 5", x - size / 2 - 14, 650);
-    for (const o of dots) {
-      c.fillStyle = o === "W" ? WIN : o === "D" ? DRAW : LOSS;
-      c.beginPath(); c.arc(x, 641, size / 2, 0, Math.PI * 2); c.fill();
-      x += size + gap;
-    }
-  }
+  // Three tiles: head to head (people you have the better of, against
+  // people who have the better of you — Sam's "10–3"), then the rankings.
+  const tiles: Array<{ label: string; draw: (cx: number, y: number) => void }> = [{
+    label: "head to head",
+    draw: (cx, y) => {
+      c.font = `700 52px ${display}`;
+      const a = String(d.beats.length), dash = "–", b2 = String(d.losesTo.length);
+      const wa = c.measureText(a).width, wd = c.measureText(dash).width, wb = c.measureText(b2).width;
+      let x = cx - (wa + wd + wb) / 2;
+      c.textAlign = "left";
+      c.fillStyle = WIN; c.fillText(a, x, y); x += wa;
+      c.fillStyle = INK; c.fillText(dash, x, y); x += wd;
+      c.fillStyle = LOSS; c.fillText(b2, x, y);
+    },
+  }, ...d.rankings.slice(0, 2).map((r) => ({
+    label: r.label,
+    draw: (cx: number, y: number) => { c.textAlign = "center"; c.fillStyle = INK; c.font = `700 44px ${display}`; c.fillText(fit(c, r.value, 250), cx, y); },
+  }))];
+  const tw = (W - 240 - (tiles.length - 1) * 24) / tiles.length;
+  tiles.forEach((t, i) => {
+    const x = 120 + i * (tw + 24);
+    roundRect(c, x, 635, tw, 130, 26); c.fillStyle = "#F3ECDD"; c.fill();
+    t.draw(x + tw / 2, 702);
+    c.textAlign = "center"; c.fillStyle = MID; c.font = `600 24px ${body}`; c.fillText(fit(c, t.label, tw - 30), x + tw / 2, 742);
+  });
 
-  // Head to head: who you have the better of, and who has the better of you.
+  // Everybody, by name: the better of, and the worse of.
   const line = (y: number) => { c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.moveTo(120, y); c.lineTo(W - 120, y); c.stroke(); };
-  line(690);
+  line(800);
   const rec = (h: H2H) => h.d ? `${h.w}–${h.d}–${h.l}` : `${h.w}–${h.l}`;
-  const column = (x: number, title: string, colour: string, rows: H2H[], empty: string) => {
-    c.textAlign = "left"; c.fillStyle = colour; c.font = `700 30px ${body}`; c.fillText(title, x, 745);
-    if (!rows.length) { c.fillStyle = MID; c.font = `500 26px ${body}`; c.fillText(empty, x, 795); return; }
-    rows.slice(0, 5).forEach((h, i) => {
-      const y = 797 + i * 50;
-      c.textAlign = "right"; c.fillStyle = colour; c.font = `700 30px ${body}`;
+  const column = (x: number, title: string, colour: string, list: H2H[], empty: string) => {
+    c.textAlign = "left"; c.fillStyle = colour; c.font = `700 30px ${body}`; c.fillText(`${title} · ${list.length}`, x, 852);
+    if (!list.length) { c.fillStyle = MID; c.font = `500 26px ${body}`; c.fillText(empty, x, 902); return; }
+    const shown = list.length > rows ? list.slice(0, rows - 1) : list;
+    shown.forEach((h, i) => {
+      const y = 902 + i * ROW;
+      c.textAlign = "right"; c.fillStyle = colour; c.font = `700 28px ${body}`;
       const score = rec(h);
       c.fillText(score, x + 380, y);
       const sw = c.measureText(score).width;
-      c.textAlign = "left"; c.fillStyle = INK; c.font = `600 28px ${body}`;
-      c.fillText(fit(c, h.name, 380 - sw - 18), x, y);
+      c.textAlign = "left"; c.fillStyle = INK; c.font = `600 27px ${body}`;
+      c.fillText(fit(c, h.name, 380 - sw - 16), x, y);
     });
+    if (shown.length < list.length) {
+      c.textAlign = "left"; c.fillStyle = MID; c.font = `600 25px ${body}`;
+      c.fillText(`and ${list.length - shown.length} more`, x, 902 + shown.length * ROW);
+    }
   };
   column(120, "Winning records", WIN, d.beats, "None yet");
-  column(580, "Losing records", LOSS, d.losesTo, "Nobody has the better of them");
+  column(580, "Losing records", LOSS, d.losesTo, "Nobody, yet");
 
   // Trophies, or achievements when there are none.
-  line(1060);
+  line(top);
   c.textAlign = "left";
   if (d.trophies.length) {
-    c.fillStyle = INK; c.font = `700 30px ${body}`; c.fillText(`Trophies · ${d.trophies.length}`, 120, 1112);
+    c.fillStyle = INK; c.font = `700 30px ${body}`; c.fillText(`Trophies · ${d.trophies.length}`, 120, top + 52);
     d.trophies.slice(0, 3).forEach((t, i) => {
-      const y = 1160 + i * 44;
+      const y = top + 98 + i * 42;
       drawCup(c, 132, y - 10, BRASS);
       c.fillStyle = INK; c.font = `600 27px ${body}`; c.fillText(fit(c, t, W - 120 - 160), 160, y);
     });
   } else {
     c.fillStyle = INK; c.font = `700 30px ${body}`;
-    c.fillText(`Achievements · ${d.achievements.done.length} of ${d.achievements.total}`, 120, 1112);
+    c.fillText(`Achievements · ${d.achievements.done.length} of ${d.achievements.total}`, 120, top + 52);
     d.achievements.done.slice(0, 4).forEach((a, i) => {
-      const x = 120 + (i % 2) * 420, y = 1160 + Math.floor(i / 2) * 44;
+      const x = 120 + (i % 2) * 420, y = top + 98 + Math.floor(i / 2) * 42;
       c.fillStyle = BRASS; c.beginPath(); c.arc(x + 10, y - 9, 8, 0, Math.PI * 2); c.fill();
       c.fillStyle = INK; c.font = `600 27px ${body}`; c.fillText(fit(c, a, 380), x + 30, y);
     });

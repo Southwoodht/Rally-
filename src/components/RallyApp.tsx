@@ -2863,7 +2863,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             onClose={() => setChallengeSheet(null)}
             onSend={async (whenIso, mins, venue) => {
               const ok = await addFixture(meId, them.id, whenIso, mins, venue || undefined);
-              if (ok !== false) flash("Challenge sent to " + (them.name || fullNameOf(them)));
               return ok;
             }}
           />
