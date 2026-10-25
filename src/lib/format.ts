@@ -92,7 +92,12 @@ export const distinctFirstName = (p: any, among: any[]): string => {
 
 export const shortTier = (l) => (l ? l.cat.slice(0, 3) + " · " + l.sub : null);
 
+/** Points share, a draw as half — what the old Record ranking sorts on. */
 export const winPct = (r) => (r && r.gp ? (r.w + r.d * 0.5) / r.gp : 0);
+/** What any "win rate" / "% won" on screen prints: wins over matches played.
+ *  Not winPct, which counted draws as half and so put 71% on Sam's share
+ *  card beside a profile that read 65% (2026-10-25). */
+export const wonPct = (r) => (r && r.gp ? r.w / r.gp : 0);
 
 
 export const D = (s) => new Date(s).getTime();

@@ -117,7 +117,7 @@ export function LegacyProfile({ player, players, matches, meId, nameOf, onClose,
               <div style={{ marginTop: 20 }}>
                 <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: MUTED, marginBottom: 8 }}>Playing profile</div>
                 {legacy.splits.map((s) => {
-                  const pct = s.n ? Math.round(((s.w + s.d * 0.5) / s.n) * 100) : 0;
+                  const pct = s.n ? Math.round((s.w / s.n) * 100) : 0;
                   return (
                     <div key={s.label} style={{ marginBottom: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontFamily: body, fontSize: 13, color: CHALK, marginBottom: 4 }}>

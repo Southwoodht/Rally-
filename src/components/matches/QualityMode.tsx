@@ -110,7 +110,7 @@ function Tiles({ q, v, onOpenPlayer }: { q: MatchQuality; v: Voice; onOpenPlayer
 
   const tile = (key: "above" | "below", title: string, r: Record3, lime: boolean) => {
     const n = played(r);
-    const rate = n >= MIN_FOR_RATE ? Math.round(((r.w + r.d * 0.5) / n) * 100) + "% won" : n ? "too few to judge" : "none yet";
+    const rate = n >= MIN_FOR_RATE ? Math.round((r.w / n) * 100) + "% won" : n ? "too few to judge" : "none yet";
     const on = open === key;
     return (
       <button

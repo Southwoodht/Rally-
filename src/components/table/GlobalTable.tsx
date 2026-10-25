@@ -51,7 +51,7 @@ const label: React.CSSProperties = {
 };
 
 const rec = (r: { w: number; d: number; l: number }) => (r.d > 0 ? `${r.w}–${r.d}–${r.l}` : `${r.w}–${r.l}`);
-const winRate = (r: GlobalRow) => (r.gp ? Math.round(((r.w + r.d * 0.5) / r.gp) * 100) : null);
+const winRate = (r: GlobalRow) => (r.gp ? Math.round((r.w / r.gp) * 100) : null);
 
 /** Full name, always. Surnames are load-bearing — two Charlies, three Henrys. */
 const nameOf = (r: GlobalRow) => r.name + (r.last ? " " + r.last : "");

@@ -57,14 +57,14 @@ const played = (r: Record3) => r.w + r.d + r.l;
 /**
  * Win rate as a percentage, or null when there is too little to say.
  *
- * Draws count as half, matching winPct everywhere else. The floor is a
+ * Wins over matches played, like every "% won" on screen. The floor is a
  * property of the answer rather than of the caller: "100% won" off one match
  * is not a win rate, it is a single result wearing a statistic's clothes.
  */
 export const MIN_FOR_RATE = 3;
 export function rateOf(r: Record3): number | null {
   const n = played(r);
-  return n < MIN_FOR_RATE ? null : Math.round(((r.w + r.d * 0.5) / n) * 100);
+  return n < MIN_FOR_RATE ? null : Math.round((r.w / n) * 100);
 }
 
 export interface QualityRow {

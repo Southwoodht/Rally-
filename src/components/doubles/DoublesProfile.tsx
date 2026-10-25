@@ -169,7 +169,7 @@ export function DoublesProfile({ players, matches, playerId, leagueName, onOpenP
         <div style={{ display: "flex", justifyContent: "space-around", textAlign: "center" }}>
           <div>
             <div style={{ fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_TEXT_HI, ...tabular }}>
-              {pct(played ? (won + drawn * 0.5) / played : 0)}%
+              {pct(played ? won / played : 0)}%
             </div>
             <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>win rate</div>
           </div>

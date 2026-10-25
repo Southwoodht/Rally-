@@ -107,7 +107,7 @@ eq(q.byLevel.some((r) => r.cat === "Pro"), false, "the ungraded opponent contrib
 eq(q.byLevel.find((r) => r.cat === "Amateur")!.winRate, null, "one match is not a win rate");
 eq(q.byLevel.find((r) => r.cat === "Advanced")!.winRate, null, "two matches is not a win rate either");
 eq(rateOf({ w: 2, d: 0, l: 1 }), 67, "three matches is");
-eq(rateOf({ w: 1, d: 1, l: 1 }), 50, "a draw counts as half");
+eq(rateOf({ w: 1, d: 1, l: 1 }), 33, "wins over played — a draw is not a win");
 
 // --------------------------------------------------- where the wins are from
 // Wins: adv (above), peer (at), ama + beg (below). The nohist win is in none.

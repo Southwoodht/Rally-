@@ -30,7 +30,9 @@ export function recordsByYear(rows: Array<{ date: number; outcome: "W" | "D" | "
   }
   for (const y of Object.keys(out)) {
     const r = out[+y];
-    r.pct = r.played ? Math.round(((r.w + r.d * 0.5) / r.played) * 100) : 0;
+    // Wins over matches played: "% won" means exactly that (2026-10-25:
+    // draws at half put 71% beside a profile reading 65%).
+    r.pct = r.played ? Math.round((r.w / r.played) * 100) : 0;
   }
   return out;
 }

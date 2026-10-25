@@ -55,7 +55,7 @@ export interface StandingsListProps {
 const recordOf = (p: StandingsPlayer) => `${p.w}–${p.d}–${p.l}`;
 const winPctOf = (p: StandingsPlayer) => {
   const gp = p.w + p.d + p.l;
-  return gp ? Math.round(((p.w + p.d * 0.5) / gp) * 100) : null;
+  return gp ? Math.round((p.w / gp) * 100) : null;
 };
 const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 

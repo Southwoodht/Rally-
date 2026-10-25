@@ -136,7 +136,7 @@ export function DoublesRecordAgainst({ records, byId, onOpenProfile }: { records
     >
       {shown.map((r) => {
         const p = byId.get(r.opponentId);
-        const pct = Math.round(((r.won + r.drawn * 0.5) / r.played) * 100);
+        const pct = Math.round((r.won / r.played) * 100);
         return (
           <div key={r.opponentId} onClick={() => p && onOpenProfile?.(r.opponentId)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", cursor: p && onOpenProfile ? "pointer" : "default" }}>
             <Avatar player={p} size={34} />

@@ -1,7 +1,7 @@
 import { countsAsPlayed } from "./matchStatus";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
-import { winPct } from "@/lib/format";
+import { wonPct as winPct } from "@/lib/format";
 
 // "Legacy" looks at a player's whole Rally career rather than just current
 // form — see LeagueHome's Active/Legacy toggle. Everything here is derived

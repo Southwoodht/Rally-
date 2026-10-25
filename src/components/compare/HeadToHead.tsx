@@ -12,7 +12,7 @@ import { computeStats } from "@/core/elo";
 import { levelAt, levelNow, levelVal } from "@/core/levels";
 import { explainFactors, predictProb, predictProbAtVenue, venuesFor } from "@/core/predict";
 import { computeRivalry } from "@/core/rivalries";
-import { D, fmtDate, winPct, winnerLabel, distinctFirstName } from "@/lib/format";
+import { D, fmtDate, wonPct as winPct, winnerLabel, distinctFirstName } from "@/lib/format";
 import { FEED_OVERLAY, BALL, CHALK, CLAY, FEED_HERO, FEED_ON_HERO, LINE, MUTED, PANEL2, body, card, display, miniInput } from "@/lib/theme";
 import { FEED_THEY_LEAD } from "@/lib/theme";
 import {

@@ -31,7 +31,7 @@ const sectionLabel: React.CSSProperties = {
 };
 
 const rec = (r: WDL) => `${r.w}–${r.d}–${r.l}`;
-const rate = (r: WDL) => { const n = r.w + r.d + r.l; return n ? (r.w + r.d * 0.5) / n : null; };
+const rate = (r: WDL) => { const n = r.w + r.d + r.l; return n ? r.w / n : null; };
 
 export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer }: {
   players: any[];

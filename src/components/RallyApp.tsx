@@ -1285,7 +1285,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         const others = (await listMyLeagues()).filter((l: any) => l.id !== gid);
         if (others.length) {
           const places = await myLeaguePlaces(others, myAuthId);
-          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: RATING_UNIT_ALL, footer: ordinal(pl.place) + " of " + pl.of }));
+          places.forEach((pl) => found.push({ scope: pl.name, rank: pl.place, rating: pl.rating, unit: RATING_UNIT_ALL, footer: ordinal(pl.place) + " of " + pl.of + " ranked" }));
         }
       } catch {}
       if (alive) setOtherStandings(found);
@@ -1600,7 +1600,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         unit: useSeason ? RATING_UNIT_SEASON : RATING_UNIT_ALL,
         movement: null,
         form: (form[meId] || []).slice(-5),
-        footer: status === "placed" ? ordinal(st.place[meId]) + " of " + st.of : null,
+        footer: status === "placed" ? ordinal(st.place[meId]) + " of " + st.of + " ranked" : null,
       };
     })();
 
@@ -1763,11 +1763,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       };
     })() : null;
 
-    // Draws count as half, the same way every other win rate in the app does.
-    const allTime = wdl[meId];
-    const winRateAllTime = allTime && allTime.gp
-      ? Math.round(((allTime.w + allTime.d * 0.5) / allTime.gp) * 100)
-      : null;
 
     /**
      * Two people worth playing next.

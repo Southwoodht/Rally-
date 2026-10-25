@@ -3,7 +3,7 @@ import { computeAchievements } from "@/core/achievements";
 import { computeStats } from "@/core/elo";
 import { levelAt, levelVal } from "@/core/levels";
 import { computeOfficial } from "@/core/official";
-import { winPct } from "@/lib/format";
+import { wonPct as winPct } from "@/lib/format";
 
 // Everything here is reconstructed from the actual recorded matches for the
 // given calendar year — nothing invented. ELO/rank use the same replay

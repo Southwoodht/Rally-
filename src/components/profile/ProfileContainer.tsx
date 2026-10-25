@@ -169,7 +169,7 @@ export function ProfileContainer({
     const rankings = [
       {
         label: group?.name || "Club",
-        value: myStatus === "placed" ? ordinal(st.place[pid]) + " of " + st.of
+        value: myStatus === "placed" ? ordinal(st.place[pid]) + " of " + st.of + " ranked"
           : myStatus === "provisional" ? "Provisional"
           : myStatus === "short" ? (PROVISIONAL_GAMES - (st.played[pid] || 0)) + " more to rank"
           : "Not ranked",
@@ -321,7 +321,7 @@ export function ProfileContainer({
       : null;
 
     return {
-      record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round(((r.w + r.d * 0.5) / r.gp) * 100) : 0, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
+      record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
       gap, playingStyle, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
       historyTotal: mine.length, meta,
       pointsSummary: (() => {
