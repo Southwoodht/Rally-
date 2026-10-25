@@ -115,6 +115,10 @@ export interface GlickoTable {
   /** The ± — one standard deviation, Glickman's RD. */
   rd: Record<string, number>;
   provisional: Record<string, boolean>;
+  /** Each player's rating walking on court, per counted match:
+   *  before[matchId][playerId]. Best wins are ranked on it, so a win is
+   *  judged on who the opponent was then, on the Table's own rating. */
+  before: Record<string, Record<string, { rating: number; rd: number }>>;
 }
 
 /**
@@ -158,14 +162,16 @@ export function computeGlicko(players: any[], matches: any[], now: number = Date
     return aged(s, when - s.at);
   };
 
+  const before: GlickoTable["before"] = {};
   for (const m of counted) {
     const a = at(m.p1, m.date), b = at(m.p2, m.date);
+    before[m.id] = { [m.p1]: { rating: a.rating, rd: a.rd }, [m.p2]: { rating: b.rating, rd: b.rd } };
     const s1 = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
     state[m.p1] = { ...glickoUpdate(a, [{ opp: b, score: s1 }]), at: m.date };
     state[m.p2] = { ...glickoUpdate(b, [{ opp: a, score: 1 - s1 }]), at: m.date };
   }
 
-  const out: GlickoTable = { rating: {}, rd: {}, provisional: {} };
+  const out: GlickoTable = { rating: {}, rd: {}, provisional: {}, before };
   for (const id of Object.keys(state)) {
     const s = aged(state[id], now - state[id].at);
     out.rating[id] = s.rating;

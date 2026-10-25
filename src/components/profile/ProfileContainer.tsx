@@ -209,11 +209,17 @@ export function ProfileContainer({
       .map((m: any) => {
         const oid = m.p1 === pid ? m.p2 : m.p1;
         const lv = levelAt(byId[oid], m.date);
+        // Ranked on the Table's rating as it stood going into the match,
+        // less its ± — what the opponent had PROVEN by then. The old Elo
+        // ranking undervalued anyone who had lost a lot to Zaach (the §9
+        // level-multiplier flaw), and the bare rating would rank a newcomer
+        // at 1500 ± 350 as a big scalp before anyone knew what they were.
+        const then = st.table.before[m.id]?.[oid];
         return {
           matchId: m.id,
           opponent: byId[oid],
-          rating: (ratingBefore?.[m.id] || {})[oid] ?? 0,
-          subtitle: (lv?.cat || "Level not recorded") + " · " + new Date(m.date).getFullYear(),
+          rating: then ? then.rating - then.rd : -Infinity,
+          subtitle: [lv?.cat || "Level not recorded", then ? "rated " + Math.round(then.rating) + " then" : null, new Date(m.date).getFullYear()].filter(Boolean).join(" · "),
         };
       })
       .filter((w: any) => w.opponent)

@@ -104,5 +104,20 @@ const match = (id: string, p1: string, p2: string, winner: string, day: number, 
   ok(glickoSeed({ id: "x" }).rating === 1500 && glickoSeed({ id: "x" }).rd === 350, "no level: the middle, widest ±");
 }
 
+// Rating going into each match, for best wins: the first meeting is judged
+// on the seeds, the second on what the first did to them.
+{
+  const { computeGlicko } = require("./glicko");
+  const ps = [{ id: "a" }, { id: "b" }];
+  const t0 = Date.UTC(2026, 0, 1);
+  const ms = [
+    { id: "m1", p1: "a", p2: "b", winner: "p1", date: t0, status: "confirmed" },
+    { id: "m2", p1: "a", p2: "b", winner: "p1", date: t0 + 86400000, status: "confirmed" },
+  ];
+  const t = computeGlicko(ps, ms, t0 + 2 * 86400000);
+  ok(t.before.m1.b.rating === 1500 && t.before.m1.b.rd === 350, "before the first match b is the unlevelled seed");
+  ok(t.before.m2.b.rating < 1500 && t.before.m2.a.rating > 1500, "before the second, the first result has moved both");
+}
+
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
 console.log(`PASSED — ${checks}/${checks} checks (glicko)`);
