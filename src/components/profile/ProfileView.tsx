@@ -253,7 +253,11 @@ function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }
         winRate: p.record.winRate,
         rankings: (p.record.rankings || []).map((x) => ({ label: x.label, value: x.value })),
         form: (p.record.form || []).map((f) => f.outcome),
-        bestWins: (p.bestWins || []).map((b) => ({ name: fullNameOf(b.opponent) || "Somebody", sub: b.subtitle })),
+        beats: [...(p.opponents?.lead || [])].sort((a, b) => b.w - a.w || a.l - b.l)
+          .map((o) => ({ name: fullNameOf(o.player) || "Somebody", w: o.w, d: o.d, l: o.l })),
+        losesTo: [...(p.opponents?.behind || [])].sort((a, b) => b.l - a.l || a.w - b.w)
+          .map((o) => ({ name: fullNameOf(o.player) || "Somebody", w: o.w, d: o.d, l: o.l })),
+        trophies: (p.trophies?.list || []).map((t) => [t.competition, t.result, t.season].filter(Boolean).join(" · ")),
         achievements: { done: (p.achievements || []).filter((a) => a.earned).map((a) => a.label), total: (p.achievements || []).length },
       });
       if (r === "saved") setNote("Saved as a picture. Find it in your downloads to share.");

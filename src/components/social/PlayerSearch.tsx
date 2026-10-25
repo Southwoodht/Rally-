@@ -47,7 +47,12 @@ function readRecents(): Recent[] {
  * else. Alphabetical would be no order at all — the person you are looking
  * for is nearly always somebody you already know.
  */
-export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] }) {
+export function PlayerSearch({ leagueAuthIds = [], onOpen, onBack }: {
+  leagueAuthIds?: string[];
+  /** Inside the app: open the profile in place, no page load. */
+  onOpen?: (id: string) => void;
+  onBack?: () => void;
+}) {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<Profile[] | null>(null);
   const [mates, setMates] = useState<LeaguePlayerHit[] | null>(null);
@@ -150,6 +155,10 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
    */
   const open = (p: { id: string; display_name?: string; name?: string; avatar_url: string | null }) => {
     rememberProfile({ id: p.id, name: p.display_name || p.name || "Player", avatar_url: p.avatar_url });
+    // Inside the app, in place. Sam: searching "resets back to the choose
+    // your club screen" — the page load through /?profile= landed on the
+    // club picker before anything could open the profile.
+    if (onOpen) { onOpen(p.id); return; }
     window.location.href = "/?profile=" + encodeURIComponent(p.id);
   };
 
@@ -181,7 +190,7 @@ export function PlayerSearch({ leagueAuthIds = [] }: { leagueAuthIds?: string[] 
     <div style={{ minHeight: "100vh", background: FEED_PAGE, paddingTop: "env(safe-area-inset-top)" }}>
       <div style={{ maxWidth: 620, margin: "0 auto", padding: "8px 16px 48px" }}>
         <button
-          onClick={() => window.history.back()}
+          onClick={() => (onBack ? onBack() : window.history.back())}
           aria-label="Back"
           style={{ display: "flex", alignItems: "center", gap: 2, background: "transparent", border: "none", color: FEED_TEXT_MID, cursor: "pointer", padding: "10px 6px 10px 0", fontFamily: body, fontSize: 15 }}
         >

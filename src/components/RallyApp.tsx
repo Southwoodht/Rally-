@@ -21,6 +21,7 @@ import { GroupSheet } from "@/components/layout/GroupSheet";
 import { SubHeader } from "@/components/layout/SubHeader";
 import { MyProfile } from "@/components/profile/MyProfile";
 import { ProfileModal } from "@/components/profile/ProfileModal";
+import { PlayerSearch } from "@/components/social/PlayerSearch";
 import { ChallengeSheet } from "@/components/profile/ChallengeSheet";
 import { MatchDetail } from "@/components/games/MatchDetail";
 import { NotificationBell } from "@/components/layout/NotificationBell";
@@ -347,6 +348,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Who the booking form should open with already chosen.
   const [challengeWith, setChallengeWith] = useState<string | null>(null);
   const [challengeSheet, setChallengeSheet] = useState<string | null>(null);
+  // Find a player opens over the app (zIndex 119, under a profile at 120),
+  // so Back from a profile it opened returns to the results.
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Acting on where the profile page sent us, once the league is loaded.
   //
@@ -2016,9 +2020,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 {/* Finding somebody is a top-level thing to want, and until
                     now the only way to reach a person was to already share a
                     league with them. */}
-                <a href="/search" aria-label="Find a player" style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, textDecoration: "none" }}>
+                <button onClick={() => setSearchOpen(true)} aria-label="Find a player" style={{ background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0, color: FEED_TEXT_MID, cursor: "pointer" }}>
                   <Search size={18} strokeWidth={2} />
-                </a>
+                </button>
                 <button onClick={() => { setMsgWith(null); setTab("messages"); }} aria-label={unreadMsgs > 0 ? `Messages, ${unreadMsgs} unread` : "Messages"} style={{ position: "relative", background: FEED_RAISED, border: "none", borderRadius: 999, width: 38, height: 38, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0, overflow: "visible" }}>
                   <MessageRobins count={unreadMsgs} />
                 </button>
@@ -2832,6 +2836,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               <button onClick={async () => { setMenuOpen(false); try { await supabase?.auth.signOut(); } catch {} if (typeof window !== "undefined") window.location.href = "/"; }} style={listRow}><LogOut size={18} color={BALL} /><span style={{ flex: 1, textAlign: "left", fontFamily: body, fontSize: 15, color: CHALK }}>Log out</span></button>
             </div>
           </div>
+        </div>
+      )}
+      {searchOpen && (
+        <div className="sw-overlay" style={{ position: "fixed", inset: 0, zIndex: 119, overflowY: "auto", WebkitOverflowScrolling: "touch", background: COURT }}>
+          <PlayerSearch
+            leagueAuthIds={(gdata.players || []).map((p: any) => p.auth_id).filter(Boolean)}
+            onOpen={(id) => setPendingIntent({ kind: "profile", authId: id })}
+            onBack={() => setSearchOpen(false)}
+          />
         </div>
       )}
       {publicProfileId && (
