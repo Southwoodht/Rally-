@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isShortMatch } from "@/core/matchStatus";
+import { countsAsPlayed, isLegacy, isShortMatch } from "@/core/matchStatus";
 import React, { useState, useMemo } from "react";
 import { AlertCircle, ArrowLeftRight, Info } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
@@ -66,7 +66,10 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
   // matches, labelled, because the brief wants them visible and not counted.
   const between = useMemo(() => { if (!a || !b) return []; return scoped.filter((m) => (m.p1 === a && m.p2 === b) || (m.p1 === b && m.p2 === a)).sort((x, y) => y.date - x.date); }, [a, b, scoped]);
   const games = useMemo(() => between.filter((m) => countsAsPlayed(m)), [between]);
-  const listed = useMemo(() => between.filter((m) => countsAsPlayed(m) || isShortMatch(m)), [between]);
+  const listed = useMemo(() => between.filter((m) => countsAsPlayed(m) || isShortMatch(m) || isLegacy(m)), [between]);
+  // Legacy results are listed and counted beside the record, never in it:
+  // "11–3–6 (+4 legacy)".
+  const legacyCount = between.filter((m) => isLegacy(m)).length;
   const rivalry = useMemo(() => (a && b ? computeRivalry(a, b, scoped) : null), [a, b, scoped]);
   let aw = 0, bw = 0, d = 0;
   games.forEach((m) => { if (m.winner === "draw") d++; else if ((m.winner === "p1" && m.p1 === a) || (m.winner === "p2" && m.p2 === a)) aw++; else bw++; });
@@ -315,7 +318,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             </SurfaceCard>
           )}
           <SurfaceCard radius={18} style={{ marginBottom: 4 }}>
-            <StatRow label="Head to head" av={aw + "–" + d + "–" + bw} bv={bw + "–" + d + "–" + aw} na={aw} nb={bw} />
+            <StatRow label={legacyCount ? `Head to head (+${legacyCount} legacy)` : "Head to head"} av={aw + "–" + d + "–" + bw} bv={bw + "–" + d + "–" + aw} na={aw} nb={bw} />
             {/* No bar: 28–6–10 is three numbers, not a magnitude. */}
             <StatRow label="Record" av={ra.w + "–" + ra.d + "–" + ra.l} bv={rb.w + "–" + rb.d + "–" + rb.l} />
             <StatRow label="Win rate" av={ra.gp ? Math.round(winPct(ra) * 100) + "%" : "–"} bv={rb.gp ? Math.round(winPct(rb) * 100) + "%" : "–"} na={ra.gp ? winPct(ra) : undefined} nb={rb.gp ? winPct(rb) : undefined} />
@@ -383,7 +386,9 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
               const outcome = m.winner === "draw" || isShortMatch(m) ? "D" : m.winner === mine ? "W" : "L";
               return {
                 matchId: m.id, outcome, opponent: nm(b), opponentId: b, onOpenPlayer: onOpen || undefined,
-                date: fmtDate(m.date), score: [m.score || null, isShortMatch(m) ? "short match" : null].filter(Boolean).join(" · ") || null,
+                date: isLegacy(m) && m.datePrecision === "year" ? String(new Date(m.date).getFullYear()) : fmtDate(m.date),
+                score: [m.score || null, isShortMatch(m) ? "short match" : null].filter(Boolean).join(" · ") || null,
+                legacy: isLegacy(m),
               } as MatchHistoryItem;
             })} />
           ) : (

@@ -1,5 +1,5 @@
 "use client";
-import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
+import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isLegacy, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
 import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
@@ -777,6 +777,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const actingId = players.some((p) => p.id === gdata.me) ? gdata.me : null;
     const oppId = actingId ? (m.p1 === actingId ? m.p2 : m.p2 === actingId ? m.p1 : null) : null;
     const opp = oppId ? players.find((p) => p.id === oppId) : null;
+    // A legacy result is the club's record: an organiser takes it down at once.
+    if (isLegacy(m) && canManageMatches) { deleteMatch(id); flash("Deleted"); return; }
     if (opp && opp.auth_id) {
       saveData({ ...gdata, matches: gdata.matches.map((x) => x.id === id ? { ...x, pendingEdit: { ...patch, proposedBy: actingId, proposedAt: Date.now() } } : x) });
       flash("Change sent — waiting for them to agree");
@@ -985,7 +987,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       if (ok !== false) flash("Logged in " + names.join(" and ") + pendingNote);
     } else {
       setMatches([mt, ...matches]);
-      flash(isShortMatch(mt) ? "Logged as a short match" : "Logged" + pendingNote);
+      flash(isShortMatch(mt) ? "Logged as a short match" : isLegacy(mt) ? "Logged as a legacy result" : "Logged" + pendingNote);
     }
     setTab("home");
   };
@@ -2331,10 +2333,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         )}
         {tab === "add" && !showDoubles && <LogResult players={players} matches={matches} elo={elo} meId={meId} onSave={(mt) => {
           // A short match never counts, so it is never offered to a table.
-          const options = isShortMatch(mt) ? [] : leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
+          const options = isShortMatch(mt) || isLegacy(mt) ? [] : leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
           if (options.length) setLeagueAsk({ match: mt, options });
           else saveLogged(mt, []);
-        }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} />}
+        }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} canLegacy={canManageMatches} />}
         {/* Home's top row sits outside Home itself, in a <header>, so the
             screen-change fade (ui/Motion.tsx) leaves it still like on every
             other tab. */}

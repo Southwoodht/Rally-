@@ -1,4 +1,4 @@
-import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isShortMatch, isUnconfirmedResult } from "./matchStatus";
+import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isLegacy, isShortMatch, isUnconfirmedResult } from "./matchStatus";
 
 let pass = 0, fail = 0;
 const eq = (got: any, want: any, msg: string) => {
@@ -53,6 +53,9 @@ eq(isDisputed(m("disputed")), true, "and says it is disputed");
 eq(isUnconfirmedResult(m("disputed")), false, "and is not swept up by the auto-confirm");
 eq(countsAsPlayed(m("short")), false, "a short match is never counted");
 eq(isShortMatch(m("short")), true, "and is recognised as one");
+eq(countsAsPlayed(m("legacy")), false, "a legacy result counts for nothing");
+eq(hasResult(m("legacy")), false, "and is not a result anything rates");
+eq(isLegacy(m("legacy")), true, "but is recognised as legacy");
 eq(hasResult(m("short")), false, "nor listed with the results a number counts");
 eq(CONFIRM_WINDOW_MS, 48 * 3600 * 1000, "results wait 48 hours for the opponent");
 

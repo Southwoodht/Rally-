@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isLegacy, isUnconfirmedResult } from "@/core/matchStatus";
 import { openProfile } from "@/lib/openProfile";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
@@ -189,12 +189,30 @@ export function ProfileContainer({
       const o = outcome(m);
       if (o === "W") x.w++; else if (o === "D") x.d++; else x.l++;
     }
-    const oppRec = (id: string) => ({
-      player: byId[id], w: h[id].w, d: h[id].d, l: h[id].l,
-      levelLabel: levelNow(byId[id])?.cat || undefined,
-    });
-    const lead = Object.keys(h).filter((o) => byId[o] && h[o].w > h[o].l).map(oppRec);
-    const behind = Object.keys(h).filter((o) => byId[o] && h[o].l > h[o].w).map(oppRec);
+    // Legacy results beside them, never inside them (Sam: "11–3–6 (+4
+    // legacy)"). Somebody known only from legacy results is still listed,
+    // placed by those, so the history does not lose them.
+    const hl: Record<string, { w: number; d: number; l: number }> = {};
+    for (const m of mine) {
+      if (!isLegacy(m)) continue;
+      const opp = m.p1 === pid ? m.p2 : m.p1;
+      const x = (hl[opp] = hl[opp] || { w: 0, d: 0, l: 0 });
+      const o = outcome(m);
+      if (o === "W") x.w++; else if (o === "D") x.d++; else x.l++;
+    }
+    const zero = { w: 0, d: 0, l: 0 };
+    const oppRec = (id: string) => {
+      const r0 = h[id] || zero, lg = hl[id];
+      return {
+        player: byId[id], w: r0.w, d: r0.d, l: r0.l,
+        legacy: lg ? lg.w + lg.d + lg.l : 0,
+        levelLabel: levelNow(byId[id])?.cat || undefined,
+      };
+    };
+    const faced = Array.from(new Set([...Object.keys(h), ...Object.keys(hl)])).filter((o) => byId[o]);
+    const side = (o: string) => { const r0 = h[o]; return r0 && r0.w + r0.d + r0.l ? r0 : (hl[o] || zero); };
+    const lead = faced.filter((o) => side(o).w > side(o).l).map(oppRec);
+    const behind = faced.filter((o) => side(o).l > side(o).w).map(oppRec);
 
     const rivalries = topRivalries(pid, matches || [], 3)
       .filter((v: any) => byId[v.oid])
@@ -293,20 +311,23 @@ export function ProfileContainer({
     const history = [...mine].reverse().map((m: any) => {
       const o = byId[m.p1 === pid ? m.p2 : m.p1];
       const pending = isUnconfirmedResult(m);
+      const legacy = isLegacy(m);
       return {
         matchId: m.id,
+        legacy,
         outcome: outcome(m),
         opponent: fullNameOf(o),
         opponentId: o?.id,
         onOpenPlayer: onOpen,
-        date: shortDate(m.date),
+        // A year is all some legacy results know; never print a made-up day.
+        date: legacy && m.datePrecision === "year" ? String(new Date(m.date).getFullYear()) : shortDate(m.date),
         ts: m.date,
         score: m.score || null,
         // What it did to Official points, the table's number (Sam,
         // 2026-10-22) — replacing the per-match Elo change, which swung
         // −0.9 to −17 for the same loss, and then the grade word that stood
         // in for it for a day.
-        points: officialSteps.perMatch[m.id]?.[pid] ?? null,
+        points: legacy ? null : officialSteps.perMatch[m.id]?.[pid] ?? null,
         pending,
         onOpen: onOpenMatch ? () => onOpenMatch(m.id) : undefined,
         onEdit: pending && onProposeEdit ? () => onOpenMatch && onOpenMatch(m.id) : undefined,

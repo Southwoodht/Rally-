@@ -19,10 +19,12 @@ export interface YearRecord { w: number; d: number; l: number; played: number; p
 export const yearOf = (ts: number): number =>
   Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric" }).format(new Date(ts)));
 
-export function recordsByYear(rows: Array<{ date: number; outcome: "W" | "D" | "L"; pending?: boolean }>): Record<number, YearRecord> {
+export function recordsByYear(rows: Array<{ date: number; outcome: "W" | "D" | "L"; pending?: boolean; legacy?: boolean }>): Record<number, YearRecord> {
   const out: Record<number, YearRecord> = {};
   for (const r of rows) {
-    if (r.pending) continue;
+    // A legacy result sits under its year but never in the year's record:
+    // the record is rated matches only.
+    if (r.pending || r.legacy) continue;
     const y = yearOf(r.date);
     const rec = out[y] || (out[y] = { w: 0, d: 0, l: 0, played: 0, pct: 0 });
     if (r.outcome === "W") rec.w++; else if (r.outcome === "D") rec.d++; else rec.l++;

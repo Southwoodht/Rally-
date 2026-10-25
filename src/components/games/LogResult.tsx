@@ -6,6 +6,7 @@ import { BigBtn, Empty, Field, Toggle } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { predictProb } from "@/core/predict";
 import { uid } from "@/lib/format";
+import { useColumnReady } from "@/lib/utrReady";
 import { BALL, CHALK, CLAY, COURT, LINE, MUTED, body, card, display, input } from "@/lib/theme";
 import { FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, tabular } from "@/lib/theme";
 
@@ -24,8 +25,15 @@ const sectionLabel: React.CSSProperties = {
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
-export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onCreatePlayer, onDeleteBetween }: any) {
+export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onCreatePlayer, onDeleteBetween, canLegacy }: any) {
   const [mode, setMode] = useState("single");
+  // Legacy results (Sam, 2026-10-25): old matches nobody logged at the time,
+  // known to the year. Organisers only — a legacy result needs nobody's
+  // agreement, so it is the club's record to keep, not anyone's to add about
+  // somebody else — and only once schema_match_legacy.sql has added
+  // date_precision, because a save naming a missing column fails outright.
+  const legacyReady = useColumnReady("matches", "date_precision") === true;
+  const [legacyYear, setLegacyYear] = useState(() => new Date().getFullYear() - 1);
   /**
    * Player 1 starts as you.
    *
@@ -86,6 +94,15 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     }
     onSave({ id: uid(), date: when, p1, p2, score: scoreStr, winner, status: short ? "short" : needsConfirm ? "pending" : "confirmed", reportedBy: meId, loggedAt: Date.now(), notes: notes.trim() || undefined, venue: venue.trim() || undefined, category: category.trim() || undefined, prediction });
   };
+  const submitLegacy = (winner: string) => {
+    if (!p1 || !p2) return setErr("Pick both players.");
+    if (p1 === p2) return setErr("Pick two different players.");
+    setErr("");
+    // Mid-year, so it sorts inside its year; the date is never printed —
+    // datePrecision "year" makes every screen show just the year.
+    const when = Date.UTC(legacyYear, 6, 1, 12);
+    onSave({ id: uid(), date: when, p1, p2, score: "", winner, status: "legacy", datePrecision: "year", reportedBy: meId, loggedAt: Date.now() });
+  };
   const submitBulk = () => {
     if (!p1 || !p2) return setErr("Pick both players.");
     if (p1 === p2) return setErr("Pick two different players.");
@@ -108,10 +125,29 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <Toggle on={mode === "single"} onClick={() => setMode("single")} label="One game" />
         <Toggle on={mode === "bulk"} onClick={() => setMode("bulk")} label="Bulk / history" />
+        {canLegacy && legacyReady && <Toggle on={mode === "legacy"} onClick={() => setMode("legacy")} label="Legacy" />}
       </div>
       <Field label="Player 1"><PlayerPicker value={p1} onChange={setP1} players={players} exclude={p2} placeholder="Player 1" onCreatePlayer={onCreatePlayer} /></Field>
       <Field label="Player 2"><PlayerPicker value={p2} onChange={setP2} players={players} exclude={p1} placeholder="Player 2" onCreatePlayer={onCreatePlayer} /></Field>
-      {mode === "single" ? (
+      {mode === "legacy" ? (
+        <>
+          <Field label="Year">
+            <select value={String(legacyYear)} onChange={(e) => setLegacyYear(Number(e.target.value))} style={{ ...input, fontFamily: body, boxSizing: "border-box" as const }}>
+              {Array.from({ length: 40 }, (_, i) => new Date().getFullYear() - i).map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
+          </Field>
+          {err && <div style={{ color: CLAY, fontFamily: body, fontSize: 13, marginBottom: 10 }}>{err}</div>}
+          <div style={{ ...sectionLabel, margin: "8px 0 9px" }}>Who won?</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <BigBtn onClick={() => submitLegacy("p1")} disabled={!p1} color={BALL}>{n1}</BigBtn>
+            <BigBtn onClick={() => submitLegacy("draw")} color={MUTED}>Draw</BigBtn>
+            <BigBtn onClick={() => submitLegacy("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
+          </div>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
+            A legacy result is history, not a rating: it shows on both profiles and in their head-to-head as &ldquo;+1 legacy&rdquo;, and counts towards nothing &mdash; no rating, table, points, streak or achievement. Log one per year if that is all anyone remembers.
+          </div>
+        </>
+      ) : mode === "single" ? (
         <>
           <Field label="Date played"><input type="date" value={dateStr} max={todayStr()} onChange={(e) => setDateStr(e.target.value)} style={{ ...input, colorScheme: "dark", boxSizing: "border-box" as const }} /></Field>
           <Field label="Score (optional)">

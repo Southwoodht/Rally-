@@ -73,6 +73,18 @@ const DISPUTED = "disputed";
  */
 const SHORT = "short";
 
+/**
+ * A legacy result (Sam, 2026-10-25): a match from before anyone logged them —
+ * "I dominated two players pre 2020 and couldn't tell you how many games, it
+ * was all the time". Recorded so the history is true, counted in NOTHING:
+ * no rating, table, Official, prediction, streak, achievement or
+ * competition. A status rather than a flag on a confirmed row, on purpose:
+ * every rating already asks countsAsPlayed, and the Global table's SQL counts
+ * only `confirmed`, so a status cannot leak into a rating anyone forgot to
+ * update. Often dated to the year only (`datePrecision: "year"`).
+ */
+const LEGACY = "legacy";
+
 const warned = new Set<string>();
 
 /**
@@ -100,7 +112,7 @@ const warned = new Set<string>();
 export function countsAsPlayed(m: any): boolean {
   const s = m?.status;
   if (NOT_PLAYED.has(s)) return false;
-  if (s === DISPUTED || s === SHORT) return false;
+  if (s === DISPUTED || s === SHORT || s === LEGACY) return false;
   if (UNCONFIRMED.has(s)) return true;
   if (s === "confirmed") return true;
   // Unknown. Behave exactly as the old denylist did rather than silently
@@ -167,4 +179,9 @@ export function isDisputed(m: any): boolean {
 /** A short or unfinished match: shown, labelled, never counted. */
 export function isShortMatch(m: any): boolean {
   return m?.status === SHORT;
+}
+
+/** A legacy result: in the history and the head-to-head, labelled, counted in nothing. */
+export function isLegacy(m: any): boolean {
+  return m?.status === LEGACY;
 }

@@ -136,6 +136,10 @@ const matchToRow = (leagueId: string, m: any) => (assertWritable(m), {
   venue: m.venue ?? null,
   photo_url: m.photoUrl ?? null,
   category: m.category ?? null,
+  // A legacy result dated to the year only (schema_match_legacy.sql). Sent
+  // only when set, so a database without the column still saves everything
+  // else — the toggle that sets it waits for the column.
+  ...(m.datePrecision === "year" ? { date_precision: "year" } : {}),
   pending_edit: m.pendingEdit ?? null,
   delete_requested_by: m.deleteRequestedBy ?? null,
   delete_requested_at: m.deleteRequestedAt ? new Date(m.deleteRequestedAt).toISOString() : null,
@@ -169,6 +173,7 @@ export const rowToMatch = (r: any) => ({
   venue: r.venue ?? undefined,
   photoUrl: r.photo_url ?? undefined,
   category: r.category ?? undefined,
+  datePrecision: r.date_precision === "year" ? "year" : undefined,
   pendingEdit: r.pending_edit ?? undefined,
   // Drives the 24h auto-confirm sweep in RallyApp.tsx. Sourced from the
   // row's own created_at (set server-side, once, on insert) rather than

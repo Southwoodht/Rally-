@@ -5,7 +5,7 @@ import { TrophyMoment } from "@/components/ui/TrophyMoment";
 import { YearHeader } from "@/components/ui/YearHeader";
 import { honoursByYear, trophyDateLabel, trophyTitle, trophyTs, type TrophyLike } from "@/core/trophyTimeline";
 import { recordsByYear, yearOf, type YearRecord } from "@/core/yearRecord";
-import { FEED_LIME, FEED_LOSS, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
+import { FEED_LIME, FEED_LOSS, FEED_RAISED, FEED_TEXT_DIM, FEED_TEXT_HI, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
 // Recent matches, as a list you can read down.
 //
@@ -39,6 +39,10 @@ export interface MatchHistoryItem {
   points?: number | null;
   /** Nobody has agreed to it yet, so it counts for nothing. */
   pending?: boolean;
+  /** A legacy result (core/matchStatus.ts): shown, badged, counted in
+   *  nothing. Its `date` is already just the year when that is all anyone
+   *  knows. */
+  legacy?: boolean;
   onEdit?: () => void;
   onOpen?: () => void;
 }
@@ -94,7 +98,7 @@ export function MatchHistoryList({ items, years, trophies }: {
 }) {
   if (!items || !items.length) return null;
   const grouped = items.every((m) => typeof m.ts === "number");
-  const recs = years || (grouped ? recordsByYear(items.map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending }))) : {});
+  const recs = years || (grouped ? recordsByYear(items.map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending, legacy: m.legacy }))) : {});
   const honours = honoursByYear(trophies || []);
 
   // Newest first, like the rows. A trophy on the same day as a match sorts
@@ -143,7 +147,7 @@ export function MatchHistoryList({ items, years, trophies }: {
           onClick={m.onOpen}
           style={{
             display: "flex", alignItems: "center", gap: 12,
-            borderLeft: "3px solid " + (m.pending ? PENDING_BORDER : BORDER[m.outcome]),
+            borderLeft: "3px solid " + (m.pending || m.legacy ? PENDING_BORDER : BORDER[m.outcome]),
             // Square, so the marker reads as the edge of the row rather than
             // a detached tick.
             borderRadius: 0,
@@ -172,8 +176,11 @@ export function MatchHistoryList({ items, years, trophies }: {
                 Awaiting their ok{m.points != null ? <span style={tabular}> · {signed(m.points)} points</span> : null}
               </div>
             )}
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
-              {m.date}{m.score ? " · " + m.score : ""}
+            <div style={{ ...tabular, display: "flex", alignItems: "center", gap: 6, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
+              {m.legacy && (
+                <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: FEED_TEXT_HI, background: FEED_RAISED, borderRadius: 999, padding: "1px 8px" }}>Legacy</span>
+              )}
+              <span>{m.date}{m.score ? " · " + m.score : ""}{m.legacy ? " · not rated" : ""}</span>
             </div>
           </div>
           {m.pending ? (

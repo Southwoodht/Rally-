@@ -97,11 +97,11 @@ export function ProfileView(p: ProfileViewProps) {
   // there rather than opening a second list somewhere else.
   const [filter, setFilter] = useState<OutcomeFilter>(null);
   const history = p.history || [];
-  const filtered = filter ? history.filter((m) => m.outcome === filter) : [];
+  const filtered = filter ? history.filter((m) => m.outcome === filter && !m.legacy) : [];
   const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
   // Each year's record over the WHOLE history, so the header above a
   // five-row preview still says how the whole year went.
-  const years = recordsByYear(history.filter((m) => typeof m.ts === "number").map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending })));
+  const years = recordsByYear(history.filter((m) => typeof m.ts === "number").map((m) => ({ date: m.ts as number, outcome: m.outcome, pending: m.pending, legacy: m.legacy })));
   // The same trophies as the Verified trophies row, in the shape the history
   // places them by. Not in the Wins/Draws/Losses lists above: those answer
   // "which matches", and a trophy is not one.
@@ -255,9 +255,9 @@ function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }
         rankings: (p.record.rankings || []).map((x) => ({ label: x.label, value: x.value })),
         form: (p.record.form || []).map((f) => f.outcome),
         beats: [...(p.opponents?.lead || [])].sort((a, b) => b.w - a.w || a.l - b.l)
-          .map((o) => ({ name: fullNameOf(o.player) || "Somebody", w: o.w, d: o.d, l: o.l })),
+          .map((o) => ({ name: fullNameOf(o.player) || "Somebody", w: o.w, d: o.d, l: o.l, legacy: o.legacy || 0 })),
         losesTo: [...(p.opponents?.behind || [])].sort((a, b) => b.l - a.l || a.w - b.w)
-          .map((o) => ({ name: fullNameOf(o.player) || "Somebody", w: o.w, d: o.d, l: o.l })),
+          .map((o) => ({ name: fullNameOf(o.player) || "Somebody", w: o.w, d: o.d, l: o.l, legacy: o.legacy || 0 })),
         trophies: (p.trophies?.list || []).map((t) => [t.competition, t.result, t.season].filter(Boolean).join(" · ")),
         achievements: { done: (p.achievements || []).filter((a) => a.earned).map((a) => a.label), total: (p.achievements || []).length },
       });

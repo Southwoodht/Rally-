@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isLegacy, isUnconfirmedResult } from "@/core/matchStatus";
 import { scoreProblem } from "@/core/sets";
 import { dominationHeadline } from "@/core/domination";
 import React, { useRef, useState } from "react";
@@ -95,12 +95,16 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   // else from here. It applies at once, as any edit against a shell does.
   const mine = !!meId && (match.p1 === meId || match.p2 === meId);
   const bothShells = !!p1 && !!p2 && !p1.auth_id && !p2.auth_id;
-  const canEdit = !!(onProposeEdit && meId && (mine || (organiser && bothShells)));
+  // A legacy result is the club's record, kept by its organisers: they can
+  // take one down straight away (and add it again if it was wrong).
+  const legacy = isLegacy(match);
+  const canEdit = !!(onProposeEdit && meId && (mine || (organiser && (bothShells || legacy))));
   const oppOf = (selfId: string) => byId[selfId === match.p1 ? match.p2 : match.p1];
   const opponentOfMe = mine ? oppOf(meId) : null;
-  const needsApproval = !!(opponentOfMe && opponentOfMe.auth_id);
+  const needsApproval = !!(opponentOfMe && opponentOfMe.auth_id) && !(legacy && organiser);
 
-  const ctx = matchContext(players, matches, match);
+  // A legacy result moved no rating, so it has no before-and-after to tell.
+  const ctx = legacy ? null : matchContext(players, matches, match);
   const confirmedH2h = (matches || []).filter((m: any) => countsAsPlayed(m) && ((m.p1 === match.p1 && m.p2 === match.p2) || (m.p1 === match.p2 && m.p2 === match.p1)));
   let h2hP1 = 0, h2hP2 = 0, h2hD = 0;
   confirmedH2h.forEach((m: any) => { if (m.winner === "draw") h2hD++; else if ((m.winner === "p1" && m.p1 === match.p1) || (m.winner === "p2" && m.p2 === match.p1)) h2hP1++; else h2hP2++; });
@@ -197,7 +201,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         </div>
 
         <MatchCard
-          dateLabel={fmtDate(match.date)}
+          dateLabel={legacy ? (match.datePrecision === "year" ? String(new Date(match.date).getFullYear()) : fmtDate(match.date)) + " · Legacy, not rated" : fmtDate(match.date)}
           winner={{ player: winnerSide.player, sets: winnerSide.sets }}
           loser={{ player: loserSide.player, sets: loserSide.sets }}
           drawn={isDraw}
@@ -336,7 +340,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
             ) : confirmDelete ? (
               <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Delete this match?</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : legacy ? "A legacy result counts for nothing, so this deletes straight away. You can log it again." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>{needsApproval ? "Request delete" : "Delete"}</button>
                   <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Cancel</button>
@@ -344,7 +348,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
               </div>
             ) : (
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Edit result</button>
+                {!legacy && <button onClick={beginEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Edit result</button>}
                 {onProposeDelete && <button onClick={() => setConfirmDelete(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: CLAY, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Delete match</button>}
               </div>
             )}

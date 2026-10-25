@@ -31,7 +31,7 @@ export interface ShareCardData {
   achievements: { done: string[]; total: number };
 }
 
-export interface H2H { name: string; w: number; d: number; l: number }
+export interface H2H { name: string; w: number; d: number; l: number; /** legacy results, beside the record */ legacy?: number }
 
 const W = 1080;
 const CREAM = "#F8F4EB", CARD = "#FFFDF8", INK = "#2A2118", MID = "#7A6B58", BRASS = "#B8955A", LINE = "#E6DCC8";
@@ -209,7 +209,12 @@ export async function drawProfileCard(d: ShareCardData): Promise<HTMLCanvasEleme
   // Everybody, by name: the better of, and the worse of.
   const line = (y: number) => { c.strokeStyle = LINE; c.lineWidth = 2; c.beginPath(); c.moveTo(120, y); c.lineTo(W - 120, y); c.stroke(); };
   line(800);
-  const rec = (h: H2H) => h.d ? `${h.w}–${h.d}–${h.l}` : `${h.w}–${h.l}`;
+  const rated = (h: H2H) => (h.d ? `${h.w}–${h.d}–${h.l}` : `${h.w}–${h.l}`);
+  const rec = (h: H2H) => {
+    const has = h.w + h.d + h.l > 0;
+    if (!h.legacy) return rated(h);
+    return has ? `${rated(h)} +${h.legacy} legacy` : `${h.legacy} legacy`;
+  };
   const column = (x: number, title: string, colour: string, list: H2H[], empty: string) => {
     c.textAlign = "left"; c.fillStyle = colour; c.font = `700 30px ${body}`; c.fillText(`${title} · ${list.length}`, x, 852);
     if (!list.length) { c.fillStyle = MID; c.font = `500 26px ${body}`; c.fillText(empty, x, 902); return; }

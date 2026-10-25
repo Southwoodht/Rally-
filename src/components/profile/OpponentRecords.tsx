@@ -19,6 +19,9 @@ export interface OpponentRecord {
   w: number;
   d: number;
   l: number;
+  /** Legacy results against them (core/matchStatus.ts), shown beside the
+   *  record and never inside it: "11–3–6 (+4 legacy)". */
+  legacy?: number;
   /** "Intermediate", or undefined when they have not set one. */
   levelLabel?: string;
 }
@@ -57,7 +60,10 @@ function Row({ r, accent, recordColour, onOpen, last }: any) {
         )}
       </span>
       <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 15, color: recordColour, flexShrink: 0 }}>
-        {r.w}–{r.d}–{r.l}
+        {r.w + r.d + r.l > 0 ? `${r.w}–${r.d}–${r.l}` : ""}
+        {r.legacy ? (
+          <span style={{ fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID }}>{r.w + r.d + r.l > 0 ? ` (+${r.legacy} legacy)` : `${r.legacy} legacy`}</span>
+        ) : null}
       </span>
     </button>
   );
