@@ -149,6 +149,12 @@ export interface KnockoutFixture {
   pairB: string | null;
   /** 'A' | 'B' | 'draw' | null — from the result, when there is one. */
   winner: string | null;
+  /** The score, side A first, when the result has one (the coach sheet). */
+  sets?: Array<{ a: number; b: number }>;
+  /** When it was played, ms. */
+  date?: number;
+  /** Settled by an organiser's walkover rather than played. */
+  walkover?: boolean;
 }
 
 /**

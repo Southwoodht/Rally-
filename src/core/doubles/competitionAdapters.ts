@@ -79,13 +79,28 @@ export function singlesCompetitionView(
     return { winner: winnerId === f.p1 ? "A" : "B", match: m };
   };
 
-  const ties: KnockoutFixture[] = mine.map((f) => ({
-    id: f.id,
-    round: f.round ?? null,
-    pairA: entryOf.get(f.p1) ?? null,
-    pairB: entryOf.get(f.p2) ?? null,
-    winner: outcome(f)?.winner ?? null,
-  }));
+  // Sets from the free-text score, oriented to the MATCH's p1, then turned
+  // to the fixture's p1. A score that cannot be reconciled with the result
+  // counts its points and no sets, rather than a guess.
+  const setsOf = (f: SinglesFixtureLike, m: SinglesMatchLike) => {
+    const raw = parseSets(m.score);
+    const oriented = raw ? orientToWinner(raw, m.winner as any) : null;
+    const flip = m.p1 !== f.p1;
+    return (oriented || []).map((s) => (flip ? { a: s.b, b: s.a } : s));
+  };
+
+  const ties: KnockoutFixture[] = mine.map((f) => {
+    const o = outcome(f);
+    return {
+      id: f.id,
+      round: f.round ?? null,
+      pairA: entryOf.get(f.p1) ?? null,
+      pairB: entryOf.get(f.p2) ?? null,
+      winner: o?.winner ?? null,
+      ...(o && !o.match ? { walkover: true } : {}),
+      ...(o?.match ? { sets: setsOf(f, o.match), ...(o.match.date != null ? { date: o.match.date } : {}) } : {}),
+    };
+  });
 
   const results: CompetitionResult[] = [];
   for (const f of mine) {
@@ -93,13 +108,7 @@ export function singlesCompetitionView(
     const a = entryOf.get(f.p1), b = entryOf.get(f.p2);
     if (!o || !a || !b) continue;
     if (!o.match) { results.push({ pairA: a, pairB: b, winner: o.winner, sets: [], walkover: true }); continue; }
-    // Sets from the free-text score, oriented to the MATCH's p1, then turned
-    // to the fixture's p1. A score that cannot be reconciled with the result
-    // counts its points and no sets, rather than a guess.
-    const raw = parseSets(o.match.score);
-    const oriented = raw ? orientToWinner(raw, o.match.winner as any) : null;
-    const flip = o.match.p1 !== f.p1;
-    const sets = (oriented || []).map((s) => (flip ? { a: s.b, b: s.a } : s));
+    const sets = setsOf(f, o.match);
     results.push({ pairA: a, pairB: b, winner: o.winner, sets, ...(o.match.date != null ? { date: o.match.date } : {}) });
   }
 
@@ -139,7 +148,14 @@ export function doublesCompetitionView(
   const ties: KnockoutFixture[] = mine.map((f) => {
     const m = f.matchId ? byMatch.get(f.matchId) : undefined;
     const wo = f.outcome === "walkover_a" ? "A" : f.outcome === "walkover_b" ? "B" : null;
-    return { id: f.id, round: f.round, pairA: f.pairA, pairB: f.pairB, winner: wo ?? (m && confirmed(m) ? m.winner : null) };
+    const counted = !wo && m && confirmed(m) ? m : null;
+    // Read the same way round as the winner always has been: the tie's A is
+    // the match's team A (DoublesEntry writes them so).
+    return {
+      id: f.id, round: f.round, pairA: f.pairA, pairB: f.pairB, winner: wo ?? (counted ? counted.winner : null),
+      ...(wo ? { walkover: true } : {}),
+      ...(counted ? { sets: counted.sets, ...(counted.playedAt != null ? { date: counted.playedAt } : {}) } : {}),
+    };
   });
   const played = matches.filter((m) => m.competitionId === competitionId);
   const results: CompetitionResult[] = played

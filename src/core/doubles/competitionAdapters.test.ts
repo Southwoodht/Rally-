@@ -40,6 +40,9 @@ const entries: CompetitionPair[] = [
   ok(v.ties.find((t) => t.id === "f2")!.winner === "B", "Charlie won as MATCH p1 but is FIXTURE p2: still B");
   ok(v.ties.find((t) => t.id === "f3")!.winner === null, "unplayed: no winner");
   ok(v.ties.find((t) => t.id === "f4")!.winner === "A", "a pending result counts, as it does on the singles table");
+  const t2 = v.ties.find((t) => t.id === "f2")!;
+  ok(!!t2.sets && t2.sets[0].a === 1 && t2.sets[0].b === 6, "the tie carries its score from the FIXTURE's p1 side (coach sheet)");
+  ok(v.ties.find((t) => t.id === "f3")!.sets === undefined, "an unplayed tie has no score");
 
   const f1 = v.results.find((r) => r.pairA === "eS" && r.pairB === "eZ")!;
   ok(f1.sets.length === 2 && f1.sets[0].a === 4 && f1.sets[0].b === 6, "sets read from Sam's side on f1");

@@ -1,12 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { FileText, Image as ImageIcon, Share } from "lucide-react";
-import { shareSheetImage, shareSheetPdf, type Sheet } from "@/lib/shareSheet";
+import { shareSheetImages, shareSheetPdf, type Sheet } from "@/lib/shareSheet";
 import { FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
 
 /**
  * "Share sheet" on a competition and on the club night mixer
- * (lib/shareSheet.ts): a portrait picture for the club chat, or an A4 PDF
+ * (lib/shareSheet.ts): portrait pictures for the club chat (the table and
+ * this round, or the rounds when there is no table), or a one-page A4 PDF
  * to print and pin up. `build` is called on tap, so the sheet is whatever
  * is on screen at that moment.
  */
@@ -19,8 +20,8 @@ export function ShareSheetButton({ build, style }: { build: () => Sheet; style?:
     setBusy(kind); setNote("");
     try {
       const sheet = build();
-      const r = kind === "image" ? await shareSheetImage(sheet) : await shareSheetPdf(sheet);
-      if (r === "saved") setNote(kind === "image" ? "Saved as a picture — find it in your downloads." : "Saved as a PDF — find it in your downloads.");
+      const r = kind === "image" ? await shareSheetImages(sheet) : await shareSheetPdf(sheet);
+      if (r === "saved") setNote(kind === "image" ? "Saved — find the pictures in your downloads." : "Saved as a PDF — find it in your downloads.");
       if (r !== "cancelled") setOpen(false);
     } catch (e: any) {
       setNote(e?.message || "Couldn't make the sheet.");
@@ -35,7 +36,7 @@ export function ShareSheetButton({ build, style }: { build: () => Sheet; style?:
       ) : (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           <button onClick={() => go("image")} disabled={!!busy} style={{ ...pill, opacity: busy && busy !== "image" ? 0.5 : 1 }}>
-            <ImageIcon size={15} strokeWidth={2} /> {busy === "image" ? "Making it…" : "Picture for WhatsApp"}
+            <ImageIcon size={15} strokeWidth={2} /> {busy === "image" ? "Making it…" : "Pictures for WhatsApp"}
           </button>
           <button onClick={() => go("pdf")} disabled={!!busy} style={{ ...pill, opacity: busy && busy !== "pdf" ? 0.5 : 1 }}>
             <FileText size={15} strokeWidth={2} /> {busy === "pdf" ? "Making it…" : "A4 PDF"}

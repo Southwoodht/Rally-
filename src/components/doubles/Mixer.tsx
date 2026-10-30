@@ -149,10 +149,11 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
         style={{ marginBottom: 12 }}
         build={() => ({
           title: "Club night",
-          subtitle: [formatMatchDate(Date.now()), `${here.length} players`, `${courts} ${courts === 1 ? "court" : "courts"}`].join(" · "),
-          sections: rounds.map((r, ri) => ({
+          meta: `Doubles mixer · ${here.length} players · ${courts} ${courts === 1 ? "court" : "courts"}`,
+          generated: formatMatchDate(Date.now()),
+          rounds: rounds.map((r, ri) => ({
             heading: `Round ${ri + 1}`,
-            rows: r.courts.map((c, ci) => ({ label: `Court ${ci + 1}`, main: `${short(c.a[0])} & ${short(c.a[1])}  v  ${short(c.b[0])} & ${short(c.b[1])}` })),
+            matches: r.courts.map((c, ci) => ({ label: `Court ${ci + 1}`, a: `${short(c.a[0])} & ${short(c.a[1])}`, b: `${short(c.b[0])} & ${short(c.b[1])}` })),
             note: r.out.length ? "Sitting out: " + r.out.map(short).join(", ") : undefined,
           })),
         })}

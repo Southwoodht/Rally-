@@ -1,4 +1,5 @@
 "use client";
+import { clearPendingComp, pendingClub, readCompParam } from "@/lib/compLink";
 import React, { useEffect, useState } from "react";
 import { ClubMark } from "@/components/ui/ClubMark";
 import type { Session } from "@supabase/supabase-js";
@@ -56,6 +57,7 @@ export default function Dashboard({ session }: { session: Session }) {
       // dev auto mode — skip Supabase league listing so the debug league remains active
       return;
     }
+    readCompParam();
     try {
       // "?league=friendly" — arriving from the switcher inside the app.
       // Checked before the league list, because somebody with exactly one
@@ -86,6 +88,14 @@ export default function Dashboard({ session }: { session: Session }) {
       setLeagues(mine);
       // Only worth asking when there's a choice to make.
       if (mine.length) leagueSizes(mine.map((l) => l.id)).then(setSizes).catch(() => {});
+      // A scanned coach sheet (lib/compLink.ts) opens its club — when the
+      // person is in it. Otherwise the scan is dropped and nothing changes.
+      const wanted = pendingClub();
+      if (wanted) {
+        const hit = mine.find((l) => l.id === wanted);
+        if (hit) { setActive(hit); setView("app"); return; }
+        clearPendingComp();
+      }
       if (mine.length === 1) { setActive(mine[0]); setView("app"); }
       else if (mine.length > 1) setView("picker");
       else setView("empty");

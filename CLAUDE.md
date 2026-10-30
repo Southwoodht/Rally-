@@ -1467,6 +1467,25 @@ Wording: the Maps fallback searches "racket club near"; a short match is "a
 game that stopped early". UTR keeps its name, and OSM courts found by
 sport=tennis are still called "Tennis courts", because they are.
 
+**Share sheet v2 (branch `share-sheet-v2`, 2026-10-30, not merged).** Sam's
+rework. The A4 PDF is ONE page for up to ~8 players / 15 rounds: header
+(name; club · Singles/Doubles league/knockout · season; "Made …"; the
+play-by deadline once — the latest tie play-by, else the division's or
+season's end), the standings (Pos, Player, P W D L Pts), then fixtures in
+2–3 columns, one line a match, winner bold, score side A first and a drawn
+tick when played. Rounds never split. It tries sizes 100%→60%, two columns
+before three, full names before "Charlie H"; only past 60% does a page 2
+appear (measured: 10 players / 18 rounds still fit one page). WhatsApp is
+two portraits (`drawSheetImages`): the standings big, and "This round ·
+Round N" (first round with an open tie) plus the five latest results; a
+sheet with no table (knockout, mixer) is one picture of its rounds. Ties
+now carry `sets` / `date` / `walkover` (`KnockoutFixture`, from
+competitionAdapters, tested; doubles read the same way round as their
+winner always has). The footer QR is `lib/compLink.ts`:
+`/?club=<league>&comp=<competition>`, stashed in localStorage on load (10
+minutes fresh, survives sign-in), Dashboard opens the club if you are in
+it, RallyApp switches to Fixtures on the right sport, Competitions opens it.
+
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to
 `/search`, and picking somebody sent the page to `/?profile=`, a full load —

@@ -1,4 +1,5 @@
 "use client";
+import { peekPendingComp } from "@/lib/compLink";
 import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isLegacy, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
@@ -294,6 +295,15 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Anything that turns doubles UI on has to pass BOTH: the league allows it
   // and the person chose it. Two separate conditions, never conflated.
   const showDoubles = !!doublesEnabled && sport === "doubles";
+  // A scanned coach sheet (lib/compLink.ts): once the club's competitions
+  // arrive, go to Fixtures on the right side; Competitions opens it there.
+  useEffect(() => {
+    const want = peekPendingComp();
+    const c = want ? comps.competitions.find((x) => x.id === want) : null;
+    if (!c) return;
+    setSport(c.kind === "doubles" ? "doubles" : "singles");
+    setTab("fixtures");
+  }, [comps.competitions]); // eslint-disable-line react-hooks/exhaustive-deps
   // The Table tab's Divisions view: every running league-format competition
   // of the kind on screen. With none, the view falls back to Standings.
   const divisionComps = (competitionsEnabled && !comps.unavailable ? comps.competitions : [])
@@ -2516,6 +2526,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               onCreateClosed={() => { if (divisionPreset) { setDivisionPreset(null); if (divisionMade.current) { divisionMade.current = false; setTab("ladder"); setTableMode("divisions"); } } }}
               onCreatePlayer={addPlayer}
               seasons={seasonsState.seasons}
+              clubName={group?.name || leagueName || "Club"}
               tieRowsOf={(c) => {
                 const entryOf = new Map(comps.pairs.filter((p) => p.competitionId === c.id).map((p) => [p.p1, p.id]));
                 return fixtures.filter((f: any) => f.competitionId === c.id).map((f: any) => ({
@@ -2597,6 +2608,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               onCreateClosed={() => { if (divisionPreset) { setDivisionPreset(null); if (divisionMade.current) { divisionMade.current = false; setTab("ladder"); setTableMode("divisions"); } } }}
               onCreatePlayer={addPlayer}
               seasons={seasonsState.seasons}
+              clubName={group?.name || leagueName || "Club"}
               tieRowsOf={(c) => doubles.fixtures.filter((f) => f.competitionId === c.id).map((f) => ({
                 id: f.id, round: f.round, pairA: f.pairA, pairB: f.pairB, done: f.done,
                 playBy: f.playBy ?? null, outcome: f.outcome ?? null, woA: "walkover_a", woB: "walkover_b",
