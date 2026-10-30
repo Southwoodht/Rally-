@@ -84,6 +84,14 @@ const SHORT = "short";
  * update. Often dated to the year only (`datePrecision: "year"`).
  */
 const LEGACY = "legacy";
+/**
+ * A legacy result one side has claimed and the other has not yet agreed
+ * (Sam, 2026-10-30: "the opponent must confirm a legacy entry; unconfirmed
+ * shows as claimed"). Counted in nothing, exactly like `legacy`, and NEVER
+ * swept to agreed by the 48-hour timer: a claim about 2018 is not something
+ * silence can settle. Agreeing turns it into `legacy`, never `confirmed`.
+ */
+const LEGACY_CLAIMED = "legacy_claimed";
 
 const warned = new Set<string>();
 
@@ -112,7 +120,7 @@ const warned = new Set<string>();
 export function countsAsPlayed(m: any): boolean {
   const s = m?.status;
   if (NOT_PLAYED.has(s)) return false;
-  if (s === DISPUTED || s === SHORT || s === LEGACY) return false;
+  if (s === DISPUTED || s === SHORT || s === LEGACY || s === LEGACY_CLAIMED) return false;
   if (UNCONFIRMED.has(s)) return true;
   if (s === "confirmed") return true;
   // Unknown. Behave exactly as the old denylist did rather than silently
@@ -183,5 +191,34 @@ export function isShortMatch(m: any): boolean {
 
 /** A legacy result: in the history and the head-to-head, labelled, counted in nothing. */
 export function isLegacy(m: any): boolean {
-  return m?.status === LEGACY;
+  return m?.status === LEGACY || m?.status === LEGACY_CLAIMED;
+}
+
+/** A legacy result the other side has not agreed yet: shown as "claimed". */
+export function isLegacyClaimed(m: any): boolean {
+  return m?.status === LEGACY_CLAIMED;
+}
+
+/**
+ * Who has to agree a legacy result before it stops being a claim: anybody
+ * in it with an account who did not log it. Nobody — a shell, or the
+ * reporter alone — and it is simply recorded, as with any other result.
+ */
+export function legacyNeedsAgreement(p1: any, p2: any, reporterPlayerId: string | null | undefined): boolean {
+  return [p1, p2].some((p) => p && p.id !== reporterPlayerId && isClaimed(p));
+}
+
+/**
+ * The line under a head-to-head record about the years before Southwood:
+ * "Led 4 legacy years", "Led 3 of 4 legacy years", "Trailed 2 legacy
+ * years", "Level over 2 legacy years". From the side of whoever w/l is
+ * counted for; a draw year leads nobody. Claimed years are counted in and
+ * named, so a claim is never presented as agreed. Null with no legacy.
+ */
+export function legacyLine(r: { w: number; d: number; l: number; claimed?: number }): string | null {
+  const n = r.w + r.d + r.l;
+  if (!n) return null;
+  const years = (k: number) => (k === n ? `${n} legacy ${n === 1 ? "year" : "years"}` : `${k} of ${n} legacy years`);
+  const main = r.w > r.l ? "Led " + years(r.w) : r.l > r.w ? "Trailed " + years(r.l) : `Level over ${n} legacy ${n === 1 ? "year" : "years"}`;
+  return r.claimed ? `${main} · ${r.claimed} claimed` : main;
 }

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { gameTo11Problem, scoreProblem } from "@/core/sets";
+import { legacyNeedsAgreement } from "@/core/matchStatus";
 import { buildBulk } from "@/components/games/bulk";
 import { BigBtn, Empty, Field, Toggle } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
@@ -116,7 +117,10 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     // Mid-year, so it sorts inside its year; the date is never printed —
     // datePrecision "year" makes every screen show just the year.
     const when = Date.UTC(legacyYear, 6, 1, 12);
-    onSave({ id: uid(), date: when, p1, p2, score: "", winner, status: "legacy", datePrecision: "year", reportedBy: meId, loggedAt: Date.now() });
+    // A claim until the other side agrees it (Sam, 2026-10-30) — anyone in it
+    // with an account who didn't log it. Against a shell it is simply recorded.
+    const claim = legacyNeedsAgreement(players.find((p) => p.id === p1), players.find((p) => p.id === p2), meId);
+    onSave({ id: uid(), date: when, p1, p2, score: "", winner, status: claim ? "legacy_claimed" : "legacy", datePrecision: "year", reportedBy: meId, loggedAt: Date.now() });
   };
   const submitBulk = () => {
     if (!p1 || !p2) return setErr("Pick both players.");
@@ -159,7 +163,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submitLegacy("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
-            A legacy result is history, not a rating: it shows on both profiles and in their head-to-head as &ldquo;+1 legacy&rdquo;, and counts towards nothing &mdash; no rating, table, points, streak or achievement. Log one per year if that is all anyone remembers.
+            One per year, before Southwood. Shown under the head-to-head, never in the record or any rating. Anyone in it with an account agrees it first; until then it shows as claimed.
           </div>
         </>
       ) : mode === "single" ? (

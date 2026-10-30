@@ -452,7 +452,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
           {(!!opponentsLead.length || !!opponentsBehind.length) && (
             <div style={{ marginTop: 22 }}>
               <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginBottom: 10 }}>Their opponents</div>
-              <OpponentRecords lead={opponentsLead} behind={opponentsBehind} />
+              <OpponentRecords lead={opponentsLead} behind={opponentsBehind} level={byOpponent.filter((r) => r.w === r.l).length} />
             </div>
           )}
 

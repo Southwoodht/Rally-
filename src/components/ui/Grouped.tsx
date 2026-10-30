@@ -33,9 +33,11 @@ export function GroupCard({ children, style }: { children: React.ReactNode; styl
 }
 
 /** One row. `first` leaves off the hairline above it. */
-export function GroupRow({ title, sub, right, onClick, first, chevron, style }: {
+export function GroupRow({ title, sub, below, right, onClick, first, chevron, style }: {
   title: React.ReactNode;
   sub?: React.ReactNode;
+  /** Under the sub-line, free to wrap (the legacy line and its explanation). */
+  below?: React.ReactNode;
   right?: React.ReactNode;
   onClick?: () => void;
   first?: boolean;
@@ -53,6 +55,7 @@ export function GroupRow({ title, sub, right, onClick, first, chevron, style }: 
         {sub != null && sub !== "" && (
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", ...tabular }}>{sub}</div>
         )}
+        {below != null && <div style={{ marginTop: 3 }}>{below}</div>}
       </div>
       {right}
       {chevron && <ChevronRight size={18} color={FEED_TEXT_MID} style={{ flexShrink: 0 }} />}

@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isLegacy, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isLegacy, isLegacyClaimed, isUnconfirmedResult } from "@/core/matchStatus";
 import { openProfile } from "@/lib/openProfile";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClaimTrophyForm } from "@/components/profile/ClaimTrophyForm";
@@ -192,13 +192,14 @@ export function ProfileContainer({
     // Legacy results beside them, never inside them (Sam: "11–3–6 (+4
     // legacy)"). Somebody known only from legacy results is still listed,
     // placed by those, so the history does not lose them.
-    const hl: Record<string, { w: number; d: number; l: number }> = {};
+    const hl: Record<string, { w: number; d: number; l: number; claimed: number }> = {};
     for (const m of mine) {
       if (!isLegacy(m)) continue;
       const opp = m.p1 === pid ? m.p2 : m.p1;
-      const x = (hl[opp] = hl[opp] || { w: 0, d: 0, l: 0 });
+      const x = (hl[opp] = hl[opp] || { w: 0, d: 0, l: 0, claimed: 0 });
       const o = outcome(m);
       if (o === "W") x.w++; else if (o === "D") x.d++; else x.l++;
+      if (isLegacyClaimed(m)) x.claimed++;
     }
     const zero = { w: 0, d: 0, l: 0 };
     const oppRec = (id: string) => {
@@ -206,13 +207,16 @@ export function ProfileContainer({
       return {
         player: byId[id], w: r0.w, d: r0.d, l: r0.l,
         legacy: lg ? lg.w + lg.d + lg.l : 0,
+        ...(lg ? { legacyRecord: lg } : {}),
         levelLabel: levelNow(byId[id])?.cat || undefined,
+        ...(wdl?.[id] ? { overall: { w: wdl[id].w, d: wdl[id].d, l: wdl[id].l } } : {}),
       };
     };
     const faced = Array.from(new Set([...Object.keys(h), ...Object.keys(hl)])).filter((o) => byId[o]);
     const side = (o: string) => { const r0 = h[o]; return r0 && r0.w + r0.d + r0.l ? r0 : (hl[o] || zero); };
     const lead = faced.filter((o) => side(o).w > side(o).l).map(oppRec);
     const behind = faced.filter((o) => side(o).l > side(o).w).map(oppRec);
+    const levelWith = faced.filter((o) => side(o).w === side(o).l).length;
 
     const rivalries = topRivalries(pid, matches || [], 3)
       .filter((v: any) => byId[v.oid])
@@ -315,6 +319,7 @@ export function ProfileContainer({
       return {
         matchId: m.id,
         legacy,
+        claimed: isLegacyClaimed(m),
         outcome: outcome(m),
         opponent: fullNameOf(o),
         opponentId: o?.id,
@@ -353,7 +358,7 @@ export function ProfileContainer({
 
     return {
       record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, unbeatenRate: r.gp ? Math.round(((r.w + r.d) / r.gp) * 100) : undefined, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
-      gap, playingStyle, rivalries, bestWins, opponents: { lead, behind }, achievements, history,
+      gap, playingStyle, rivalries, bestWins, opponents: { lead, behind, level: levelWith }, achievements, history,
       historyTotal: mine.length, meta,
       pointsSummary: (() => {
         const own = Object.values(officialSteps.perMatch).reduce((t, row) => t + (row[pid] ?? 0), 0);

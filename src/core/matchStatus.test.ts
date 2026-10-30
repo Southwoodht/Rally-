@@ -1,4 +1,4 @@
-import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isLegacy, isShortMatch, isUnconfirmedResult } from "./matchStatus";
+import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isLegacy, isLegacyClaimed, isShortMatch, isUnconfirmedResult, legacyLine, legacyNeedsAgreement } from "./matchStatus";
 
 let pass = 0, fail = 0;
 const eq = (got: any, want: any, msg: string) => {
@@ -57,6 +57,24 @@ eq(countsAsPlayed(m("legacy")), false, "a legacy result counts for nothing");
 eq(hasResult(m("legacy")), false, "and is not a result anything rates");
 eq(isLegacy(m("legacy")), true, "but is recognised as legacy");
 eq(hasResult(m("short")), false, "nor listed with the results a number counts");
+// A claimed legacy result (Sam, 2026-10-30): legacy in every way, still a claim.
+eq(countsAsPlayed(m("legacy_claimed")), false, "a claimed legacy result counts for nothing");
+eq(isLegacy(m("legacy_claimed")), true, "it is still a legacy result");
+eq(isLegacyClaimed(m("legacy_claimed")), true, "marked as a claim");
+eq(isLegacyClaimed(m("legacy")), false, "an agreed one is not");
+eq(isUnconfirmedResult(m("legacy_claimed")), false, "and the 48-hour sweep never settles it");
+eq(hasResult(m("legacy_claimed")), false, "nor is it listed with the results a number counts");
+const shell = { id: "s" }, acct = { id: "x", auth_id: "u1" }, me = { id: "me", auth_id: "u0" };
+eq(legacyNeedsAgreement(me, shell, "me"), false, "against a shell: nobody to agree");
+eq(legacyNeedsAgreement(me, acct, "me"), true, "against an account: they agree");
+eq(legacyNeedsAgreement(acct, shell, "org"), true, "an organiser logging for others: the account holder agrees");
+eq(legacyLine({ w: 4, d: 0, l: 0 }), "Led 4 legacy years", "led every year");
+eq(legacyLine({ w: 3, d: 0, l: 1 }), "Led 3 of 4 legacy years", "led most");
+eq(legacyLine({ w: 0, d: 0, l: 2 }), "Trailed 2 legacy years", "trailed");
+eq(legacyLine({ w: 1, d: 0, l: 1 }), "Level over 2 legacy years", "level");
+eq(legacyLine({ w: 1, d: 0, l: 0 }), "Led 1 legacy year", "singular");
+eq(legacyLine({ w: 4, d: 0, l: 0, claimed: 1 }), "Led 4 legacy years · 1 claimed", "a claim is named");
+eq(legacyLine({ w: 0, d: 0, l: 0 }), null, "no legacy, no line");
 eq(CONFIRM_WINDOW_MS, 48 * 3600 * 1000, "results wait 48 hours for the opponent");
 
 console.log(fail ? `\nFAILED — ${fail} of ${pass + fail} checks` : `\nPASSED — ${pass}/${pass} checks`);

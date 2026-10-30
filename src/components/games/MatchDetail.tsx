@@ -1,5 +1,5 @@
 "use client";
-import { countsAsPlayed, isLegacy, isUnconfirmedResult } from "@/core/matchStatus";
+import { countsAsPlayed, isLegacy, isLegacyClaimed, isUnconfirmedResult } from "@/core/matchStatus";
 import { scoreProblem } from "@/core/sets";
 import { dominationHeadline } from "@/core/domination";
 import React, { useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { predictProb } from "@/core/predict";
 import { matchContext } from "@/core/rank";
 import { autoConfirmNote, deleteTimeoutNote, fmtDate, shortNameOf } from "@/lib/format";
 import { readPhotoAsDataUrl } from "@/lib/photo";
-import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HAIRLINE, FEED_LIME, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, MUTED, PANEL2, body, miniInput, tabular } from "@/lib/theme";
+import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, MUTED, PANEL2, body, miniInput, tabular } from "@/lib/theme";
 
 const PHOTO_SIZE = 480;
 
@@ -71,7 +71,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   );
 }
 
-export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, onAdminCorrect, groupName, season, organiser }: any) {
+export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, onAdminCorrect, onAgreeLegacy, groupName, season, organiser }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   // The same check Log a result makes (core/sets.ts scoreProblem): an edit
@@ -218,6 +218,16 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
           onOpenProfile={onOpenProfile}
         />
 
+        {isLegacyClaimed(match) && (
+          // A claimed legacy year: the other side agrees it, here or from the
+          // bell. Agreeing makes it legacy — it never becomes a rated result.
+          mine && match.reportedBy !== meId && onAgreeLegacy ? (
+            <div style={{ marginTop: 10, padding: "12px", borderRadius: 12, background: FEED_RAISED }}>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.45 }}>Claimed by {shortNameOf(byId[match.reportedBy] || null) || "your opponent"}. Agree it if it&apos;s right; if not, tell an organiser.</div>
+              <button onClick={() => onAgreeLegacy(match.id)} style={{ marginTop: 10, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_LIME_INK, background: FEED_LIME, border: "none", borderRadius: 10, padding: "9px 16px", cursor: "pointer" }}>Agree it</button>
+            </div>
+          ) : <Notice tone="lime">Claimed — waiting for the other side to agree</Notice>
+        )}
         {isUnconfirmedResult(match) && <Notice tone="lime">Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</Notice>}
         {match.pendingEdit && <Notice tone="lime">Edit pending agreement</Notice>}
         {match.deleteRequestedBy && <Notice tone="clay">Delete pending agreement</Notice>}

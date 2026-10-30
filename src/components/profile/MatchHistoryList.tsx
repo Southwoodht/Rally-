@@ -43,6 +43,8 @@ export interface MatchHistoryItem {
    *  nothing. Its `date` is already just the year when that is all anyone
    *  knows. */
   legacy?: boolean;
+  /** A legacy result the other side has not agreed yet. */
+  claimed?: boolean;
   onEdit?: () => void;
   onOpen?: () => void;
 }
@@ -180,7 +182,7 @@ export function MatchHistoryList({ items, years, trophies }: {
               {m.legacy && (
                 <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: FEED_TEXT_HI, background: FEED_RAISED, borderRadius: 999, padding: "1px 8px" }}>Legacy</span>
               )}
-              <span>{m.date}{m.score ? " · " + m.score : ""}{m.legacy ? " · not rated" : ""}</span>
+              <span>{m.date}{m.score ? " · " + m.score : ""}{m.legacy ? (m.claimed ? " · claimed" : " · not rated") : ""}</span>
             </div>
           </div>
           {m.pending ? (

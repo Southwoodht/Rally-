@@ -50,7 +50,7 @@ export interface ProfileViewProps {
   friends?: React.ReactNode;
   rivalries?: RivalryCardProps[];
   bestWins?: BestWin[];
-  opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[] } | null;
+  opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[]; level?: number } | null;
   achievements?: Achievement[];
   trophies?: { list: ProfileTrophy[]; onClaim?: () => void; onGive?: () => void; onRemove?: (id: string) => void } | null;
   history?: MatchHistoryItem[];
@@ -178,6 +178,8 @@ export function ProfileView(p: ProfileViewProps) {
           <OpponentRecords
             lead={p.opponents.lead}
             behind={p.opponents.behind}
+            level={p.opponents.level}
+            self={isSelf}
             visible={allOpponents ? Number.MAX_SAFE_INTEGER : OPPONENTS_PREVIEW}
             onOpen={p.onOpenPlayer}
             onAll={() => setAllOpponents(true)}

@@ -1486,6 +1486,27 @@ winner always has). The footer QR is `lib/compLink.ts`:
 minutes fresh, survives sign-in), Dashboard opens the club if you are in
 it, RallyApp switches to Fixtures on the right sport, Competitions opens it.
 
+**Polish + head-to-head (branch `polish-h2h`, 2026-10-30, not merged).**
+Sam's 16-point brief; 1–11 (clubs page and switcher, division tables, odds,
+Plan next season) were already live from 2026-10-24 and untouched. New:
+the profile's head-to-head is `OpponentRecords` rebuilt inset-grouped like
+Compare — "Rivals · You lead X · They lead Y · Level Z" (people, not
+matches; "Leads / Trails" on someone else's profile), then Winning against
+/ Losing against cards, name bold, level and overall record muted, the
+H2H a `RecordPill`. **Legacy is never in a W-D-L**: under it, a drawn
+laurel (`ui/LegacyNote.tsx`) and `legacyLine()` — "Led 4 legacy years",
+"Led 3 of 4…", "Trailed…", "Level over…", "· 1 claimed" — which explains
+itself on tap. Compare shows it under Head to head (only it, with no
+logged matches). **New status `legacy_claimed`** (no SQL: status has no
+check constraint, participants may already update their own match): a
+legacy year logged where anyone else in it has an account
+(`legacyNeedsAgreement`) is a claim until they press **Agree it** in match
+detail (bell item "added a legacy result from 2019"), which makes it
+`legacy`, never `confirmed`. Counted in nothing, never swept by the 48h
+timer (`isUnconfirmedResult` is false), `isLegacy` true. Sam v Chris's four
+existing rows stay `legacy` (agreed). Rejecting a claim is "tell an
+organiser" — they can delete it at once.
+
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to
 `/search`, and picking somebody sent the page to `/?profile=`, a full load —

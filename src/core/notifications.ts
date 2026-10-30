@@ -1,4 +1,4 @@
-import { isUnconfirmedResult } from "./matchStatus";
+import { isLegacyClaimed, isUnconfirmedResult } from "./matchStatus";
 import { computeAchievements } from "@/core/achievements";
 
 // In-app only — no push, no persisted read/unread state. Two tiers:
@@ -27,6 +27,14 @@ export function computeLocalNotifications(meId: string, players: any[], matches:
   matches.filter((m) => isUnconfirmedResult(m) && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).forEach((m) => {
     const other = nm(m.p1 === meId ? m.p2 : m.p1);
     out.push({ id: "confirm_" + m.id, icon: "⏳", text: `${other} logged a result — confirm or dispute it`, date: m.loggedAt || m.date, action: "confirm", matchId: m.id });
+  });
+
+  // A legacy year somebody claimed against you: yours to agree, never
+  // settled by a timer (core/matchStatus.ts).
+  matches.filter((m) => isLegacyClaimed(m) && (m.p1 === meId || m.p2 === meId) && m.reportedBy !== meId).forEach((m) => {
+    const other = nm(m.p1 === meId ? m.p2 : m.p1);
+    const year = new Date(m.date).getFullYear();
+    out.push({ id: "legacy_" + m.id, icon: "🏛️", text: `${other} added a legacy result from ${year} — agree it if it's right`, date: m.loggedAt || m.date, action: "confirm", matchId: m.id });
   });
 
   matches.filter((m) => m.pendingEdit && m.pendingEdit.proposedBy !== meId && (m.p1 === meId || m.p2 === meId)).forEach((m) => {

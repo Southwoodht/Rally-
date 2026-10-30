@@ -1227,6 +1227,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
   }, [matches]);
   const confirmMatch = (id) => setMatches(matches.map((m) => m.id === id ? { ...m, status: "confirmed" } : m));
+  // Agreeing a claimed legacy year makes it legacy — never "confirmed", which
+  // would put a 2018 result into every rating (core/matchStatus.ts).
+  const agreeLegacy = (id) => { setMatches(matches.map((m) => (m.id === id && m.status === "legacy_claimed" ? { ...m, status: "legacy" } : m))); flash("Agreed — it's in your legacy years"); };
   // Disputing no longer deletes (Sam, 2026-10-21: "deleting the result means
   // one person can wipe a match they lost"). The result is marked disputed,
   // counts for nothing, and waits for an organiser in Run your club.
@@ -2917,7 +2920,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         />
       )}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
-      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onAdminCorrect={canManageMatches ? adminCorrect : undefined} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
+      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onAdminCorrect={canManageMatches ? adminCorrect : undefined} onAgreeLegacy={agreeLegacy} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && (
         <GroupSheet
           // The club you are in is always listed, even if the list of clubs
