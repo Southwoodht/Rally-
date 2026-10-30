@@ -1483,8 +1483,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     return out;
   };
   const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
-  // "10 ahead · 3 behind" under each name in a singles league table, all time.
-  const people = peopleCounts(matches.filter((m) => countsAsPlayed(m)));
+  // "10–3" (ahead–behind) under each name in a singles league table, all time.
+  const people = peopleCounts(matches);
   const singlesVsOf = (e: { p1: string }) => (e.p1 ? peopleLine(people[e.p1]) || undefined : undefined);
 
 

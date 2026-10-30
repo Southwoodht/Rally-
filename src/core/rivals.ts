@@ -1,3 +1,5 @@
+import { countsAsPlayed, isLegacy } from "./matchStatus";
+
 /**
  * Who goes on the profile's Rivals card (Sam, 2026-10-30).
  *
@@ -35,37 +37,48 @@ export function topRivals(records: H2HRecord[], n = 3): H2HRecord[] {
 }
 
 /**
- * Ahead / level / behind for every player in a match list, counting PEOPLE
- * — the profile hero's numbers, for the Table's rows (Sam, 2026-10-30:
- * "under people it says their head to head not their records"). Pass only
- * matches that count; a draw-only record against somebody is level.
+ * Ahead / level / behind for every player, counting PEOPLE — the profile
+ * hero's numbers, for the Table's rows (Sam, 2026-10-30). Counted exactly
+ * as the profile counts them, or the row and the profile disagree (they
+ * did: 9 on the Table, 10 on Sam's profile): matches that count, and for
+ * somebody you have only ever met in legacy years, those legacy results.
+ * Legacy never adds to a pair that has counted matches.
  */
 export interface PeopleCount { ahead: number; level: number; behind: number }
 
-export function peopleCounts(matches: { p1: string; p2: string; winner: string }[]): Record<string, PeopleCount> {
-  const net: Record<string, Record<string, number>> = {};
-  const bump = (a: string, b: string, n: number) => {
-    const row = (net[a] = net[a] || {});
-    row[b] = (row[b] || 0) + n;
+export function peopleCounts(matches: { p1: string; p2: string; winner: string; status?: string }[]): Record<string, PeopleCount> {
+  type Tally = { net: number; n: number };
+  const live: Record<string, Record<string, Tally>> = {};
+  const old: Record<string, Record<string, Tally>> = {};
+  const bump = (into: typeof live, a: string, b: string, d: number) => {
+    const row = (into[a] = into[a] || {});
+    const t = (row[b] = row[b] || { net: 0, n: 0 });
+    t.net += d; t.n++;
   };
   for (const m of matches) {
     if (!m.p1 || !m.p2 || m.p1 === m.p2) continue;
+    const into = countsAsPlayed(m) ? live : isLegacy(m) ? old : null;
+    if (!into) continue;
     const d = m.winner === "p1" ? 1 : m.winner === "p2" ? -1 : 0;
-    bump(m.p1, m.p2, d);
-    bump(m.p2, m.p1, -d);
+    bump(into, m.p1, m.p2, d);
+    bump(into, m.p2, m.p1, -d);
   }
   const out: Record<string, PeopleCount> = {};
-  for (const id of Object.keys(net)) {
+  for (const id of new Set([...Object.keys(live), ...Object.keys(old)])) {
     const c = { ahead: 0, level: 0, behind: 0 };
-    for (const n of Object.values(net[id])) { if (n > 0) c.ahead++; else if (n < 0) c.behind++; else c.level++; }
+    for (const opp of new Set([...Object.keys(live[id] || {}), ...Object.keys(old[id] || {})])) {
+      const t = live[id]?.[opp]?.n ? live[id][opp] : old[id]?.[opp];
+      if (!t) continue;
+      if (t.net > 0) c.ahead++; else if (t.net < 0) c.behind++; else c.level++;
+    }
     out[id] = c;
   }
   return out;
 }
 
-/** "10 ahead · 3 behind", with "· 1 level" between when there is one — the
- *  profile hero's numbers on one line. */
+/** "4–1": people ahead of, then people behind (Sam's own examples), with
+ *  " · 1 level" after when there is one. */
 export function peopleLine(c: PeopleCount | undefined): string {
   if (!c || c.ahead + c.level + c.behind === 0) return "";
-  return [c.ahead + " ahead", c.level ? c.level + " level" : null, c.behind + " behind"].filter(Boolean).join(" · ");
+  return `${c.ahead}–${c.behind}` + (c.level ? ` · ${c.level} level` : "");
 }

@@ -59,7 +59,7 @@ export interface TieRow {
 
 interface Props {
   kind: CompetitionKind;
-  /** "10 ahead · 3 behind" for an entry, under its name in a league table. Singles. */
+  /** "10–3" (ahead–behind) for an entry, under its name in a league table. Singles. */
   vsOf?: (entry: CompetitionPair) => string | undefined;
   players: any[];
   /** This kind's competitions only. */
@@ -275,8 +275,8 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
   /** Tap a row — the Divisions view opens the player's profile. */
   onOpenEntry?: (entry: CompetitionPair) => void;
   zones?: TableZones | null;
-  /** Under each name, that player's own head-to-head, "10 ahead · 3
-   *  behind" (Sam, 2026-10-30: "can u have their h2h instead"). */
+  /** Under each name, that player's own head-to-head, "10–3" (ahead–
+   *  behind; Sam, 2026-10-30: "can u have their h2h instead"). */
   vsOf?: (entry: CompetitionPair) => string | undefined;
 }) {
   const table = leagueTable(entries, results, pointsWin, pointsDraw);

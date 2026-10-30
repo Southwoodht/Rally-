@@ -4,7 +4,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
 import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
-import { countsAsPlayed } from "@/core/matchStatus";
 import { peopleCounts, peopleLine } from "@/core/rivals";
 import { fullNameOf } from "@/lib/format";
 import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, FORM_CHIP, display as displayFont } from "@/lib/theme";
@@ -51,7 +50,7 @@ export interface StandingsListProps {
   /** Listed in order but given no place: a dash where the rank goes and no
    *  leader card. The provisional group under the table. */
   placeless?: boolean;
-  /** The matches each row's "10 ahead · 3 behind" counts — all time,
+  /** The matches each row's "10–3" (ahead–behind) counts — all time,
    *  whatever the table's period, like the profile. Defaults to `matches`. */
   vsMatches?: any[];
 }
@@ -66,7 +65,7 @@ const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 // a stronger claim than "unknown" — and simply say so instead.
 //
 // Under every name, that player's own head-to-head (Sam, 2026-10-30: "can u
-// have their h2h instead") — "10 ahead · 3 behind", the profile hero's
+// have their h2h instead") — "10–3" (ahead–behind), the profile hero's
 // numbers, counted all time like the profile.
 const statLineOf = (p: StandingsPlayer, h2h?: string) => {
   if (h2h) return h2h;
@@ -232,7 +231,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
     return ordered.map((r, i) => ({ ...r, display: r.p.displayOverride ?? display[i], fraction: barFraction(r.p.rating, min, max) }));
   }, [players, matches]);
 
-  const people = useMemo(() => peopleCounts((vsMatches || matches || []).filter(countsAsPlayed)), [vsMatches, matches]);
+  const people = useMemo(() => peopleCounts(vsMatches || matches || []), [vsMatches, matches]);
   const vsOf = (id: string) => peopleLine(people[id]) || undefined;
 
   if (!rows.length) return null;
