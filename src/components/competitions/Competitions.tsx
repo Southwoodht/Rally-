@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trophy, X } from "lucide-react";
+import { ShareSheetButton } from "@/components/ui/ShareSheetButton";
+import type { Sheet } from "@/lib/shareSheet";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { FormDots, SurfaceCard, type FormResult } from "@/components/ui/Surfaces";
 import {
@@ -386,6 +388,35 @@ function RowMatches({ pairId, results, pointsWin, pointsDraw, left, entryName, o
 // One competition
 // ---------------------------------------------------------------------------
 
+/** A competition as a coach sheet: its fixtures by round, decided or not. */
+function competitionSheet(c: Competition, n: number, props: Props, entryName: (id: string | null | undefined, short?: boolean) => string): Sheet {
+  const winners = new Map(props.tiesOf(c).map((t) => [t.id, t.winner]));
+  const rows: TieRow[] = props.tieRowsOf ? props.tieRowsOf(c) : props.tiesOf(c).map((t) => ({
+    id: t.id, round: t.round, pairA: t.pairA, pairB: t.pairB, done: !!t.winner, playBy: null, outcome: null, woA: "", woB: "",
+  }));
+  const rounds = Array.from(new Set(rows.map((r) => r.round ?? 0))).sort((a, b) => a - b);
+  const name = (id: string | null) => (id ? entryName(id, false) : "To be decided");
+  const state = (r: TieRow): string | undefined => {
+    if (r.outcome === "void") return "Called off";
+    if (r.outcome === r.woA) return `Walkover to ${name(r.pairA)}`;
+    if (r.outcome === r.woB) return `Walkover to ${name(r.pairB)}`;
+    const w = winners.get(r.id);
+    if (w === "A") return `Won by ${name(r.pairA)}`;
+    if (w === "B") return `Won by ${name(r.pairB)}`;
+    if (w === "draw") return "Drawn";
+    return r.playBy ? `Play by ${formatMatchDate(r.playBy + "T12:00:00")}` : undefined;
+  };
+  const kindWord = c.format === "league" ? "League" : "Knockout";
+  return {
+    title: c.name,
+    subtitle: [formatMatchDate(Date.now()), `${kindWord} · ${n} ${unit(props.kind, n)}`].join(" · "),
+    sections: rounds.map((round) => ({
+      heading: round ? competitionLabel(c, n, round).replace(c.name + " · ", "") : "Matches",
+      rows: rows.filter((r) => (r.round ?? 0) === round).map((r) => ({ main: `${name(r.pairA)}  v  ${name(r.pairB)}`, sub: state(r) })),
+    })),
+  };
+}
+
 function Detail(props: Props & {
   c: Competition; cEntries: CompetitionPair[]; entryName: (id: string | null | undefined, short?: boolean) => string; onBack: () => void;
 }) {
@@ -421,6 +452,10 @@ function Detail(props: Props & {
             : `Knockout · ${n} ${unit(kind, n)}, seeded`}
           {c.status === "finished" ? " · Finished" : ""}
         </div>
+
+        {/* The coach sheet (lib/shareSheet.ts): every fixture by round, as a
+            picture for the chat or an A4 page to pin up. */}
+        <ShareSheetButton style={{ marginTop: 12 }} build={() => competitionSheet(c, n, props, entryName)} />
 
         {champ && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, background: FEED_LIME, color: FEED_LIME_INK, borderRadius: 12, padding: "12px 14px", marginTop: 14 }}>

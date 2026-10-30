@@ -136,3 +136,17 @@ export function scoreProblem(score: string | null | undefined, winner: "p1" | "p
   }
   return null;
 }
+
+/**
+ * One game to 11 (squash, racketball): first to 11, two clear once it
+ * reaches 10-10, so 11-9 and 12-10 are finished games and 11-10 is not.
+ * Stored the same way as a set ("11-7, 9-11, 11-4"), so everything that
+ * reads a score reads these too; only the entry screen knows the rule.
+ */
+export function gameTo11Problem(a: number, b: number): string | null {
+  const hi = Math.max(a, b), lo = Math.min(a, b);
+  if (hi === 11 && lo <= 9) return null;
+  if (hi > 11 && hi - lo === 2) return null;
+  if (hi < 11) return `${a}-${b} isn't finished — a game goes to 11.`;
+  return `${a}-${b} can't happen — past 10-10 a game is won by two clear.`;
+}

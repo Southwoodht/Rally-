@@ -1,9 +1,10 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, Minus, Plus, Shuffle } from "lucide-react";
+import { ShareSheetButton } from "@/components/ui/ShareSheetButton";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { mixerRounds, partnerRepeats, type MixerCourt } from "@/core/doubles/mixer";
-import { fullNameOf } from "@/lib/format";
+import { formatMatchDate, fullNameOf } from "@/lib/format";
 import {
   FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular,
 } from "@/lib/theme";
@@ -142,6 +143,20 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
         {sitting > 0 ? ` · ${sitting} sit${sitting === 1 ? "s" : ""} out each round` : ""}
         {" · "}{repeats === 0 ? "a new partner every round" : `${repeats} repeat ${repeats === 1 ? "partner" : "partners"}`}
       </div>
+      {/* The coach sheet: tonight's courts as a picture for the chat or an
+          A4 page to pin up (lib/shareSheet.ts). */}
+      <ShareSheetButton
+        style={{ marginBottom: 12 }}
+        build={() => ({
+          title: "Club night",
+          subtitle: [formatMatchDate(Date.now()), `${here.length} players`, `${courts} ${courts === 1 ? "court" : "courts"}`].join(" · "),
+          sections: rounds.map((r, ri) => ({
+            heading: `Round ${ri + 1}`,
+            rows: r.courts.map((c, ci) => ({ label: `Court ${ci + 1}`, main: `${short(c.a[0])} & ${short(c.a[1])}  v  ${short(c.b[0])} & ${short(c.b[1])}` })),
+            note: r.out.length ? "Sitting out: " + r.out.map(short).join(", ") : undefined,
+          })),
+        })}
+      />
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {rounds.map((r, ri) => (
           <SurfaceCard key={ri} radius={16} pad="12px 14px">

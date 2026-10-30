@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { scoreProblem } from "@/core/sets";
+import { gameTo11Problem, scoreProblem } from "@/core/sets";
 import { buildBulk } from "@/components/games/bulk";
 import { BigBtn, Empty, Field, Toggle } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
@@ -58,6 +58,15 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   // start because that's the common case; more on request.
   const [sets, setSets] = useState<Array<{ a: string; b: string }>>([{ a: "", b: "" }, { a: "", b: "" }, { a: "", b: "" }]);
   const [err, setErr] = useState("");
+  // Sets (tennis, padel) or games to 11 (squash, racketball). Only the
+  // grid's labels and the finished-game check differ; the score is the same
+  // "11-7, 9-11" string either way. Remembered per person on this device.
+  const [to11, setTo11State] = useState<boolean>(() => { try { return localStorage.getItem("rally.scoreFormat") === "to11"; } catch { return false; } });
+  const setTo11 = (v: boolean) => {
+    setTo11State(v);
+    try { localStorage.setItem("rally.scoreFormat", v ? "to11" : "sets"); } catch {}
+    if (v && sets.length < 5) setSets([...sets, ...Array.from({ length: 5 - sets.length }, () => ({ a: "", b: "" }))]);
+  };
   // A quick 3-0 that wasn't a full set (winter brief item 9). Logged as
   // status "short": shown and labelled, counted in nothing (core/matchStatus).
   const [short, setShort] = useState(false);
@@ -84,6 +93,12 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     // The grid is written Player 1 first, so the check knows direction.
     const problem = scoreProblem(scoreStr, winner, true);
     if (problem) return setErr(problem);
+    if (to11) {
+      for (const g of filledSets) {
+        const bad = gameTo11Problem(parseInt(g.a, 10), parseInt(g.b, 10));
+        if (bad) return setErr(bad);
+      }
+    }
     setErr("");
     const when = dateStr ? new Date(dateStr).getTime() : Date.now();
     // Snapshot Rally's prediction using the state as it stood right before
@@ -151,10 +166,15 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
         <>
           <Field label="Date played"><input type="date" value={dateStr} max={todayStr()} onChange={(e) => setDateStr(e.target.value)} style={{ ...input, colorScheme: "dark", boxSizing: "border-box" as const }} /></Field>
           <Field label="Score (optional)">
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {([[false, "Sets"], [true, "Games to 11"]] as const).map(([v, l]) => (
+                <button key={l} onClick={() => setTo11(v)} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, padding: "6px 12px", borderRadius: 999, border: "none", cursor: "pointer", background: to11 === v ? FEED_LIME : FEED_RAISED, color: to11 === v ? FEED_LIME_INK : FEED_TEXT_MID }}>{l}</button>
+              ))}
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: `minmax(0,1fr) repeat(${sets.length}, 46px)`, gap: 6, alignItems: "center" }}>
               <span />
               {sets.map((_, i) => (
-                <span key={"h" + i} style={{ fontFamily: body, fontSize: 11, fontWeight: 500, color: FEED_TEXT_MID, textAlign: "center" }}>Set {i + 1}</span>
+                <span key={"h" + i} style={{ fontFamily: body, fontSize: 11, fontWeight: 500, color: FEED_TEXT_MID, textAlign: "center" }}>{to11 ? "Game" : "Set"} {i + 1}</span>
               ))}
               {([["a", n1], ["b", n2]] as const).map(([side, label]) => (
                 <React.Fragment key={side}>
@@ -165,7 +185,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                       value={s[side]}
                       onChange={(e) => setCell(i, side, e.target.value)}
                       inputMode="numeric"
-                      aria-label={`${label}, set ${i + 1}`}
+                      aria-label={`${label}, ${to11 ? "game" : "set"} ${i + 1}`}
                       style={{ ...input, ...tabular, fontFamily: body, fontWeight: 600, fontSize: 16, background: FEED_RAISED, color: FEED_TEXT_HI, textAlign: "center", padding: "10px 4px", marginBottom: 0 }}
                     />
                   ))}
@@ -173,7 +193,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
               ))}
             </div>
             {sets.length < 5 && (
-              <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ ...addLink, padding: "10px 0 0" }}>Add a set</button>
+              <button onClick={() => setSets([...sets, { a: "", b: "" }])} style={{ ...addLink, padding: "10px 0 0" }}>{to11 ? "Add a game" : "Add a set"}</button>
             )}
             {/* One line, not three. This was the largest block of text on the
                 screen and it is optional guidance on an optional field — on a
@@ -198,7 +218,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
           >
             <span>
               <span style={{ display: "block", fontFamily: body, fontSize: 15, color: FEED_TEXT_HI }}>Short or unfinished match</span>
-              <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>A quick game that wasn&apos;t a full set. Shown in the feed, never counted.</span>
+              <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>A game that stopped early. Shown in the feed, never counted.</span>
             </span>
             <span style={{ width: 44, height: 26, borderRadius: 13, background: short ? BALL : FEED_CARD, position: "relative", flexShrink: 0, marginLeft: 10 }}>
               <span style={{ position: "absolute", top: 3, left: short ? 21 : 3, width: 20, height: 20, borderRadius: 10, background: short ? FEED_LIME_INK : FEED_TEXT_MID }} />

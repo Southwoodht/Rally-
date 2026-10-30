@@ -1,7 +1,7 @@
 // Tests for scoreProblem (core/sets.ts): a score and the winner must agree.
 // Plain TypeScript with an assert; relative imports (see CLAUDE.md §1).
 
-import { scoreProblem } from "./sets";
+import { gameTo11Problem, scoreProblem } from "./sets";
 
 let failures = 0;
 let checks = 0;
@@ -22,6 +22,15 @@ ok(scoreProblem("7-6, 0-6, 7-6", "p1", true) === null, "sets decide, not games: 
 ok(scoreProblem("1-6, 5-3", "p2", true) === null, "Charlie v Zaach 1-6, 5-3: Zaach won the only finished set");
 ok(scoreProblem("6-3, 3-1", "p1", true) === null, "a set up and ahead in the second: fine");
 ok(scoreProblem("6-4, 4-6", "p1", true) !== null, "a set each and 10-10 in games is level: no winner without the decider");
+
+ok(gameTo11Problem(11, 7) === null, "11-7 is a game");
+ok(gameTo11Problem(9, 11) === null, "9-11 is a game");
+ok(gameTo11Problem(12, 10) === null, "12-10 is a game");
+ok(gameTo11Problem(15, 13) === null, "15-13 is a game");
+ok(gameTo11Problem(11, 10) !== null, "11-10 is not finished");
+ok(gameTo11Problem(13, 10) !== null, "13-10 cannot happen");
+ok(gameTo11Problem(8, 6) !== null, "8-6 is not finished");
+ok(gameTo11Problem(10, 10) !== null, "10-10 is not finished");
 
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
 console.log(`PASSED — ${checks}/${checks} checks (score check)`);

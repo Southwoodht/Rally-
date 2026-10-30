@@ -141,7 +141,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
                 <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 3 }}>
                   Type its name in the box above and tap Use. Or find it on the map first:
                 </div>
-                <a href={`https://www.google.com/maps/search/${encodeURIComponent("tennis club near " + (near === "you" ? "me" : near))}`} target="_blank" rel="noopener noreferrer" style={{ ...chip, display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, textDecoration: "none", background: PANEL }}>
+                <a href={`https://www.google.com/maps/search/${encodeURIComponent("racket club near " + (near === "you" ? "me" : near))}`} target="_blank" rel="noopener noreferrer" style={{ ...chip, display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, textDecoration: "none", background: PANEL }}>
                   <MapPin size={14} /> Look on Google Maps
                 </a>
               </div>
