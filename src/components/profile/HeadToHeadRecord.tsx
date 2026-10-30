@@ -20,18 +20,27 @@ import { FEED_LIME, FEED_LOST, FEED_PAD, FEED_PAD_Y, FEED_RADIUS, FEED_RAISED, F
 
 export interface Standing { place: string; rating: number | null; rd: number | null }
 
-export function HeadToHeadHero({ ahead, level, behind, self, record, standing }: {
+export type H2HGroup = "ahead" | "level" | "behind";
+
+/** Each count is a button down to the list that names those people (Sam:
+ *  "if u click the head to heads it shows who they are beating"). */
+export function HeadToHeadHero({ ahead, level, behind, self, record, standing, onShow }: {
   ahead: number; level: number; behind: number; self: boolean;
   record: { w: number; d: number; l: number };
   standing?: Standing | null;
+  onShow?: (group: H2HGroup) => void;
 }) {
   const faced = ahead + level + behind;
-  const num = (n: number, colour: string, label: string) => (
-    <div style={{ textAlign: "center", minWidth: 0 }}>
-      <div style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 50, lineHeight: 1, color: colour }}>{n}</div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6 }}>{label}</div>
-    </div>
-  );
+  const num = (n: number, colour: string, label: H2HGroup) => {
+    const go = onShow && n > 0 ? () => onShow(label) : undefined;
+    return (
+      <button type="button" onClick={go} disabled={!go} aria-label={go ? `Show the ${n} ${label}` : undefined}
+        style={{ textAlign: "center", minWidth: 0, background: "none", border: "none", padding: "2px 4px", cursor: go ? "pointer" : "default", color: "inherit" }}>
+        <div style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 50, lineHeight: 1, color: colour }}>{n}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6, textDecoration: go ? "underline" : "none", textDecorationColor: FEED_RAISED, textUnderlineOffset: 3 }}>{label}</div>
+      </button>
+    );
+  };
   const dot = <span aria-hidden="true" style={{ fontFamily: display, fontWeight: 700, fontSize: 34, color: FEED_RAISED, lineHeight: 1, marginTop: 6 }}>·</span>;
   // A number in the display face; a word ("Not ranked", "Provisional") in
   // the body face and smaller, so three columns never run into each other.
@@ -85,15 +94,15 @@ function Row({ r, first, note, onOpen }: { r: OpponentRecord; first: boolean; no
   );
 }
 
-function List({ title, hint, items, notes, visible, onOpen, onAll }: {
-  title: string; hint?: string; items: OpponentRecord[]; notes?: Record<string, string>;
+function List({ id, title, hint, items, notes, visible, onOpen, onAll }: {
+  id: string; title: string; hint?: string; items: OpponentRecord[]; notes?: Record<string, string>;
   visible?: number; onOpen?: (id: string) => void; onAll?: () => void;
 }) {
   if (!items.length) return null;
   const shown = visible ? items.slice(0, visible) : items;
   const rest = items.length - shown.length;
   return (
-    <div style={{ marginTop: 18 }}>
+    <div id={id} style={{ marginTop: 18, scrollMarginTop: 72 }}>
       <GroupLabel right={hint ? <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID }}>{hint}</span> : undefined}>{title} · {items.length}</GroupLabel>
       <GroupCard>
         {shown.map((r, i) => <Row key={r.player?.id || i} r={r} first={i === 0} note={notes?.[r.player?.id]} onOpen={onOpen} />)}
@@ -122,9 +131,9 @@ export function HeadToHeadLists({ lead, behind, level, self, showAllAhead, onAll
   const mostPlayed = [...lead].sort((a, b) => played(b) - played(a) || (b.w - b.l) - (a.w - a.l));
   return (
     <>
-      <List title="Behind" hint={self ? "your targets" : undefined} items={worstFirst} notes={notes} onOpen={onOpen} />
-      <List title="Level" items={level} onOpen={onOpen} />
-      <List title="Ahead" items={mostPlayed} visible={showAllAhead ? undefined : 5} onOpen={onOpen} onAll={onAllAhead} />
+      <List id="h2h-behind" title="Behind" hint={self ? "your targets" : undefined} items={worstFirst} notes={notes} onOpen={onOpen} />
+      <List id="h2h-level" title="Level" items={level} onOpen={onOpen} />
+      <List id="h2h-ahead" title="Ahead" items={mostPlayed} visible={showAllAhead ? undefined : 5} onOpen={onOpen} onAll={onAllAhead} />
     </>
   );
 }

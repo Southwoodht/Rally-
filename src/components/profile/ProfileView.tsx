@@ -138,6 +138,11 @@ export function ProfileView(p: ProfileViewProps) {
       <HeadToHeadHero
         ahead={p.opponents?.lead.length || 0} level={p.opponents?.levelList?.length || 0} behind={p.opponents?.behind.length || 0}
         self={isSelf} record={p.record.record} standing={p.standing}
+        onShow={(g) => {
+          // Ahead opens in full so the tap shows everybody it counted.
+          if (g === "ahead") setAllOpponents(true);
+          setTimeout(() => document.getElementById("h2h-" + g)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+        }}
       />
       <ShareCardButton p={p} isSelf={isSelf} />
       {p.opponents && (

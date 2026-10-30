@@ -4,7 +4,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
 import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
-import { levelNow } from "@/core/levels";
+import { countsAsPlayed } from "@/core/matchStatus";
+import { peopleCounts, type PeopleCount } from "@/core/rivals";
 import { fullNameOf } from "@/lib/format";
 import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, FORM_CHIP, display as displayFont } from "@/lib/theme";
 
@@ -52,11 +53,6 @@ export interface StandingsListProps {
   placeless?: boolean;
 }
 
-const recordOf = (p: StandingsPlayer) => `${p.w}–${p.d}–${p.l}`;
-const winPctOf = (p: StandingsPlayer) => {
-  const gp = p.w + p.d + p.l;
-  return gp ? Math.round((p.w / gp) * 100) : null;
-};
 const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 
 // Somebody who has never played is not somebody on nought. Printing them as
@@ -65,15 +61,15 @@ const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 // no evidence, the other is a lot of it. They keep their place in the list —
 // a separate section under the table was worse, because "below everybody" is
 // a stronger claim than "unknown" — and simply say so instead.
-const statLineOf = (p: StandingsPlayer) => {
+//
+// Under the name, the head-to-head in people (Sam, 2026-10-30: "under
+// people it says their head to head not their records") — the profile
+// hero's three numbers, over the same matches the table is counting. The
+// record and the level word went to make room; both are on the profile.
+const statLineOf = (p: StandingsPlayer, c?: PeopleCount) => {
   if (!gamesOf(p)) return "no games yet";
-  const pct = winPctOf(p);
-  const lv = levelNow(p.player);
-  // No "provisional" here since the one-table change: provisional players
-  // sit in their own section under that heading, so the word on every row
-  // said it a second time and pushed the level off the end.
-  return [recordOf(p), pct === null ? null : pct + "%", lv?.cat ? String(lv.cat).toLowerCase() : null]
-    .filter(Boolean).join(" · ");
+  if (!c) return "";
+  return ["Ahead of " + c.ahead, c.level ? "level " + c.level : null, "behind " + c.behind].filter(Boolean).join(" · ");
 };
 
 /**
@@ -98,7 +94,7 @@ function barFraction(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
 
-function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display: string; onOpen?: (id: string) => void; unit: string }) {
+function LeaderCard({ p, counts, display, onOpen, unit }: { p: StandingsPlayer; counts?: PeopleCount; display: string; onOpen?: (id: string) => void; unit: string }) {
   return (
     <div
       onClick={onOpen ? () => onOpen(p.player.id) : undefined}
@@ -118,7 +114,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
             {fullNameOf(p.player)}
           </div>
           <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {statLineOf(p)}
+            {statLineOf(p, counts)}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -142,7 +138,7 @@ function LeaderCard({ p, display, onOpen, unit }: { p: StandingsPlayer; display:
   );
 }
 
-function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
+function PlayerRow({ p, counts, rank, tied, display, fraction, isMe, onOpen }: any) {
   // No bar at all for somebody with no games — a zero-width bar and a
   // no-bar-drawn are the same pixels, but only one of them is a measurement.
   const played = gamesOf(p) > 0;
@@ -182,7 +178,7 @@ function PlayerRow({ p, rank, tied, display, fraction, isMe, onOpen }: any) {
             )}
           </div>
           <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {statLineOf(p)}
+            {statLineOf(p, counts)}
           </div>
           {p.form && p.form.length > 0 && (
             <div style={{ marginTop: 5 }}>
@@ -235,6 +231,8 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
     return ordered.map((r, i) => ({ ...r, display: r.p.displayOverride ?? display[i], fraction: barFraction(r.p.rating, min, max) }));
   }, [players, matches]);
 
+  const counts = useMemo(() => peopleCounts((matches || []).filter(countsAsPlayed)), [matches]);
+
   if (!rows.length) return null;
 
   // Only crown somebody when they are alone at the top. Two players sharing
@@ -251,7 +249,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {crowned && <LeaderCard p={crowned.p} display={crowned.display} onOpen={onOpen} unit={unit} />}
+      {crowned && <LeaderCard p={crowned.p} counts={counts[crowned.id]} display={crowned.display} onOpen={onOpen} unit={unit} />}
 
       {/* Every row below the leader printed a bare numeral, and the leader
           card was the only thing on the screen naming it. Switch to Strength
@@ -272,6 +270,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
         <PlayerRow
           key={r.id}
           p={r.p}
+          counts={counts[r.id]}
           rank={placeless ? "–" : r.rank}
           tied={placeless ? false : r.tied}
           display={r.display}

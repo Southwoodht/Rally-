@@ -33,3 +33,32 @@ export function topRivals(records: H2HRecord[], n = 3): H2HRecord[] {
     .sort((a, b) => (b.w + b.d + b.l) - (a.w + a.d + a.l) || Math.abs(a.w - a.l) - Math.abs(b.w - b.l))
     .slice(0, n);
 }
+
+/**
+ * Ahead / level / behind for every player in a match list, counting PEOPLE
+ * — the profile hero's numbers, for the Table's rows (Sam, 2026-10-30:
+ * "under people it says their head to head not their records"). Pass only
+ * matches that count; a draw-only record against somebody is level.
+ */
+export interface PeopleCount { ahead: number; level: number; behind: number }
+
+export function peopleCounts(matches: { p1: string; p2: string; winner: string }[]): Record<string, PeopleCount> {
+  const net: Record<string, Record<string, number>> = {};
+  const bump = (a: string, b: string, n: number) => {
+    const row = (net[a] = net[a] || {});
+    row[b] = (row[b] || 0) + n;
+  };
+  for (const m of matches) {
+    if (!m.p1 || !m.p2 || m.p1 === m.p2) continue;
+    const d = m.winner === "p1" ? 1 : m.winner === "p2" ? -1 : 0;
+    bump(m.p1, m.p2, d);
+    bump(m.p2, m.p1, -d);
+  }
+  const out: Record<string, PeopleCount> = {};
+  for (const id of Object.keys(net)) {
+    const c = { ahead: 0, level: 0, behind: 0 };
+    for (const n of Object.values(net[id])) { if (n > 0) c.ahead++; else if (n < 0) c.behind++; else c.level++; }
+    out[id] = c;
+  }
+  return out;
+}
