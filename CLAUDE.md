@@ -1441,8 +1441,8 @@ way. Still unlogged, by design: Data → Clear results (bulk, two-step).
 owners/editors fix "Cheesedog4000…" → "Charlie Easey". `set_player_name`
 (2026-10-24) only renamed the club's player row; the members list, search,
 messages and Global show the ACCOUNT name (profiles.display_name). New
-`set_member_name(league, user, name)` (**`schema_member_rename.sql`, not yet
-run**) sets the account name AND their player row(s) in that club; staff
+`set_member_name(league, user, name)` (**`schema_member_rename.sql` RUN 2026-10-30,
+verified (1, false)**) sets the account name AND their player row(s) in that club; staff
 only, target must be in that club, an editor can't rename an owner, 1–60
 chars; the app runs `isOffensiveName` first. Rename sits on each row of
 Who helps run it. The rest of Sam's Part 2 list (remove member, delete
