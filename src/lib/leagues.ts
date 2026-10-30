@@ -376,6 +376,27 @@ export async function clubsNear(spot: { lat: number; lng: number }, km = 40): Pr
  * playing and deletes the membership. Their results stay, so nobody's rating
  * moves.
  */
+/**
+ * An owner or editor renames a member of their club: their account name and
+ * their player in this club (schema_member_rename.sql). The caller checks the
+ * offensive-words filter first.
+ */
+export async function setMemberName(leagueId: string, userId: string, name: string): Promise<void> {
+  if (!supabase) throw new Error("Not connected.");
+  const res: any = await withSupabaseTimeout(
+    supabase.rpc("set_member_name", { p_league_id: leagueId, p_user_id: userId, p_name: name }),
+    { error: { message: "timed out" } } as any,
+  );
+  if (res?.error) {
+    const msg = String(res.error.message || "");
+    throw new Error(
+      /could not find the function|schema cache/i.test(msg)
+        ? "Renaming members isn't switched on yet — run supabase/schema_member_rename.sql."
+        : msg || "Couldn't rename them.",
+    );
+  }
+}
+
 export async function removeLeagueMember(leagueId: string, userId: string): Promise<void> {
   if (!supabase) throw new Error("Not connected.");
   const res: any = await withSupabaseTimeout(

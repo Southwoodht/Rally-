@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { SurfaceCard } from "@/components/ui/Surfaces";
-import { listLeagueMembers, removeLeagueMember, setLeagueRole, type LeagueMember } from "@/lib/leagues";
+import { listLeagueMembers, removeLeagueMember, setLeagueRole, setMemberName, type LeagueMember } from "@/lib/leagues";
+import { isOffensiveName, OFFENSIVE_NAME_MESSAGE } from "@/core/nameFilter";
 import {
   DOT_LOSS, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body,
 } from "@/lib/theme";
@@ -41,6 +42,28 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [leagueId]);
 
   const iAmOwner = !!members?.some((m) => m.isMe && m.role === "owner");
+  const iAmStaff = !!members?.some((m) => m.isMe && (m.role === "owner" || m.role === "editor"));
+
+  // Renaming a member (Sam, 2026-10-30: "Cheesedog4000…" → "Charlie Easey").
+  // Owners and editors; an editor can't rename an owner. Sets their account
+  // name and their player in this club together (schema_member_rename.sql).
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const rename = async (m: LeagueMember) => {
+    const name = newName.trim().replace(/\s+/g, " ");
+    if (!name) return;
+    if (isOffensiveName(name)) { setFailed({ id: m.userId, message: OFFENSIVE_NAME_MESSAGE }); return; }
+    setBusy(m.userId); setFailed(null);
+    try {
+      await setMemberName(leagueId, m.userId, name);
+      setRenaming(null); setNewName("");
+      await load();
+      onRemoved?.();
+    } catch (e: any) {
+      setFailed({ id: m.userId, message: e?.message || "Couldn't rename them." });
+    }
+    setBusy(null);
+  };
 
   const change = async (m: LeagueMember, role: "owner" | "editor" | "member") => {
     setBusy(m.userId); setFailed(null); setOpen(null);
@@ -90,6 +113,11 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
             <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {m.name}{m.isMe ? " (you)" : ""}
             </span>
+            {iAmStaff && !m.isMe && (m.role !== "owner" || iAmOwner) && renaming !== m.userId && (
+              <button onClick={() => { setRenaming(m.userId); setNewName(m.name || ""); setFailed(null); }} style={{ flexShrink: 0, background: "none", border: "none", padding: "4px 6px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID }}>
+                Rename
+              </button>
+            )}
             {iAmOwner ? (
               <button
                 onClick={() => setOpen(open === m.userId ? null : m.userId)}
@@ -109,6 +137,15 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
               </span>
             )}
           </div>
+
+          {renaming === m.userId && (
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Their real name" autoFocus maxLength={60}
+                style={{ flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "9px 11px", fontFamily: body, fontSize: 14.5 }} />
+              <button onClick={() => rename(m)} disabled={busy === m.userId || !newName.trim()} style={{ flexShrink: 0, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "9px 12px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer", opacity: newName.trim() ? 1 : 0.5 }}>{busy === m.userId ? "Saving…" : "Save"}</button>
+              <button onClick={() => { setRenaming(null); setFailed(null); }} style={{ flexShrink: 0, background: "none", border: "none", padding: "9px 4px", fontFamily: body, fontSize: 13.5, color: FEED_TEXT_MID, cursor: "pointer" }}>Cancel</button>
+            </div>
+          )}
 
           {open === m.userId && (
             <div style={{ marginTop: 8 }}>

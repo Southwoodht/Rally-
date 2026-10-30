@@ -1437,6 +1437,18 @@ straight through `editMatch` with no log — now it goes through
 organiser isn't in. Keeping / removing a disputed result is logged the same
 way. Still unlogged, by design: Data → Clear results (bulk, two-step).
 
+**Renaming a member's account (branch `coach-sheet`, 2026-10-30).** Sam:
+owners/editors fix "Cheesedog4000…" → "Charlie Easey". `set_player_name`
+(2026-10-24) only renamed the club's player row; the members list, search,
+messages and Global show the ACCOUNT name (profiles.display_name). New
+`set_member_name(league, user, name)` (**`schema_member_rename.sql`, not yet
+run**) sets the account name AND their player row(s) in that club; staff
+only, target must be in that club, an editor can't rename an owner, 1–60
+chars; the app runs `isOffensiveName` first. Rename sits on each row of
+Who helps run it. The rest of Sam's Part 2 list (remove member, delete
+account → Former player, name filter, privacy page with ICO ZB890566 linked
+from sign-up/menu) was already live from 2026-10-24.
+
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to
 `/search`, and picking somebody sent the page to `/?profile=`, a full load —

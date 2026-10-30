@@ -75,6 +75,8 @@ begin
     -- Moderation (schema_moderation.sql): renaming a player, removing a member.
     'public.set_player_name(text, text, text)',
     'public.remove_league_member(uuid, uuid)',
+    -- Renaming a member's account (schema_member_rename.sql).
+    'public.set_member_name(uuid, uuid, text)',
     -- The doubles sanity trigger's function (schema_doubles.sql). Not an
     -- entry point — nothing calls it but the trigger — and the migration
     -- revokes it itself. It is listed anyway because `create or replace`
@@ -121,7 +123,7 @@ select f.proname                                 as function,
      'close_season_if_due', 'guard_competition_fixture',
      'set_player_level', 'guard_player_level', 'log_player_level', 'set_player_start', 'set_player_utr', 'set_league_logo',
      'set_league_place', 'set_league_open', 'clubs_near', 'players_near',
-     'set_player_name', 'remove_league_member',
+     'set_player_name', 'remove_league_member', 'set_member_name',
      'doubles_match_is_sane', 'doubles_fixture_is_sane',
      'is_league_member', 'is_club_admin'
    )
