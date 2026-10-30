@@ -1482,9 +1482,24 @@ sheet with no table (knockout, mixer) is one picture of its rounds. Ties
 now carry `sets` / `date` / `walkover` (`KnockoutFixture`, from
 competitionAdapters, tested; doubles read the same way round as their
 winner always has). The footer QR is `lib/compLink.ts`:
-`/?club=<league>&comp=<competition>`, stashed in localStorage on load (10
-minutes fresh, survives sign-in), Dashboard opens the club if you are in
-it, RallyApp switches to Fixtures on the right sport, Competitions opens it.
+`/?club=<league>&comp=<competition>` on whatever address the app is served
+from (so it works before southwood.app is connected), read by AuthGate on
+load before sign-in can take the address bar, stashed in localStorage (an
+hour fresh), Dashboard opens the club if you are in it, RallyApp switches
+to Fixtures on the right sport, Competitions opens it. Decoded with jsQR
+from both the page and the picture on 2026-10-30.
+**Tweaks, 2026-10-30 (branch `share-rivals`):** a name is NEVER truncated —
+`setMatch()` sets each match on one line, then the score at 78%, then the
+score on its own line, and only when the names alone are too wide "A v"
+over "B"; columns pack on those real heights. A result with no score shows
+a green "W" by the winner (no lone tick); a walkover says "walkover". The
+second picture is **Still to play** (`nextToPlay`, the next six open
+matches in draw order) above Latest results.
+**Rivals card** (`profile/RivalsCard.tsx`) straight under the career record,
+hero style (a second `sw-hero` on the profile, at Sam's ask): opponents you
+lead – who lead you, "you lead · they lead", then "Best win: (first of Best
+wins, i.e. strongest opponent beaten) · Nemesis: (most losses to)". Tapping
+it expands and scrolls to Head to head.
 
 **Polish + head-to-head (merged to master 2026-10-30).**
 Sam's 16-point brief; 1–11 (clubs page and switcher, division tables, odds,

@@ -6,12 +6,12 @@
  * the moment the page loads and stripped from the address bar, because a
  * signed-out scan goes through sign-in first and a reload must not re-run
  * it. Dashboard opens the club when the person is in it; Competitions opens
- * the competition once its list arrives. A stash older than ten minutes is
+ * the competition once its list arrives. A stash older than an hour (long enough to sign up and confirm an email) is
  * ignored, so a scan that led nowhere can't surface days later.
  */
 
 const KEY = "rally.openComp";
-const FRESH_MS = 10 * 60 * 1000;
+const FRESH_MS = 60 * 60 * 1000;
 
 interface Pending { club: string; comp: string; at: number }
 

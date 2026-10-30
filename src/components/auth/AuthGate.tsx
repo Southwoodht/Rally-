@@ -9,6 +9,7 @@ import { FEED_OVERLAY, BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display } f
 import Welcome from "@/components/auth/Welcome";
 import UpdatePassword from "@/components/auth/UpdatePassword";
 import Dashboard from "@/components/dashboard/Dashboard";
+import { readCompParam } from "@/lib/compLink";
 
 /**
  * Decides what the app shows:
@@ -20,6 +21,10 @@ export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [recovery, setRecovery] = useState(false);
+
+  // A scanned coach sheet (lib/compLink.ts) is read here, before sign-in or
+  // sign-up can take the address bar with it, and opened once the club loads.
+  useEffect(() => { readCompParam(); }, []);
 
   useEffect(() => {
     // support a dev-only override to fake a session for end-to-end checks —
