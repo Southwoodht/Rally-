@@ -15,7 +15,7 @@ import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body } fro
 const RECENT_WINDOW_MS = 7 * 86400000;
 const SEEN_KEY = "notifs_seen";
 
-export function NotificationBell({ meId, leagueId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin, onGoFriends }: any) {
+export function NotificationBell({ meId, leagueId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin, onGoFriends, organiser }: any) {
   const [open, setOpen] = useState(false);
   const [remote, setRemote] = useState<Notification[]>([]);
   // Which notifications have been looked at. Notifications are computed from
@@ -34,7 +34,7 @@ export function NotificationBell({ meId, leagueId, players, matches, posts, name
       .finally(() => { if (alive) setSeenLoaded(true); });
     return () => { alive = false; };
   }, []);
-  const local = useMemo(() => computeLocalNotifications(meId, players, matches, posts, nameOf), [meId, players, matches, posts, nameOf]);
+  const local = useMemo(() => computeLocalNotifications(meId, players, matches, posts, nameOf, !!organiser), [meId, players, matches, posts, nameOf, organiser]);
 
   const loadRemote = async () => {
     const out: Notification[] = [];

@@ -1,6 +1,6 @@
 "use client";
 import { peekPendingComp } from "@/lib/compLink";
-import { CONFIRM_WINDOW_MS, countsAsPlayed, isClaimed, isLegacy, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
+import { CONFIRM_WINDOW_MS, REJECTED_KEEP_MS, countsAsPlayed, isClaimed, isLegacy, isLegacyRejected, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
 import React, { useCallback, useState, useEffect, useMemo, useRef } from "react";
@@ -1220,7 +1220,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   useEffect(() => {
     const DAY = 24 * 3600 * 1000;
     const now = Date.now();
-    const due = matches.filter((m) => m.deleteRequestedAt && now - m.deleteRequestedAt > DAY);
+    // A rejected legacy claim keeps its rejection time here too, but it is
+    // not a delete request: an organiser's app clears it after two weeks
+    // (only staff may delete it), once its claimer has had time to be told.
+    const due = matches.filter((m) => m.deleteRequestedAt && (isLegacyRejected(m)
+      ? canManageMatches && now - m.deleteRequestedAt > REJECTED_KEEP_MS
+      : !!m.deleteRequestedBy && now - m.deleteRequestedAt > DAY));
     if (due.length) {
       const ids = new Set(due.map((m) => m.id));
       setMatches(matches.filter((m) => !ids.has(m.id)));
@@ -1229,6 +1234,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const confirmMatch = (id) => setMatches(matches.map((m) => m.id === id ? { ...m, status: "confirmed" } : m));
   // Agreeing a claimed legacy year makes it legacy — never "confirmed", which
   // would put a 2018 result into every rating (core/matchStatus.ts).
+  // "Not right" (Sam, 2026-10-30): the claim comes off both profiles at
+  // once and its claimer is told in the bell. Kept as a rejected row only so
+  // there is something to tell them from (core/matchStatus.ts).
+  const rejectLegacy = (id) => { setMatches(matches.map((m) => (m.id === id && m.status === "legacy_claimed" ? { ...m, status: "legacy_rejected", deleteRequestedAt: Date.now() } : m))); flash("Taken off — they'll be told"); };
   const agreeLegacy = (id) => { setMatches(matches.map((m) => (m.id === id && m.status === "legacy_claimed" ? { ...m, status: "legacy" } : m))); flash("Agreed — it's in your legacy years"); };
   // Disputing no longer deletes (Sam, 2026-10-21: "deleting the result means
   // one person can wipe a match they lost"). The result is marked disputed,
@@ -2064,7 +2073,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   <MessageRobins count={unreadMsgs} />
                 </button>
                 <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  <NotificationBell meId={meId} leagueId={leagueId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
+                  <NotificationBell meId={meId} leagueId={leagueId} organiser={!!canManageMatches} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
                 </div>
                 {(
                   <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3.5, flexShrink: 0 }}>
@@ -2375,7 +2384,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
           const options = isShortMatch(mt) || isLegacy(mt) ? [] : leagueGameOptions(gdata.fixtures || [], comps.competitions, mt.p1, mt.p2, mt.winner === "draw");
           if (options.length) setLeagueAsk({ match: mt, options });
           else saveLogged(mt, []);
-        }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} canLegacy={canManageMatches} />}
+        }} onSaveMany={(arr) => { setMatches([...arr, ...matches]); flash("Added " + arr.length + " results"); setTab("ladder"); }} onCreatePlayer={addPlayer} onDeleteBetween={canManageMatches ? (a, b, year) => { deleteBetween(a, b, year); flash(year ? "Cleared " + year : "Cleared"); } : null} canLegacy organiser={!!canManageMatches} />}
         {/* Home's top row sits outside Home itself, in a <header>, so the
             screen-change fade (ui/Motion.tsx) leaves it still like on every
             other tab. */}
@@ -2920,7 +2929,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         />
       )}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
-      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onAdminCorrect={canManageMatches ? adminCorrect : undefined} onAgreeLegacy={agreeLegacy} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
+      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onAdminCorrect={canManageMatches ? adminCorrect : undefined} onAgreeLegacy={agreeLegacy} onRejectLegacy={rejectLegacy} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && (
         <GroupSheet
           // The club you are in is always listed, even if the list of clubs

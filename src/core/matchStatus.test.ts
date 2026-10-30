@@ -1,4 +1,4 @@
-import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isLegacy, isLegacyClaimed, isShortMatch, isUnconfirmedResult, legacyLine, legacyNeedsAgreement } from "./matchStatus";
+import { CONFIRM_WINDOW_MS, countsAsPlayed, hasResult, isAgreed, isBooking, isDisputed, isLegacy, isLegacyClaimed, isLegacyRejected, isShortMatch, isUnconfirmedResult, legacyLine, legacyNeedsAgreement } from "./matchStatus";
 
 let pass = 0, fail = 0;
 const eq = (got: any, want: any, msg: string) => {
@@ -75,6 +75,10 @@ eq(legacyLine({ w: 1, d: 0, l: 1 }), "Level over 2 legacy years", "level");
 eq(legacyLine({ w: 1, d: 0, l: 0 }), "Led 1 legacy year", "singular");
 eq(legacyLine({ w: 4, d: 0, l: 0, claimed: 1 }), "Led 4 legacy years · 1 claimed", "a claim is named");
 eq(legacyLine({ w: 0, d: 0, l: 0 }), null, "no legacy, no line");
+eq(countsAsPlayed(m("legacy_rejected")), false, "a rejected claim counts for nothing");
+eq(isLegacy(m("legacy_rejected")), false, "and is not shown as legacy anywhere");
+eq(hasResult(m("legacy_rejected")), false, "nor as a result");
+eq(isLegacyRejected(m("legacy_rejected")), true, "it is known as a rejected claim");
 eq(CONFIRM_WINDOW_MS, 48 * 3600 * 1000, "results wait 48 hours for the opponent");
 
 console.log(fail ? `\nFAILED — ${fail} of ${pass + fail} checks` : `\nPASSED — ${pass}/${pass} checks`);

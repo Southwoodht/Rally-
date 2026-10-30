@@ -1,4 +1,4 @@
-import { isLegacyClaimed, isUnconfirmedResult } from "./matchStatus";
+import { isLegacyClaimed, isLegacyRejected, REJECTED_KEEP_MS, isUnconfirmedResult } from "./matchStatus";
 import { computeAchievements } from "@/core/achievements";
 
 // In-app only — no push, no persisted read/unread state. Two tiers:
@@ -19,7 +19,7 @@ export interface Notification {
   matchId?: string;
 }
 
-export function computeLocalNotifications(meId: string, players: any[], matches: any[], posts: any[], nameOf: (id: string) => string): Notification[] {
+export function computeLocalNotifications(meId: string, players: any[], matches: any[], posts: any[], nameOf: (id: string) => string, organiser = false): Notification[] {
   const out: Notification[] = [];
   const now = Date.now();
   const nm = (id: string) => { const p = players.find((x) => x.id === id); return p ? p.name + (p.last ? " " + p.last : "") : nameOf(id); };
@@ -37,6 +37,22 @@ export function computeLocalNotifications(meId: string, players: any[], matches:
     out.push({ id: "legacy_" + m.id, icon: "🏛️", text: `${other} added a legacy result from ${year} — agree it if it's right`, date: m.loggedAt || m.date, action: "confirm", matchId: m.id });
   });
 
+  // An organiser answers a claim for somebody with no account to answer it.
+  if (organiser) {
+    matches.filter((m) => isLegacyClaimed(m) && m.reportedBy !== meId).forEach((m) => {
+      const others = players.filter((p) => (p.id === m.p1 || p.id === m.p2) && p.id !== m.reportedBy);
+      if (!others.length || others.some((p) => p.auth_id)) return;
+      out.push({ id: "legacy_" + m.id, icon: "🏛️", text: `${nm(m.reportedBy)} added a legacy result from ${new Date(m.date).getFullYear()} against ${others.map((p) => nm(p.id)).join(" and ")} — confirm it for them, or say it's not right`, date: m.loggedAt || m.date, action: "confirm", matchId: m.id });
+    });
+  }
+
+  // A legacy year you claimed that they said wasn't right: it's gone from
+  // both profiles, and you're told who and which year.
+  matches.filter((m) => isLegacyRejected(m) && m.reportedBy === meId && (m.deleteRequestedAt || 0) > now - REJECTED_KEEP_MS).forEach((m) => {
+    const other = nm(m.p1 === meId ? m.p2 : m.p1);
+    out.push({ id: "legacyno_" + m.id, icon: "🏛️", text: `${other} said your legacy result from ${new Date(m.date).getFullYear()} wasn't right, so it's been taken off`, date: m.deleteRequestedAt || now, action: "none" });
+  });
+
   matches.filter((m) => m.pendingEdit && m.pendingEdit.proposedBy !== meId && (m.p1 === meId || m.p2 === meId)).forEach((m) => {
     const proposer = nm(m.pendingEdit.proposedBy);
     out.push({ id: "edit_" + m.id, icon: "✏️", text: `${proposer} proposed a change to your match — review it`, date: m.pendingEdit.proposedAt || now, action: "edit", matchId: m.id });
@@ -49,7 +65,7 @@ export function computeLocalNotifications(meId: string, players: any[], matches:
   // destructive thing the app does on a timer, so it says so — to both
   // sides, including the person who asked, since a mis-tap is exactly the
   // case that needs catching.
-  matches.filter((m) => m.deleteRequestedAt && (m.p1 === meId || m.p2 === meId)).forEach((m) => {
+  matches.filter((m) => m.deleteRequestedAt && m.deleteRequestedBy && (m.p1 === meId || m.p2 === meId)).forEach((m) => {
     const other = nm(m.p1 === meId ? m.p2 : m.p1);
     const mine = m.deleteRequestedBy === meId;
     const left = m.deleteRequestedAt + 24 * 3600 * 1000 - now;

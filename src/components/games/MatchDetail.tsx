@@ -71,7 +71,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   );
 }
 
-export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, onAdminCorrect, onAgreeLegacy, groupName, season, organiser }: any) {
+export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, onAdminCorrect, onAgreeLegacy, onRejectLegacy, groupName, season, organiser }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   // The same check Log a result makes (core/sets.ts scoreProblem): an edit
@@ -218,16 +218,23 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
           onOpenProfile={onOpenProfile}
         />
 
-        {isLegacyClaimed(match) && (
-          // A claimed legacy year: the other side agrees it, here or from the
-          // bell. Agreeing makes it legacy — it never becomes a rated result.
-          mine && match.reportedBy !== meId && onAgreeLegacy ? (
+        {isLegacyClaimed(match) && (() => {
+          // Who answers a claimed legacy year: the other player. When they
+          // have no account, an organiser answers for them (Sam, 2026-10-30).
+          const claimer = byId[match.reportedBy];
+          const others = [byId[match.p1], byId[match.p2]].filter((p: any) => p && p.id !== match.reportedBy);
+          const answerer = (mine && match.reportedBy !== meId) || (!!organiser && match.reportedBy !== meId && others.length > 0 && others.every((p: any) => !p.auth_id));
+          if (!answerer || !onAgreeLegacy) return <Notice tone="lime">Claimed — waiting for the other player to confirm</Notice>;
+          return (
             <div style={{ marginTop: 10, padding: "12px", borderRadius: 12, background: FEED_RAISED }}>
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.45 }}>Claimed by {shortNameOf(byId[match.reportedBy] || null) || "your opponent"}. Agree it if it&apos;s right; if not, tell an organiser.</div>
-              <button onClick={() => onAgreeLegacy(match.id)} style={{ marginTop: 10, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_LIME_INK, background: FEED_LIME, border: "none", borderRadius: 10, padding: "9px 16px", cursor: "pointer" }}>Agree it</button>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.45 }}>{shortNameOf(claimer || null) || "Someone"} added this legacy year. Is it right?</div>
+              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                <button onClick={() => { onAgreeLegacy(match.id); }} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_LIME_INK, background: FEED_LIME, border: "none", borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>Confirm</button>
+                {onRejectLegacy && <button onClick={() => { onRejectLegacy(match.id); onClose && onClose(); }} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, background: "transparent", border: "1px solid " + FEED_TEXT_MID, borderRadius: 10, padding: "10px 12px", cursor: "pointer" }}>Not right</button>}
+              </div>
             </div>
-          ) : <Notice tone="lime">Claimed — waiting for the other side to agree</Notice>
-        )}
+          );
+        })()}
         {isUnconfirmedResult(match) && <Notice tone="lime">Awaiting confirmation{autoConfirmNote(match.loggedAt) ? ` — ${autoConfirmNote(match.loggedAt)}` : ""}</Notice>}
         {match.pendingEdit && <Notice tone="lime">Edit pending agreement</Notice>}
         {match.deleteRequestedBy && <Notice tone="clay">Delete pending agreement</Notice>}

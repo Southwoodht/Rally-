@@ -92,6 +92,17 @@ const LEGACY = "legacy";
  * silence can settle. Agreeing turns it into `legacy`, never `confirmed`.
  */
 const LEGACY_CLAIMED = "legacy_claimed";
+/**
+ * A claimed legacy year the other side said was not right (Sam, 2026-10-30:
+ * "Not right" removes the claim and tells the person who made it). Kept as
+ * a row only so the claimer can be told — a deleted row leaves nothing to
+ * notify from — and shown NOWHERE else: not legacy, not a result, nothing.
+ * `deleteRequestedAt` carries when it was rejected (`deleteRequestedBy`
+ * stays empty, so no delete-request screen ever sees it); organisers' apps
+ * clear these after `REJECTED_KEEP_MS`.
+ */
+const LEGACY_REJECTED = "legacy_rejected";
+export const REJECTED_KEEP_MS = 14 * 86400000;
 
 const warned = new Set<string>();
 
@@ -120,7 +131,7 @@ const warned = new Set<string>();
 export function countsAsPlayed(m: any): boolean {
   const s = m?.status;
   if (NOT_PLAYED.has(s)) return false;
-  if (s === DISPUTED || s === SHORT || s === LEGACY || s === LEGACY_CLAIMED) return false;
+  if (s === DISPUTED || s === SHORT || s === LEGACY || s === LEGACY_CLAIMED || s === LEGACY_REJECTED) return false;
   if (UNCONFIRMED.has(s)) return true;
   if (s === "confirmed") return true;
   // Unknown. Behave exactly as the old denylist did rather than silently
@@ -192,6 +203,11 @@ export function isShortMatch(m: any): boolean {
 /** A legacy result: in the history and the head-to-head, labelled, counted in nothing. */
 export function isLegacy(m: any): boolean {
   return m?.status === LEGACY || m?.status === LEGACY_CLAIMED;
+}
+
+/** A legacy claim the other side turned down: only its claimer is told. */
+export function isLegacyRejected(m: any): boolean {
+  return m?.status === LEGACY_REJECTED;
 }
 
 /** A legacy result the other side has not agreed yet: shown as "claimed". */

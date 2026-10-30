@@ -26,7 +26,7 @@ const sectionLabel: React.CSSProperties = {
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
-export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onCreatePlayer, onDeleteBetween, canLegacy }: any) {
+export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onCreatePlayer, onDeleteBetween, canLegacy, organiser }: any) {
   const [mode, setMode] = useState("single");
   // Legacy results (Sam, 2026-10-25): old matches nobody logged at the time,
   // known to the year. Organisers only — a legacy result needs nobody's
@@ -113,13 +113,19 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
   const submitLegacy = (winner: string) => {
     if (!p1 || !p2) return setErr("Pick both players.");
     if (p1 === p2) return setErr("Pick two different players.");
+    // Members log their OWN legacy years (Sam, 2026-10-30); organisers may
+    // record anybody's.
+    if (!organiser && p1 !== meId && p2 !== meId) return setErr("You can only add legacy years you played in.");
     setErr("");
     // Mid-year, so it sorts inside its year; the date is never printed —
     // datePrecision "year" makes every screen show just the year.
     const when = Date.UTC(legacyYear, 6, 1, 12);
     // A claim until the other side agrees it (Sam, 2026-10-30) — anyone in it
     // with an account who didn't log it. Against a shell it is simply recorded.
-    const claim = legacyNeedsAgreement(players.find((p) => p.id === p1), players.find((p) => p.id === p2), meId);
+    // A member's claim always waits for agreement — against somebody with no
+    // account, an organiser agrees it for them. An organiser's own entry
+    // against a shell is simply recorded, as any organiser result is.
+    const claim = !organiser || legacyNeedsAgreement(players.find((p) => p.id === p1), players.find((p) => p.id === p2), meId);
     onSave({ id: uid(), date: when, p1, p2, score: "", winner, status: claim ? "legacy_claimed" : "legacy", datePrecision: "year", reportedBy: meId, loggedAt: Date.now() });
   };
   const submitBulk = () => {
@@ -163,7 +169,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submitLegacy("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
-            One per year, before Southwood. Shown under the head-to-head, never in the record or any rating. Anyone in it with an account agrees it first; until then it shows as claimed.
+            One per year, before Southwood. Shown under the head-to-head, never in the record or any rating. It shows as claimed until the other player confirms it.
           </div>
         </>
       ) : mode === "single" ? (

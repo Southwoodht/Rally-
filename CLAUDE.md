@@ -1505,7 +1505,19 @@ detail (bell item "added a legacy result from 2019"), which makes it
 `legacy`, never `confirmed`. Counted in nothing, never swept by the 48h
 timer (`isUnconfirmedResult` is false), `isLegacy` true. Sam v Chris's four
 existing rows stay `legacy` (agreed). Rejecting a claim is "tell an
-organiser" — they can delete it at once.
+organiser" — they can delete it at once. **Superseded 2026-10-30 (branch
+`legacy-claims-2`), Sam's two rulings:** the other player gets **Confirm |
+Not right**; Not right makes the row `legacy_rejected` (counted and shown
+nowhere, `deleteRequestedAt` = when, `deleteRequestedBy` left empty so no
+delete-request screen sees it) and the claimer's bell says "X said your
+legacy result from 2019 wasn't right" for 14 days (`REJECTED_KEEP_MS`),
+after which an organiser's app deletes it (participants may not delete a
+non-pending row). A tombstone rather than a delete because a deleted row
+leaves nothing to notify from. **Every member can log legacy years they
+played in** (Add result → Legacy); a member's entry is ALWAYS claimed —
+against a shell an organiser answers for them (bell item + Confirm / Not
+right in match detail). An organiser's own entry against a shell is still
+recorded straight away. Organisers edit/delete any legacy row as before.
 
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to
