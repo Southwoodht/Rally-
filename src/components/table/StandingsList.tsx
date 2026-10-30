@@ -5,7 +5,7 @@ import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/com
 import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
 import { countsAsPlayed } from "@/core/matchStatus";
-import { recordsVs, vsLine } from "@/core/rivals";
+import { peopleCounts, peopleLine } from "@/core/rivals";
 import { fullNameOf } from "@/lib/format";
 import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, FORM_CHIP, display as displayFont } from "@/lib/theme";
 
@@ -51,8 +51,8 @@ export interface StandingsListProps {
   /** Listed in order but given no place: a dash where the rank goes and no
    *  leader card. The provisional group under the table. */
   placeless?: boolean;
-  /** The matches "You lead 3–1" counts — all time, whatever the table's
-   *  period; a head-to-head is the whole history. Defaults to `matches`. */
+  /** The matches each row's "10 ahead · 3 behind" counts — all time,
+   *  whatever the table's period, like the profile. Defaults to `matches`. */
   vsMatches?: any[];
 }
 
@@ -65,15 +65,12 @@ const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 // a separate section under the table was worse, because "below everybody" is
 // a stronger claim than "unknown" — and simply say so instead.
 //
-// Under everybody else's name, how YOU stand against them (Sam, 2026-10-30:
-// "under people it says their head to head not their records"), over the
-// matches the table is counting. Your own row keeps your record.
-const recordOf = (p: StandingsPlayer) => `${p.w}–${p.d}–${p.l}`;
-const statLineOf = (p: StandingsPlayer, vs?: string) => {
-  if (vs) return vs;
-  if (!gamesOf(p)) return "no games yet";
-  const gp = gamesOf(p);
-  return recordOf(p) + " · " + Math.round((p.w / gp) * 100) + "%";
+// Under every name, that player's own head-to-head (Sam, 2026-10-30: "can u
+// have their h2h instead") — "10 ahead · 3 behind", the profile hero's
+// numbers, counted all time like the profile.
+const statLineOf = (p: StandingsPlayer, h2h?: string) => {
+  if (h2h) return h2h;
+  return gamesOf(p) ? "" : "no games yet";
 };
 
 /**
@@ -235,8 +232,8 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
     return ordered.map((r, i) => ({ ...r, display: r.p.displayOverride ?? display[i], fraction: barFraction(r.p.rating, min, max) }));
   }, [players, matches]);
 
-  const vs = useMemo(() => (meId ? recordsVs((vsMatches || matches || []).filter(countsAsPlayed), meId) : null), [vsMatches, matches, meId]);
-  const vsOf = (id: string) => (vs && id !== meId ? vsLine(vs[id]) : undefined);
+  const people = useMemo(() => peopleCounts((vsMatches || matches || []).filter(countsAsPlayed)), [vsMatches, matches]);
+  const vsOf = (id: string) => peopleLine(people[id]) || undefined;
 
   if (!rows.length) return null;
 

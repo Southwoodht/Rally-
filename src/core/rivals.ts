@@ -35,28 +35,37 @@ export function topRivals(records: H2HRecord[], n = 3): H2HRecord[] {
 }
 
 /**
- * One player's record against everybody else in a match list — for the
- * tables, which say under each name how YOU stand against them (Sam,
- * 2026-10-30: "under people it says their head to head not their
- * records"). Pass only matches that count.
+ * Ahead / level / behind for every player in a match list, counting PEOPLE
+ * — the profile hero's numbers, for the Table's rows (Sam, 2026-10-30:
+ * "under people it says their head to head not their records"). Pass only
+ * matches that count; a draw-only record against somebody is level.
  */
-export function recordsVs(matches: { p1: string; p2: string; winner: string }[], me: string): Record<string, { w: number; d: number; l: number }> {
-  const out: Record<string, { w: number; d: number; l: number }> = {};
+export interface PeopleCount { ahead: number; level: number; behind: number }
+
+export function peopleCounts(matches: { p1: string; p2: string; winner: string }[]): Record<string, PeopleCount> {
+  const net: Record<string, Record<string, number>> = {};
+  const bump = (a: string, b: string, n: number) => {
+    const row = (net[a] = net[a] || {});
+    row[b] = (row[b] || 0) + n;
+  };
   for (const m of matches) {
-    if (m.p1 !== me && m.p2 !== me) continue;
-    const opp = m.p1 === me ? m.p2 : m.p1;
-    if (!opp || opp === me) continue;
-    const r = (out[opp] = out[opp] || { w: 0, d: 0, l: 0 });
-    if (m.winner === "draw") r.d++;
-    else if ((m.winner === "p1") === (m.p1 === me)) r.w++;
-    else r.l++;
+    if (!m.p1 || !m.p2 || m.p1 === m.p2) continue;
+    const d = m.winner === "p1" ? 1 : m.winner === "p2" ? -1 : 0;
+    bump(m.p1, m.p2, d);
+    bump(m.p2, m.p1, -d);
+  }
+  const out: Record<string, PeopleCount> = {};
+  for (const id of Object.keys(net)) {
+    const c = { ahead: 0, level: 0, behind: 0 };
+    for (const n of Object.values(net[id])) { if (n > 0) c.ahead++; else if (n < 0) c.behind++; else c.level++; }
+    out[id] = c;
   }
   return out;
 }
 
-/** "You lead 3–1", "You trail 1–4", "Level 2–2", "Never played you". */
-export function vsLine(r: { w: number; d: number; l: number } | undefined): string {
-  if (!r || r.w + r.d + r.l === 0) return "Never played you";
-  const rec = r.d ? `${r.w}–${r.d}–${r.l}` : `${r.w}–${r.l}`;
-  return (r.w > r.l ? "You lead " : r.w < r.l ? "You trail " : "Level ") + rec;
+/** "10 ahead · 3 behind", with "· 1 level" between when there is one — the
+ *  profile hero's numbers on one line. */
+export function peopleLine(c: PeopleCount | undefined): string {
+  if (!c || c.ahead + c.level + c.behind === 0) return "";
+  return [c.ahead + " ahead", c.level ? c.level + " level" : null, c.behind + " behind"].filter(Boolean).join(" · ");
 }

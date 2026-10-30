@@ -59,7 +59,7 @@ export interface TieRow {
 
 interface Props {
   kind: CompetitionKind;
-  /** "You lead 3–1" for an entry, under its name in a league table. Singles. */
+  /** "10 ahead · 3 behind" for an entry, under its name in a league table. Singles. */
   vsOf?: (entry: CompetitionPair) => string | undefined;
   players: any[];
   /** This kind's competitions only. */
@@ -275,8 +275,8 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
   /** Tap a row — the Divisions view opens the player's profile. */
   onOpenEntry?: (entry: CompetitionPair) => void;
   zones?: TableZones | null;
-  /** Under each name, how you stand against them (Sam, 2026-10-30: "their
-   *  head to head not their records"). Your own row keeps its form. */
+  /** Under each name, that player's own head-to-head, "10 ahead · 3
+   *  behind" (Sam, 2026-10-30: "can u have their h2h instead"). */
   vsOf?: (entry: CompetitionPair) => string | undefined;
 }) {
   const table = leagueTable(entries, results, pointsWin, pointsDraw);
@@ -317,7 +317,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
         const fresh = r.played === 0;
         const bg = isMine ? tint(FEED_TEXT_HI, 7) : up ? tint(FEED_UP, 10) : down ? tint(FEED_DOWN, 10) : "transparent";
         const f = form[r.pairId] || [];
-        const vs = entry && !isMine ? vsOf?.(entry) : undefined;
+        const vs = entry ? vsOf?.(entry) : undefined;
         return (
           <React.Fragment key={r.pairId}>
           <div onClick={() => setOpen(open === r.pairId ? null : r.pairId)} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "9px 8px", background: bg, borderTop: i ? "1px solid " + LINE : "none", fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", opacity: fresh ? 0.55 : 1, ...tabular }}>

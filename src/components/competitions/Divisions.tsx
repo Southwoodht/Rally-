@@ -160,7 +160,7 @@ export function tierLabel(index: number, count: number): string | null {
  */
 export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, datesOf, oddsOf, onOpenPlayer, onAdd, onPlanNext, manage, vsOf }: {
   kind: CompetitionKind;
-  /** "You lead 3–1" under each name. Singles. */
+  /** "10 ahead · 3 behind" under each name. Singles. */
   vsOf?: (entry: CompetitionPair) => string | undefined;
   /** Running league-format competitions of this kind. */
   competitions: Competition[];
