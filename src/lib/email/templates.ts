@@ -33,6 +33,14 @@ export function bookingEmail(by: string, when: string, url: string, where?: stri
   return { ...wrap([`${by} has booked your match — ${when}${at}.`, "If that doesn't work for you, you can change it in Southwood."], { label: "See the booking", url }), subject: `Match booked — ${when}` };
 }
 
+/** An organiser corrected one of your results (schema_match_edits.sql). */
+export function resultEditedEmail(by: string, opponent: string, before: string, after: string, url: string): Email {
+  const lines = after === "removed"
+    ? [`${by}, an organiser of your club, removed your result against ${opponent}.`, `It was: ${before}.`, "If that's wrong, have a word with them — every change an organiser makes is logged."]
+    : [`${by}, an organiser of your club, corrected your result against ${opponent}.`, `It was: ${before}.`, `It's now: ${after}.`, "If that's wrong, have a word with them — every change an organiser makes is logged."];
+  return { ...wrap(lines, { label: "See your results", url }), subject: after === "removed" ? `A result against ${opponent} was removed` : `Your result against ${opponent} was corrected` };
+}
+
 export function resultReminderEmail(opponent: string, when: string, url: string): Email {
   return { ...wrap([`How did it go against ${opponent}?`, `Your match on ${when} hasn't got a result yet. It takes ten seconds, and the table can't count it until somebody enters it.`], { label: "Enter the result", url }), subject: `How did it go against ${opponent}?` };
 }

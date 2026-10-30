@@ -71,7 +71,7 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   );
 }
 
-export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, groupName, season, organiser }: any) {
+export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenProfile, meId, onProposeEdit, onUpdateExtras, onProposeDelete, onAgreeDelete, onCancelDelete, onAdminCorrect, groupName, season, organiser }: any) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>(null);
   // The same check Log a result makes (core/sets.ts scoreProblem): an edit
@@ -98,7 +98,13 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   // A legacy result is the club's record, kept by its organisers: they can
   // take one down straight away (and add it again if it was wrong).
   const legacy = isLegacy(match);
-  const canEdit = !!(onProposeEdit && meId && (mine || (organiser && (bothShells || legacy))));
+  // An organiser correcting a match they are NOT in (Sam, 2026-10-30): any
+  // match in the club, accounts or not, straight away — logged, and both
+  // players told (RallyApp adminCorrect). Their OWN matches still go through
+  // the opponent like anyone's: running the club is not a licence to rewrite
+  // your own results.
+  const adminMode = !!onAdminCorrect && !mine;
+  const canEdit = !!(onProposeEdit && meId && (mine || (organiser && (bothShells || legacy)))) || adminMode;
   const oppOf = (selfId: string) => byId[selfId === match.p1 ? match.p2 : match.p1];
   const opponentOfMe = mine ? oppOf(meId) : null;
   const needsApproval = !!(opponentOfMe && opponentOfMe.auth_id) && !(legacy && organiser);
@@ -142,7 +148,9 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
     const problem = scoreProblem(draft.score, winner, false);
     if (problem) { setEditErr(problem); return; }
     setEditErr(null);
-    onProposeEdit(match.id, { date: draft.date ? new Date(draft.date).getTime() : match.date, score: draft.score.trim(), winner });
+    const patch = { date: draft.date ? new Date(draft.date).getTime() : match.date, score: draft.score.trim(), winner };
+    if (adminMode) void onAdminCorrect(match.id, patch);
+    else onProposeEdit(match.id, patch);
     setEditing(false);
     setDraft(null);
   };
@@ -151,12 +159,13 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   // account" — an instant delete has nothing left to show, so close; a
   // requested one updates match.deleteRequestedBy and stays open to show it.
   const confirmedDelete = () => {
+    if (adminMode) { void onAdminCorrect(match.id, null); setConfirmDelete(false); onClose && onClose(); return; }
     onProposeDelete && onProposeDelete(match.id);
     setConfirmDelete(false);
     if (!needsApproval) onClose && onClose();
   };
   const iRequestedDelete = !!match.deleteRequestedBy && match.deleteRequestedBy === meId;
-  const theyRequestedDelete = !!match.deleteRequestedBy && match.deleteRequestedBy !== meId;
+  const theyRequestedDelete = mine && !!match.deleteRequestedBy && match.deleteRequestedBy !== meId;
 
   const saveNotes = () => { if (notesDraft === null) return; onUpdateExtras && onUpdateExtras(match.id, { notes: notesDraft.trim() || undefined }); setNotesDraft(null); };
   const saveVenue = () => { if (venueDraft === null) return; onUpdateExtras && onUpdateExtras(match.id, { venue: venueDraft.trim() || undefined }); setVenueDraft(null); };
@@ -317,7 +326,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
                     <button key={r} onClick={() => setDraft({ ...draft, result: r })} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "9px 6px", borderRadius: 10, cursor: "pointer", border: "none", background: draft.result === r ? BALL : PANEL2, color: draft.result === r ? COURT : MUTED, fontWeight: 600 }}>{label}</button>
                   ))}
                 </div>
-                <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID }}>{needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
+                <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID }}>{adminMode ? "As an organiser, this changes it straight away. It's logged, and both players are told." : needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
                 {editErr && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{editErr}</div>}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={saveEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: COURT, background: BALL, border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Save</button>
@@ -340,9 +349,9 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
             ) : confirmDelete ? (
               <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Delete this match?</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : legacy ? "A legacy result counts for nothing, so this deletes straight away. You can log it again." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
+                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{adminMode ? "As an organiser, this removes it straight away. It's logged, both players are told, and any competition match it settled reopens." : needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : legacy ? "A legacy result counts for nothing, so this deletes straight away. You can log it again." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>{needsApproval ? "Request delete" : "Delete"}</button>
+                  <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>{needsApproval && !adminMode ? "Request delete" : "Delete"}</button>
                   <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Cancel</button>
                 </div>
               </div>

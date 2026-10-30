@@ -22,6 +22,7 @@ import { SubHeader } from "@/components/layout/SubHeader";
 import { MyProfile } from "@/components/profile/MyProfile";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { venueLabel } from "@/lib/venues";
+import { logMatchEdit, notifyMatchEdit, snapshotOf } from "@/lib/matchEdits";
 import { PlayerSearch } from "@/components/social/PlayerSearch";
 import { ChallengeSheet } from "@/components/profile/ChallengeSheet";
 import { MatchDetail } from "@/components/games/MatchDetail";
@@ -777,8 +778,6 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const actingId = players.some((p) => p.id === gdata.me) ? gdata.me : null;
     const oppId = actingId ? (m.p1 === actingId ? m.p2 : m.p2 === actingId ? m.p1 : null) : null;
     const opp = oppId ? players.find((p) => p.id === oppId) : null;
-    // A legacy result is the club's record: an organiser takes it down at once.
-    if (isLegacy(m) && canManageMatches) { deleteMatch(id); flash("Deleted"); return; }
     if (opp && opp.auth_id) {
       saveData({ ...gdata, matches: gdata.matches.map((x) => x.id === id ? { ...x, pendingEdit: { ...patch, proposedBy: actingId, proposedAt: Date.now() } } : x) });
       flash("Change sent — waiting for them to agree");
@@ -803,6 +802,8 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     const actingId = players.some((p) => p.id === gdata.me) ? gdata.me : null;
     const oppId = actingId ? (m.p1 === actingId ? m.p2 : m.p2 === actingId ? m.p1 : null) : null;
     const opp = oppId ? players.find((p) => p.id === oppId) : null;
+    // A legacy result is the club's record: an organiser takes it down at once.
+    if (isLegacy(m) && canManageMatches) { deleteMatch(id); flash("Deleted"); return; }
     if (opp && opp.auth_id) {
       saveData({ ...gdata, matches: gdata.matches.map((x) => x.id === id ? { ...x, deleteRequestedBy: actingId, deleteRequestedAt: Date.now() } : x) });
       flash("Delete requested — waiting for them to agree");
@@ -812,6 +813,35 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     }
   };
   const agreeDelete = (id) => deleteMatch(id);
+  /**
+   * An organiser's correction (Sam, 2026-10-30): owners and editors can change
+   * or remove ANY result in their club, accounts or not, with no agreement
+   * step — and every one is logged first (lib/matchEdits.ts) and both
+   * players are told. The log is written before the change; if it can't be,
+   * nothing changes. A competition tie the result settled follows it: an
+   * edit re-settles it, a removal reopens it.
+   */
+  const adminCorrect = async (id: string, patch: any | null) => {
+    const m = gdata.matches.find((x) => x.id === id);
+    if (!m || !canManageMatches) return;
+    const next = patch ? { ...m, ...patch, pendingEdit: null, deleteRequestedBy: null, deleteRequestedAt: null } : null;
+    let editId: string;
+    try {
+      editId = await logMatchEdit(leagueId, m, patch ? "edit" : "delete", next ? snapshotOf(next) : null);
+    } catch (e: any) {
+      flash(e?.message || "Couldn't record the change, so nothing was changed.");
+      return;
+    }
+    const ok = await saveData({
+      ...gdata,
+      matches: next ? gdata.matches.map((x) => (x.id === id ? next : x)) : gdata.matches.filter((x) => x.id !== id),
+      fixtures: (gdata.fixtures || []).map((f) => (f.matchId !== id ? f : next ? { ...settleTie(f, next), booked: f.booked ?? null } : { ...f, done: false, winner: undefined, matchId: undefined })),
+    });
+    if (ok !== false) {
+      flash(next ? "Corrected — both players have been told" : "Removed — both players have been told");
+      void notifyMatchEdit(editId);
+    }
+  };
   const cancelDeleteRequest = (id) => saveData({ ...gdata, matches: gdata.matches.map((m) => m.id === id ? { ...m, deleteRequestedBy: null, deleteRequestedAt: null } : m) });
   const setMode = (m) => { setRankingMode(m); persistSettings({ rankingMode: m }); };
   const fixtures = gdata.fixtures || [];
@@ -2025,7 +2055,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   <MessageRobins count={unreadMsgs} />
                 </button>
                 <div style={{ background: FEED_RAISED, borderRadius: 999, width: 38, height: 38, display: "grid", placeItems: "center", flexShrink: 0 }}>
-                  <NotificationBell meId={meId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
+                  <NotificationBell meId={meId} leagueId={leagueId} players={players} matches={matches} posts={posts} nameOf={nameOf} onOpenMatch={setMatchDetailId} onGoFriends={() => setTab("friends")} onGoAdmin={() => setTab("clubadmin")} />
                 </div>
                 {(
                   <button onClick={() => setMenuOpen(true)} aria-label="Menu" style={{ background: PANEL, border: "none", borderRadius: 999, width: 36, height: 36, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3.5, flexShrink: 0 }}>
@@ -2879,7 +2909,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         />
       )}
       {legacyPlayer && <LegacyProfile player={legacyPlayer} players={players} matches={matches} meId={meId} nameOf={nameOf} onOpenMatch={setMatchDetailId} onClose={() => setLegacyId(null)} />}
-      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
+      {matchDetailMatch && <MatchDetail match={matchDetailMatch} players={players} matches={matches} nameOf={nameOf} meId={meId} onProposeEdit={proposeEdit} onUpdateExtras={editMatch} onProposeDelete={proposeDelete} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onAdminCorrect={canManageMatches ? adminCorrect : undefined} groupName={group?.name} season={(group as any)?.season} organiser={canManageMatches} onOpenProfile={(id) => { setMatchDetailId(null); openProfile(id); }} onClose={() => setMatchDetailId(null)} />}
       {groupSheet && (
         <GroupSheet
           // The club you are in is always listed, even if the list of clubs

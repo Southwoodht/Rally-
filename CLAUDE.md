@@ -1415,6 +1415,24 @@ Charlie Easey" lines — only when the paste contains "Winner:" lines, so a
 bare "Sam v Charlie" is still a match to ask about. A winner who is
 neither of the pair is unreadable, never guessed (tested).
 
+**Organiser corrections (branch `admin-result-editing`, 2026-10-30, NOT
+merged — Sam: preview first).** Owners/editors can edit or remove ANY result
+in their club from match detail, accounts or not, straight away — but only
+matches they are NOT playing in (`adminMode` in MatchDetail; their own still
+go through the opponent). RallyApp `adminCorrect` writes a `match_edits` row
+first (lib/matchEdits.ts; **`schema_match_edits.sql`, not yet run** — until
+it is, a correction is refused with a message naming the file, never made
+unlogged), then saves; a competition tie the match settled is re-settled or
+reopened. Both players are told: bell row (NotificationBell reads the log
+for the last 30 days) and email (`/api/notify-edit`, once per log row, only
+callable by the organiser who wrote the row). The matches RLS already let
+staff update/delete any club match, so no policy changed.
+`diagnose_george_will.sql` lists that pair's results (played, entered,
+score, winner). Ratings that depend on order sort by date PLAYED (elo,
+glicko, officialTimeline); entry time only breaks same-day ties.
+Fixed in passing: the "organiser deletes a legacy result at once" line had
+landed in proposeEdit instead of proposeDelete.
+
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to
 `/search`, and picking somebody sent the page to `/?profile=`, a full load —

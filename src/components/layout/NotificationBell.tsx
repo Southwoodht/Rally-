@@ -1,5 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { listEditsFor } from "@/lib/matchEdits";
+import { describeResult } from "@/lib/matchEditText";
+import { formatMatchDate } from "@/lib/format";
 import { Glyph } from "@/components/ui/Glyph";
 import { Bell } from "@/components/ui/Bell";
 import { listMyAdminClubs } from "@/lib/clubs";
@@ -12,7 +15,7 @@ import { FEED_OVERLAY, BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL2, body } fro
 const RECENT_WINDOW_MS = 7 * 86400000;
 const SEEN_KEY = "notifs_seen";
 
-export function NotificationBell({ meId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin, onGoFriends }: any) {
+export function NotificationBell({ meId, leagueId, players, matches, posts, nameOf, onOpenMatch, onGoAdmin, onGoFriends }: any) {
   const [open, setOpen] = useState(false);
   const [remote, setRemote] = useState<Notification[]>([]);
   // Which notifications have been looked at. Notifications are computed from
@@ -63,6 +66,27 @@ export function NotificationBell({ meId, players, matches, posts, nameOf, onOpen
         const pending = await listPendingClaims(c.id);
         pending.forEach((t) => {
           out.push({ id: "review_" + t.id, icon: "📋", text: `${t.claimant_name || "Someone"} submitted a claim for ${c.name} — needs review`, date: new Date(t.created_at).getTime(), action: "review" });
+        });
+      }
+    } catch {}
+    // An organiser corrected or removed one of my results (lib/matchEdits.ts).
+    try {
+      if (leagueId && meId) {
+        const edits = await listEditsFor(leagueId, [meId], now - 30 * 86400000);
+        const byAuth = (a: string) => (players || []).find((p: any) => p.auth_id === a);
+        edits.forEach((e) => {
+          const side = e.p1 === meId ? "p1" : "p2";
+          const opp = nameOf ? nameOf(side === "p1" ? e.p2 : e.p1) : "your opponent";
+          const who = byAuth(e.editedBy);
+          if (who?.id === meId) return;
+          const by = who ? (who.name || "An organiser") : "An organiser";
+          const before = describeResult(e.before, side, formatMatchDate);
+          const after = describeResult(e.action === "delete" ? null : e.after, side, formatMatchDate);
+          out.push({
+            id: "edit_" + e.id, icon: "✏️",
+            text: after === "removed" ? `${by} removed your result v ${opp} (${before})` : `${by} corrected your result v ${opp}: ${before} → ${after}`,
+            date: e.editedAt, action: "none",
+          });
         });
       }
     } catch {}
