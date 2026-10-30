@@ -7,6 +7,7 @@ import { GapInsight } from "@/components/profile/GapInsight";
 import { MatchHistoryList, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { FriendsCard } from "@/components/profile/FriendsCard";
+import { InviteToClub } from "@/components/profile/InviteToClub";
 import { RecordCard } from "@/components/profile/RecordCard";
 import { OpponentRecords } from "@/components/profile/OpponentRecords";
 import { RivalryCard } from "@/components/profile/RivalryCard";
@@ -397,9 +398,11 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
         </div>
       )}
 
+      {!isMe && authId && <InviteToClub authId={authId} firstName={(asPlayer?.name || "them").split(" ")[0]} />}
+
       {noChallenge && !isMe && (
         <div style={{ background: FEED_CARD, borderRadius: 14, padding: "12px 14px", margin: "-6px 0 16px", fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
-          You can challenge people in your clubs, and {(asPlayer?.name || "they").split(" ")[0]} isn&apos;t in one of yours yet. Message them to arrange a game, or send them your club&apos;s invite link.
+          You can challenge people in your clubs, and {(asPlayer?.name || "they").split(" ")[0]} isn&apos;t in one of yours yet. Invite them to your club below, or message them to arrange a game.
         </div>
       )}
 

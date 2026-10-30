@@ -11,6 +11,31 @@ import { readImageForMessage } from "@/lib/photo";
 import { FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_PAGE, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FEED_THEY_LEAD, tabular } from "@/lib/theme";
 import { fullNameOf, initialsOf } from "@/lib/format";
 
+/**
+ * Web addresses in a message become links, so an invite from a profile's
+ * "Invite to Seacourt" can be tapped (2026-10-30). Only http(s) addresses —
+ * anything else stays text, so a message can never carry a javascript: link.
+ * A southwood.app link opens in place; anything else in a new tab.
+ */
+function withLinks(text: string | null | undefined): React.ReactNode {
+  if (!text) return text;
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => {
+    if (!/^https?:\/\//.test(part)) return part;
+    const href = part.replace(/[.,!?)]+$/, "");
+    const tail = part.slice(href.length);
+    let own = false;
+    try { own = new URL(href).hostname.endsWith("southwood.app") || new URL(href).origin === window.location.origin; } catch { /* not a URL after all */ }
+    return (
+      <React.Fragment key={i}>
+        <a href={href} {...(own ? {} : { target: "_blank", rel: "noopener noreferrer" })} style={{ color: "inherit", textDecoration: "underline", wordBreak: "break-all" }}>{href}</a>
+        {tail}
+      </React.Fragment>
+    );
+  });
+}
+
 // There's no realtime subscription here on purpose — one poll while the
 // screen is open is a few hundred bytes and needs no extra Supabase setup.
 // Worth revisiting if conversations ever get busy.
@@ -408,7 +433,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
                         <img src={m.image_url} alt="" style={{ display: "block", width: "100%", borderRadius: m.body ? 10 : round, maxHeight: 320, objectFit: "cover" }} />
                       </button>
                     )}
-                    {m.body}
+                    {withLinks(m.body)}
                   </div>
                   {isMyLast && m.read_at && !withNext && (
                     <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 4, textAlign: "right" }}>
