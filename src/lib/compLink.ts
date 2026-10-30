@@ -1,6 +1,6 @@
 /**
  * "Scan for the live table" — the QR code on a coach sheet opens that
- * competition in the app: /?club=<league id>&comp=<competition id>.
+ * competition in the app: https://southwood.app/?club=<league id>&comp=<competition id>.
  *
  * Like an invite link (lib/invite.ts), the ids are stashed in localStorage
  * the moment the page loads and stripped from the address bar, because a
@@ -10,14 +10,15 @@
  * ignored, so a scan that led nowhere can't surface days later.
  */
 
+import { publicOrigin } from "@/lib/siteUrl";
+
 const KEY = "rally.openComp";
 const FRESH_MS = 60 * 60 * 1000;
 
 interface Pending { club: string; comp: string; at: number }
 
 export function compLink(leagueId: string, compId: string): string {
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://southwood.app";
-  return `${origin}/?club=${encodeURIComponent(leagueId)}&comp=${encodeURIComponent(compId)}`;
+  return `${publicOrigin()}/?club=${encodeURIComponent(leagueId)}&comp=${encodeURIComponent(compId)}`;
 }
 
 /** Read ?club=&comp= off the address bar into the stash. Call once on load. */

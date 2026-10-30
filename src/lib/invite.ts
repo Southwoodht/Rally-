@@ -17,6 +17,8 @@
  * flow doesn't.
  */
 
+import { publicOrigin } from "@/lib/siteUrl";
+
 const PENDING_KEY = "rally.pendingJoin";
 
 /** The query parameter an invite link carries. */
@@ -31,7 +33,7 @@ export const JOIN_PARAM = "join";
  */
 export function inviteUrl(code: string): string {
   if (typeof window === "undefined" || !code) return "";
-  return `${window.location.origin}/?${JOIN_PARAM}=${encodeURIComponent(code.trim().toUpperCase())}`;
+  return `${publicOrigin()}/?${JOIN_PARAM}=${encodeURIComponent(code.trim().toUpperCase())}`;
 }
 
 /**

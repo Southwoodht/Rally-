@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { SITE_URL } from "@/lib/siteUrl";
 
 /**
  * Email, server side only (winter brief item 6).
@@ -23,13 +24,13 @@ export function adminClient(): SupabaseClient | null {
   return admin;
 }
 
-/** Where links in an email point: the live app. */
-export function appUrl(fallbackOrigin?: string): string {
+/** Where links in an email point: southwood.app, never the address the
+ *  request came in on (an old vercel.app tab would otherwise send those).
+ *  NEXT_PUBLIC_APP_URL overrides it, for testing. */
+export function appUrl(_fallbackOrigin?: string): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL;
   if (explicit) return explicit.replace(/\/$/, "");
-  const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (prod) return "https://" + prod;
-  return fallbackOrigin || "https://southwood.app";
+  return SITE_URL;
 }
 
 /**
