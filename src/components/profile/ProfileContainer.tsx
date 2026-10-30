@@ -12,8 +12,7 @@ import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { officialTimeline } from "@/core/officialTimeline";
-import { computeGlicko, glickoStandings } from "@/core/glicko";
-import { pickNemesis, topRivals } from "@/core/rivals";
+import { glickoStandings } from "@/core/glicko";
 import { opponentStrength } from "@/core/official";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 import { topRivalries } from "@/core/rivalries";
@@ -217,12 +216,8 @@ export function ProfileContainer({
     const side = (o: string) => { const r0 = h[o]; return r0 && r0.w + r0.d + r0.l ? r0 : (hl[o] || zero); };
     const lead = faced.filter((o) => side(o).w > side(o).l).map(oppRec);
     const behind = faced.filter((o) => side(o).l > side(o).w).map(oppRec);
-    const levelWith = faced.filter((o) => side(o).w === side(o).l).length;
-    // The Rivals card (core/rivals.ts): the three most played, and the
-    // nemesis — the best record AGAINST them, never simply the most losses.
-    const recs = Object.entries(h).filter(([id]) => byId[id]).map(([id, r0]) => ({ id, ...r0 }));
-    const nem = pickNemesis(recs);
-    const rivalsTop = topRivals(recs, 3).map((r0) => ({ player: byId[r0.id], w: r0.w, d: r0.d, l: r0.l }));
+    const levelList = faced.filter((o) => side(o).w === side(o).l).map(oppRec);
+    const levelWith = levelList.length;
 
     const rivalries = topRivalries(pid, matches || [], 3)
       .filter((v: any) => byId[v.oid])
@@ -364,12 +359,16 @@ export function ProfileContainer({
 
     return {
       record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, unbeatenRate: r.gp ? Math.round(((r.w + r.d) / r.gp) * 100) : undefined, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
-      gap, playingStyle, rivalries, bestWins, opponents: { lead, behind, level: levelWith }, achievements, history,
-      rivalsCard: {
-        top: rivalsTop,
-        nemesis: nem ? { player: byId[nem.id], w: nem.w, d: nem.d, l: nem.l } : null,
-        // Their rating going into the match (Glicko before it), as Sam asked.
-        bestWin: bestWins[0] ? { player: bestWins[0].opponent, rating: (() => { const b = computeGlicko(players || [], matches || []).before[bestWins[0].matchId]?.[bestWins[0].opponent.id]; return b ? Math.round(b.rating) : null; })() } : null,
+      gap, playingStyle, rivalries, bestWins, opponents: { lead, behind, level: levelWith, levelList }, achievements, history,
+      // The head-to-head hero's small row (Sam, 2026-10-30): club place as
+      // "2nd of 7", and the rating with its ± (the Table's own numbers).
+      standing: {
+        place: myStatus === "placed" ? ordinal(st.place[pid]) + " of " + st.of
+          : myStatus === "provisional" ? "Provisional"
+          : myStatus === "short" ? (PROVISIONAL_GAMES - (st.played[pid] || 0)) + " to go"
+          : "Not ranked",
+        rating: st.table.rating[pid] != null && (st.played[pid] || 0) > 0 ? Math.round(st.table.rating[pid]) : null,
+        rd: st.table.rd[pid] != null ? Math.round(st.table.rd[pid]) : null,
       },
       historyTotal: mine.length, meta,
       pointsSummary: (() => {
@@ -447,7 +446,8 @@ export function ProfileContainer({
       rivalries={data.rivalries}
       bestWins={data.bestWins}
       opponents={data.opponents}
-      rivalsCard={data.rivalsCard ? { ...data.rivalsCard, onOpenH2H: onCompare && pid ? (oid: string) => onCompare(pid, oid) : undefined } : null}
+      standing={data.standing}
+      onOpenH2H={onCompare && pid ? (oid: string) => onCompare(pid, oid) : undefined}
       achievements={data.achievements}
       trophies={{
         // Honours the app works out from finished seasons come first: they

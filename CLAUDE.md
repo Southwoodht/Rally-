@@ -1495,6 +1495,18 @@ over "B"; columns pack on those real heights. A result with no score shows
 a green "W" by the winner (no lone tick); a walkover says "walkover". The
 second picture is **Still to play** (`nextToPlay`, the next six open
 matches in draw order) above Latest results.
+**Superseded the same day (branch `h2h-hero`): the head-to-head record IS
+the profile's hero** (`profile/HeadToHeadRecord.tsx`). `HeadToHeadHero`
+(sw-hero) counts PEOPLE — ahead · level · behind, "Ahead of X of the N
+players you've faced", then matches W–D–L, club place ("2nd of 7", from
+ProfileContainer's `standing`) and rating ± under a hairline.
+`HeadToHeadLists`: **Behind** first (worst net first, "your targets", the
+`pickNemesis` one labelled Nemesis), **Level**, **Ahead** (most played,
+five then See all, legacy as a laurel line). Rows open Compare for that
+pair (`onOpenH2H`, public profiles fall back to opening the player). The
+old RecordCard sits lower as a plain card (`plain`, no rankings) titled
+Matches, above Match history, still filtering the list. RivalsCard.tsx is
+deleted; OpponentRecords stays for PublicProfile. History of v2 follows.
 **Rivals card v2 (merged to master 2026-10-30)** (`profile/RivalsCard.tsx`),
 straight under the career record, a plain card now (Sam: faces, not big
 numbers): "Rivals · You lead X · They lead Y", the three most-played

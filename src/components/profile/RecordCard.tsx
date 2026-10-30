@@ -44,6 +44,8 @@ export interface RecordCardProps {
   currentStreak: number;
   bestStreak: number;
   rankings?: RankingRow[];
+  /** Not the screen's hero: no brass rim (the head-to-head card is). */
+  plain?: boolean;
 }
 
 // Appendix C: W-D-L labels are 13, the stat-row labels 12.
@@ -71,11 +73,11 @@ function Tally({ n, colour, caption, onClick, active }: { n: number; colour: str
   );
 }
 
-export function RecordCard({ record, form, winRate, unbeatenRate, currentStreak, bestStreak, rankings, onFilter, activeFilter }: RecordCardProps) {
+export function RecordCard({ record, form, winRate, unbeatenRate, currentStreak, bestStreak, rankings, onFilter, activeFilter, plain }: RecordCardProps) {
   const tap = (o: Exclude<OutcomeFilter, null>) =>
     onFilter ? () => onFilter(activeFilter === o ? null : o) : undefined;
   return (
-    <SurfaceCard className="sw-hero" radius={FEED_RADIUS} pad={FEED_PAD_Y + "px " + FEED_PAD + "px"}>
+    <SurfaceCard className={plain ? undefined : "sw-hero"} radius={FEED_RADIUS} pad={FEED_PAD_Y + "px " + FEED_PAD + "px"}>
       {/* a — the record. Won is the accent and lost is --lost, per §2 and
           Appendix C; drawn stays plain text. The separators are 14x2 bars of
           --muted-fill rather than an en dash, which is what the mockup

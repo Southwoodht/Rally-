@@ -1,0 +1,130 @@
+"use client";
+import React from "react";
+import { Avatar } from "@/components/ui/Avatar";
+import { GroupCard, GroupLabel } from "@/components/ui/Grouped";
+import { LegacyNote } from "@/components/ui/LegacyNote";
+import { SurfaceCard } from "@/components/ui/Surfaces";
+import type { OpponentRecord } from "@/components/profile/OpponentRecords";
+import { legacyLine } from "@/core/matchStatus";
+import { pickNemesis } from "@/core/rivals";
+import { fullNameOf } from "@/lib/format";
+import { FEED_LIME, FEED_LOST, FEED_PAD, FEED_PAD_Y, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, body, display, tabular } from "@/lib/theme";
+
+/**
+ * The head-to-head record IS the profile now (Sam, 2026-10-30): the top
+ * card counts PEOPLE — how many opponents you are ahead of, level with and
+ * behind — and the lists under it name them, targets first. The match
+ * record, place and rating sit small beneath a hairline; win rate, form
+ * and streaks moved down to the match history.
+ */
+
+export interface Standing { place: string; rating: number | null; rd: number | null }
+
+export function HeadToHeadHero({ ahead, level, behind, self, record, standing }: {
+  ahead: number; level: number; behind: number; self: boolean;
+  record: { w: number; d: number; l: number };
+  standing?: Standing | null;
+}) {
+  const faced = ahead + level + behind;
+  const num = (n: number, colour: string, label: string) => (
+    <div style={{ textAlign: "center", minWidth: 0 }}>
+      <div style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 50, lineHeight: 1, color: colour }}>{n}</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6 }}>{label}</div>
+    </div>
+  );
+  const dot = <span aria-hidden="true" style={{ fontFamily: display, fontWeight: 700, fontSize: 34, color: FEED_RAISED, lineHeight: 1, marginTop: 6 }}>·</span>;
+  // A number in the display face; a word ("Not ranked", "Provisional") in
+  // the body face and smaller, so three columns never run into each other.
+  const small = (label: string, value: React.ReactNode, isWord = false) => (
+    <div style={{ textAlign: "center", minWidth: 0 }}>
+      <div style={{ ...tabular, fontFamily: isWord ? body : display, fontWeight: isWord ? 600 : 700, fontSize: isWord ? 14 : 18, lineHeight: "24px", color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3 }}>{label}</div>
+    </div>
+  );
+  return (
+    <SurfaceCard className="sw-hero" radius={FEED_RADIUS} pad={FEED_PAD_Y + "px " + FEED_PAD + "px"}>
+      <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 13.5, color: FEED_TEXT_MID }}>Head-to-head record</div>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 18, marginTop: 14 }}>
+        {num(ahead, FEED_LIME, "ahead")}{dot}{num(level, FEED_TEXT_HI, "level")}{dot}{num(behind, FEED_LOST, "behind")}
+      </div>
+      {faced > 0 && (
+        <div style={{ ...tabular, textAlign: "center", fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 14 }}>
+          Ahead of {ahead} of the {faced} {faced === 1 ? "player" : "players"} {self ? "you've" : "they've"} faced
+        </div>
+      )}
+      <div style={{ borderTop: "1px solid " + LINE, marginTop: 16, paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+        {small("matches", `${record.w}–${record.d}–${record.l}`)}
+        {small("club", standing?.place || "—", !!standing?.place && !/^\d/.test(standing.place))}
+        {small("rating", standing?.rating != null
+          ? <>{standing.rating}{standing.rd != null && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}> ±{standing.rd}</span>}</>
+          : "—")}
+      </div>
+    </SurfaceCard>
+  );
+}
+
+const recordText = (r: { w: number; d: number; l: number }) => (r.d ? `${r.w}–${r.d}–${r.l}` : `${r.w}–${r.l}`);
+const played = (r: OpponentRecord) => r.w + r.d + r.l;
+
+function Row({ r, first, note, onOpen }: { r: OpponentRecord; first: boolean; note?: string; onOpen?: (id: string) => void }) {
+  const legacy = r.legacyRecord ? legacyLine(r.legacyRecord) : null;
+  const go = onOpen && r.player?.id ? () => onOpen(r.player.id) : undefined;
+  const sub = note || r.levelLabel;
+  return (
+    <div role={go ? "button" : undefined} onClick={go} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderTop: first ? "none" : "1px solid " + LINE, cursor: go ? "pointer" : "default" }}>
+      <Avatar player={r.player} size={40} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(r.player)}</div>
+        {sub && <div style={{ fontFamily: body, fontWeight: note ? 600 : 500, fontSize: 13, color: note ? FEED_LOST : FEED_TEXT_MID, marginTop: 1 }}>{sub}</div>}
+        {legacy && <div style={{ marginTop: 2 }}><LegacyNote text={legacy.charAt(0).toLowerCase() + legacy.slice(1)} /></div>}
+      </div>
+      {played(r) > 0 && (
+        <span style={{ ...tabular, flexShrink: 0, whiteSpace: "nowrap", fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_TEXT_HI }}>{recordText(r)}</span>
+      )}
+    </div>
+  );
+}
+
+function List({ title, hint, items, notes, visible, onOpen, onAll }: {
+  title: string; hint?: string; items: OpponentRecord[]; notes?: Record<string, string>;
+  visible?: number; onOpen?: (id: string) => void; onAll?: () => void;
+}) {
+  if (!items.length) return null;
+  const shown = visible ? items.slice(0, visible) : items;
+  const rest = items.length - shown.length;
+  return (
+    <div style={{ marginTop: 18 }}>
+      <GroupLabel right={hint ? <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID }}>{hint}</span> : undefined}>{title} · {items.length}</GroupLabel>
+      <GroupCard>
+        {shown.map((r, i) => <Row key={r.player?.id || i} r={r} first={i === 0} note={notes?.[r.player?.id]} onOpen={onOpen} />)}
+        {rest > 0 && (
+          <button onClick={onAll} style={{ display: "block", width: "100%", background: "transparent", border: "none", borderTop: "1px solid " + LINE, padding: "12px 16px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_LIME, textAlign: "left" }}>
+            See all {items.length}
+          </button>
+        )}
+      </GroupCard>
+    </div>
+  );
+}
+
+/**
+ * Behind first — the targets, worst first, the nemesis named — then anyone
+ * level, then Ahead, most played first, five and "See all". Every row opens
+ * the head-to-head with that player.
+ */
+export function HeadToHeadLists({ lead, behind, level, self, showAllAhead, onAllAhead, onOpen }: {
+  lead: OpponentRecord[]; behind: OpponentRecord[]; level: OpponentRecord[]; self: boolean;
+  showAllAhead: boolean; onAllAhead: () => void; onOpen?: (id: string) => void;
+}) {
+  const worstFirst = [...behind].sort((a, b) => (b.l - b.w) - (a.l - a.w) || played(b) - played(a));
+  const nem = pickNemesis(behind.filter((r) => r.player?.id).map((r) => ({ id: r.player.id, w: r.w, d: r.d, l: r.l })));
+  const notes: Record<string, string> = nem ? { [nem.id]: "Nemesis" } : {};
+  const mostPlayed = [...lead].sort((a, b) => played(b) - played(a) || (b.w - b.l) - (a.w - a.l));
+  return (
+    <>
+      <List title="Behind" hint={self ? "your targets" : undefined} items={worstFirst} notes={notes} onOpen={onOpen} />
+      <List title="Level" items={level} onOpen={onOpen} />
+      <List title="Ahead" items={mostPlayed} visible={showAllAhead ? undefined : 5} onOpen={onOpen} onAll={onAllAhead} />
+    </>
+  );
+}

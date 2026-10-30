@@ -6,11 +6,11 @@ import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps 
 import { onSide } from "@/core/trophyTimeline";
 import { MatchHistoryList, PointsSummary, type MatchHistoryItem } from "@/components/profile/MatchHistoryList";
 import { recordsByYear } from "@/core/yearRecord";
-import { OpponentRecords, type OpponentRecord } from "@/components/profile/OpponentRecords";
+import type { OpponentRecord } from "@/components/profile/OpponentRecords";
 import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
 import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
-import { RivalsCard, type RivalsCardData } from "@/components/profile/RivalsCard";
+import { HeadToHeadHero, HeadToHeadLists, type Standing } from "@/components/profile/HeadToHeadRecord";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
 import { ChevronRight, Share } from "lucide-react";
@@ -51,8 +51,11 @@ export interface ProfileViewProps {
   friends?: React.ReactNode;
   rivalries?: RivalryCardProps[];
   bestWins?: BestWin[];
-  opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[]; level?: number } | null;
-  rivalsCard?: RivalsCardData | null;
+  opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[]; level?: number; levelList?: OpponentRecord[] } | null;
+  /** The hero's small row: club place and rating. */
+  standing?: Standing | null;
+  /** Open the head-to-head with this opponent. */
+  onOpenH2H?: (opponentId: string) => void;
   achievements?: Achievement[];
   trophies?: { list: ProfileTrophy[]; onClaim?: () => void; onGive?: () => void; onRemove?: (id: string) => void } | null;
   history?: MatchHistoryItem[];
@@ -87,7 +90,6 @@ const Link = ({ label, onClick, arrow = true }: { label: string; onClick?: () =>
 
 /** How many rows a section shows before you ask for the rest. */
 const HISTORY_PREVIEW = 5;
-const OPPONENTS_PREVIEW = 4;
 
 export function ProfileView(p: ProfileViewProps) {
   const isSelf = p.viewer === "self";
@@ -131,24 +133,20 @@ export function ProfileView(p: ProfileViewProps) {
         </div>
       )}
 
-      <RecordCard {...p.record} onFilter={setFilter} activeFilter={filter} />
-      {p.rivalsCard && p.opponents && (p.opponents.lead.length > 0 || p.opponents.behind.length > 0) && (
-        <RivalsCard data={p.rivalsCard} lead={p.opponents.lead.length} behind={p.opponents.behind.length} self={isSelf} />
-      )}
+      {/* The head-to-head record is the profile's main record (Sam,
+          2026-10-30): who they are ahead of, level with and behind. */}
+      <HeadToHeadHero
+        ahead={p.opponents?.lead.length || 0} level={p.opponents?.levelList?.length || 0} behind={p.opponents?.behind.length || 0}
+        self={isSelf} record={p.record.record} standing={p.standing}
+      />
       <ShareCardButton p={p} isSelf={isSelf} />
-
-      {filter && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI }}>
-              {FILTER_TITLE[filter]} · {filtered.length}
-            </span>
-            <Link label="Close" onClick={() => setFilter(null)} arrow={false} />
-          </div>
-          <MatchHistoryList items={forViewer(filtered)} />
-        </div>
+      {p.opponents && (
+        <HeadToHeadLists
+          lead={p.opponents.lead} behind={p.opponents.behind} level={p.opponents.levelList || []} self={isSelf}
+          showAllAhead={allOpponents} onAllAhead={() => setAllOpponents(true)}
+          onOpen={p.onOpenH2H || p.onOpenPlayer}
+        />
       )}
-
       {p.gap && <div style={{ marginTop: 12 }}><GapInsight {...p.gap} /></div>}
 
       {/* Directly under the record, because it is the same fact over time and
@@ -171,26 +169,6 @@ export function ProfileView(p: ProfileViewProps) {
         <Section title="Best wins"><BestWins wins={p.bestWins} onOpenMatch={p.onOpenMatch} /></Section>
       )}
 
-      {p.opponents && (p.opponents.lead.length > 0 || p.opponents.behind.length > 0) && (
-        <Section
-          title="Head to head"
-          right={
-            allOpponents
-              ? <Link label="Show fewer" onClick={() => setAllOpponents(false)} arrow={false} />
-              : <Link label={`All ${p.opponents.lead.length + p.opponents.behind.length}`} onClick={() => setAllOpponents(true)} />
-          }
-        >
-          <OpponentRecords
-            lead={p.opponents.lead}
-            behind={p.opponents.behind}
-            level={p.opponents.level}
-            self={isSelf}
-            visible={allOpponents ? Number.MAX_SAFE_INTEGER : OPPONENTS_PREVIEW}
-            onOpen={p.onOpenPlayer}
-            onAll={() => setAllOpponents(true)}
-          />
-        </Section>
-      )}
 
       {p.achievements && p.achievements.length > 0 && (
         <div style={{ marginTop: 22 }}><Achievements items={p.achievements} /></div>
@@ -200,6 +178,23 @@ export function ProfileView(p: ProfileViewProps) {
         <Section title="Verified trophies">
           <VerifiedTrophiesRow trophies={p.trophies.list} onClaim={isSelf ? p.trophies.onClaim : undefined} onGive={p.trophies.onGive} onRemove={p.trophies.onRemove} />
         </Section>
+      )}
+
+      {/* The match record, form and rates, now beside the history they
+          describe; tapping a tally filters the list. */}
+      <Section title="Matches">
+        <RecordCard {...p.record} rankings={[]} plain onFilter={setFilter} activeFilter={filter} />
+      </Section>
+      {filter && (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI }}>
+              {FILTER_TITLE[filter]} · {filtered.length}
+            </span>
+            <Link label="Close" onClick={() => setFilter(null)} arrow={false} />
+          </div>
+          <MatchHistoryList items={forViewer(filtered)} />
+        </div>
       )}
 
       {history.length > 0 && (
