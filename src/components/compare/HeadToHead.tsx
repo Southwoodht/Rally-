@@ -370,8 +370,8 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
                 <GroupRow
                   key={e.oid} first={j === 0}
                   title={nm(e.oid)}
-                  sub={(lvl ? lvl.cat + " · " : "") + o.w + "–" + o.l + " overall"}
-                  right={<RecordPill>{e.w}–{e.l}</RecordPill>}
+                  sub={(lvl ? lvl.cat + " · " : "") + o.w + "–" + o.d + "–" + o.l + " overall"}
+                  right={<RecordPill>{e.w}–{e.d}–{e.l}</RecordPill>}
                   onClick={onOpen ? () => onOpen(e.oid) : undefined}
                 />
               );

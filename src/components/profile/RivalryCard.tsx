@@ -28,6 +28,9 @@ export interface RivalryCardProps {
   /** Already formatted — "29 Jul". */
   lastPlayed: string;
   onOpen?: (playerId: string) => void;
+  /** Your own profile. On anybody else's the card is about THEM, so it says
+   *  their name and "Leads / Trails", never "You". */
+  self?: boolean;
 }
 
 const DOT = 8;
@@ -59,9 +62,12 @@ function SplitBar({ w, d, l }: { w: number; d: number; l: number }) {
   );
 }
 
-export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOpen }: RivalryCardProps) {
+export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOpen, self = true }: RivalryCardProps) {
   const leading = w > l ? "you" : l > w ? "them" : "level";
-  const leadLabel = leading === "you" ? "You lead" : leading === "them" ? "They lead" : "All square";
+  const meFirst = String(me?.name || "They").split(" ")[0];
+  const leadLabel = leading === "level" ? "All square"
+    : self ? (leading === "you" ? "You lead" : "They lead")
+      : (leading === "you" ? meFirst + " leads" : meFirst + " trails");
   const leadColour = leading === "you" ? FEED_LIME : leading === "them" ? FEED_THEY_LEAD : FEED_TEXT_MID;
 
   return (
@@ -87,7 +93,7 @@ export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOp
       </div>
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 10 }}>
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>You</span>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{self ? "You" : meFirst}</span>
         <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {fullNameOf(them)}
         </span>
@@ -117,11 +123,11 @@ export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOp
  * somebody who has played eleven people twice each has no rivalries, and
  * saying so is better than promoting their nearest miss.
  */
-export function Rivalries({ items }: { items: RivalryCardProps[] }) {
+export function Rivalries({ items, self = true }: { items: RivalryCardProps[]; self?: boolean }) {
   if (!items || !items.length) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {items.map((it) => <RivalryCard key={it.them?.id || it.lastPlayed} {...it} />)}
+      {items.map((it) => <RivalryCard key={it.them?.id || it.lastPlayed} {...it} self={self} />)}
     </div>
   );
 }

@@ -90,7 +90,8 @@ export function HeadToHeadHero({ ahead, level, behind, self, record, standing, o
   );
 }
 
-const recordText = (r: { w: number; d: number; l: number }) => (r.d ? `${r.w}–${r.d}–${r.l}` : `${r.w}–${r.l}`);
+// Always W–D–L, draws or not, so every record on the profile reads the same way.
+const recordText = (r: { w: number; d: number; l: number }) => `${r.w}–${r.d}–${r.l}`;
 const played = (r: OpponentRecord) => r.w + r.d + r.l;
 
 function Row({ r, first, note, onOpen }: { r: OpponentRecord; first: boolean; note?: string; onOpen?: (id: string) => void }) {

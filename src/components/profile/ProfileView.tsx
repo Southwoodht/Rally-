@@ -167,7 +167,7 @@ export function ProfileView(p: ProfileViewProps) {
       {p.friends}
 
       {p.rivalries && p.rivalries.length > 0 && (
-        <Section title="Rivalries"><Rivalries items={p.rivalries} /></Section>
+        <Section title="Rivalries"><Rivalries items={p.rivalries} self={isSelf} /></Section>
       )}
 
       {p.bestWins && p.bestWins.length > 0 && (
