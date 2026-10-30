@@ -1495,11 +1495,20 @@ over "B"; columns pack on those real heights. A result with no score shows
 a green "W" by the winner (no lone tick); a walkover says "walkover". The
 second picture is **Still to play** (`nextToPlay`, the next six open
 matches in draw order) above Latest results.
-**Rivals card** (`profile/RivalsCard.tsx`) straight under the career record,
-hero style (a second `sw-hero` on the profile, at Sam's ask): opponents you
-lead – who lead you, "you lead · they lead", then "Best win: (first of Best
-wins, i.e. strongest opponent beaten) · Nemesis: (most losses to)". Tapping
-it expands and scrolls to Head to head.
+**Rivals card v2 (branch `rivals-v2`, 2026-10-30)** (`profile/RivalsCard.tsx`),
+straight under the career record, a plain card now (Sam: faces, not big
+numbers): "Rivals · You lead X · They lead Y", the three most-played
+(`topRivals` in core/rivals.ts) as photo, "Charlie H" and H2H, then a
+tinted **Nemesis** row and a **Best win** row ("rated 1642": Glicko going
+into that match, `computeGlicko().before`). **The nemesis is the best
+record AGAINST them** (`pickNemesis`: most net wins over them, 2+ matches;
+none when nobody leads them; tested) — v1 used most losses and named
+Charlie Easey, whom Sam leads 11-3-6. Each face opens Compare for THAT pair
+(`shared.onCompare(a, b)`: `compareFrom` on the left, Back returns to the
+profile via `h2hReturn`). Also: a scanned sheet landed on Home because the
+club's load reset the tab after the switch; RallyApp now waits for
+`loading` before going to Fixtures, and says "Couldn't find that
+competition in this club" after 8 s if it never opens.
 
 **Polish + head-to-head (merged to master 2026-10-30).**
 Sam's 16-point brief; 1–11 (clubs page and switcher, division tables, odds,

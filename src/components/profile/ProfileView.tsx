@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Achievements, type Achievement } from "@/components/profile/Achievements";
 import { BestWins, type BestWin } from "@/components/profile/BestWins";
 import { GapInsight, PlayingStyle, type GapInsightProps, type PlayingStyleProps } from "@/components/profile/GapInsight";
@@ -10,7 +10,7 @@ import { OpponentRecords, type OpponentRecord } from "@/components/profile/Oppon
 import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
 import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
-import { RivalsCard } from "@/components/profile/RivalsCard";
+import { RivalsCard, type RivalsCardData } from "@/components/profile/RivalsCard";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
 import { ChevronRight, Share } from "lucide-react";
@@ -52,6 +52,7 @@ export interface ProfileViewProps {
   rivalries?: RivalryCardProps[];
   bestWins?: BestWin[];
   opponents?: { lead: OpponentRecord[]; behind: OpponentRecord[]; level?: number } | null;
+  rivalsCard?: RivalsCardData | null;
   achievements?: Achievement[];
   trophies?: { list: ProfileTrophy[]; onClaim?: () => void; onGive?: () => void; onRemove?: (id: string) => void } | null;
   history?: MatchHistoryItem[];
@@ -94,13 +95,6 @@ export function ProfileView(p: ProfileViewProps) {
   // every row, and how many of them are on screen is nobody else's business.
   const [allOpponents, setAllOpponents] = useState(false);
   const [allHistory, setAllHistory] = useState(false);
-  const h2hRef = useRef<HTMLDivElement | null>(null);
-  // The nemesis: whoever they have lost to most, across everybody faced.
-  const nemesis = (() => {
-    const all = [...(p.opponents?.lead || []), ...(p.opponents?.behind || [])].filter((o) => o.l > 0);
-    all.sort((a, b) => b.l - a.l || (b.l - b.w) - (a.l - a.w));
-    return all[0]?.player;
-  })();
   // Tapping "28 won" asks a question of the list below, so the answer goes
   // there rather than opening a second list somewhere else.
   const [filter, setFilter] = useState<OutcomeFilter>(null);
@@ -138,12 +132,8 @@ export function ProfileView(p: ProfileViewProps) {
       )}
 
       <RecordCard {...p.record} onFilter={setFilter} activeFilter={filter} />
-      {p.opponents && (p.opponents.lead.length > 0 || p.opponents.behind.length > 0) && (
-        <RivalsCard
-          lead={p.opponents.lead.length} behind={p.opponents.behind.length} self={isSelf}
-          bestWin={p.bestWins?.[0]?.opponent} nemesis={nemesis}
-          onOpen={() => { setAllOpponents(true); setTimeout(() => h2hRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}
-        />
+      {p.rivalsCard && p.opponents && (p.opponents.lead.length > 0 || p.opponents.behind.length > 0) && (
+        <RivalsCard data={p.rivalsCard} lead={p.opponents.lead.length} behind={p.opponents.behind.length} self={isSelf} />
       )}
       <ShareCardButton p={p} isSelf={isSelf} />
 
@@ -181,7 +171,6 @@ export function ProfileView(p: ProfileViewProps) {
         <Section title="Best wins"><BestWins wins={p.bestWins} onOpenMatch={p.onOpenMatch} /></Section>
       )}
 
-      <div ref={h2hRef} style={{ scrollMarginTop: 80 }} />
       {p.opponents && (p.opponents.lead.length > 0 || p.opponents.behind.length > 0) && (
         <Section
           title="Head to head"

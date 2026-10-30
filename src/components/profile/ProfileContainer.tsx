@@ -12,7 +12,8 @@ import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { officialTimeline } from "@/core/officialTimeline";
-import { glickoStandings } from "@/core/glicko";
+import { computeGlicko, glickoStandings } from "@/core/glicko";
+import { pickNemesis, topRivals } from "@/core/rivals";
 import { opponentStrength } from "@/core/official";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
 import { topRivalries } from "@/core/rivalries";
@@ -51,7 +52,7 @@ export function ProfileContainer({
   player, players, matches, elo, wdl, form, deltas, ratingBefore, meId, group, groups,
   viewer = "self", onOpen, onOpenMatch, onProposeEdit, onPickLeague,
   onFriends, onLinkedPlayer, onClaimTrophy, onAllHistory, onAllOpponents, onStyleDetails,
-  myAuthId, onMessage, onChallenge, onOpenMatches, seasonHonoursOf,
+  myAuthId, onMessage, onChallenge, onOpenMatches, seasonHonoursOf, onCompare,
   // False where the profile was reached from outside your league (search,
   // a friend's list): the database only lets an admin award inside a league
   // they are in, so the button would only ever fail there.
@@ -217,6 +218,11 @@ export function ProfileContainer({
     const lead = faced.filter((o) => side(o).w > side(o).l).map(oppRec);
     const behind = faced.filter((o) => side(o).l > side(o).w).map(oppRec);
     const levelWith = faced.filter((o) => side(o).w === side(o).l).length;
+    // The Rivals card (core/rivals.ts): the three most played, and the
+    // nemesis — the best record AGAINST them, never simply the most losses.
+    const recs = Object.entries(h).filter(([id]) => byId[id]).map(([id, r0]) => ({ id, ...r0 }));
+    const nem = pickNemesis(recs);
+    const rivalsTop = topRivals(recs, 3).map((r0) => ({ player: byId[r0.id], w: r0.w, d: r0.d, l: r0.l }));
 
     const rivalries = topRivalries(pid, matches || [], 3)
       .filter((v: any) => byId[v.oid])
@@ -359,6 +365,12 @@ export function ProfileContainer({
     return {
       record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, unbeatenRate: r.gp ? Math.round(((r.w + r.d) / r.gp) * 100) : undefined, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
       gap, playingStyle, rivalries, bestWins, opponents: { lead, behind, level: levelWith }, achievements, history,
+      rivalsCard: {
+        top: rivalsTop,
+        nemesis: nem ? { player: byId[nem.id], w: nem.w, d: nem.d, l: nem.l } : null,
+        // Their rating going into the match (Glicko before it), as Sam asked.
+        bestWin: bestWins[0] ? { player: bestWins[0].opponent, rating: (() => { const b = computeGlicko(players || [], matches || []).before[bestWins[0].matchId]?.[bestWins[0].opponent.id]; return b ? Math.round(b.rating) : null; })() } : null,
+      },
       historyTotal: mine.length, meta,
       pointsSummary: (() => {
         const own = Object.values(officialSteps.perMatch).reduce((t, row) => t + (row[pid] ?? 0), 0);
@@ -435,6 +447,7 @@ export function ProfileContainer({
       rivalries={data.rivalries}
       bestWins={data.bestWins}
       opponents={data.opponents}
+      rivalsCard={data.rivalsCard ? { ...data.rivalsCard, onOpenH2H: onCompare && pid ? (oid: string) => onCompare(pid, oid) : undefined } : null}
       achievements={data.achievements}
       trophies={{
         // Honours the app works out from finished seasons come first: they

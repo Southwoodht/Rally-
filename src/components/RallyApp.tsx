@@ -1,5 +1,5 @@
 "use client";
-import { peekPendingComp } from "@/lib/compLink";
+import { clearPendingComp, peekPendingComp } from "@/lib/compLink";
 import { CONFIRM_WINDOW_MS, REJECTED_KEEP_MS, countsAsPlayed, isClaimed, isLegacy, isLegacyRejected, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
@@ -188,6 +188,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // Set when you arrive at Compare from a Table row, so it opens on the two
   // of you rather than on two empty pickers.
   const [compareWith, setCompareWith] = useState<string | null>(null);
+  // A head-to-head opened from a profile's Rivals card: who is on the left
+  // (the profile's player, not always you), and where Back returns to.
+  const [compareFrom, setCompareFrom] = useState<string | null>(null);
+  const [h2hReturn, setH2hReturn] = useState<{ tab: string; profileId: string | null } | null>(null);
   // Standings or Compare, on the Table tab. Session only — a filter you
   // chose once is not a preference worth remembering across launches, and
   // opening the app into Compare would be answering a question nobody asked.
@@ -297,13 +301,27 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const showDoubles = !!doublesEnabled && sport === "doubles";
   // A scanned coach sheet (lib/compLink.ts): once the club's competitions
   // arrive, go to Fixtures on the right side; Competitions opens it there.
+  // Not while the club is still loading: loading it ends by putting the tab
+  // back to Home, which is how a scan once landed on Home (Sam, 2026-10-30).
   useEffect(() => {
+    if (loading) return;
     const want = peekPendingComp();
     const c = want ? comps.competitions.find((x) => x.id === want) : null;
     if (!c) return;
     setSport(c.kind === "doubles" ? "doubles" : "singles");
     setTab("fixtures");
-  }, [comps.competitions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [comps.competitions, loading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // And if it never turns up — another club's sheet, or a competition since
+  // deleted — say so once rather than leaving them on Home wondering.
+  useEffect(() => {
+    if (loading || !peekPendingComp()) return;
+    const t = setTimeout(() => {
+      if (!peekPendingComp()) return;
+      clearPendingComp();
+      flash("Couldn't find that competition in this club");
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
   // The Table tab's Divisions view: every running league-format competition
   // of the kind on screen. With none, the view falls back to Standings.
   const divisionComps = (competitionsEnabled && !comps.unavailable ? comps.competitions : [])
@@ -1934,7 +1952,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
       : singlesCompetitionView(c.id, comps.pairs, fixtures, matches).results,
     minGames: SEASON_RANK_GAMES,
   }).filter((h) => h.playerId === pid);
-  const shared = { seasonHonoursOf, players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId,
+  const shared = { seasonHonoursOf, players, elo, wdl, form, deltas, ratingBefore, matches, nameOf, ranked, showElo: true, onOpen: openProfile, fixtures, group, groups, meId, myAuthId, onMessage: (authId: string) => { setMsgWith(authId); setProfileId(null); setTab("messages"); }, onOpenMatches: (pid: string, m: MatchesMode) => { setMatchesFor(pid); setMatchesMode(m); setProfileId(null); setTab("matches"); }, onProposeEdit: proposeEdit, onOpenMatch: setMatchDetailId, onCompare: (a: string, b: string) => { setH2hReturn({ tab, profileId }); setCompareFrom(a); setCompareWith(b); setProfileId(null); setTab("h2h"); },
     // Challenge from a profile opens ChallengeSheet over it (When, how long,
     // Where, Send) — no trip to Fixtures (Sam, 2026-10-25).
     onChallenge: (pid: string) => setChallengeSheet(pid) };
@@ -2695,8 +2713,12 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "global" && <GlobalTable myAuthId={myAuthId} players={players} onOpenProfile={openProfile} onBack={() => setTab("ladder")} />}
         {/* Back to wherever you came from: the Table if a row sent you here,
             the profile menu otherwise. */}
-        {tab === "h2h" && <SubHeader title="Compare" onBack={() => { const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from); }} />}
-        {tab === "h2h" && <HeadToHead players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={meId} initialB={compareWith} />}
+        {tab === "h2h" && <SubHeader title="Compare" onBack={() => {
+          // Back from a Rivals face returns to the profile it was opened on.
+          if (h2hReturn) { const r = h2hReturn; setH2hReturn(null); setCompareFrom(null); setCompareWith(null); setTab(r.tab); setProfileId(r.profileId as any); return; }
+          const from = compareWith ? "ladder" : "profile"; setCompareWith(null); setTab(from);
+        }} />}
+        {tab === "h2h" && <HeadToHead key={(compareFrom || meId) + ":" + (compareWith || "")} players={players} matches={matches} elo={elo} wdl={wdl} nameOf={nameOf} onOpen={openProfile} onCreatePlayer={addPlayer} initialA={compareFrom || meId} initialB={compareWith} />}
         {tab === "profile" && showDoubles && !personal && (
           doubles.unavailable
             ? <div style={{ margin: "14px 16px 0", padding: 22, borderRadius: 26, background: PANEL, fontFamily: body, fontSize: 15, color: FEED_TEXT_MID, lineHeight: 1.5 }}>

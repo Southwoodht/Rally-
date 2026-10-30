@@ -13,6 +13,8 @@
   },
   "include": [
     "src/core/nameFilter.ts",
+    "src/core/rivals.ts",
+    "src/core/rivals.test.ts",
     "src/core/nameFilter.test.ts",
     "src/core/tiebreak.ts",
     "src/core/rankDisplay.ts",
