@@ -5,7 +5,7 @@
  */
 
 /** The parts of a result a correction can change, as they are saved. */
-export interface ResultSnapshot { date: number; winner: string; score: string; status: string }
+export interface ResultSnapshot { date: number; winner: string; score: string; status: string; p1?: string; p2?: string }
 
 /** "Won 6-4 on 12 Mar" — one side of a correction, from a player's side. */
 export function describeResult(s: ResultSnapshot | null, side: "p1" | "p2", fmt: (t: number) => string): string {

@@ -18,7 +18,7 @@ import type { ResultSnapshot } from "@/lib/matchEditText";
 export type { ResultSnapshot } from "@/lib/matchEditText";
 
 export const snapshotOf = (m: any): ResultSnapshot => ({
-  date: m.date, winner: m.winner, score: m.score || "", status: m.status || "confirmed",
+  date: m.date, winner: m.winner, score: m.score || "", status: m.status || "confirmed", p1: m.p1, p2: m.p2,
 });
 
 export interface MatchEdit {

@@ -1430,7 +1430,12 @@ staff update/delete any club match, so no policy changed.
 score, winner). Ratings that depend on order sort by date PLAYED (elo,
 glicko, officialTimeline); entry time only breaks same-day ties.
 Fixed in passing: the "organiser deletes a legacy result at once" line had
-landed in proposeEdit instead of proposeDelete.
+landed in proposeEdit instead of proposeDelete. Same day, after Sam found
+"no delete": the feed's inline organiser Edit box (History.tsx) saved
+straight through `editMatch` with no log — now it goes through
+`adminCorrect` with a Delete beside Save, and shows only on matches the
+organiser isn't in. Keeping / removing a disputed result is logged the same
+way. Still unlogged, by design: Data → Clear results (bulk, two-step).
 
 **Find a player opens inside the app (2026-10-25).** Sam: searching "resets
 back to the choose your club screen". The top-row search was a link to

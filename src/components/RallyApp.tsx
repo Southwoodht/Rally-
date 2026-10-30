@@ -1233,14 +1233,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     matches: gdata.matches.filter((m) => m.id !== id),
     fixtures: (gdata.fixtures || []).map((f) => (f.matchId === id ? { ...f, done: false, winner: undefined, matchId: undefined } : f)),
   });
-  const keepDisputed = (id) => {
-    setMatches(matches.map((m) => (m.id === id ? { ...m, status: "confirmed" } : m)));
-    flash("Result kept");
-  };
-  const removeDisputed = async (id) => {
-    const ok = await removeResult(id);
-    if (ok !== false) flash("Result removed");
-  };
+  // An organiser's ruling on a dispute is a correction like any other:
+  // logged, and both players told (adminCorrect).
+  const keepDisputed = (id) => adminCorrect(id, { status: "confirmed" });
+  const removeDisputed = (id) => adminCorrect(id, null);
   const updateGroup = (id, patch) => saveGroups(groups.map((g) => g.id === id ? { ...g, ...patch } : g));
   const removePlayer = (id) => saveData({ ...gdata, players: gdata.players.filter((p) => p.id !== id), matches: gdata.matches.filter((m) => m.p1 !== id && m.p2 !== id) });
   const ranked = useMemo(() => {
@@ -2006,7 +2002,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   });
   // The club as a venue: where a booking or challenge defaults to.
   const clubVenue = !personal && !isFriendlyLeague(gid) ? { name: group?.name || leagueName || "Club", place: clubPlace?.location ?? null, lat: clubPlace?.lat ?? null, lng: clubPlace?.lng ?? null, club: true } : null;
-  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
+  const feed = <History mode={tab === "fixtures" ? "fixtures" : "feed"} posts={posts} onPost={addPost} onRemovePost={removePost} matches={matches} players={players} elo={elo} nameOf={nameOf} meId={meId} groupName={group?.name} fixtures={fixtures} onGenerate={generateFixtures} onClearFixtures={clearFixtures} onResolveFixture={resolveFixture} onBookFixture={bookFixture} onAddFixture={addFixture} onRemoveFixture={removeFixture} onCreatePlayer={addPlayer} challengeWith={challengeWith} onConfirm={confirmMatch} onDispute={disputeMatch} onDelete={removeResult} canEditMatches={canManageMatches} onEditMatch={editMatch} onAdminCorrect={canManageMatches ? adminCorrect : undefined} onApproveEdit={approveEdit} onRejectEdit={rejectEdit} onAgreeDelete={agreeDelete} onCancelDelete={cancelDeleteRequest} onOpenMatch={setMatchDetailId} onOpenProfile={openProfile} wdl={wdl} leagueId={gid} friendly={isFriendlyLeague(gid)} onNudge={nudgeMatch} doublesMatches={!!doublesEnabled && !personal ? doubles.matches : undefined} fixtureLabel={compLabelFor} fixtureNoDraw={compNoDraw} onOpenDoubles={setEditDoublesId} onMessage={(authId: string) => { setMsgWith(authId); setTab("messages"); }}
     homeVenue={clubVenue}
     doublesMode={tab === "home" && homeDoubles}
     doublesRoundup={homeDoubles && dHome ? <DoublesRoundup matches={doubles.matches} players={players} home={dHome} /> : null} />;

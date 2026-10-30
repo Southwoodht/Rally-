@@ -20,7 +20,7 @@ import { dominationHeadline } from "@/core/domination";
 import { orientToWinner, parseSets } from "@/core/sets";
 import { BALL, CHALK, CLAY, COURT, FEED_LIME, FEED_LIME_INK, FEED_TEXT_MID, LINE, MUTED, PANEL, PANEL2, body, input, listCard, miniInput, tabular, wrap } from "@/lib/theme";
 
-export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches, fixtureLabel, fixtureNoDraw, onOpenDoubles, doublesMode, doublesRoundup, onMessage, homeVenue }: any) {
+export function History({ posts, onPost, onRemovePost, matches, players, elo, nameOf, meId, groupName, fixtures, onGenerate, onClearFixtures, onResolveFixture, onBookFixture, onAddFixture, onRemoveFixture, onCreatePlayer, challengeWith, onConfirm, onDispute, onDelete, canEditMatches, onEditMatch, onApproveEdit, onRejectEdit, onAgreeDelete, onCancelDelete, onOpenMatch, onOpenProfile, wdl, leagueId, mode, friendly, onNudge, doublesMatches, fixtureLabel, fixtureNoDraw, onOpenDoubles, doublesMode, doublesRoundup, onMessage, homeVenue, onAdminCorrect }: any) {
   // Games used to be one screen with a toggle across the top. It's two
   // screens now — the feed lives on Home, fixtures have their own tab — so
   // when a caller states which half it wants, the toggle has nothing left to
@@ -96,13 +96,19 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
     setEditDraft({ date: m.date ? new Date(m.date).toISOString().slice(0, 10) : "", p1: m.p1, p2: m.p2, winner: m.winner || "draw", score: m.score || "" });
   };
   const [editErr, setEditErr] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const saveEdit = (m: any) => {
     if (!editDraft || !onEditMatch) return;
     // Same rule as logging a new result (core/sets.ts scoreProblem).
     const problem = scoreProblem(editDraft.score, editDraft.winner, false);
     if (problem) { setEditErr(problem); return; }
     setEditErr(null);
-    onEditMatch(m.id, { date: editDraft.date ? new Date(editDraft.date).getTime() : m.date, p1: editDraft.p1, p2: editDraft.p2, winner: editDraft.winner, score: editDraft.score.trim() });
+    const patch = { date: editDraft.date ? new Date(editDraft.date).getTime() : m.date, p1: editDraft.p1, p2: editDraft.p2, winner: editDraft.winner, score: editDraft.score.trim() };
+    // An organiser's correction is logged and both players told
+    // (RallyApp adminCorrect). This box used to save silently — the one
+    // organiser edit that left no trail.
+    if (onAdminCorrect) void onAdminCorrect(m.id, patch);
+    else onEditMatch(m.id, patch);
     setEditingMatchId(null);
     setEditDraft(null);
   };
@@ -404,7 +410,9 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                     onOpenMatch={onOpenMatch ? () => onOpenMatch(m.id) : undefined}
                   />
                   <div>
-                    {canEditMatches && (
+                    {/* Organisers correct other people's results here. Their own
+                        go through the opponent, from match detail, like anyone's. */}
+                    {canEditMatches && m.p1 !== meId && m.p2 !== meId && (
                       <div style={{ marginTop: 8 }}>
                         {editingMatchId === m.id ? (
                           <div style={{ display: "grid", gap: 6 }}>
@@ -424,8 +432,20 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                             {editErr && <div style={{ fontFamily: body, fontSize: 12, color: CLAY }}>{editErr}</div>}
                             <div style={{ display: "flex", gap: 8 }}>
                               <button onClick={() => saveEdit(m)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: BALL, border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Save</button>
-                              <button onClick={() => { setEditingMatchId(null); setEditDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button>
+                              <button onClick={() => { setEditingMatchId(null); setEditDraft(null); setConfirmDeleteId(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button>
+                              {onAdminCorrect && (
+                                <button onClick={() => setConfirmDeleteId(m.id)} style={{ marginLeft: "auto", fontFamily: body, fontWeight: 600, fontSize: 12, color: CLAY, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Delete</button>
+                              )}
                             </div>
+                            {confirmDeleteId === m.id && (
+                              <div style={{ display: "grid", gap: 6, marginTop: 4 }}>
+                                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, lineHeight: 1.4 }}>Delete this result? It&apos;s logged, both players are told, and any competition match it settled reopens.</div>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <button onClick={() => { void onAdminCorrect(m.id, null); setConfirmDeleteId(null); setEditingMatchId(null); setEditDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: CLAY, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Delete result</button>
+                                  <button onClick={() => setConfirmDeleteId(null)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Keep it</button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <button onClick={() => beginEdit(m)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: BALL, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Edit</button>
