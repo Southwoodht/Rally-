@@ -10,7 +10,7 @@ import type { OpponentRecord } from "@/components/profile/OpponentRecords";
 import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
 import type { RecordCardProps } from "@/components/profile/RecordCard";
-import { HeadToHeadHero, HeadToHeadLists, type Standing } from "@/components/profile/HeadToHeadRecord";
+import { HeadToHeadHero, HeadToHeadLists, HeadToHeadSheet, type H2HGroup, type Standing } from "@/components/profile/HeadToHeadRecord";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
 import { ChevronRight, Share } from "lucide-react";
@@ -96,6 +96,7 @@ export function ProfileView(p: ProfileViewProps) {
   // Expansion is view state, not data: the container already handed over
   // every row, and how many of them are on screen is nobody else's business.
   const [allOpponents, setAllOpponents] = useState(false);
+  const [h2hSheet, setH2hSheet] = useState<H2HGroup | null>(null);
   const [allHistory, setAllHistory] = useState(false);
   const history = p.history || [];
   const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
@@ -135,12 +136,14 @@ export function ProfileView(p: ProfileViewProps) {
         self={isSelf} record={p.record.record} standing={p.standing}
         form={p.record.form}
         rates={{ winRate: p.record.winRate, unbeatenRate: p.record.unbeatenRate, currentStreak: p.record.currentStreak, bestStreak: p.record.bestStreak }}
-        onShow={(g) => {
-          // Ahead opens in full so the tap shows everybody it counted.
-          if (g === "ahead") setAllOpponents(true);
-          setTimeout(() => document.getElementById("h2h-" + g)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-        }}
+        onShow={setH2hSheet}
       />
+      {h2hSheet && p.opponents && (
+        <HeadToHeadSheet
+          group={h2hSheet} lead={p.opponents.lead} behind={p.opponents.behind} level={p.opponents.levelList || []} self={isSelf}
+          onClose={() => setH2hSheet(null)} onOpen={p.onOpenH2H || p.onOpenPlayer}
+        />
+      )}
       <ShareCardButton p={p} isSelf={isSelf} />
       {p.opponents && (
         <HeadToHeadLists

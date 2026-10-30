@@ -9,7 +9,7 @@ import type { OpponentRecord } from "@/components/profile/OpponentRecords";
 import { legacyLine } from "@/core/matchStatus";
 import { pickNemesis } from "@/core/rivals";
 import { fullNameOf } from "@/lib/format";
-import { FEED_LIME, FEED_LOST, FEED_PAD, FEED_PAD_Y, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, body, display, tabular } from "@/lib/theme";
+import { FEED_OVERLAY, PANEL, FEED_LIME, FEED_LOST, FEED_PAD, FEED_PAD_Y, FEED_RADIUS, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, LINE, body, display, tabular } from "@/lib/theme";
 
 /**
  * The head-to-head record IS the profile now (Sam, 2026-10-30): the top
@@ -23,7 +23,7 @@ export interface Standing { place: string; rating: number | null; rd: number | n
 
 export type H2HGroup = "ahead" | "level" | "behind";
 
-/** Each count is a button down to the list that names those people (Sam:
+/** Each count opens a sheet naming those people (Sam:
  *  "if u click the head to heads it shows who they are beating"). */
 export function HeadToHeadHero({ ahead, level, behind, self, record, standing, onShow, form, rates }: {
   ahead: number; level: number; behind: number; self: boolean;
@@ -139,14 +139,59 @@ function List({ id, title, hint, items, notes, visible, onOpen, onAll }: {
  * level, then Ahead, most played first, five and "See all". Every row opens
  * the head-to-head with that player.
  */
+const worstFirstOf = (behind: OpponentRecord[]) => [...behind].sort((a, b) => (b.l - b.w) - (a.l - a.w) || played(b) - played(a));
+const mostPlayedOf = (lead: OpponentRecord[]) => [...lead].sort((a, b) => played(b) - played(a) || (b.w - b.l) - (a.w - a.l));
+const nemesisNotes = (behind: OpponentRecord[]): Record<string, string> => {
+  const nem = pickNemesis(behind.filter((r) => r.player?.id).map((r) => ({ id: r.player.id, w: r.w, d: r.d, l: r.l })));
+  return nem ? { [nem.id]: "Nemesis" } : {};
+};
+
+/**
+ * Tap 10 on the hero and the ten people open in a sheet over the profile
+ * (Sam, 2026-10-30: "when u click 10 it lists my 10 people and same with my
+ * 3"). Same rows and order as the lists under the card; a row opens the
+ * head-to-head with that player.
+ */
+export function HeadToHeadSheet({ group, lead, behind, level, self, onClose, onOpen }: {
+  group: H2HGroup; lead: OpponentRecord[]; behind: OpponentRecord[]; level: OpponentRecord[]; self: boolean;
+  onClose: () => void; onOpen?: (id: string) => void;
+}) {
+  const items = group === "ahead" ? mostPlayedOf(lead) : group === "behind" ? worstFirstOf(behind) : level;
+  const notes = group === "behind" ? nemesisNotes(behind) : undefined;
+  const n = items.length;
+  const title = group === "ahead" ? `Ahead of ${n}` : group === "behind" ? `Behind ${n}` : `Level with ${n}`;
+  const sub = group === "ahead"
+    ? `${n === 1 ? "The player" : "Players"} ${self ? "you have" : "they have"} a winning record against`
+    : group === "behind"
+      ? `${n === 1 ? "The player" : "Players"} with a winning record against ${self ? "you" : "them"}${self ? " — your targets" : ""}`
+      : `Honours even, so far`;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 125 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 34px", boxSizing: "border-box" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 26, color: group === "behind" ? FEED_LOST : FEED_TEXT_HI }}>{title}</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, marginTop: 2 }}>{sub}</div>
+          </div>
+          <button onClick={onClose} style={{ background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", flexShrink: 0 }}>Done</button>
+        </div>
+        <div style={{ marginTop: 14 }}>
+          <GroupCard>
+            {items.map((r, i) => <Row key={r.player?.id || i} r={r} first={i === 0} note={notes?.[r.player?.id]} onOpen={onOpen ? (id) => { onClose(); onOpen(id); } : undefined} />)}
+          </GroupCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HeadToHeadLists({ lead, behind, level, self, showAllAhead, onAllAhead, onOpen }: {
   lead: OpponentRecord[]; behind: OpponentRecord[]; level: OpponentRecord[]; self: boolean;
   showAllAhead: boolean; onAllAhead: () => void; onOpen?: (id: string) => void;
 }) {
-  const worstFirst = [...behind].sort((a, b) => (b.l - b.w) - (a.l - a.w) || played(b) - played(a));
-  const nem = pickNemesis(behind.filter((r) => r.player?.id).map((r) => ({ id: r.player.id, w: r.w, d: r.d, l: r.l })));
-  const notes: Record<string, string> = nem ? { [nem.id]: "Nemesis" } : {};
-  const mostPlayed = [...lead].sort((a, b) => played(b) - played(a) || (b.w - b.l) - (a.w - a.l));
+  const worstFirst = worstFirstOf(behind);
+  const notes = nemesisNotes(behind);
+  const mostPlayed = mostPlayedOf(lead);
   return (
     <>
       <List id="h2h-behind" title="Behind" hint={self ? "your targets" : undefined} items={worstFirst} notes={notes} onOpen={onOpen} />
