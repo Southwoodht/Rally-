@@ -9,7 +9,7 @@ import { recordsByYear } from "@/core/yearRecord";
 import type { OpponentRecord } from "@/components/profile/OpponentRecords";
 import { ProfileActions, type ProfileActionsProps } from "@/components/profile/ProfileActions";
 import { ProfileHeader, type ProfileHeaderProps } from "@/components/profile/ProfileHeader";
-import { RecordCard, type OutcomeFilter, type RecordCardProps } from "@/components/profile/RecordCard";
+import type { RecordCardProps } from "@/components/profile/RecordCard";
 import { HeadToHeadHero, HeadToHeadLists, type Standing } from "@/components/profile/HeadToHeadRecord";
 import { Rivalries, type RivalryCardProps } from "@/components/profile/RivalryCard";
 import { SettingsList, VerifiedTrophiesRow, type ProfileTrophy, type SettingsRow } from "@/components/profile/ProfileRows";
@@ -97,11 +97,7 @@ export function ProfileView(p: ProfileViewProps) {
   // every row, and how many of them are on screen is nobody else's business.
   const [allOpponents, setAllOpponents] = useState(false);
   const [allHistory, setAllHistory] = useState(false);
-  // Tapping "28 won" asks a question of the list below, so the answer goes
-  // there rather than opening a second list somewhere else.
-  const [filter, setFilter] = useState<OutcomeFilter>(null);
   const history = p.history || [];
-  const filtered = filter ? history.filter((m) => m.outcome === filter && !m.legacy) : [];
   const shownHistory = allHistory ? history : history.slice(0, HISTORY_PREVIEW);
   // Each year's record over the WHOLE history, so the header above a
   // five-row preview still says how the whole year went.
@@ -114,7 +110,6 @@ export function ProfileView(p: ProfileViewProps) {
   const historyTrophies = (p.trophies?.list || [])
     .map((t) => ({ id: t.id, competition: t.competition, result: t.result, season: t.season, won_on: t.wonOn, format: t.format, clubName: t.clubName }))
     .filter((t) => onSide(t, "singles"));
-  const FILTER_TITLE = { W: "Wins", D: "Draws", L: "Losses" } as const;
   // Editing belongs to the owner of the result, wherever the list appears.
   const forViewer = (list: MatchHistoryItem[]) =>
     isSelf ? list : list.map((m) => ({ ...m, onEdit: undefined }));
@@ -138,6 +133,8 @@ export function ProfileView(p: ProfileViewProps) {
       <HeadToHeadHero
         ahead={p.opponents?.lead.length || 0} level={p.opponents?.levelList?.length || 0} behind={p.opponents?.behind.length || 0}
         self={isSelf} record={p.record.record} standing={p.standing}
+        form={p.record.form}
+        rates={{ winRate: p.record.winRate, unbeatenRate: p.record.unbeatenRate, currentStreak: p.record.currentStreak, bestStreak: p.record.bestStreak }}
         onShow={(g) => {
           // Ahead opens in full so the tap shows everybody it counted.
           if (g === "ahead") setAllOpponents(true);
@@ -183,23 +180,6 @@ export function ProfileView(p: ProfileViewProps) {
         <Section title="Verified trophies">
           <VerifiedTrophiesRow trophies={p.trophies.list} onClaim={isSelf ? p.trophies.onClaim : undefined} onGive={p.trophies.onGive} onRemove={p.trophies.onRemove} />
         </Section>
-      )}
-
-      {/* The match record, form and rates, now beside the history they
-          describe; tapping a tally filters the list. */}
-      <Section title="Matches">
-        <RecordCard {...p.record} rankings={[]} plain onFilter={setFilter} activeFilter={filter} />
-      </Section>
-      {filter && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI }}>
-              {FILTER_TITLE[filter]} · {filtered.length}
-            </span>
-            <Link label="Close" onClick={() => setFilter(null)} arrow={false} />
-          </div>
-          <MatchHistoryList items={forViewer(filtered)} />
-        </div>
       )}
 
       {history.length > 0 && (

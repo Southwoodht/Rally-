@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { FormBars, type FormBarItem } from "@/components/profile/FormBars";
 import { GroupCard, GroupLabel } from "@/components/ui/Grouped";
 import { LegacyNote } from "@/components/ui/LegacyNote";
 import { SurfaceCard } from "@/components/ui/Surfaces";
@@ -24,11 +25,15 @@ export type H2HGroup = "ahead" | "level" | "behind";
 
 /** Each count is a button down to the list that names those people (Sam:
  *  "if u click the head to heads it shows who they are beating"). */
-export function HeadToHeadHero({ ahead, level, behind, self, record, standing, onShow }: {
+export function HeadToHeadHero({ ahead, level, behind, self, record, standing, onShow, form, rates }: {
   ahead: number; level: number; behind: number; self: boolean;
   record: { w: number; d: number; l: number };
   standing?: Standing | null;
   onShow?: (group: H2HGroup) => void;
+  /** Last 5 and the rates, folded in from the old Matches card (Sam,
+   *  2026-10-30: "merge it all with the head to head card under one"). */
+  form?: FormBarItem[];
+  rates?: { winRate: number; unbeatenRate?: number; currentStreak: number; bestStreak: number };
 }) {
   const faced = ahead + level + behind;
   const num = (n: number, colour: string, label: H2HGroup) => {
@@ -61,7 +66,20 @@ export function HeadToHeadHero({ ahead, level, behind, self, record, standing, o
           Ahead of {ahead} of the {faced} {faced === 1 ? "player" : "players"} {self ? "you've" : "they've"} faced
         </div>
       )}
-      <div style={{ borderTop: "1px solid " + LINE, marginTop: 16, paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
+      {form && form.length > 0 && (
+        <div style={{ borderTop: "1px solid " + LINE, marginTop: 16, paddingTop: 14 }}>
+          <FormBars items={form} />
+        </div>
+      )}
+      {rates && (
+        <div style={{ borderTop: "1px solid " + LINE, marginTop: 14, paddingTop: 14, display: "grid", gridTemplateColumns: rates.unbeatenRate != null ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: 6 }}>
+          {small("win rate", rates.winRate + "%")}
+          {rates.unbeatenRate != null && small("unbeaten", rates.unbeatenRate + "%")}
+          {small("streak", rates.currentStreak)}
+          {small("best run", rates.bestStreak)}
+        </div>
+      )}
+      <div style={{ borderTop: "1px solid " + LINE, marginTop: 14, paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
         {small("matches", `${record.w}–${record.d}–${record.l}`)}
         {small("club", standing?.place || "—", !!standing?.place && !/^\d/.test(standing.place))}
         {small("rating", standing?.rating != null
