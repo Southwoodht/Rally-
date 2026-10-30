@@ -5,7 +5,7 @@ import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/com
 import { assignRanks, buildH2H, type RankCandidate } from "@/core/tiebreak";
 import { ratingColumn } from "@/core/rankDisplay";
 import { countsAsPlayed } from "@/core/matchStatus";
-import { peopleCounts, type PeopleCount } from "@/core/rivals";
+import { recordsVs, vsLine } from "@/core/rivals";
 import { fullNameOf } from "@/lib/format";
 import { FEED_BAR, FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_LIME_INK_2, FEED_ON_HERO, FEED_PAD, FEED_RADIUS, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, tabular, tight, FEED_RAISED, FORM_CHIP, display as displayFont } from "@/lib/theme";
 
@@ -51,6 +51,9 @@ export interface StandingsListProps {
   /** Listed in order but given no place: a dash where the rank goes and no
    *  leader card. The provisional group under the table. */
   placeless?: boolean;
+  /** The matches "You lead 3–1" counts — all time, whatever the table's
+   *  period; a head-to-head is the whole history. Defaults to `matches`. */
+  vsMatches?: any[];
 }
 
 const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
@@ -62,14 +65,15 @@ const gamesOf = (p: StandingsPlayer) => p.w + p.d + p.l;
 // a separate section under the table was worse, because "below everybody" is
 // a stronger claim than "unknown" — and simply say so instead.
 //
-// Under the name, the head-to-head in people (Sam, 2026-10-30: "under
-// people it says their head to head not their records") — the profile
-// hero's three numbers, over the same matches the table is counting. The
-// record and the level word went to make room; both are on the profile.
-const statLineOf = (p: StandingsPlayer, c?: PeopleCount) => {
+// Under everybody else's name, how YOU stand against them (Sam, 2026-10-30:
+// "under people it says their head to head not their records"), over the
+// matches the table is counting. Your own row keeps your record.
+const recordOf = (p: StandingsPlayer) => `${p.w}–${p.d}–${p.l}`;
+const statLineOf = (p: StandingsPlayer, vs?: string) => {
+  if (vs) return vs;
   if (!gamesOf(p)) return "no games yet";
-  if (!c) return "";
-  return ["Ahead of " + c.ahead, c.level ? "level " + c.level : null, "behind " + c.behind].filter(Boolean).join(" · ");
+  const gp = gamesOf(p);
+  return recordOf(p) + " · " + Math.round((p.w / gp) * 100) + "%";
 };
 
 /**
@@ -94,7 +98,7 @@ function barFraction(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
 
-function LeaderCard({ p, counts, display, onOpen, unit }: { p: StandingsPlayer; counts?: PeopleCount; display: string; onOpen?: (id: string) => void; unit: string }) {
+function LeaderCard({ p, counts, display, onOpen, unit }: { p: StandingsPlayer; counts?: string; display: string; onOpen?: (id: string) => void; unit: string }) {
   return (
     <div
       onClick={onOpen ? () => onOpen(p.player.id) : undefined}
@@ -200,7 +204,7 @@ function PlayerRow({ p, counts, rank, tied, display, fraction, isMe, onOpen }: a
   );
 }
 
-export function StandingsList({ players, matches, meId, onOpen, unit = "rating", placeless = false }: StandingsListProps) {
+export function StandingsList({ players, matches, meId, onOpen, unit = "rating", placeless = false, vsMatches }: StandingsListProps) {
   const rows = useMemo(() => {
     const candidates: RankCandidate[] = players.map((p) => ({
       id: p.player.id,
@@ -231,7 +235,8 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
     return ordered.map((r, i) => ({ ...r, display: r.p.displayOverride ?? display[i], fraction: barFraction(r.p.rating, min, max) }));
   }, [players, matches]);
 
-  const counts = useMemo(() => peopleCounts((matches || []).filter(countsAsPlayed)), [matches]);
+  const vs = useMemo(() => (meId ? recordsVs((vsMatches || matches || []).filter(countsAsPlayed), meId) : null), [vsMatches, matches, meId]);
+  const vsOf = (id: string) => (vs && id !== meId ? vsLine(vs[id]) : undefined);
 
   if (!rows.length) return null;
 
@@ -249,7 +254,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {crowned && <LeaderCard p={crowned.p} counts={counts[crowned.id]} display={crowned.display} onOpen={onOpen} unit={unit} />}
+      {crowned && <LeaderCard p={crowned.p} counts={vsOf(crowned.id)} display={crowned.display} onOpen={onOpen} unit={unit} />}
 
       {/* Every row below the leader printed a bare numeral, and the leader
           card was the only thing on the screen naming it. Switch to Strength
@@ -270,7 +275,7 @@ export function StandingsList({ players, matches, meId, onOpen, unit = "rating",
         <PlayerRow
           key={r.id}
           p={r.p}
-          counts={counts[r.id]}
+          counts={vsOf(r.id)}
           rank={placeless ? "–" : r.rank}
           tied={placeless ? false : r.tied}
           display={r.display}

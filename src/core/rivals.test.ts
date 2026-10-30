@@ -1,5 +1,5 @@
 // Tests for core/rivals.ts. Plain TypeScript with an assert; relative imports (see CLAUDE.md §1).
-import { peopleCounts, pickNemesis, topRivals } from "./rivals";
+import { pickNemesis, recordsVs, topRivals, vsLine } from "./rivals";
 
 let failures = 0, checks = 0;
 function ok(cond: boolean, what: string) { checks++; if (!cond) { failures++; console.error(`  FAIL ${what}`); } }
@@ -19,21 +19,19 @@ ok(pickNemesis([{ id: "a", w: 0, d: 0, l: 2 }, { id: "b", w: 1, d: 0, l: 3 }])?.
 ok(topRivals(sam).map((r) => r.id).join() === "cheese,zaach,mike", "rivals are the most played");
 ok(topRivals([]).length === 0, "nobody played, no rivals");
 
-// People, not matches: Sam 2-1 over Charlie is one person ahead; a 1-1 with
-// Zaach and a lone draw with Hugh are two people level.
-const pc = peopleCounts([
+// Your record against each of them, said the way a table row says it.
+const vs = recordsVs([
   { p1: "sam", p2: "charlie", winner: "p1" },
   { p1: "charlie", p2: "sam", winner: "p1" },
   { p1: "sam", p2: "charlie", winner: "p1" },
-  { p1: "sam", p2: "zaach", winner: "p1" },
   { p1: "zaach", p2: "sam", winner: "p1" },
   { p1: "hugh", p2: "sam", winner: "draw" },
-  { p1: "mike", p2: "sam", winner: "p1" },
-]);
-ok(pc.sam.ahead === 1 && pc.sam.level === 2 && pc.sam.behind === 1, "Sam: ahead of 1, level with 2, behind 1");
-ok(pc.charlie.ahead === 0 && pc.charlie.behind === 1, "Charlie: behind Sam");
-ok(pc.mike.ahead === 1 && pc.mike.behind === 0, "Mike: ahead of Sam");
-ok(!pc.nobody, "nobody who never played gets a count");
+  { p1: "mike", p2: "hugh", winner: "p1" },
+], "sam");
+ok(vsLine(vs.charlie) === "You lead 2–1", "Sam leads Charlie 2–1");
+ok(vsLine(vs.zaach) === "You trail 0–1", "Sam trails Zaach");
+ok(vsLine(vs.hugh) === "Level 0–1–0", "a draw is level, and shows the draw");
+ok(vsLine(vs.mike) === "Never played you", "a match not involving Sam is not his");
 
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
 console.log(`PASSED — ${checks}/${checks} checks (rivals)`);

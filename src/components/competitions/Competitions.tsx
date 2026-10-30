@@ -59,6 +59,8 @@ export interface TieRow {
 
 interface Props {
   kind: CompetitionKind;
+  /** "You lead 3–1" for an entry, under its name in a league table. Singles. */
+  vsOf?: (entry: CompetitionPair) => string | undefined;
   players: any[];
   /** This kind's competitions only. */
   competitions: Competition[];
@@ -266,13 +268,16 @@ const zoneKey = (z: TableZones): string => [
   z.down ? (z.down === 1 ? "Bottom place drops" : `Bottom ${z.down} drop`) + (z.downTo ? " to " + z.downTo : "") : null,
 ].filter(Boolean).join(" · ");
 
-export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, left, meId, entryName, onOpenEntry, zones }: {
+export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, left, meId, entryName, onOpenEntry, zones, vsOf }: {
   kind: CompetitionKind; entries: CompetitionPair[]; results: CompetitionResult[];
   pointsWin: number; pointsDraw: number; left: Record<string, number> | null; meId: string;
   entryName: (id: string | null | undefined, short?: boolean) => string;
   /** Tap a row — the Divisions view opens the player's profile. */
   onOpenEntry?: (entry: CompetitionPair) => void;
   zones?: TableZones | null;
+  /** Under each name, how you stand against them (Sam, 2026-10-30: "their
+   *  head to head not their records"). Your own row keeps its form. */
+  vsOf?: (entry: CompetitionPair) => string | undefined;
 }) {
   const table = leagueTable(entries, results, pointsWin, pointsDraw);
   const [open, setOpen] = useState<string | null>(null);
@@ -312,6 +317,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
         const fresh = r.played === 0;
         const bg = isMine ? tint(FEED_TEXT_HI, 7) : up ? tint(FEED_UP, 10) : down ? tint(FEED_DOWN, 10) : "transparent";
         const f = form[r.pairId] || [];
+        const vs = entry && !isMine ? vsOf?.(entry) : undefined;
         return (
           <React.Fragment key={r.pairId}>
           <div onClick={() => setOpen(open === r.pairId ? null : r.pairId)} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "9px 8px", background: bg, borderTop: i ? "1px solid " + LINE : "none", fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", opacity: fresh ? 0.55 : 1, ...tabular }}>
@@ -323,6 +329,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
               <span style={{ display: "block", fontWeight: isMine ? 700 : 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entryName(r.pairId)}</span>
               {fresh
                 ? <span style={{ display: "block", fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>Not played yet</span>
+                : vs ? <span style={{ display: "block", fontSize: 12, fontWeight: 500, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{vs}</span>
                 : f.length > 0 && <span style={{ display: "block", marginTop: 4 }}><FormDots form={f} size={6} /></span>}
             </span>
             <span style={{ textAlign: "right", color: FEED_TEXT_MID }}>{r.played}</span>
@@ -493,7 +500,7 @@ function Detail(props: Props & {
         )}
 
         {c.format === "league" && (
-          <LeagueTable kind={kind} entries={cEntries} results={props.resultsOf(c)} pointsWin={c.pointsWin} pointsDraw={c.pointsDraw} left={left} meId={meId} entryName={entryName} />
+          <LeagueTable kind={kind} entries={cEntries} results={props.resultsOf(c)} pointsWin={c.pointsWin} pointsDraw={c.pointsDraw} left={left} meId={meId} entryName={entryName} vsOf={props.vsOf} />
         )}
 
         {c.format === "knockout" && bracket.map((round, ri) => (

@@ -335,6 +335,7 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
             {rankedRows.length > 0 && <StandingsList
               players={rankedRows}
               matches={filtered}
+              vsMatches={matches}
               meId={meId}
               unit={unit}
               onOpen={(id: string) => onOpen(id, "all")}
@@ -348,6 +349,7 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
                 <StandingsList
                   players={provisionalRows}
                   matches={filtered}
+                  vsMatches={matches}
                   meId={meId}
                   unit={unit}
                   placeless

@@ -1,5 +1,6 @@
 "use client";
 import { clearPendingComp, peekPendingComp } from "@/lib/compLink";
+import { recordsVs, vsLine } from "@/core/rivals";
 import { CONFIRM_WINDOW_MS, REJECTED_KEEP_MS, countsAsPlayed, isClaimed, isLegacy, isLegacyRejected, isShortMatch, isUnconfirmedResult } from "@/core/matchStatus";
 import { PublicProfile } from "@/components/profile/PublicProfile";
 import { setProfileOpener } from "@/lib/openProfile";
@@ -1482,6 +1483,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
     return out;
   };
   const meId = players.some((p) => p.id === gdata.me) ? gdata.me : players[0]?.id;
+  // "You lead 3–1" under each name in a singles league table, all time.
+  const vsMe = meId ? recordsVs(matches.filter((m) => countsAsPlayed(m)), meId) : {};
+  const singlesVsOf = (e: { p1: string }) => (e.p1 && e.p1 !== meId ? vsLine(vsMe[e.p1]) : undefined);
 
 
   /**
@@ -2217,6 +2221,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
         {tab === "ladder" && tableView === "divisions" && divisionComps.length > 0 && !planningNext && (
           <Divisions
             kind={showDoubles ? "doubles" : "singles"}
+            vsOf={showDoubles ? undefined : singlesVsOf}
             competitions={divisionComps}
             entries={comps.pairs}
             players={players}
@@ -2545,6 +2550,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             {!divisionPreset && mixerRow}
             <Competitions
               kind="singles"
+              vsOf={singlesVsOf}
               players={players}
               competitions={singlesComps}
               entries={comps.pairs}

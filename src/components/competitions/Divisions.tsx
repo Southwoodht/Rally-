@@ -158,8 +158,10 @@ export function tierLabel(index: number, count: number): string | null {
  * Ordered by name with numbers read as numbers, so Division 10 follows 9.
  * Tapping a row lists that player's matches, with a link to their profile.
  */
-export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, datesOf, oddsOf, onOpenPlayer, onAdd, onPlanNext, manage }: {
+export function Divisions({ kind, competitions, entries, players, meId, resultsOf, remainingOf, datesOf, oddsOf, onOpenPlayer, onAdd, onPlanNext, manage, vsOf }: {
   kind: CompetitionKind;
+  /** "You lead 3–1" under each name. Singles. */
+  vsOf?: (entry: CompetitionPair) => string | undefined;
   /** Running league-format competitions of this kind. */
   competitions: Competition[];
   entries: CompetitionPair[];
@@ -223,6 +225,7 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
               left={remainingOf(c)} meId={meId} entryName={entryName}
               onOpenEntry={(e) => onOpenPlayer(e.p1)}
               zones={zonesFor(i, mine.length)}
+              vsOf={vsOf}
             />
             {manage && managing === c.id && (
               <GroupCard style={{ marginTop: 10, padding: "0 14px 14px" }}>
