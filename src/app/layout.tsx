@@ -148,7 +148,13 @@ const BOOT_SCRIPT = `try{var a=0;for(var i=0;i<localStorage.length;i++){var k=lo
 // before hydration makes React re-render the whole page (seen in the
 // preview). It only steps <html data-splash> on: "out" fades it, "done" hides
 // it — attributes on <html> React ignores (suppressHydrationWarning).
-const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0;function out(){if(gone)return;gone=1;window.__swSplashOut=null;var w=1500-performance.now();setTimeout(function(){d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},1050)},w>0?w:0)}window.__swSplashOut=out;setTimeout(out,Math.max(0,3000-performance.now()))})();`;
+// Since the slow dissolve (Sam: Home then "does a jugged kind of thing"):
+// once the data is ready and 1.5s have passed, it also waits for Home to
+// STOP MOVING — the season, What's new and the feed land a moment after the
+// rest and push things down — by watching .sw-main's size until it has been
+// still for 350ms. A ResizeObserver, not layout-shift entries, because
+// Safari has no layout-shift. 3s from the tap is still the hard limit.
+const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0,asked=0,quiet=null,ro=null;function go(){if(gone)return;gone=1;window.__swSplashOut=null;if(ro)ro.disconnect();clearTimeout(quiet);d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},1050)}function settle(){clearTimeout(quiet);quiet=setTimeout(go,350)}function out(){if(asked)return;asked=1;var w=1500-performance.now();setTimeout(function(){var el=document.querySelector(".sw-main")||document.body;settle();try{ro=new ResizeObserver(settle);ro.observe(el)}catch(e){}},w>0?w:0)}window.__swSplashOut=out;setTimeout(go,Math.max(0,3000-performance.now()))})();`;
 const SPLASH_MARK = markSvg(`class="sw-splash-mark" aria-hidden="true" style="width:${MARK_WIDTH};height:auto;display:block"`);
 
 export default function RootLayout({ children }: { children: ReactNode }) {

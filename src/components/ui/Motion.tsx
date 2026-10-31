@@ -129,6 +129,11 @@ export function useScreenIn<T extends HTMLElement>(key: string) {
     const el = ref.current;
     if (!el) return;
     if (first.current) { first.current = false; return; }
+    // Not while the app is still arriving (first 4.5s, as CountUp): the
+    // screen key can settle after the load (a remembered table mode, the
+    // season), and replaying the rise just after the launch dissolve read
+    // as a judder.
+    if (performance.now() < 4500) return;
     el.classList.remove("sw-screen-in");
     void el.offsetWidth;
     el.classList.add("sw-screen-in");
