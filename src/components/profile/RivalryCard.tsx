@@ -82,7 +82,7 @@ export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOp
           <Avatar player={me} size={38} />
         </span>
         <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 26, lineHeight: 1, letterSpacing: "-0.04em", color: FEED_TEXT_HI }}>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 24, lineHeight: 1, letterSpacing: "-0.04em", color: FEED_TEXT_HI }}>
             {w}–{d}–{l}
           </div>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: leadColour, marginTop: 4 }}>{leadLabel}</div>
@@ -102,13 +102,13 @@ export function RivalryCard({ me, them, w, d, l, recent, total, lastPlayed, onOp
       <SplitBar w={w} d={d} l={l} />
 
       <div style={{ borderTop: "0.5px solid " + FEED_RAISED, marginTop: 12, paddingTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, flexShrink: 0 }}>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, flexShrink: 0 }}>
           {recent.length === 5 ? "Last 5" : "Last " + recent.length}
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, flex: 1, minWidth: 0 }}>
           {recent.map((r, i) => <Dot key={i} outcome={r} />)}
         </span>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, flexShrink: 0 }}>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, flexShrink: 0 }}>
           {total} played · {lastPlayed}
         </span>
       </div>

@@ -169,7 +169,7 @@ export function RatingLine({
           // never wraps: it shrinks to nothing before the headline does.
           <div style={{ textAlign: "right", flexShrink: 0, paddingLeft: 10 }}>
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>Started</div>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap" }}>
               {bandName(prog.points[0].progress)}
             </div>
           </div>
@@ -186,7 +186,7 @@ export function RatingLine({
               key={v}
               onClick={() => { setMode(v); setPicked(null); }}
               style={{
-                fontFamily: body, fontWeight: 600, fontSize: 12.5, padding: "5px 12px",
+                fontFamily: body, fontWeight: 600, fontSize: 12, padding: "5px 12px",
                 borderRadius: 999, border: "none", cursor: "pointer",
                 background: active === v ? FEED_LIME : FEED_RAISED,
                 color: active === v ? FEED_LIME_INK : FEED_TEXT_MID,
@@ -283,7 +283,7 @@ export function RatingLine({
             )}
           </button>
         ) : (
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
             {active === "progress"
               ? prog.points.length + " matches since your level was first recorded. A promotion lifts you above everything below it."
               : t.points.length + " matches. Tap the line to see any one of them."}

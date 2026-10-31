@@ -42,10 +42,12 @@ export function ChallengeSheet({ name, hasAccount, homeVenue, onSend, onClose }:
     setBusy(true); setFailed(false);
     const iso = new Date(when).toISOString();
     const v = venueReady ? venue : null;
+    // Optimistic: "Challenge sent" at once, the save behind it; a refusal
+    // brings the form back with what was chosen and says so.
+    setSent([formatMatchDateTime(iso), v ? venueLabel(v) : null].filter(Boolean).join(" at "));
     const ok = await onSend(iso, mins !== DEFAULT_DURATION_MINUTES ? mins : undefined, v);
     setBusy(false);
-    if (ok === false) { setFailed(true); return; }
-    setSent([formatMatchDateTime(iso), v ? venueLabel(v) : null].filter(Boolean).join(" at "));
+    if (ok === false) { setSent(null); setFailed(true); }
   };
 
   return (
@@ -56,17 +58,17 @@ export function ChallengeSheet({ name, hasAccount, homeVenue, onSend, onClose }:
             <div style={{ width: 64, height: 64, borderRadius: 999, background: FEED_LIME, color: FEED_LIME_INK, display: "grid", placeItems: "center", margin: "0 auto" }}>
               <Check size={34} strokeWidth={3} />
             </div>
-            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 21, color: FEED_TEXT_HI, marginTop: 14 }}>Challenge sent</div>
+            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, marginTop: 14 }}>Challenge sent</div>
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginTop: 6 }}>{sent}</div>
             <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 8 }}>
               {hasAccount ? `${first} has been emailed. It's in Fixtures for both of you.` : `It's in Fixtures for both of you. ${first} hasn't got an account, so tell them yourself.`}
             </div>
-            <button onClick={onClose} style={{ width: "100%", marginTop: 18, border: "none", borderRadius: 12, padding: "13px", cursor: "pointer", fontFamily: body, fontWeight: 700, fontSize: 15.5, background: FEED_RAISED, color: FEED_TEXT_HI }}>Done</button>
+            <button onClick={onClose} style={{ width: "100%", marginTop: 18, border: "none", borderRadius: 12, padding: "13px", cursor: "pointer", fontFamily: body, fontWeight: 700, fontSize: 15, background: FEED_RAISED, color: FEED_TEXT_HI }}>Done</button>
           </div>
         ) : (<>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ color: FEED_TEXT_HI, display: "grid" }}><CrossedRackets size={24} /></span>
-          <span style={{ flex: 1, fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI }}>Challenge {first}</span>
+          <span style={{ flex: 1, fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI }}>Challenge {first}</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 14, cursor: "pointer" }}>Close</button>
         </div>
 
@@ -78,7 +80,7 @@ export function ChallengeSheet({ name, hasAccount, homeVenue, onSend, onClose }:
             <div style={lbl}>How long</div>
             <div style={{ display: "flex", gap: 6 }}>
               {DURATION_CHOICES.map((m) => (
-                <button key={m} onClick={() => setMins(m)} style={{ flex: 1, border: "none", borderRadius: 10, padding: "9px 6px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 13.5, background: mins === m ? FEED_LIME : FEED_RAISED, color: mins === m ? FEED_LIME_INK : FEED_TEXT_MID }}>
+                <button key={m} onClick={() => setMins(m)} style={{ flex: 1, border: "none", borderRadius: 10, padding: "9px 6px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 13, background: mins === m ? FEED_LIME : FEED_RAISED, color: mins === m ? FEED_LIME_INK : FEED_TEXT_MID }}>
                   {m === 60 ? "1 hour" : m === 90 ? "1½ hours" : m / 60 + " hours"}
                 </button>
               ))}
@@ -93,15 +95,15 @@ export function ChallengeSheet({ name, hasAccount, homeVenue, onSend, onClose }:
           </>
         )}
 
-        <button onClick={send} disabled={!when || busy} style={{ width: "100%", marginTop: 18, border: "none", borderRadius: 12, padding: "13px", cursor: when ? "pointer" : "default", fontFamily: body, fontWeight: 700, fontSize: 15.5, background: FEED_LIME, color: FEED_LIME_INK, opacity: !when || busy ? 0.45 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <button onClick={send} disabled={!when || busy} style={{ width: "100%", marginTop: 18, border: "none", borderRadius: 12, padding: "13px", cursor: when ? "pointer" : "default", fontFamily: body, fontWeight: 700, fontSize: 15, background: FEED_LIME, color: FEED_LIME_INK, opacity: !when || busy ? 0.45 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <CrossedRackets size={18} />{busy ? "Sending…" : "Send challenge"}
         </button>
         {failed && (
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13.5, color: FEED_TEXT_HI, marginTop: 10, textAlign: "center" }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI, marginTop: 10, textAlign: "center" }}>
             That didn&apos;t send. Check your signal and try again.
           </div>
         )}
-        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 10, textAlign: "center" }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 10, textAlign: "center" }}>
           {hasAccount ? `${first} gets an email with the time${venueReady ? " and place" : ""}.` : `${first} hasn't got an account, so tell them yourself. It's in Fixtures for both of you.`}
         </div>
         </>)}

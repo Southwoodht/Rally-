@@ -108,7 +108,7 @@ function Section({ s, open, onToggle }: { s: Sect; open: boolean; onToggle: () =
         <div style={{ padding: "0 16px 16px" }}>
           {s.points.map((p) => (
             <div key={p.label} style={{ background: PANEL2, borderRadius: 12, padding: "10px 12px", marginBottom: 8 }}>
-              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 12.5, color: BALL, marginBottom: 4 }}>{p.label}</div>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: 12, color: BALL, marginBottom: 4 }}>{p.label}</div>
               <div style={{ fontFamily: body, fontSize: 13, color: CHALK, lineHeight: 1.5 }}>{p.text}</div>
             </div>
           ))}

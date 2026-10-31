@@ -95,7 +95,7 @@ export function OpponentRecords({ lead, behind, level = 0, self = false, visible
 
   return (
     <div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 12, ...tabular }}>{summary}</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 12, ...tabular }}>{summary}</div>
       {ahead.length > 0 && (
         <>
           <GroupLabel>Winning against</GroupLabel>

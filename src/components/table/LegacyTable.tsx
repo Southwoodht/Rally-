@@ -18,7 +18,7 @@ export function LegacyTable({ players, matches, onOpen }: any) {
     <div>
       <div style={{ background: PANEL, border: "none", borderRadius: 14, padding: "12px 14px", marginBottom: 14 }}>
         <div style={{ fontFamily: body, fontWeight: 700, fontSize: 13, color: BALL, marginBottom: 6 }}>Legacy</div>
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5 }}>Active rankings measure current form. Legacy ranks by <strong style={{ color: CHALK }}>career matches played</strong> — everyone who's ever played, not just who's active now.</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>Active rankings measure current form. Legacy ranks by <strong style={{ color: CHALK }}>career matches played</strong> — everyone who's ever played, not just who's active now.</div>
       </div>
       {career.length > 8 && (
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" style={{ ...miniInput, width: "100%", marginBottom: 12, boxSizing: "border-box" as const }} />
@@ -38,14 +38,14 @@ export function LegacyTable({ players, matches, onOpen }: any) {
                     <span style={{ fontFamily: body, fontSize: 13, color: CLAY, fontWeight: 700 }}>{Math.round(r.winPct! * 100)}%</span>
                     <LevelBadge level={levelNow(p)} small />
                   </div>
-                  <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                  <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
                     <span>{r.w}–{r.d}–{r.l}</span>
                     <span>{r.firstYear === r.lastYear ? r.firstYear : r.firstYear + "–" + r.lastYear}</span>
                   </div>
                 </div>
                 <div style={{ textAlign: "right", minWidth: 46 }}>
                   <div style={{ fontFamily: body, fontSize: 22, fontWeight: 700, color: i === 0 ? BALL : CHALK, fontVariantNumeric: "tabular-nums lining-nums" }}>{r.matches}</div>
-                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: MUTED }}>Matches</div>
+                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED }}>Matches</div>
                 </div>
               </button>
             );

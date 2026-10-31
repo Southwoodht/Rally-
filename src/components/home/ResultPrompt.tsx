@@ -54,19 +54,19 @@ export function ResultPrompt({ items, onResolve, onCancel }: {
   const submit = async (it: AwaitingResult, winner: "p1" | "p2" | "draw") => {
     const problem = scoreProblem(score, winner, false);
     if (problem) { setError(problem); return; }
-    setSaving(true); setError(null);
+    // Optimistic: closes at once, saves behind. A refused save reopens it
+    // with the score still there — the whole point of this card is that it
+    // does not lose what you told it.
+    const typed = score;
+    setError(null); setScore(""); setOpenId(null);
     let ok = false;
     try {
-      ok = (await onResolve(it.fixtureId, winner, score.trim())) !== false;
+      ok = (await onResolve(it.fixtureId, winner, typed.trim())) !== false;
     } catch (e) {
       console.error("Saving a result from the Home prompt failed", e);
       ok = false;
     }
-    setSaving(false);
-    // A refused save keeps the score. The whole point of this card is that it
-    // does not lose what you told it.
-    if (ok) { setScore(""); setOpenId(null); }
-    else setError("Couldn't save. Try again.");
+    if (!ok) { setOpenId(it.fixtureId); setScore(typed); setError("Couldn't save. Try again."); }
   };
 
   const btn = (bg: string, fg: string) => ({
@@ -81,7 +81,7 @@ export function ResultPrompt({ items, onResolve, onCancel }: {
         const open = openId === it.fixtureId;
         return (
           <SurfaceCard key={it.fixtureId} radius={20} pad="16px 16px 14px" style={{ marginBottom: 8 }}>
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI, ...tight(19) }}>
               How did it go?
             </div>
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4 }}>

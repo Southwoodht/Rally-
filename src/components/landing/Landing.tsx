@@ -33,7 +33,7 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
       <header className="lp-bar">
         <a href="/" className="lp-brand" aria-label="Southwood home">
           <img src="/icon-192.png" alt="" width={36} height={36} style={{ borderRadius: 9 }} />
-          <span style={{ fontFamily: display, fontWeight: 700, fontSize: 21 }}>Southwood</span>
+          <span style={{ fontFamily: display, fontWeight: 700, fontSize: 20 }}>Southwood</span>
         </a>
         <button onClick={onSignIn} className="lp-btn lp-ghost lp-small">Sign in</button>
       </header>

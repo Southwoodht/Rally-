@@ -32,12 +32,12 @@ export function LevelRecheck({ current, onPick, onDismiss }: {
     background: active ? FEED_HERO : FEED_RAISED,
     color: active ? FEED_ON_HERO : FEED_TEXT_MID,
     border: "none", borderRadius: 999, padding: "9px 13px", cursor: "pointer",
-    fontFamily: body, fontWeight: 600, fontSize: 13.5, whiteSpace: "nowrap",
+    fontFamily: body, fontWeight: 600, fontSize: 13, whiteSpace: "nowrap",
   });
 
   return (
     <SurfaceCard radius={20} pad="18px 16px 16px" style={{ marginBottom: 12 }}>
-      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, ...tight(19) }}>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI, ...tight(19) }}>
         Southwood has six levels now
       </div>
       <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.5 }}>

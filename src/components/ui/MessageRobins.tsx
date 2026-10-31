@@ -157,7 +157,7 @@ export function MessageRobins({ count }: { count: number; size?: number }) {
           style={{
             ...tabular, position: "absolute", right: -9, bottom: -7, minWidth: 17, height: 17,
             borderRadius: 999, background: FEED_LIME, color: FEED_LIME_INK, fontFamily: body,
-            fontWeight: 600, fontSize: 10.5, display: "grid", placeItems: "center", padding: "0 4px",
+            fontWeight: 600, fontSize: 12, display: "grid", placeItems: "center", padding: "0 4px",
             border: "2px solid " + FEED_PAGE, boxSizing: "content-box",
           }}
         >

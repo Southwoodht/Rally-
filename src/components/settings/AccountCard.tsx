@@ -78,7 +78,7 @@ export function AccountCard({ displayName }: { displayName?: string | null }) {
       </button>
 
       {failed && (
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_THEY_LEAD, lineHeight: 1.45, marginTop: 10 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_THEY_LEAD, lineHeight: 1.45, marginTop: 10 }}>
           {failed}
         </div>
       )}

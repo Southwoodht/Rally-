@@ -91,7 +91,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
           </span>
         ))}
       </span>
-      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13.5, color: FEED_TEXT_HI, textAlign: right ? "right" : "left", lineHeight: 1.3 }}>{pairName(p)}</span>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI, textAlign: right ? "right" : "left", lineHeight: 1.3 }}>{pairName(p)}</span>
     </div>
   );
 
@@ -119,7 +119,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
           onClick={() => setIds(([p, q, r, s]) => [r, s, p, q])}
           disabled={!ids.some(Boolean)}
           aria-label="Swap the two teams"
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, background: FEED_CARD, border: "none", borderRadius: 999, padding: "7px 12px", cursor: "pointer", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 5, background: FEED_CARD, border: "none", borderRadius: 999, padding: "7px 12px", cursor: "pointer", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}
         >
           <ArrowLeftRight size={13} strokeWidth={2} />Swap teams
         </button>
@@ -151,7 +151,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
                 <div style={{ width: c.chanceA + "%", background: FEED_LIME }} />
                 <div style={{ width: 100 - c.chanceA + "%", background: FEED_LOSS }} />
               </div>
-              <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 14, paddingTop: 12, fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+              <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 14, paddingTop: 12, fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
                 {why}
                 {mt > 0 && ` They have met ${mt === 1 ? "once" : mt + " times"}: ${pairName(ta.pair)} ${c.meetings.w > c.meetings.l ? "lead" : c.meetings.w < c.meetings.l ? "trail" : "are level at"} ${rec(c.meetings)}.`}
                 {mt === 0 && ` These two pairs have never played each other.`}
@@ -230,7 +230,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
                   </div>
                 );
               })}
-              <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.5 }}>
+              <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 6, lineHeight: 1.5 }}>
                 Every doubles match the two were on opposite sides, with any partner.
               </div>
             </SurfaceCard>
@@ -244,7 +244,7 @@ export function DoublesCompare({ players, matches, meId, onOpen, onCreatePlayer 
               const fromA = m.winner === "draw" ? true : m.winner === "A";
               const sets = (((m as any).sets || []) as Array<{ a: number; b: number }>).map((s) => (fromA ? `${s.a}–${s.b}` : `${s.b}–${s.a}`)).join(" ");
               return (
-                <div key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI }}>
+                <div key={m.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", fontFamily: body, fontSize: 13, color: FEED_TEXT_HI }}>
                   <span style={{ ...tabular, color: FEED_TEXT_MID, flexShrink: 0 }}>{formatMatchDate(m.playedAt)}</span>
                   <span style={{ textAlign: "right" }}>
                     {m.winner === "draw" ? "Drawn" : (aWon ? pairName(ta.pair) : pairName(tb.pair)) + " won"}

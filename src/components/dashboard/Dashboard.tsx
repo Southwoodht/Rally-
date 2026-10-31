@@ -275,14 +275,14 @@ export default function Dashboard({ session }: { session: Session }) {
           <RallyMark size={34} title="Southwood" />
           <button onClick={() => supabase?.auth.signOut()} style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_MID, background: "none", border: "none", padding: "6px 0", cursor: "pointer" }}>Log out</button>
         </div>
-        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 38, color: FEED_TEXT_HI, lineHeight: 1.05, letterSpacing: -0.6 }}>{greetingFor(displayName || "")}</div>
+        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 40, color: FEED_TEXT_HI, lineHeight: 1.05, letterSpacing: -0.6 }}>{greetingFor(displayName || "")}</div>
         {view !== "picker" && (
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_MID, marginTop: 8 }}>
             {view === "create" ? "Start a club for your courts or your mates." : view === "join" ? "Got a code or an invite link? In you come." : "Welcome to Southwood."}
           </div>
         )}
         <div style={{ height: 26 }} />
-        {error && <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_THEY_LEAD, background: FEED_CARD, borderRadius: 14, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontFamily: body, fontSize: 13, color: FEED_THEY_LEAD, background: FEED_CARD, borderRadius: 14, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
         {children}
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 34, textAlign: "center" }}>
           <a href="/privacy" style={{ color: FEED_TEXT_MID, textDecoration: "none" }}>Privacy</a>
@@ -328,16 +328,16 @@ export default function Dashboard({ session }: { session: Session }) {
               <ClubMark club={c} size={40} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED }}>{[distanceLabel(c.km), c.location, `${c.players} ${c.players === 1 ? "player" : "players"}`].filter(Boolean).join(" · ")}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>{[distanceLabel(c.km), c.location, `${c.players} ${c.players === 1 ? "player" : "players"}`].filter(Boolean).join(" · ")}</div>
               </div>
               {c.member
-                ? <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED }}>You&apos;re in</span>
+                ? <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>You&apos;re in</span>
                 : c.open_to_join && c.join_code
                   ? <button disabled={busy} onClick={() => doJoin(c.join_code!)} style={{ ...primary, width: "auto", marginTop: 0, padding: "8px 18px", flex: "0 0 auto" }}>Join</button>
                   : <span style={{ fontFamily: body, fontSize: 12, color: MUTED, textAlign: "right", maxWidth: 90 }}>Invite only, ask a member</span>}
             </div>
           ))}
-          {nearbyNote && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5 }}>{nearbyNote}</div>}
+          {nearbyNote && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{nearbyNote}</div>}
         </div>
       )}
       <button style={ghost} onClick={() => { setError(""); setView(leagues.length ? "picker" : "empty"); }}>Back</button>
@@ -350,7 +350,7 @@ export default function Dashboard({ session }: { session: Session }) {
     // as two tiles that say what they are for, then Friendlies outside, in a
     // dashed card, because it is the thing that is not a club.
     const label = (t: string) => (
-      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, letterSpacing: 1.6, textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>{t}</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>{t}</div>
     );
     const bySummary = new Map(summaries.map((x) => [x.leagueId, x]));
     const tile: React.CSSProperties = { flex: 1, display: "flex", alignItems: "center", gap: 10, background: FEED_CARD, border: "1px solid " + LINE, borderRadius: 20, padding: "14px 12px", cursor: "pointer", textAlign: "left" };
@@ -370,7 +370,7 @@ export default function Dashboard({ session }: { session: Session }) {
                 ? <span style={{ fontWeight: 600 }}>No matches yet</span>
                 : <>
                     <span style={{ fontWeight: 700 }}>{sm.place ? ordinal(sm.place) : "Not ranked yet"}{sm.place && sm.rating != null ? " · " + sm.rating : ""}</span>
-                    <span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>{sm.lastPlayed ? " · " + playedAgo(sm.lastPlayed) : " · not played yet"}</span>
+                    <span style={{ fontWeight: 500, color: FEED_TEXT_MID }}>{sm.lastPlayed ? " · " + playedAgo(sm.lastPlayed) : " · not played yet"}</span>
                   </>
               : null;
             const facts = [n && sm?.clubMatches !== 0 ? `${n.players} ${n.players === 1 ? "player" : "players"} · ${n.matches} ${n.matches === 1 ? "match" : "matches"}` : n ? `${n.players} ${n.players === 1 ? "player" : "players"}` : null, l.location || null].filter(Boolean).join(" · ");
@@ -379,9 +379,9 @@ export default function Dashboard({ session }: { session: Session }) {
                 <div role="button" onClick={() => { setActive(l); setView("app"); }} style={{ display: "flex", alignItems: "center", gap: 16, padding: "18px 16px", cursor: "pointer" }}>
                   <ClubMark club={l} size={54} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
+                    <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.name}</div>
                     {you && <div style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_HI, marginTop: 3, ...tabular }}>{you}</div>}
-                    {facts && <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.35, ...tabular }}>{facts}</div>}
+                    {facts && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.35, ...tabular }}>{facts}</div>}
                   </div>
                   <button
                     aria-label={"More for " + l.name}
@@ -419,15 +419,15 @@ export default function Dashboard({ session }: { session: Session }) {
           <button onClick={() => { setError(""); setView("join"); }} style={tile}>
             {tileIcon(<LogIn size={19} color={FEED_LIME} />)}
             <span style={{ minWidth: 0 }}>
-              <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 17, color: FEED_TEXT_HI }}>Join</span>
-              <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1 }}>Got a code?</span>
+              <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 18, color: FEED_TEXT_HI }}>Join</span>
+              <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1 }}>Got a code?</span>
             </span>
           </button>
           <button onClick={() => { setError(""); setView("create"); }} style={tile}>
             {tileIcon(<Plus size={19} color={FEED_LIME} />)}
             <span style={{ minWidth: 0 }}>
-              <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 17, color: FEED_TEXT_HI }}>Create</span>
-              <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap" }}>For your group</span>
+              <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 18, color: FEED_TEXT_HI }}>Create</span>
+              <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap" }}>For your group</span>
             </span>
           </button>
         </div>
@@ -436,8 +436,8 @@ export default function Dashboard({ session }: { session: Session }) {
         <div role="button" onClick={() => { setActive({ id: FRIENDLY_LEAGUE_ID, name: "Friendlies" } as any); setView("app"); }} style={{ display: "flex", alignItems: "center", gap: 16, border: "1.5px dashed " + FEED_TEXT_MID, borderRadius: 24, padding: "18px 16px", cursor: "pointer", opacity: 0.95 }}>
           <span style={{ width: 54, height: 54, flexShrink: 0, display: "grid", placeItems: "center" }}><Users size={24} color={FEED_TEXT_HI} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI }}>Friendlies</div>
-            <div style={{ fontFamily: body, fontWeight: 400, fontSize: 15, color: FEED_TEXT_MID, marginTop: 3 }}>Log a match against anyone</div>
+            <div style={{ fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI }}>Friendlies</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_MID, marginTop: 3 }}>Log a match against anyone</div>
           </div>
           <ChevronRight size={20} color={FEED_TEXT_MID} />
         </div>
@@ -456,7 +456,7 @@ export default function Dashboard({ session }: { session: Session }) {
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 22, letterSpacing: "-0.02em", color: FEED_TEXT_HI }}>
           You&apos;re not in a club yet
         </div>
-        <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 8, lineHeight: 1.5 }}>
           Join one with a code or an invite link, or start your own for your club or your mates.
         </div>
       </div>
@@ -478,7 +478,7 @@ export default function Dashboard({ session }: { session: Session }) {
           league is a commitment — a name, a code, people to invite. Two mates
           who play on a Tuesday need none of it, and making them set one up
           first is asking them to run a club before they can record a game. */}
-      <div style={{ fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
         Or skip the club entirely — just log matches against your mates.
       </div>
       <button

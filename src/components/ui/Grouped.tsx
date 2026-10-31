@@ -16,7 +16,7 @@ import { FEED_CARD, FEED_PAGE, FEED_TEXT_HI, FEED_TEXT_MID, LINE, body, tabular 
 export function GroupLabel({ children, right, style }: { children: React.ReactNode; right?: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 4px", marginBottom: 8, ...style }}>
-      <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 12.5, letterSpacing: 1.4, textTransform: "uppercase", color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+      <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         {children}
       </span>
       {right}
@@ -51,7 +51,7 @@ export function GroupRow({ title, sub, below, right, onClick, first, chevron, st
       style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderTop: first ? "none" : "1px solid " + LINE, cursor: onClick ? "pointer" : "default", ...style }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
         {sub != null && sub !== "" && (
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", ...tabular }}>{sub}</div>
         )}

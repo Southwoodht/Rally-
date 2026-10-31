@@ -130,7 +130,7 @@ export function ProfileView(p: ProfileViewProps) {
     <div>
       <ProfileHeader {...p.header} viewer={p.viewer} />
       {!isSelf && p.actions && <ProfileActions {...p.actions} onShare={share.go} />}
-      {!isSelf && share.note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 8 }}>{share.note}</div>}
+      {!isSelf && share.note && <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 8 }}>{share.note}</div>}
 
       {p.period && (
         <div style={{ marginTop: 18 }}>
@@ -190,7 +190,7 @@ export function ProfileView(p: ProfileViewProps) {
       {total > 0 && (
         <button
           onClick={p.onAllHistory || (() => setAllHistory(!allHistory))}
-          style={{ display: "flex", alignItems: "center", width: "100%", marginTop: 22, background: FEED_CARD, border: "none", borderRadius: 14, padding: "15px 16px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, textAlign: "left" }}
+          style={{ display: "flex", alignItems: "center", width: "100%", marginTop: 22, background: FEED_CARD, border: "none", borderRadius: 14, padding: "15px 16px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, textAlign: "left" }}
         >
           <span style={{ flex: 1, ...tabular }}>All matches · {total}</span>
           <ChevronRight size={18} strokeWidth={2} color={FEED_TEXT_MID} style={{ transform: !p.onAllHistory && allHistory ? "rotate(90deg)" : undefined }} />
@@ -204,10 +204,10 @@ export function ProfileView(p: ProfileViewProps) {
 
       {isSelf && (
         <div style={{ marginTop: 12 }}>
-          <button onClick={share.go} disabled={share.busy} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 14, padding: "12px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer", opacity: share.busy ? 0.55 : 1 }}>
+          <button onClick={share.go} disabled={share.busy} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 14, padding: "12px", fontFamily: body, fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: share.busy ? 0.55 : 1 }}>
             <Share size={16} strokeWidth={2} />{share.busy ? "Making the card…" : "Share my card"}
           </button>
-          {share.note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 6, textAlign: "center" }}>{share.note}</div>}
+          {share.note && <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 6, textAlign: "center" }}>{share.note}</div>}
         </div>
       )}
 
@@ -227,8 +227,8 @@ function VersusStrip({ name, w, d, l, last }: { name: string; w: number; d: numb
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, background: FEED_CARD, borderRadius: 14, padding: "12px 16px" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>You vs {name}</div>
-        <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>You vs {name}</div>
+        <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           <span style={{ color: colour, fontWeight: 600 }}>{lead}</span> · {n} played{last ? " · last " + last : ""}
         </div>
       </div>

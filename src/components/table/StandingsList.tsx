@@ -1,4 +1,5 @@
 "use client";
+import { CountUp } from "@/components/ui/CountUp";
 import React, { useMemo } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
@@ -113,13 +114,13 @@ function LeaderCard({ p, counts, display, onOpen, unit }: { p: StandingsPlayer; 
           <div style={{ ...tight(20), fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {fullNameOf(p.player)}
           </div>
-          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statLineOf(p, counts)}
           </div>
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <StatNumeral size={36} tone="ink" style={{ letterSpacing: "-0.04em" }}>{display}</StatNumeral>
-          {plusMinus(p) && <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1 }}>{plusMinus(p)}</div>}
+          <StatNumeral size={36} tone="ink" style={{ letterSpacing: "-0.04em" }}><CountUp value={display} /></StatNumeral>
+          {plusMinus(p) && <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 1 }}>{plusMinus(p)}</div>}
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0, marginTop: 2 }}>{unit}</div>
         </div>
       </div>
@@ -170,11 +171,11 @@ function PlayerRow({ p, counts, rank, tied, display, fraction, isMe, onOpen }: a
         <Avatar player={p.player} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {fullNameOf(p.player)}
             </span>
             {isMe && (
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 10, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
             )}
           </div>
           <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -187,9 +188,9 @@ function PlayerRow({ p, counts, rank, tied, display, fraction, isMe, onOpen }: a
           )}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
-          <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 24, letterSpacing: "-0.03em", color: !played || p.provisional ? FEED_TEXT_MID : isMe ? FEED_LIME : FEED_TEXT_HI }}>{played ? display : "–"}</span>
+          <span style={{ ...tabular, fontFamily: displayFont, fontWeight: 700, fontSize: 24, letterSpacing: "-0.03em", color: !played || p.provisional ? FEED_TEXT_MID : isMe ? FEED_LIME : FEED_TEXT_HI }}>{played ? <CountUp value={display} /> : "–"}</span>
           {played && plusMinus(p) && (
-            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, marginTop: 1 }}>{plusMinus(p)}</div>
+            <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>{plusMinus(p)}</div>
           )}
           {p.movement !== null && p.movement !== undefined && (
             <div style={{ marginTop: 2 }}><MovementIndicator delta={p.movement} size={11} /></div>

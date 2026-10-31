@@ -124,13 +124,17 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
   const resetBooking = () => { setBooking(false); setSlots([meId, "", "", ""]); setWhen(""); setBookError(null); };
   const bookIt = async () => {
     if (!bookReady || busy) return;
+    // Optimistic: the form closes and the booking shows at once (useDoubles
+    // gives it a temporary id). A refusal brings the form back with the four
+    // still chosen — a refused booking that cleared itself would leave
+    // nothing to show it had been refused.
+    const keep = { slots, when };
     setBusy(true); setBookError(null);
+    resetBooking();
     try {
-      await onBook({ teamA: [slots[0], slots[1]], teamB: [slots[2], slots[3]], booked: fromInputValue(when) });
-      resetBooking();
+      await onBook({ teamA: [keep.slots[0], keep.slots[1]], teamB: [keep.slots[2], keep.slots[3]], booked: fromInputValue(keep.when) });
     } catch (e: any) {
-      // The form stays open with the four still chosen. A refused booking that
-      // cleared itself would leave nothing to show it had been refused.
+      setSlots(keep.slots); setWhen(keep.when); setBooking(true);
       setBookError(e?.message || "Couldn't book that. Try again.");
     }
     setBusy(false);
@@ -202,7 +206,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
       {!booking ? (
         <button
           onClick={() => setBooking(true)}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14, cursor: "pointer" }}
         >
           <Plus size={17} strokeWidth={2.4} />Book a doubles match
         </button>
@@ -378,8 +382,8 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
         <div role="button" onClick={() => openRow(f)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", cursor: "pointer" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Four names do not fit one line on a phone: a pair a line. */}
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortPair(f.teamA)}</div>
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortPair(f.teamA)}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               <span style={{ fontWeight: 500, color: FEED_TEXT_LOW, fontSize: 13 }}>v</span> {shortPair(f.teamB)}
             </div>
             {(sub || overdue) && (
@@ -411,7 +415,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
     const st = (side: "A" | "B"): React.CSSProperties => ({ fontWeight: w === side ? 700 : 500, color: w && w !== side && w !== "draw" ? FEED_TEXT_MID : FEED_TEXT_HI });
     return (
       <div key={f.id} role={go ? "button" : undefined} onClick={go} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", borderTop: first ? "none" : "1px solid " + FEED_HAIRLINE, cursor: go ? "pointer" : "default" }}>
-        <div style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5 }}>
+        <div style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14 }}>
           <div style={{ ...st("A"), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortPair(f.teamA)}</div>
           <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}><span style={{ fontWeight: 500, color: FEED_TEXT_LOW, fontSize: 13 }}>v</span> <span style={st("B")}>{shortPair(f.teamB)}</span></div>
         </div>
@@ -497,7 +501,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>No matches to play. Book one?</div>
                   {!hideBooking && (
-                    <button onClick={() => setBooking(true)} style={{ flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 999, border: "none", cursor: "pointer", background: FEED_LIME, color: FEED_LIME_INK }}>Book</button>
+                    <button onClick={() => setBooking(true)} style={{ flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "9px 16px", borderRadius: 999, border: "none", cursor: "pointer", background: FEED_LIME, color: FEED_LIME_INK }}>Book</button>
                   )}
                 </div>
               </SurfaceCard>
@@ -536,7 +540,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
               <SurfaceCard key={f.id} radius={16} pad="12px 14px">
                 <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
                   {tag && (
-                    <div style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tag}</div>
+                    <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tag}</div>
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
@@ -558,7 +562,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
                     <div style={{ width: pA + "%", background: FORM_WIN }} />
                     <div style={{ width: (100 - pA) + "%", background: FORM_LOSS }} />
                   </div>
-                  <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
+                  <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 5 }}>
                     <span>{pA}%</span>
                     <span style={{ color: FEED_TEXT_LOW }}>win chance</span>
                     <span>{100 - pA}%</span>
@@ -566,7 +570,7 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 9 }}>
                     {dateLabel && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 600, fontSize: 11.5 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 600, fontSize: 12 }}>
                         <Calendar size={11} strokeWidth={2.2} />{dateLabel}
                       </span>
                     )}

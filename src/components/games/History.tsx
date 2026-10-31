@@ -123,7 +123,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
           {myDisputed.map((m: any) => (
             <div key={m.id} style={{ background: PANEL, border: "1px solid " + CLAY, borderRadius: 14, padding: 12, marginBottom: 8 }}>
               <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><strong>{winnerLabel(m, nameOf)}</strong></div>
-              <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+              <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
               <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8 }}>The organisers will decide. It doesn&apos;t count for anything until they do.</div>
             </div>
           ))}
@@ -147,11 +147,11 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>
                   {iReported ? <strong>{winnerLabel(m, nameOf)}</strong> : <><Who id={m.reportedBy} size={18} /> logged: <strong>{winnerLabel(m, nameOf)}</strong></>}
                 </div>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, margin: "2px 0 10px" }}>{fmtDate(m.date)}{m.score ? " · " + m.score : ""}</div>
                 {canRespond ? (
                   <>
                     <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onConfirm(m.id)} color={BALL}>Agree</BigBtn><BigBtn onClick={() => onDispute(m.id)} color={CLAY}>Dispute</BigBtn></div>
-                    {note && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
+                    {note && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
                   </>
                 ) : iReported ? (
                   <>
@@ -193,8 +193,8 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             return (
               <div key={m.id + "-edit"} style={{ background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><Who id={edit.proposedBy} size={18} /> wants to change a result:</div>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, margin: "4px 0" }}>Was: {winnerLabel({ ...m, ...before }, nameOf)}{before.score ? " · " + before.score : ""} · {fmtDate(before.date)}</div>
-                <div style={{ fontFamily: body, fontSize: 11, color: BALL, marginBottom: 10 }}>Now: {winnerLabel({ ...m, ...after }, nameOf)}{after.score ? " · " + after.score : ""} · {fmtDate(after.date)}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, margin: "4px 0" }}>Was: {winnerLabel({ ...m, ...before }, nameOf)}{before.score ? " · " + before.score : ""} · {fmtDate(before.date)}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: BALL, marginBottom: 10 }}>Now: {winnerLabel({ ...m, ...after }, nameOf)}{after.score ? " · " + after.score : ""} · {fmtDate(after.date)}</div>
                 {canRespond ? (
                   <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onApproveEdit(m.id)} color={BALL}>Agree</BigBtn><BigBtn onClick={() => onRejectEdit(m.id)} color={CLAY}>Reject</BigBtn></div>
                 ) : proposedByMe ? (
@@ -214,11 +214,11 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
             return (
               <div key={m.id + "-delete"} style={{ background: PANEL, border: "1px solid " + CLAY, borderRadius: 14, padding: 12, marginBottom: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}><Who id={m.deleteRequestedBy} size={18} /> wants to delete a result:</div>
-                <div style={{ fontFamily: body, fontSize: 11, color: MUTED, margin: "2px 0 10px" }}>{winnerLabel(m, nameOf)}{m.score ? " · " + m.score : ""} · {fmtDate(m.date)}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, margin: "2px 0 10px" }}>{winnerLabel(m, nameOf)}{m.score ? " · " + m.score : ""} · {fmtDate(m.date)}</div>
                 {canRespond ? (
                   <>
                     <div style={{ display: "flex", gap: 8 }}><BigBtn onClick={() => onAgreeDelete(m.id)} color={CLAY}>Agree & delete</BigBtn><BigBtn onClick={() => onCancelDelete(m.id)} color={BALL}>Keep it</BigBtn></div>
-                    {note && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
+                    {note && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8 }}>If you don't respond, this {note}.</div>}
                   </>
                 ) : requestedByMe ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}><span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for {other} to agree{note ? ` — ${note}` : "…"}</span><button onClick={() => onCancelDelete(m.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer" }}>Cancel</button></div>
@@ -272,9 +272,9 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                 <div key={p.id} style={{ display: "flex", gap: 10, background: PANEL, border: "1px solid " + BALL, borderRadius: 14, padding: 12, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{p.text}</div>
-                    <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 2 }}>{nm(p.by)} · {fmtDate(p.date)}</div>
+                    <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>{nm(p.by)} · {fmtDate(p.date)}</div>
                   </div>
-                  {(p.by === meId || canEditMatches) && <button onClick={() => onRemovePost(p.id)} style={{ fontFamily: body, fontSize: 10, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 7px", cursor: "pointer", flexShrink: 0, alignSelf: "flex-start" }}>&#10005;</button>}
+                  {(p.by === meId || canEditMatches) && <button onClick={() => onRemovePost(p.id)} style={{ fontFamily: body, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 7px", cursor: "pointer", flexShrink: 0, alignSelf: "flex-start" }}>&#10005;</button>}
                 </div>
               ))}
             </div>
@@ -294,9 +294,9 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   <div key={f.id} style={{ background: PANEL, border: "none", borderRadius: 14, padding: 12, marginBottom: 8 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontFamily: body, fontSize: 15, fontWeight: 700, color: CHALK }}>{nm(f.p1)} v {nm(f.p2)}</span>
-                      <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{formatMatchDateTime(f.booked)}</span>
+                      <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "3px 9px", flexShrink: 0 }}>{formatMatchDateTime(f.booked)}</span>
                     </div>
-                    <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, marginBottom: 4 }}><span>{nm(f.p1)} {p1}%</span><span>{100 - p1}% {nm(f.p2)}</span></div>
+                    <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginBottom: 4 }}><span>{nm(f.p1)} {p1}%</span><span>{100 - p1}% {nm(f.p2)}</span></div>
                     <div style={{ display: "flex", height: 5, borderRadius: 3, overflow: "hidden", background: PANEL2 }}><div style={{ width: p1 + "%", background: BALL }} /><div style={{ width: (100 - p1) + "%", background: MUTED }} /></div>
                   </div>
                 ); })}
@@ -358,7 +358,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                   <Glyph name={it.e.icon} size={16} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: body, fontSize: 14, color: BALL }}>{it.e.text}</div>
-                    <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 1 }}>{fmtDate(it.e.date)}</div>
+                    <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 1 }}>{fmtDate(it.e.date)}</div>
                   </div>
                 </div>
               );
@@ -390,12 +390,12 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
               );
               if (it.kind === "post") return (
                 <div key={it.key} style={{ display: "flex", gap: 12, padding: "12px 4px", borderBottom: "none" }}>
-                  <span style={{ fontSize: 17 }}>&#128172;</span>
+                  <span style={{ fontSize: 18 }}>&#128172;</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{it.p.text}</div>
-                    <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 2 }}><Who id={it.p.by} size={16} strong={false} /> \u00b7 {fmtDate(it.p.date)}</div>
+                    <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}><Who id={it.p.by} size={16} strong={false} /> \u00b7 {fmtDate(it.p.date)}</div>
                   </div>
-                  {it.p.by === meId && <button onClick={() => onRemovePost(it.p.id)} style={{ fontFamily: body, fontSize: 10, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 7px", cursor: "pointer" }}>&#10005;</button>}
+                  {it.p.by === meId && <button onClick={() => onRemovePost(it.p.id)} style={{ fontFamily: body, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 5, padding: "4px 7px", cursor: "pointer" }}>&#10005;</button>}
                 </div>
               );
               const m = it.m;
@@ -439,7 +439,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
                             </div>
                             {confirmDeleteId === m.id && (
                               <div style={{ display: "grid", gap: 6, marginTop: 4 }}>
-                                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, lineHeight: 1.4 }}>Delete this result? It&apos;s logged, both players are told, and any competition match it settled reopens.</div>
+                                <div style={{ fontFamily: body, fontSize: 12, color: CLAY, lineHeight: 1.4 }}>Delete this result? It&apos;s logged, both players are told, and any competition match it settled reopens.</div>
                                 <div style={{ display: "flex", gap: 8 }}>
                                   <button onClick={() => { void onAdminCorrect(m.id, null); setConfirmDeleteId(null); setEditingMatchId(null); setEditDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: CLAY, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Delete result</button>
                                   <button onClick={() => setConfirmDeleteId(null)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Keep it</button>

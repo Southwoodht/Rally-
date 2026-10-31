@@ -128,7 +128,7 @@ export function RecordCard({ record, form, winRate, unbeatenRate, currentStreak,
               <span style={{ textAlign: "right", minWidth: 0 }}>
                 {/* 19/700 display. §5: the signed-in user's own league row
                     is the accent; the others are plain. */}
-                <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 19, color: r.emphasis ? FEED_LIME : FEED_TEXT_HI }}>{r.value}</span>
+                <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 20, color: r.emphasis ? FEED_LIME : FEED_TEXT_HI }}>{r.value}</span>
                 {r.qualifier && (
                   <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginLeft: 6 }}>{r.qualifier}</span>
                 )}

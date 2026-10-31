@@ -131,7 +131,7 @@ export function ClubBoard({ clubName, players, matches, fixtures, doublesMatches
   return (
     <div style={{ position: "fixed", inset: 0, background: FEED_PAGE, zIndex: 140, overflowY: "auto", padding: "calc(env(safe-area-inset-top) + 18px) clamp(14px, 3vw, 48px) 28px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: "clamp(14px, 2vw, 30px)" }}>
-        <div style={{ flex: 1, minWidth: 0, fontFamily: display, fontWeight: 800, fontSize: "clamp(30px, 4.4vw, 76px)", color: FEED_TEXT_HI, textTransform: "uppercase", letterSpacing: "-0.5px", lineHeight: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ flex: 1, minWidth: 0, fontFamily: display, fontWeight: 700, fontSize: "clamp(30px, 4.4vw, 76px)", color: FEED_TEXT_HI, textTransform: "uppercase", letterSpacing: "-0.5px", lineHeight: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {clubName}
         </div>
         <span style={{ ...tabular, fontFamily: body, fontSize: "clamp(22px, 2.6vw, 44px)", color: FEED_LIME }}>{clock}</span>
@@ -186,7 +186,7 @@ export function ClubBoard({ clubName, players, matches, fixtures, doublesMatches
           )}
         </div>
       </div>
-      <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_LOW, marginTop: 16 }}>Updates every minute · Southwood</div>
+      <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 16 }}>Updates every minute · Southwood</div>
     </div>
   );
 }

@@ -103,7 +103,7 @@ function BookPill({ onBook, label = "Book a match" }: { onBook?: () => void; lab
       style={{
         display: "block", width: "100%", height: 42, borderRadius: 21, border: "none",
         background: FEED_CTA, color: FEED_ON_CTA, cursor: onBook ? "pointer" : "default",
-        fontFamily: body, fontWeight: 700, fontSize: 17, marginTop: 14,
+        fontFamily: body, fontWeight: 700, fontSize: 18, marginTop: 14,
       }}
     >
       {label}
@@ -221,7 +221,7 @@ function SuggestionRow({ s, onOpenPlayer, onBook }: { s: Suggestion; onOpenPlaye
       <Avatar player={s.player} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ ...quiet, ...tabular, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.reason}</div>
-        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {s.player.name}{s.player.last ? " " + s.player.last : ""}
         </div>
       </div>

@@ -59,9 +59,9 @@ export default function PrivacyPage() {
         </p>
         {sections.map((s) => (
           <section key={s.heading} style={{ background: FEED_CARD, borderRadius: 16, padding: "14px 16px", marginBottom: 10 }}>
-            <h2 style={{ fontFamily: body, fontWeight: 500, fontSize: 17, color: FEED_TEXT_HI, margin: "0 0 6px" }}>{s.heading}</h2>
+            <h2 style={{ fontFamily: body, fontWeight: 500, fontSize: 18, color: FEED_TEXT_HI, margin: "0 0 6px" }}>{s.heading}</h2>
             {s.body.map((p, i) => (
-              <p key={i} style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.55, margin: i ? "8px 0 0" : 0 }}>{p}</p>
+              <p key={i} style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.55, margin: i ? "8px 0 0" : 0 }}>{p}</p>
             ))}
           </section>
         ))}

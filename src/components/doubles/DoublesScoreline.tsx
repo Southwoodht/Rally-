@@ -79,7 +79,7 @@ export function DoublesScoreline({ match, players, meId, when }: Props) {
           <strong style={{ fontWeight: 600 }}>{names(right)}</strong>
           {score && <span style={{ ...tabular, color: FEED_TEXT_MID }}>{" " + score}</span>}
         </div>
-        <div style={{ fontFamily: body, fontSize: 11, color: FEED_TEXT_MID, marginTop: 2 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
           Doubles · {when}
         </div>
       </div>

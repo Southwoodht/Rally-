@@ -1,4 +1,5 @@
 "use client";
+import { SkelRows } from "@/components/ui/Skeleton";
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, Info } from "lucide-react";
 import { Empty } from "@/components/ui/atoms";
@@ -139,7 +140,7 @@ function Header({ onBack }: { onBack?: () => void }) {
         <Info size={13} color={open ? FEED_LIME : FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
       </button>
       {open && (
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.55, marginTop: 10, background: FEED_CARD, borderRadius: 14, padding: 14 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.55, marginTop: 10, background: FEED_CARD, borderRadius: 14, padding: 14 }}>
           Everyone you&apos;ve crossed paths with, ranked on their own record in their own leagues — not on the matches they played against us. Level is only a starting assumption: the more someone plays their own level or better, the more their results decide their place and the less their claimed level does. Nobody has to set a level to be ranked — without one we simply assume the middle and let the results talk.
         </div>
       )}
@@ -180,7 +181,7 @@ function Distribution({ rows }: { rows: GlobalRow[] }) {
         {counts.map((c) => (
           <span key={c.label} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: c.colour, flexShrink: 0 }} />
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID }}>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>
               {c.n} {c.label.toLowerCase()}
             </span>
           </span>
@@ -229,7 +230,7 @@ function WorldCard({ rows }: { rows: GlobalRow[] }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ ...tabular, ...tight(40), fontFamily: body, fontWeight: 700, fontSize: 40, color: FEED_TEXT_HI, lineHeight: 1 }}>{rows.length}</div>
         <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginTop: 6 }}>players ranked worldwide</div>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.45 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.45 }}>
           Everyone you&apos;ve played, and everyone they&apos;ve played{multi ? ` · ${multi} play in ${clubs > 2 ? "several" : "two"} clubs` : ""}
         </div>
       </div>
@@ -259,12 +260,12 @@ function Podium({ rows, ratings, myAuthId, openFor }: { rows: GlobalRow[]; ratin
                 <span style={{ position: "absolute", inset: 4 }}><Face row={r} size={size} /></span>
                 <span style={{ ...tabular, position: "absolute", right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12, background: MEDAL[i], color: "#fff", fontFamily: body, fontWeight: 700, fontSize: 13, display: "grid", placeItems: "center", boxShadow: "0 0 0 2px var(--bg-card, #fff)" }}>{i + 1}</span>
               </div>
-              <div style={{ fontFamily: body, fontWeight: 700, fontSize: first ? 15.5 : 14, color: FEED_TEXT_HI, marginTop: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>
+              <div style={{ fontFamily: body, fontWeight: 700, fontSize: first ? 15 : 14, color: FEED_TEXT_HI, marginTop: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", padding: "0 2px" }}>
                 {r.name}{r.last ? " " + r.last.charAt(0) + "." : ""}
               </div>
-              {!!myAuthId && r.key === myAuthId && <div style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", display: "inline-block", marginTop: 3 }}>you</div>}
-              <div style={{ ...tabular, fontFamily: body, fontWeight: 700, fontSize: first ? 20 : 17, color: FEED_TEXT_HI, marginTop: 4 }}>{ratings[i]}</div>
-              <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID }}>{rec(r)}</div>
+              {!!myAuthId && r.key === myAuthId && <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", display: "inline-block", marginTop: 3 }}>you</div>}
+              <div style={{ ...tabular, fontFamily: body, fontWeight: 700, fontSize: first ? 20 : 18, color: FEED_TEXT_HI, marginTop: 4 }}>{ratings[i]}</div>
+              <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{rec(r)}</div>
             </div>
           );
         })}
@@ -285,10 +286,10 @@ function LeaderCard({ r, rating, onOpen }: { r: GlobalRow; rating: string; onOpe
         <Face row={r} size={50} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, letterSpacing: 0 }}>Top ranked</div>
-          <div style={{ ...tight(19), fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ ...tight(19), fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_LIME_INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {nameOf(r)}
           </div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME_INK_2, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {statusOf(r)}
           </div>
         </div>
@@ -326,7 +327,7 @@ function Row({ r, place, rating, fraction, isMe, onOpen }: any) {
           <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
             <span style={{ ...nameStyle, flex: 1, minWidth: 0 }}>{nameOf(r)}</span>
             {isMe && (
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 999, padding: "1px 7px", flexShrink: 0 }}>you</span>
             )}
           </span>
           <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -334,8 +335,8 @@ function Row({ r, place, rating, fraction, isMe, onOpen }: any) {
           </span>
         </span>
         <span style={{ textAlign: "right", flex: "none" }}>
-          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI }}>{rec(r)}</span>
-          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 1 }}>{rating}</span>
+          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>{rec(r)}</span>
+          <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 1 }}>{rating}</span>
         </span>
       </div>
     </div>
@@ -351,7 +352,7 @@ function ProvisionalGroup({ rows, myKey, onOpenFor }: { rows: GlobalRow[]; myKey
         <span style={label}>Provisional</span>
         <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{rows.length}</span>
       </div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 10 }}>
         Their results count towards everyone else&apos;s rating, but {PROVISIONAL_GAMES} matches
         are needed before we put a number on where they stand.
       </div>
@@ -370,7 +371,7 @@ function ProvisionalGroup({ rows, myKey, onOpenFor }: { rows: GlobalRow[]; myKey
             <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, width: 20, flexShrink: 0 }}>–</span>
             <Face row={r} size={34} dim />
             <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ ...nameStyle, fontSize: 14.5, color: FEED_TEXT_HI }}>{nameOf(r)}</span>
+              <span style={{ ...nameStyle, fontSize: 14, color: FEED_TEXT_HI }}>{nameOf(r)}</span>
               <span style={{ ...tabular, display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {(r.level?.cat || "No level")}{r.level?.sub ? " · " + String(r.level.sub).toLowerCase() : ""} · {r.gp} played
               </span>
@@ -407,14 +408,14 @@ export function GlobalTable({ myAuthId, players, onOpenProfile, onBack }: {
         <SurfaceCard radius={18}>
           <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_THEY_LEAD }}>Global table unavailable.</div>
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
             If this says the function is missing, the one-off SQL in supabase/schema_global_standings.sql hasn&apos;t been run yet.
           </div>
         </SurfaceCard>
       </>
     );
   }
-  if (!rows) return <><Header onBack={onBack} /><Empty msg="Loading the global table…" /></>;
+  if (!rows) return <><Header onBack={onBack} /><div style={{ marginTop: 14 }}><SkelRows n={8} /></div></>;
   if (!rows.length) return <><Header onBack={onBack} /><Empty msg="Nobody to rank yet." /></>;
 
   return <GlobalStandingsList rows={rows} myAuthId={myAuthId} players={players} onOpenProfile={onOpenProfile} onBack={onBack} />;

@@ -68,7 +68,7 @@ export function LevelSuggestionsPage({ players, matches, leagueId, onSetLevel }:
       </div>
       {!shown.length && (
         <SurfaceCard radius={18} pad="16px 14px">
-          <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI }}>Everyone&apos;s stars match their results.</div>
+          <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI }}>Everyone&apos;s stars match their results.</div>
         </SurfaceCard>
       )}
       {shown.length > 0 && (
@@ -78,11 +78,11 @@ export function LevelSuggestionsPage({ players, matches, leagueId, onSetLevel }:
             const why = evidence(s);
             return (
               <div key={s.playerId} style={{ padding: "14px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
-                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI }}>{fullNameOf(p)}</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>{fullNameOf(p)}</div>
                 <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, marginTop: 4, lineHeight: 1.45 }}>
                   Results say <b>{levelText(s.to)}</b>. Set to {levelText(s.from)}.
                 </div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.45, ...tabular }}>
+                <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 3, lineHeight: 1.45, ...tabular }}>
                   Rating {Math.round(s.rating)} ± {Math.round(s.rd)} · {s.matches} matches since their level last changed{why ? " · " + why : ""}
                 </div>
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>

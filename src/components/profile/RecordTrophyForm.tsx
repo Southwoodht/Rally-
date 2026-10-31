@@ -85,7 +85,7 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
           <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED }}>Give a trophy</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontSize: 12, cursor: "pointer" }}>Close</button>
         </div>
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>
           {hasAccount
             ? <>You're awarding this as the club's administrator, so it goes on {who}'s profile straight away. They can take it off their own profile if it's wrong.</>
             : <>{who} hasn't got an account yet — you're recording it as the club's administrator and it goes on straight away. It'll be waiting on their profile the day they claim this player.</>}
@@ -121,7 +121,7 @@ export function RecordTrophyForm({ playerId, playerName, hasAccount, onClose, on
             <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={DATE_INPUT} /></Field>
             <Field label="Notes (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything worth remembering about it" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
 
-            {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}
+            {error && <div style={{ fontFamily: body, fontSize: 12, color: CLAY, marginBottom: 12 }}>{error}</div>}
             <div style={{ display: "flex", gap: 8 }}>
               <BigBtn onClick={submit} disabled={busy} color={BALL}>{busy ? "Saving…" : "Give trophy"}</BigBtn>
             </div>

@@ -1,4 +1,5 @@
 "use client";
+import { CountUp } from "@/components/ui/CountUp";
 import { clearPendingComp, compLink, peekPendingComp } from "@/lib/compLink";
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Trophy, X } from "lucide-react";
@@ -119,7 +120,7 @@ const label: React.CSSProperties = {
 };
 
 const btn = (fill: string, ink: string): React.CSSProperties => ({
-  flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13.5, padding: "11px 10px",
+  flex: 1, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "11px 10px",
   borderRadius: 10, border: "none", cursor: "pointer", background: fill, color: ink,
 });
 
@@ -311,7 +312,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
   }, [results]);
   // P, Left, W, D, L, Sets, Pts — every column kept (Sam, 2026-10-24).
   const cols = left ? "22px 1fr 22px 28px 22px 22px 22px 34px 30px" : "22px 1fr 26px 26px 26px 26px 36px 34px";
-  const head: React.CSSProperties = { fontFamily: body, fontWeight: 600, fontSize: 10.5, letterSpacing: 1, textTransform: "uppercase", color: FEED_TEXT_MID, textAlign: "right" };
+  const head: React.CSSProperties = { fontFamily: body, fontWeight: 600, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: FEED_TEXT_MID, textAlign: "right" };
   const tint = (c: string, pct: number) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
   const n = table.length;
   return (
@@ -335,7 +336,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
           <div onClick={() => setOpen(open === r.pairId ? null : r.pairId)} style={{ display: "grid", gridTemplateColumns: cols, gap: 4, alignItems: "center", padding: "9px 8px", background: bg, borderTop: i ? "1px solid " + LINE : "none", fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", opacity: fresh ? 0.55 : 1, ...tabular }}>
             <span style={{ fontWeight: 600, color: FEED_TEXT_MID, display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.1 }}>
               {r.place}
-              {(up || down) && <span style={{ fontSize: 9, color: up ? FEED_UP : FEED_DOWN, marginTop: 2 }}>{up ? "▲" : "▼"}</span>}
+              {(up || down) && <span style={{ fontSize: 12, color: up ? FEED_UP : FEED_DOWN, marginTop: 2 }}>{up ? "▲" : "▼"}</span>}
             </span>
             <span style={{ minWidth: 0 }}>
               <span style={{ display: "block", fontWeight: isMine ? 700 : 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{entryName(r.pairId)}</span>
@@ -350,7 +351,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
             <span style={{ textAlign: "right" }}>{r.drawn}</span>
             <span style={{ textAlign: "right" }}>{r.lost}</span>
             <span style={{ textAlign: "right", fontWeight: 600, color: sd > 0 ? FEED_UP : sd < 0 ? FEED_DOWN : FEED_TEXT_MID }}>{sd > 0 ? "+" + sd : sd}</span>
-            <span style={{ textAlign: "right", fontWeight: 700 }}>{r.points}</span>
+            <span style={{ textAlign: "right", fontWeight: 700 }}><CountUp value={r.points} /></span>
           </div>
           {open === r.pairId && (
             <div style={{ padding: "0 8px" }}>
@@ -366,7 +367,7 @@ export function LeagueTable({ kind, entries, results, pointsWin, pointsDraw, lef
       })}
       </div>
       {zones && (zones.up > 0 || zones.down > 0) && n > 1 && (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, padding: "8px 4px 0" }}>{zoneKey(zones)}</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, padding: "8px 4px 0" }}>{zoneKey(zones)}</div>
       )}
     </div>
   );
@@ -645,7 +646,7 @@ function Deadlines({ c, rows, entryName, canManage, roundLabel, onSetTie }: {
   const overdue = rows.filter((r) => tieState(r) === "overdue");
   const decided = rows.filter((r) => r.outcome);
   const date = (d: string) => formatMatchDate(londonDayStart(d));
-  const small: React.CSSProperties = { background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 9, padding: "7px 10px", fontFamily: body, fontSize: 12.5, cursor: "pointer" };
+  const small: React.CSSProperties = { background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 9, padding: "7px 10px", fontFamily: body, fontSize: 12, cursor: "pointer" };
 
   return (
     <SurfaceCard radius={16} pad="14px" style={{ marginBottom: 14 }}>
@@ -659,7 +660,7 @@ function Deadlines({ c, rows, entryName, canManage, roundLabel, onSetTie }: {
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: body, fontSize: 14, ...tabular }}>
               <span style={{ flex: 1, minWidth: 0, color: FEED_TEXT_HI }}>{roundLabel(round)}</span>
               <span style={{ color: late ? DOT_LOSS : FEED_TEXT_MID }}>{date(d)}</span>
-              <span style={{ width: 54, textAlign: "right", color: FEED_TEXT_MID, fontSize: 12.5 }}>{open.length ? `${open.length} left` : "done"}</span>
+              <span style={{ width: 54, textAlign: "right", color: FEED_TEXT_MID, fontSize: 12 }}>{open.length ? `${open.length} left` : "done"}</span>
               {canManage && onSetTie && open.length > 0 && (
                 <button onClick={() => { setEditRound(editRound === round ? null : round); setDay(d); }} style={{ ...small, padding: "5px 9px" }}>Move</button>
               )}
@@ -704,7 +705,7 @@ function Deadlines({ c, rows, entryName, canManage, roundLabel, onSetTie }: {
         <>
           <div style={{ ...label, margin: "12px 0 4px" }}>Decided by the organisers</div>
           {decided.map((r) => (
-            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 13.5 }}>
+            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, fontFamily: body, fontSize: 13 }}>
               <span style={{ flex: 1, minWidth: 0, color: FEED_TEXT_HI }}>
                 {entryName(r.pairA)} v {entryName(r.pairB)}
                 <span style={{ color: FEED_TEXT_MID }}> · {r.outcome === "void" ? "void" : `walkover to ${entryName(r.outcome === r.woA ? r.pairA : r.pairB)}`}</span>
@@ -813,12 +814,12 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
           <option value="">No season — no deadlines</option>
         </select>
       ) : (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 6 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 6 }}>
           No season with an end date is running, so this one has no deadlines. Start a season in Run your club to give matches play-by dates.
         </div>
       )}
       {season && (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14, ...tabular }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14, ...tabular }}>
           {formatMatchDate(londonDayStart(season.startsOn))} to {formatMatchDate(londonDayStart(season.endsOn as string))}.
           {rounds ? ` ${rounds} ${rounds === 1 ? "round" : "rounds"}${every ? `, one about every ${every} days` : ""} — the last due ${formatMatchDate(londonDayStart(deadlines[deadlines.length - 1]))}. Any round's date can be moved later.` : ""}
         </div>
@@ -832,7 +833,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
         <button onClick={() => setFormat("knockout")} style={segment(format === "knockout")}>Knockout</button>
       </div>
       </>}
-      <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14 }}>
+      <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginBottom: 14 }}>
         {format === "league"
           ? `Every ${doubles ? "pair" : "player"} plays every other. A table on points, then sets, then games.`
           : `Seeded in the order below — the top ${doubles ? "pair" : "player"} is seed 1. Winners go through; a match can't end level.`}
@@ -871,7 +872,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
           <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
             {slots.map((k) => (
               <span key={k} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: e[k] ? FEED_TEXT_HI : FEED_TEXT_LOW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: e[k] ? FEED_TEXT_HI : FEED_TEXT_LOW, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {e[k] ? who(e[k]) : k === "p1" ? "Player" : "Partner"}
                 </span>
                 <PlayerPicker players={eligible(e[k])} value={e[k]} onChange={(v: string) => set(i, k, v)} onCreatePlayer={onCreatePlayer} triggerLabel={e[k] ? "Change" : "Add"} />
@@ -885,7 +886,7 @@ function CreateForm({ kind, players, onCreatePlayer, onCancel, onCreate, seasons
           )}
         </div>
       ))}
-      <button onClick={() => setEntries([...entries, blank()])} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13.5, cursor: "pointer", padding: "8px 0 14px" }}>
+      <button onClick={() => setEntries([...entries, blank()])} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, cursor: "pointer", padding: "8px 0 14px" }}>
         <Plus size={14} strokeWidth={2.4} />Add a {doubles ? "pair" : "player"}
       </button>
 

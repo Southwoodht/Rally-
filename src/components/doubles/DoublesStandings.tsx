@@ -110,7 +110,7 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
           it by making the number bigger is the honest reading of why the
           threshold exists at all. Applied to every row so the numerals do
           not change size as you scroll past your own name. */}
-      <span style={{ width: 22, flexShrink: 0, fontFamily: display, fontWeight: 700, fontSize: 19, ...tabular, color: mine ? FEED_LIME : FEED_TEXT_HI }}>{place}</span>
+      <span style={{ width: 22, flexShrink: 0, fontFamily: display, fontWeight: 700, fontSize: 20, ...tabular, color: mine ? FEED_LIME : FEED_TEXT_HI }}>{place}</span>
       <Avatar player={r.player} size={40} />
       <span style={{ flexGrow: 1, minWidth: 0 }}>
         <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -125,7 +125,7 @@ export function DoublesStandings({ players, matches, meId, onOpen }: Props) {
           {r.played < DOUBLES_PROVISIONAL_GAMES && ` · ${DOUBLES_PROVISIONAL_GAMES - r.played} more ${DOUBLES_PROVISIONAL_GAMES - r.played === 1 ? "match" : "matches"} to rank`}
         </span>
       </span>
-      <span style={{ fontFamily: display, fontWeight: 700, fontSize: 19, ...tabular, color: mine ? FEED_LIME : (r.played < DOUBLES_PROVISIONAL_GAMES ? FEED_TEXT_MID : FEED_TEXT_HI) }}>
+      <span style={{ fontFamily: display, fontWeight: 700, fontSize: 20, ...tabular, color: mine ? FEED_LIME : (r.played < DOUBLES_PROVISIONAL_GAMES ? FEED_TEXT_MID : FEED_TEXT_HI) }}>
         {Math.round(r.elo).toLocaleString()}
       </span>
     </button>

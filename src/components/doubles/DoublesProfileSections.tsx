@@ -82,7 +82,7 @@ const scoreText = (r: DoublesHistoryRow): string => {
 
 const OutcomeChip = ({ o }: { o: "w" | "d" | "l" }) => (
   <span style={{
-    fontFamily: body, fontSize: 11, fontWeight: 700, borderRadius: 8, padding: "3px 8px", flexShrink: 0,
+    fontFamily: body, fontSize: 12, fontWeight: 700, borderRadius: 8, padding: "3px 8px", flexShrink: 0,
     background: o === "w" ? FEED_LIME : FEED_RAISED,
     color: o === "w" ? FEED_LIME_INK : o === "l" ? "var(--lost)" : FEED_TEXT_MID,
   }}>
@@ -153,7 +153,7 @@ export function DoublesRecordAgainst({ records, byId, onOpenProfile }: { records
                 </span>
               </div>
             </div>
-            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 17, width: 46, textAlign: "right", color: FEED_TEXT_HI, ...tabular }}>{pct}%</div>
+            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 18, width: 46, textAlign: "right", color: FEED_TEXT_HI, ...tabular }}>{pct}%</div>
           </div>
         );
       })}

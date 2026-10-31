@@ -21,7 +21,7 @@ export function LevelRequestForm({ current, pending, onAsk }: {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const line: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 };
+  const line: React.CSSProperties = { fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, marginTop: 6 };
   if (pending) {
     return <div style={line}>You asked for {pending.level.cat} · {pending.level.sub}. The organisers will look at it.</div>;
   }
@@ -29,7 +29,7 @@ export function LevelRequestForm({ current, pending, onAsk }: {
     return (
       <div style={line}>
         Only the organisers change levels.{" "}
-        <button onClick={() => setOpen(true)} style={{ background: "none", border: "none", padding: 0, color: BALL, fontFamily: body, fontSize: 12.5, cursor: "pointer" }}>Ask for a change</button>
+        <button onClick={() => setOpen(true)} style={{ background: "none", border: "none", padding: 0, color: BALL, fontFamily: body, fontSize: 12, cursor: "pointer" }}>Ask for a change</button>
       </div>
     );
   }

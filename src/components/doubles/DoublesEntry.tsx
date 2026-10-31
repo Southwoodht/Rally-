@@ -253,8 +253,8 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <span style={label}>{anySeat && first !== meId && partner !== meId ? "Team 1" : "Your team"}</span>
           {/* A readout of the score, not a button. See the header. */}
-          {winner === "A" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
-          {winner === "draw" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_TEXT_MID }}>Drawn</span>}
+          {winner === "A" && <span style={{ fontFamily: body, fontSize: 12, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
+          {winner === "draw" && <span style={{ fontFamily: body, fontSize: 12, fontWeight: 700, color: FEED_TEXT_MID }}>Drawn</span>}
         </div>
         {anySeat
           ? personRow(first, <PlayerPicker players={eligible(first)} value={first} onChange={setFirst} onCreatePlayer={onCreatePlayer} triggerLabel="Change" />, first === meId)
@@ -267,7 +267,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <span style={label}>{anySeat && first !== meId && partner !== meId ? "Team 2" : "Opponents"}</span>
-          {winner === "B" && <span style={{ fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
+          {winner === "B" && <span style={{ fontFamily: body, fontSize: 12, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "3px 8px" }}>Won</span>}
         </div>
         {personRow(opp1, <PlayerPicker players={eligible(opp1)} value={opp1} onChange={setOpp1} onCreatePlayer={onCreatePlayer} triggerLabel={opp1 ? "Change" : "Add"} />)}
         {personRow(opp2, unknownable(opp2, setOpp2, "Add"), false, false)}
@@ -353,7 +353,7 @@ export function DoublesEntry({ players, history, meId, onCreatePlayer, onSave, s
           style={{
             width: "100%", height: 50, borderRadius: 25, border: "none",
             background: FEED_LIME, color: FEED_LIME_INK,
-            fontFamily: body, fontSize: 17, fontWeight: 700,
+            fontFamily: body, fontSize: 18, fontWeight: 700,
             opacity: complete && !saving ? 1 : 0.5,
             cursor: complete && !saving ? "pointer" : "default",
           }}

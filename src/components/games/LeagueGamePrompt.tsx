@@ -25,7 +25,7 @@ export function LeagueGamePrompt({ who, options, onChoose }: {
     <div style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 98 }}>
       <div style={{ background: PANEL, width: "100%", maxWidth: 620, borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "22px 16px 34px", boxSizing: "border-box" }}>
         <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI }}>Count this as a league game?</div>
-        <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>
+        <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>
           {who} still {options.length === 1
             ? `have ${options[0].left} ${options[0].left === 1 ? "game" : "games"} to play in ${options[0].name}.`
             : `have games to play in ${options.map((o) => o.name).join(" and ")}.`}{" "}

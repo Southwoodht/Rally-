@@ -72,7 +72,7 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
           <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED }}>Claim a trophy</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "4px 10px", fontFamily: body, fontSize: 12, cursor: "pointer" }}>Close</button>
         </div>
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>
           This goes to the club's administrator to verify — it won't show as a trophy on your profile until they approve it.
         </div>
 
@@ -91,7 +91,7 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
                 <input value={newClubName} onChange={(e) => setNewClubName(e.target.value)} placeholder="Club name" style={{ ...input, boxSizing: "border-box" as const, marginBottom: 8 }} />
                 <input value={newClubLocation} onChange={(e) => setNewClubLocation(e.target.value)} placeholder="Location (optional)" style={{ ...input, boxSizing: "border-box" as const }} />
                 {clubs.length > 0 && <button onClick={() => setAddingClub(false)} style={{ background: "transparent", border: "none", color: MUTED, fontFamily: body, fontSize: 13, cursor: "pointer", letterSpacing: 0, marginTop: 6 }}>Cancel — pick an existing club</button>}
-                {clubs.length === 0 && <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6 }}>You'll become this club's administrator, so you can verify claims for it (including this one, and anyone else's later).</div>}
+                {clubs.length === 0 && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 6 }}>You'll become this club's administrator, so you can verify claims for it (including this one, and anyone else's later).</div>}
               </>
             )}
           </Field>
@@ -114,7 +114,7 @@ export function ClaimTrophyForm({ claimantName, onClose, onSubmitted }: any) {
         <Field label="Date won (optional)"><input type="date" value={wonOn} max={new Date().toISOString().slice(0, 10)} onChange={(e) => setWonOn(e.target.value)} style={DATE_INPUT} /></Field>
         <Field label="Notes (optional)"><input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything that helps them verify it" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
 
-        {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}
+        {error && <div style={{ fontFamily: body, fontSize: 12, color: CLAY, marginBottom: 12 }}>{error}</div>}
         <div style={{ display: "flex", gap: 8 }}>
           <BigBtn onClick={submit} disabled={busy} color={BALL}>{busy ? "Submitting…" : "Submit for review"}</BigBtn>
         </div>

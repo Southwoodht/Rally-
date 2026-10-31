@@ -63,7 +63,7 @@ export function Ladder(props: {
   const note: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 };
   const pill = (fill: string, ink: string): React.CSSProperties => ({
     background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px",
-    fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: busy ? "default" : "pointer", flexShrink: 0, opacity: busy ? 0.6 : 1,
+    fontFamily: body, fontWeight: 600, fontSize: 13, cursor: busy ? "default" : "pointer", flexShrink: 0, opacity: busy ? 0.6 : 1,
   });
 
   // ------------------------------------------------------------ no ladder yet
@@ -91,7 +91,7 @@ export function Ladder(props: {
       <SurfaceCard radius={18} pad="0" style={{ marginBottom: 14 }}>
         <button onClick={() => setOpen(true)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "none", border: "none", padding: "16px", cursor: "pointer", textAlign: "left" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>{ladder.name}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>{ladder.name}</div>
             <div style={{ ...note, marginTop: 2 }}>
               {myPlace >= 0 ? `You're ${myPlace + 1} of ${order.length}` : `${order.length} on it · join at the bottom`}
               {openCount ? ` · ${openCount} ${openCount === 1 ? "challenge" : "challenges"} on` : ""}
@@ -139,7 +139,7 @@ export function Ladder(props: {
               <span style={{ ...tabular, width: 24, textAlign: "right", fontFamily: body, fontSize: 15, color: me ? FEED_LIME : FEED_TEXT_MID, flexShrink: 0 }}>{i + 1}</span>
               {p && <Avatar player={p} size={32} />}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: body, fontSize: 15.5, color: me ? FEED_LIME : FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name(id)}</div>
+                <div style={{ fontFamily: body, fontSize: 15, color: me ? FEED_LIME : FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name(id)}</div>
                 {inChallenge.has(id) && <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW }}>In a challenge</div>}
               </div>
               {canChallenge && (
@@ -170,7 +170,7 @@ export function Ladder(props: {
 
       {canManage && candidates.length > 0 && (
         <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
-          <select value={adding} onChange={(e) => setAdding(e.target.value)} style={{ flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "10px 12px", fontFamily: body, fontSize: 14.5 }}>
+          <select value={adding} onChange={(e) => setAdding(e.target.value)} style={{ flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "10px 12px", fontFamily: body, fontSize: 14 }}>
             <option value="">Add a player at the bottom…</option>
             {candidates.map((p) => <option key={p.id} value={p.id}>{fullNameOf(p)}</option>)}
           </select>

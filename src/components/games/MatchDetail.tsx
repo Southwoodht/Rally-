@@ -18,7 +18,7 @@ function Notice({ children, tone = "lime" }: { children: React.ReactNode; tone?:
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, padding: "9px 12px", borderRadius: 12, background: FEED_RAISED }}>
       <span style={{ width: 6, height: 6, borderRadius: 3, background: colour, flexShrink: 0 }} />
-      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_HI }}>{children}</span>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_HI }}>{children}</span>
     </div>
   );
 }
@@ -51,20 +51,20 @@ function MatchStory({ ctx, match, nm, isDraw, favoredId, favoredPct, predictionC
   const winnerName = isDraw ? null : nm(match.winner === "p1" ? match.p1 : match.p2);
   return (
     <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "13px 15px", margin: "12px 0" }}>
-      <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
+      <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
         {favoredId && favoredPct != null && <>Southwood {stored ? "made" : "would have made"} <strong>{nm(favoredId)}</strong> a {favoredPct}% favourite. </>}
         {isDraw ? <>They drew.</> : <><strong>{winnerName}</strong> won{predictionCorrect === false ? " — the underdog took it." : "."}</>}
       </div>
       {(["p1", "p2"] as const).map((which) => {
         const s = side(which);
         return (
-          <div key={which} style={{ display: "flex", gap: 8, marginTop: 8, fontFamily: body, fontSize: 12.5, lineHeight: 1.4 }}>
+          <div key={which} style={{ display: "flex", gap: 8, marginTop: 8, fontFamily: body, fontSize: 12, lineHeight: 1.4 }}>
             <span style={{ fontWeight: 600, color: FEED_TEXT_HI, flexShrink: 0 }}>{s.name}</span>
             <span style={{ ...tabular, color: FEED_TEXT_MID }}>{s.text}</span>
           </div>
         );
       })}
-      <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.45, marginTop: 9, borderTop: "0.5px solid " + FEED_HAIRLINE, paddingTop: 8 }}>
+      <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.45, marginTop: 9, borderTop: "0.5px solid " + FEED_HAIRLINE, paddingTop: 8 }}>
         Places shown are in {groupName || "this club"}. Global places aren&apos;t here — they&apos;re worked out across every club at once, so they can&apos;t be rewound to what they were on the day.
       </div>
     </div>
@@ -182,7 +182,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
 
   const Row = ({ label, children }: any) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "11px 0", borderTop: "0.5px solid " + FEED_HAIRLINE, gap: 12 }}>
-      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, flexShrink: 0 }}>{label}</span>
       <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, textAlign: "right" }}>{children}</span>
     </div>
   );
@@ -244,7 +244,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         {(venueDraft !== null || match.venue) ? (
           venueDraft !== null ? (
             <div style={{ display: "flex", gap: 6, padding: "8px 0", borderTop: "none", alignItems: "center" }}>
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>Venue</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_TEXT_MID, flexShrink: 0 }}>Venue</span>
               <input value={venueDraft} onChange={(e) => setVenueDraft(e.target.value)} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
               <button onClick={saveVenue} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: COURT, background: BALL, border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer" }}>Save</button>
             </div>
@@ -296,7 +296,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         )}
 
         <div style={{ padding: "10px 0", borderTop: "none" }}>
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID, marginBottom: 6 }}>Note</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_TEXT_MID, marginBottom: 6 }}>Note</div>
           {notesDraft !== null ? (
             <div style={{ display: "flex", gap: 6 }}>
               <input value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} placeholder="e.g. Came back from 4–1 down" style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
@@ -312,7 +312,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
         </div>
 
         <div style={{ padding: "10px 0", borderTop: "none" }}>
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID, marginBottom: 6 }}>Photo</div>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_TEXT_MID, marginBottom: 6 }}>Photo</div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickPhoto(f); e.target.value = ""; }} />
           {match.photoUrl ? (
             <div>
@@ -343,8 +343,8 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
                     <button key={r} onClick={() => setDraft({ ...draft, result: r })} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "9px 6px", borderRadius: 10, cursor: "pointer", border: "none", background: draft.result === r ? BALL : PANEL2, color: draft.result === r ? COURT : MUTED, fontWeight: 600 }}>{label}</button>
                   ))}
                 </div>
-                <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID }}>{adminMode ? "As an organiser, this changes it straight away. It's logged, and both players are told." : needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
-                {editErr && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{editErr}</div>}
+                <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID }}>{adminMode ? "As an organiser, this changes it straight away. It's logged, and both players are told." : needsApproval ? "This needs their agreement before it counts." : "Updates straight away — no account on the other side."}</div>
+                {editErr && <div style={{ fontFamily: body, fontSize: 12, color: CLAY }}>{editErr}</div>}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={saveEdit} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: COURT, background: BALL, border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Save</button>
                   <button onClick={() => { setEditing(false); setDraft(null); }} style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>Cancel</button>
@@ -360,13 +360,13 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
               </div>
             ) : iRequestedDelete ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED }}>Waiting for them to agree{deleteTimeoutNote(match.deleteRequestedAt) ? ` — ${deleteTimeoutNote(match.deleteRequestedAt)}` : ""}</span>
-                <button onClick={() => onCancelDelete && onCancelDelete(match.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "6px 10px", cursor: "pointer", flexShrink: 0 }}>Cancel</button>
+                <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>Waiting for them to agree{deleteTimeoutNote(match.deleteRequestedAt) ? ` — ${deleteTimeoutNote(match.deleteRequestedAt)}` : ""}</span>
+                <button onClick={() => onCancelDelete && onCancelDelete(match.id)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "6px 10px", cursor: "pointer", flexShrink: 0 }}>Cancel</button>
               </div>
             ) : confirmDelete ? (
               <div style={{ display: "grid", gap: 8 }}>
                 <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: CHALK }}>Delete this match?</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY }}>{adminMode ? "As an organiser, this removes it straight away. It's logged, both players are told, and any competition match it settled reopens." : needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : legacy ? "A legacy result counts for nothing, so this deletes straight away. You can log it again." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
+                <div style={{ fontFamily: body, fontSize: 12, color: CLAY }}>{adminMode ? "As an organiser, this removes it straight away. It's logged, both players are told, and any competition match it settled reopens." : needsApproval ? "They have a Southwood account — this needs their agreement, or 24h with no response." : legacy ? "A legacy result counts for nothing, so this deletes straight away. You can log it again." : "They don't have an account, so this deletes straight away and can't be undone."}</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <button onClick={confirmedDelete} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: COURT, background: CLAY, border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>{needsApproval && !adminMode ? "Request delete" : "Delete"}</button>
                   <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 14, color: MUTED, background: "transparent", border: "none", borderRadius: 10, padding: "10px 10px", cursor: "pointer" }}>Cancel</button>

@@ -13,10 +13,10 @@ export function H2HRow({ name, rec, yr, c, level, onClick }: any) {
     <button onClick={onClick} style={{ display: "flex", alignItems: "center", padding: "7px 0", width: "100%", background: "transparent", border: "none", borderBottom: "none", cursor: "pointer", textAlign: "left" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: body, fontSize: 14, color: CHALK }}>{name}</div>
-        {level && <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 1 }}>currently {shortTier(level)}</div>}
+        {level && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 1 }}>currently {shortTier(level)}</div>}
       </div>
       <span style={{ ...tabular, fontFamily: body, fontSize: 13, fontWeight: 700, color: c }}>{rec}</span>
-      <span style={{ fontFamily: body, fontSize: 11, color: MUTED, width: 78, textAlign: "right" }}>{yr}</span>
+      <span style={{ fontFamily: body, fontSize: 12, color: MUTED, width: 78, textAlign: "right" }}>{yr}</span>
       <span style={{ fontFamily: body, fontSize: 12, color: MUTED }}>›</span>
     </button>
   );

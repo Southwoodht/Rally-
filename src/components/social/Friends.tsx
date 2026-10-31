@@ -1,4 +1,5 @@
 "use client";
+import { SkelRows } from "@/components/ui/Skeleton";
 import React, { useEffect, useState } from "react";
 import { openProfile } from "@/lib/openProfile";
 import { Avatar } from "@/components/ui/Avatar";
@@ -83,7 +84,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
   };
 
   const actionBtn = (label: string, onClick: () => void, color = BALL, textColor = COURT) => (
-    <button onClick={onClick} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: textColor, background: color, border: "none", borderRadius: 8, padding: "6px 11px", cursor: "pointer", whiteSpace: "nowrap" as const }}>{label}</button>
+    <button onClick={onClick} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: textColor, background: color, border: "none", borderRadius: 8, padding: "6px 11px", cursor: "pointer", whiteSpace: "nowrap" as const }}>{label}</button>
   );
 
   return (
@@ -100,7 +101,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
       </div>
 
       {me && (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 20 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 20 }}>
           Your friend code: <span style={{ fontFamily: body, color: CHALK, fontWeight: 700 }}>{me.friend_code}</span> — share it so people can add you directly.
         </div>
       )}
@@ -169,7 +170,7 @@ export function Friends({ leagueJoinCode, onBack, flash, onMessage, meAuthId, me
           Friends{friends.length ? ` (${friends.length})` : ""}
         </div>
         {loading ? (
-          <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "8px 0" }}>Loading…</div>
+          <SkelRows n={3} card={false} />
         ) : friends.length === 0 ? (
           <div style={{ fontFamily: body, fontSize: 13, color: MUTED, padding: "8px 0" }}>No friends yet — search above to find people.</div>
         ) : (

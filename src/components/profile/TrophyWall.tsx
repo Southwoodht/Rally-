@@ -30,8 +30,8 @@ export function TrophyWall({ player, players, matches, fixtures, group }: any) {
         {achievements.map((a) => (
           <div key={a.id} style={{ background: a.achieved ? PANEL2 : "transparent", opacity: a.achieved ? 1 : 0.4, border: "1px solid " + (a.achieved ? BALL : LINE), borderRadius: 12, padding: "10px 6px", textAlign: "center" }}>
             <Glyph name={a.icon} size={17} />
-            <div style={{ fontFamily: body, fontSize: 10.5, color: a.achieved ? CHALK : MUTED, marginTop: 4, letterSpacing: 0, lineHeight: 1.3 }}>{a.label}</div>
-            {a.achieved && a.date != null && <div style={{ fontFamily: body, fontSize: 8, color: MUTED, marginTop: 2 }}>{new Date(a.date).getFullYear()}</div>}
+            <div style={{ fontFamily: body, fontSize: 12, color: a.achieved ? CHALK : MUTED, marginTop: 4, letterSpacing: 0, lineHeight: 1.3 }}>{a.label}</div>
+            {a.achieved && a.date != null && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 2 }}>{new Date(a.date).getFullYear()}</div>}
           </div>
         ))}
       </div>

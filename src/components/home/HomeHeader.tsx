@@ -71,7 +71,7 @@ export function HomeHeader({ leagueName, greeting, onPickLeague, bell, topRow }:
             the greeting takes a second line when it needs one, and it breaks
             after the comma so the name always lands whole on a line of its
             own. Icons sit on the last line (flex-end), beside the name. */}
-        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, lineHeight: 1.08, letterSpacing: "-0.6px", color: FEED_TEXT_HI, minWidth: 0, overflowWrap: "anywhere" }}>
+        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 28, lineHeight: 1.08, letterSpacing: "-0.6px", color: FEED_TEXT_HI, minWidth: 0, overflowWrap: "anywhere" }}>
           {(() => {
             const at = greeting.indexOf(", ");
             if (at < 0) return greeting;

@@ -18,7 +18,7 @@ export function LevelGuide({ onClose }: any) {
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>What's my level?</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 8, lineHeight: 1.5 }}>Be honest — rallying with another beginner doesn't make you advanced. Pick where you'd genuinely stand at a club.</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 8, lineHeight: 1.5 }}>Be honest — rallying with another beginner doesn't make you advanced. Pick where you'd genuinely stand at a club.</div>
         {items.map(([t, d]) => (
           <div key={t} style={{ padding: "12px 0", borderTop: "none" }}>
             <div style={{ fontFamily: body, fontSize: 16, fontWeight: 700, color: BALL }}>{t}</div>

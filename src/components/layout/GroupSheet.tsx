@@ -53,14 +53,14 @@ export function GroupSheet({
     borderRadius: 16, padding: "14px 16px", marginBottom: 8, cursor: "pointer", textAlign: "left", boxSizing: "border-box",
   };
   const title: React.CSSProperties = { fontFamily: body, fontWeight: 700, fontSize: 18, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
-  const sub: React.CSSProperties = { fontFamily: body, fontWeight: 400, fontSize: 14.5, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
+  const sub: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 3, ...tabular };
   const here = (
     <span style={{ width: 24, height: 24, borderRadius: 12, background: FEED_LIME, display: "grid", placeItems: "center", flexShrink: 0 }}>
       <Check size={14} color={FEED_LIME_INK} strokeWidth={3} />
     </span>
   );
   const letter = (child: React.ReactNode) => (
-    <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 700, fontSize: 17 }}>{child}</span>
+    <span style={{ width: 40, height: 40, borderRadius: 20, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE, color: FEED_LIME, fontFamily: body, fontWeight: 700, fontSize: 18 }}>{child}</span>
   );
   const go = <ChevronRight size={18} color={FEED_TEXT_LOW} style={{ flexShrink: 0 }} />;
   const count = (n?: { players: number; matches: number }) =>
@@ -71,7 +71,7 @@ export function GroupSheet({
       <div onClick={(e) => e.stopPropagation()} style={{ background: FEED_PAGE, width: "100%", maxWidth: 620, maxHeight: "88vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "20px 16px 36px", boxSizing: "border-box", boxShadow: "0 -8px 30px var(--shadow-strong)" }}>
         {/* The landing page's layout (Sam's mockup, 2026-10-24): clubs in one
             card, Join and Create as two tiles, Friendlies outside, dashed. */}
-        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, letterSpacing: 1.6, textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>Your clubs</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>Your clubs</div>
         <div style={{ background: FEED_CARD, border: "1px solid " + LINE, borderRadius: 24, overflow: "hidden", marginBottom: 12 }}>
           {(clubs || []).map((c, i) => {
             const on = !friendly && c.id === currentClubId;
@@ -82,7 +82,7 @@ export function GroupSheet({
                 ? <span style={{ fontWeight: 600 }}>No matches yet</span>
                 : <>
                     <span style={{ fontWeight: 700 }}>{sm.place ? ordinal(sm.place) : "Not ranked yet"}{sm.place && sm.rating != null ? " · " + sm.rating : ""}</span>
-                    <span style={{ fontWeight: 400, color: FEED_TEXT_MID }}>{sm.lastPlayed ? " · " + playedAgo(sm.lastPlayed) : " · not played yet"}</span>
+                    <span style={{ fontWeight: 500, color: FEED_TEXT_MID }}>{sm.lastPlayed ? " · " + playedAgo(sm.lastPlayed) : " · not played yet"}</span>
                   </>
               : null;
             return (
@@ -91,7 +91,7 @@ export function GroupSheet({
                   <ClubMark club={c} size={50} />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ ...title, display: "block" }}>{c.name}</span>
-                    {you && <span style={{ display: "block", fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, marginTop: 3, ...tabular }}>{you}</span>}
+                    {you && <span style={{ display: "block", fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, marginTop: 3, ...tabular }}>{you}</span>}
                     <span style={{ ...sub, display: "block" }}>{[n, c.location || null].filter(Boolean).join(" · ") || "Your club"}</span>
                   </span>
                   {on && here}
@@ -124,14 +124,14 @@ export function GroupSheet({
             <button key={t} onClick={act} style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, background: FEED_CARD, border: "1px solid " + LINE, borderRadius: 20, padding: "14px 12px", cursor: "pointer", textAlign: "left" }}>
               <span style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", background: FEED_PAGE }}>{icon}</span>
               <span style={{ minWidth: 0 }}>
-                <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 17, color: FEED_TEXT_HI }}>{t}</span>
-                <span style={{ display: "block", fontFamily: body, fontWeight: 400, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap" }}>{s2}</span>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 700, fontSize: 18, color: FEED_TEXT_HI }}>{t}</span>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap" }}>{s2}</span>
               </span>
             </button>
           ))}
         </div>
 
-        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, letterSpacing: 1.6, textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>Outside a club</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: FEED_TEXT_MID, padding: "0 4px", marginBottom: 10 }}>Outside a club</div>
         <button
           onClick={() => { if (friendly) onClose(); else if (typeof window !== "undefined") window.location.href = onFriendly; }}
           style={{ ...card, background: "transparent", border: "1.5px dashed " + FEED_TEXT_MID, borderRadius: 24, gap: 16, padding: "16px 16px" }}
@@ -159,7 +159,7 @@ export function GroupSheet({
         )}
 
         {onManageLeagues && (clubs || []).length > 1 && (
-          <button onClick={onManageLeagues} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" }}>
+          <button onClick={onManageLeagues} style={{ display: "block", margin: "14px auto 0", background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
             Leave a club or see join codes
           </button>
         )}

@@ -12,7 +12,6 @@ import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
 import { utrLabel } from "@/core/utr";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
-import { officialTimeline } from "@/core/officialTimeline";
 import { glickoStandings } from "@/core/glicko";
 import { opponentStrength } from "@/core/official";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
@@ -112,9 +111,11 @@ export function ProfileContainer({
     return () => { alive = false; };
   }, [pid, player?.auth_id, reloadTrophies]);
 
-  // Every result's effect on Official, over ALL the club's matches — the
-  // table's all-time number — so the history's points add up to it.
-  const officialSteps = useMemo(() => officialTimeline(players || [], matches || []), [players, matches]);
+  // No officialTimeline here any more (2026-10-31). It replays the whole
+  // club one match at a time — about 0.8 s on a laptop for 30 players and
+  // 600 matches, two seconds and more on a phone — and since profile v3 the
+  // profile shows neither per-match points nor the points summary, so every
+  // profile open was paying for numbers nobody saw.
 
   const data = useMemo(() => {
     if (!pid) return null;
@@ -331,7 +332,7 @@ export function ProfileContainer({
         // 2026-10-22) — replacing the per-match Elo change, which swung
         // −0.9 to −17 for the same loss, and then the grade word that stood
         // in for it for a day.
-        points: legacy ? null : officialSteps.perMatch[m.id]?.[pid] ?? null,
+        points: null,
         pending,
         onOpen: onOpenMatch ? () => onOpenMatch(m.id) : undefined,
         onEdit: pending && onProposeEdit ? () => onOpenMatch && onOpenMatch(m.id) : undefined,
@@ -372,12 +373,8 @@ export function ProfileContainer({
         rd: st.table.rd[pid] != null ? Math.round(st.table.rd[pid]) : null,
       },
       historyTotal: mine.length, meta,
-      pointsSummary: (() => {
-        const own = Object.values(officialSteps.perMatch).reduce((t, row) => t + (row[pid] ?? 0), 0);
-        return { own, others: officialSteps.others[pid] ?? 0, total: officialSteps.final[pid] ?? 0 };
-      })(),
     };
-  }, [pid, players, matches, scopedMatches, period, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit, officialSteps]);
+  }, [pid, players, matches, scopedMatches, period, elo, wdl, deltas, ratingBefore, group, isSelf, meId, player, onOpen, onOpenMatch, onProposeEdit]);
 
   if (!player || !data) return null;
 
@@ -480,7 +477,6 @@ export function ProfileContainer({
       }}
       history={data.history}
       historyTotal={data.historyTotal}
-      pointsSummary={data.pointsSummary}
       settings={[
         { key: "friends", icon: "friends", label: "Friends", onClick: onFriends },
         { key: "linked", icon: "linked", label: "Linked player", detail: fullNameOf(player), onClick: onLinkedPlayer },

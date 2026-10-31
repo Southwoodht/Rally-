@@ -60,7 +60,7 @@ export interface PeriodStat {
 
 const tile: React.CSSProperties = { background: FEED_CARD, borderRadius: 16, padding: 14, minWidth: 0 };
 const label: React.CSSProperties = { fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW };
-const line = (color: string): React.CSSProperties => ({ fontFamily: body, fontWeight: 500, fontSize: 12.5, color, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
+const line = (color: string): React.CSSProperties => ({ fontFamily: body, fontWeight: 500, fontSize: 12, color, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
 
 export function HomeTiles({ nextUp, periods, onBook }: {
   nextUp?: NextUp | null;

@@ -1,4 +1,5 @@
 "use client";
+import { CountUp } from "@/components/ui/CountUp";
 import React from "react";
 import { Cycler } from "@/components/ui/Cycler";
 import { FormDots, MovementIndicator, StatNumeral, type FormResult } from "@/components/ui/Surfaces";
@@ -102,7 +103,7 @@ const movementLabel = (delta: number): string => {
 // Sentence case, like the rest of the app. These two were the last labels
 // still shouting.
 const labelStyle: React.CSSProperties = {
-  fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_LIME_INK_2,
+  fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME_INK_2,
   letterSpacing: 0,
 };
 
@@ -162,7 +163,7 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
                       mockup's exact figures. The suffix deliberately does NOT
                       inherit the tracking; at 26px it would collide. */}
                   <span style={{ fontFamily: display, fontWeight: 700, fontSize: 64, lineHeight: 1, letterSpacing: "-2px", color: FEED_ON_HERO }}>{cur.rank}</span>
-                  <span style={{ fontFamily: display, fontWeight: 700, fontSize: 26, lineHeight: 1, letterSpacing: 0, color: FEED_ON_HERO }}>{ordinalSuffix(cur.rank)}</span>
+                  <span style={{ fontFamily: display, fontWeight: 700, fontSize: 24, lineHeight: 1, letterSpacing: 0, color: FEED_ON_HERO }}>{ordinalSuffix(cur.rank)}</span>
                 </>
               )}
             </div>
@@ -170,7 +171,7 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
           {/* Baseline-aligned with the rank rather than centred, so two numerals
               of very different sizes sit on one line instead of floating. */}
           <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: FEED_ON_HERO }}>{cur.rating}</div>
+            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: FEED_ON_HERO }}><CountUp value={cur.rating} /></div>
             <div style={unitStyle}>{cur.unit || "rating"}</div>
           </div>
         </div>
@@ -188,7 +189,7 @@ export function StandingHero({ rank, rating, unit, movement, form, standings }: 
                 {hasMovement ? (
                   <MovementIndicator delta={cur.movement} tone="onAccent" size={13} label={movementLabel(cur.movement as number)} />
                 ) : cur.footer ? (
-                  <span style={{ ...labelStyle, fontSize: 12.5, lineHeight: 1, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur.footer}</span>
+                  <span style={{ ...labelStyle, fontSize: 12, lineHeight: 1, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur.footer}</span>
                 ) : null}
               </span>
               {/* The hero is a coloured card on some themes, so the dots get

@@ -124,17 +124,20 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
     // round is refused (core/sets.ts scoreProblem).
     const problem = scoreProblem(scoreText, winner, false);
     if (problem) { setSaveError(problem); return; }
-    setSaving(true); setSaveError(null);
+    // Optimistic (2026-10-31): the row closes at once — saveData has already
+    // put the result on screen — and the save carries on behind it. A refusal
+    // reopens the row with the score still in it, and saveData's toast says
+    // why and shows what is really stored.
+    const typed = scoreText;
+    setSaveError(null); setOpen(null); setScoreText("");
     let ok = false;
     try {
-      ok = (await onResolve(f, winner, scoreText.trim())) !== false;
+      ok = (await onResolve(f, winner, typed.trim())) !== false;
     } catch (e) {
       console.error("Saving a fixture result failed", e);
       ok = false;
     }
-    setSaving(false);
-    if (ok) { setOpen(null); setScoreText(""); }
-    else setSaveError("Couldn't save. Try again.");
+    if (!ok) { setOpen(f.id); setScoreText(typed); setSaveError("Couldn't save. Try again."); }
   };
   const [newOpp, setNewOpp] = useState(challengeWith || "");
   // Arriving from somebody's profile with Challenge tapped: open the form
@@ -191,7 +194,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       {!booking ? (
         <button
           onClick={() => { setBooking(true); setNewVenue(homeVenue || null); }}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 12, padding: "12px 14px", fontFamily: body, fontWeight: 600, fontSize: 14, cursor: "pointer" }}
         >
           <Plus size={17} strokeWidth={2.4} />Book a match
         </button>
@@ -266,11 +269,11 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                   {venueReady && <div style={{ marginBottom: 12 }}><VenuePicker value={rowVenue} onChange={setRowVenue} home={homeVenue} /></div>}
                   {f.venue?.name && (
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-                      <a href={mapsUrl(f.venue)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13.5, textDecoration: "none" }}>
+                      <a href={mapsUrl(f.venue)} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13, textDecoration: "none" }}>
                         <MapPin size={14} /> Open in Maps
                       </a>
                       {f.venue.url && (
-                        <a href={f.venue.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13.5, textDecoration: "none" }}>
+                        <a href={f.venue.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 6, background: FEED_RAISED, color: FEED_TEXT_HI, borderRadius: 999, padding: "7px 13px", fontFamily: body, fontSize: 13, textDecoration: "none" }}>
                           <ExternalLink size={14} /> Venue website
                         </a>
                       )}
@@ -501,7 +504,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: 1, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>No matches to play. Book one?</div>
                   {canBookNew && (
-                    <button onClick={() => { setBooking(true); setNewVenue(homeVenue || null); }} style={{ flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 13.5, padding: "9px 16px", borderRadius: 999, border: "none", cursor: "pointer", background: FEED_LIME, color: FEED_LIME_INK }}>
+                    <button onClick={() => { setBooking(true); setNewVenue(homeVenue || null); }} style={{ flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "9px 16px", borderRadius: 999, border: "none", cursor: "pointer", background: FEED_LIME, color: FEED_LIME_INK }}>
                       Book
                     </button>
                   )}
@@ -566,7 +569,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
             <SurfaceCard key={f.id} radius={16} pad="12px 14px">
               <button onClick={() => openRow(f)} style={{ width: "100%", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
                 {labelFor?.(f) && (
-                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(f)}</div>
+                  <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME, marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labelFor(f)}</div>
                 )}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                   <span style={{ flex: 1, minWidth: 0 }}>
@@ -592,7 +595,7 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                         <div style={{ width: p1 + "%", background: FORM_WIN }} />
                         <div style={{ width: (100 - p1) + "%", background: FORM_LOSS }} />
                       </div>
-                      <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, marginTop: 5 }}>
+                      <div style={{ ...tabular, display: "flex", justifyContent: "space-between", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 5 }}>
                         <span>{p1}%</span>
                         <span style={{ color: FEED_TEXT_LOW }}>win chance</span>
                         <span>{100 - p1}%</span>
@@ -610,13 +613,13 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
                     // result somebody still owes the league.
                     const past = (timeOf(f.booked) as number) < Date.now();
                     return (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 600, fontSize: 11.5 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: past ? FEED_RAISED : FEED_LIME, color: past ? FEED_TEXT_MID : FEED_LIME_INK, borderRadius: 999, padding: "2px 9px", fontFamily: body, fontWeight: 600, fontSize: 12 }}>
                         <Calendar size={11} strokeWidth={2.2} />{when}
                       </span>
                     );
                   })()}
                   {f.venue?.name && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       <MapPin size={11} strokeWidth={2.2} style={{ flexShrink: 0 }} />{venueLabel(f.venue)}
                     </span>
                   )}

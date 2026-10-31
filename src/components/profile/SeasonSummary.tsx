@@ -15,7 +15,7 @@ export function SeasonSummary({ player, players, matches, year, fixtures, group,
 
   const Row = ({ label, children }: any) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "9px 0", borderTop: "none", gap: 12 }}>
-      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED }}>{label}</span>
+      <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED }}>{label}</span>
       <span style={{ fontFamily: body, fontSize: 14, color: CHALK, textAlign: "right" }}>{children}</span>
     </div>
   );
@@ -27,7 +27,7 @@ export function SeasonSummary({ player, players, matches, year, fixtures, group,
           <div style={{ fontFamily: body, fontWeight: 700, fontSize: 14, color: CHALK }}>Season summary</div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: MUTED, borderRadius: 10, padding: "5px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Close</button>
         </div>
-        <div style={{ fontFamily: body, fontSize: 24, fontWeight: 800, color: BALL, marginBottom: 2 }}>{year} Season</div>
+        <div style={{ fontFamily: body, fontSize: 24, fontWeight: 700, color: BALL, marginBottom: 2 }}>{year} Season</div>
         <div style={{ fontFamily: body, fontSize: 13, color: MUTED, marginBottom: 8 }}>{player.name}{player.last ? " " + player.last : ""}</div>
 
         <Row label="Record">{s.matchesPlayed ? `${s.record.w}-${s.record.d}-${s.record.l}` : "No matches this year"}</Row>

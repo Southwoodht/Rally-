@@ -38,9 +38,9 @@ const EXAMPLE = `12/03/2019  Sam Henry beat Charlie Henry  6-4 6-2
 Hugh Jones lost to Mike Tait 2-6 4-6`;
 
 const lbl: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, letterSpacing: 0 };
-const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
+const note: React.CSSProperties = { fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 };
 const btn = (fill: string, ink: string, disabled = false): React.CSSProperties => ({
-  fontFamily: body, fontWeight: 600, fontSize: 14.5, padding: "12px 14px", borderRadius: 12, border: "none",
+  fontFamily: body, fontWeight: 600, fontSize: 14, padding: "12px 14px", borderRadius: 12, border: "none",
   cursor: disabled ? "default" : "pointer", background: fill, color: ink, opacity: disabled ? 0.5 : 1, width: "100%",
 });
 const chip = (on: boolean): React.CSSProperties => ({
@@ -225,7 +225,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
   const stepLabel = (n: number, title: string) => (
     <div style={{ marginBottom: 10 }}>
       <div style={lbl}>Step {n} of 3</div>
-      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, marginTop: 2 }}>{title}</div>
+      <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI, marginTop: 2 }}>{title}</div>
     </div>
   );
 
@@ -275,20 +275,20 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
             return (
               <div key={n.key} style={{ padding: "12px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI }}>“{n.written}”</span>
+                  <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>“{n.written}”</span>
                   <span style={{ ...note, ...tabular }}>{n.count} result{n.count === 1 ? "" : "s"}</span>
                 </div>
                 {p.kind === "player" && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                     <Check size={15} color={FEED_LIME} strokeWidth={2.5} />
                     <span style={{ flex: 1, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI }}>{fullNameOf(byId.get(p.id))}</span>
-                    <button onClick={() => set({ kind: "unset" })} style={{ ...chip(false), padding: "5px 10px", fontSize: 12.5 }}>Change</button>
+                    <button onClick={() => set({ kind: "unset" })} style={{ ...chip(false), padding: "5px 10px", fontSize: 12 }}>Change</button>
                   </div>
                 )}
                 {p.kind === "new" && (
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
                     <span style={{ flex: 1, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID }}>New player — added to {leagueName || "the club"}</span>
-                    <button onClick={() => set({ kind: "unset" })} style={{ ...chip(false), padding: "5px 10px", fontSize: 12.5 }}>Change</button>
+                    <button onClick={() => set({ kind: "unset" })} style={{ ...chip(false), padding: "5px 10px", fontSize: 12 }}>Change</button>
                   </div>
                 )}
                 {p.kind === "unset" && (
@@ -324,7 +324,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
           <div style={{ width: 44, height: 44, borderRadius: 22, background: FEED_LIME, display: "grid", placeItems: "center", margin: "0 auto 12px" }}>
             <Check size={24} color={FEED_LIME_INK} strokeWidth={3} />
           </div>
-          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 19, color: FEED_TEXT_HI, ...tabular }}>
+          <div style={{ fontFamily: body, fontWeight: 600, fontSize: 20, color: FEED_TEXT_HI, ...tabular }}>
             {added.results} result{added.results === 1 ? "" : "s"} added
           </div>
           <div style={{ ...note, marginTop: 4 }}>
@@ -368,7 +368,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
               <div key={c.r.line} style={{ padding: "10px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none", opacity: c.out ? 0.5 : 1 }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, textDecoration: c.out ? "line-through" : "none" }}>
+                    <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, textDecoration: c.out ? "line-through" : "none" }}>
                       {L} v {R} <span style={{ color: FEED_TEXT_MID, ...tabular }}>· {rec}</span>
                     </div>
                     <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
@@ -400,7 +400,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
             <div key={c.r.line} style={{ padding: "10px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none", opacity: c.out ? 0.5 : 1 }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, textDecoration: c.out ? "line-through" : "none" }}>
+                  <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, textDecoration: c.out ? "line-through" : "none" }}>
                     {text}{sc && <span style={{ color: FEED_TEXT_MID, ...tabular }}> · {sc}</span>}
                   </div>
                   <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, ...tabular }}>
@@ -431,7 +431,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
           );
         })}
         {checked.length > visible.length && (
-          <button onClick={() => setShowAll(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13.5, padding: "12px 0", cursor: "pointer" }}>
+          <button onClick={() => setShowAll(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 13, padding: "12px 0", cursor: "pointer" }}>
             Show all {checked.length}
           </button>
         )}
@@ -446,7 +446,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
           </div>
           {parsed.unreadable.map((u) => (
             <div key={u.line} style={{ padding: "6px 0" }}>
-              <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI, wordBreak: "break-word" }}>{u.raw}</div>
+              <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_HI, wordBreak: "break-word" }}>{u.raw}</div>
               <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 1 }}>Line {u.line} · {u.reason}</div>
             </div>
           ))}
@@ -456,7 +456,7 @@ export function ImportResults({ players, matches, meId, leagueName, onImport, on
 
       {confirming ? (
         <SurfaceCard radius={18} pad="16px 14px">
-          <div style={{ fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12, ...tabular }}>
+          <div style={{ fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12, ...tabular }}>
             Add {total} result{total === 1 ? "" : "s"}{newPlayerKeys.length ? ` and ${newPlayerKeys.length} new player${newPlayerKeys.length === 1 ? "" : "s"}` : ""} to {leagueName || "this club"}? {ownOnly ? "Results against somebody with an account wait for their OK, like any result you log; the rest count straight away." : "They count straight away — nobody is asked to confirm results from before the club used Southwood."}
           </div>
           <div style={{ display: "flex", gap: 8 }}>

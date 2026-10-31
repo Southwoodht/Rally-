@@ -44,7 +44,7 @@ export function ShareSheetButton({ build, style }: { build: () => Sheet; style?:
           <button onClick={() => { setOpen(false); setNote(""); }} style={{ ...pill, background: "transparent", color: FEED_TEXT_MID }}>Cancel</button>
         </div>
       )}
-      {note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 6 }}>{note}</div>}
+      {note && <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 6 }}>{note}</div>}
     </div>
   );
 }

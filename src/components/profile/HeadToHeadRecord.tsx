@@ -1,4 +1,5 @@
 "use client";
+import { CountUp } from "@/components/ui/CountUp";
 import React from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { FormBars, type FormBarItem } from "@/components/profile/FormBars";
@@ -41,7 +42,7 @@ export function HeadToHeadHero({ ahead, level, behind, self, record, standing, o
     return (
       <button type="button" onClick={go} disabled={!go} aria-label={go ? `Show the ${n} ${label}` : undefined}
         style={{ textAlign: "center", minWidth: 0, background: "none", border: "none", padding: "2px 4px", cursor: go ? "pointer" : "default", color: "inherit" }}>
-        <div style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 50, lineHeight: 1, color: colour }}>{n}</div>
+        <div style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 50, lineHeight: 1, color: colour }}><CountUp value={n} /></div>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 6, textDecoration: go ? "underline" : "none", textDecorationColor: FEED_RAISED, textUnderlineOffset: 3 }}>{label}</div>
       </button>
     );
@@ -52,12 +53,12 @@ export function HeadToHeadHero({ ahead, level, behind, self, record, standing, o
   const small = (label: string, value: React.ReactNode, isWord = false) => (
     <div style={{ textAlign: "center", minWidth: 0 }}>
       <div style={{ ...tabular, fontFamily: isWord ? body : display, fontWeight: isWord ? 600 : 700, fontSize: isWord ? 14 : 18, lineHeight: "24px", color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 3 }}>{label}</div>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 3 }}>{label}</div>
     </div>
   );
   return (
     <SurfaceCard className="sw-hero" radius={FEED_RADIUS} pad={FEED_PAD_Y + "px " + FEED_PAD + "px"}>
-      <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 13.5, color: FEED_TEXT_MID }}>Head-to-head record</div>
+      <div style={{ textAlign: "center", fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID }}>Head-to-head record</div>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center", gap: 18, marginTop: 14 }}>
         {num(ahead, FEED_LIME, "ahead")}{dot}{num(level, FEED_TEXT_HI, "level")}{dot}{num(behind, FEED_LOST, "behind")}
       </div>
@@ -83,7 +84,7 @@ export function HeadToHeadHero({ ahead, level, behind, self, record, standing, o
         {small("matches", `${record.w}–${record.d}–${record.l}`)}
         {small("club", standing?.place || "—", !!standing?.place && !/^\d/.test(standing.place))}
         {small("rating", standing?.rating != null
-          ? <>{standing.rating}{standing.rd != null && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}> ±{standing.rd}</span>}</>
+          ? <><CountUp value={standing.rating} />{standing.rd != null && <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}> ±{standing.rd}</span>}</>
           : "—")}
       </div>
     </SurfaceCard>
@@ -103,7 +104,7 @@ function Row({ r, first, note, onOpen }: { r: OpponentRecord; first: boolean; no
     <div role={go ? "button" : undefined} onClick={go} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderTop: first ? "none" : "1px solid " + LINE, cursor: go ? "pointer" : "default" }}>
       <Avatar player={r.player} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(r.player)}</div>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(r.player)}</div>
         {sub && (
           <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {note ? <><span style={{ fontWeight: 600, color: FEED_LOST }}>{note}</span>{sub.slice(note.length)}</> : sub}
@@ -127,7 +128,7 @@ function List({ id, title, hint, items, notes, visible, onOpen, onAll }: {
   const rest = items.length - shown.length;
   return (
     <div id={id} style={{ marginTop: 18, scrollMarginTop: 72 }}>
-      <GroupLabel right={hint ? <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID }}>{hint}</span> : undefined}>{title} · {items.length}</GroupLabel>
+      <GroupLabel right={hint ? <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>{hint}</span> : undefined}>{title} · {items.length}</GroupLabel>
       <GroupCard>
         {shown.map((r, i) => <Row key={r.player?.id || i} r={r} first={i === 0} note={notes?.[r.player?.id]} onOpen={onOpen} />)}
         {rest > 0 && (
@@ -177,8 +178,8 @@ export function HeadToHeadSheet({ group, lead, behind, level, self, onClose, onO
       <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 34px", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 26, color: group === "behind" ? FEED_LOST : FEED_TEXT_HI }}>{title}</div>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, marginTop: 2 }}>{sub}</div>
+            <div style={{ fontFamily: display, fontWeight: 700, fontSize: 24, color: group === "behind" ? FEED_LOST : FEED_TEXT_HI }}>{title}</div>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 2 }}>{sub}</div>
           </div>
           <button onClick={onClose} style={{ background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, cursor: "pointer", flexShrink: 0 }}>Done</button>
         </div>

@@ -35,7 +35,7 @@ const label: React.CSSProperties = {
 };
 
 const field: React.CSSProperties = {
-  ...miniInput, fontFamily: body, fontSize: 13.5, background: FEED_RAISED,
+  ...miniInput, fontFamily: body, fontSize: 13, background: FEED_RAISED,
   color: FEED_TEXT_HI, border: "none", padding: "9px 10px",
   boxSizing: "border-box" as const,
 };
@@ -73,7 +73,7 @@ function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own
   return (
     <SurfaceCard radius={16} pad="14px">
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: hist.length ? 10 : 12 }}>
-        <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {fullNameOf(player)}
         </span>
         <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, flexShrink: 0 }}>
@@ -85,10 +85,10 @@ function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own
         <div style={{ marginBottom: 12 }}>
           {sealTimeline(hist).map((h: any, i: number) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : undefined }}>
-              <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI }}>
+              <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI }}>
                 {h.cat} · {h.sub}
               </span>
-              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>
+              <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, flexShrink: 0 }}>
                 {fmtBoundary(h.from)} – {fmtBoundary(h.to)}
               </span>
               {/* Not on a locked card. The timeline there is theirs, and a
@@ -134,12 +134,12 @@ function PlayerCard({ player, mode, onSave, failure }: { player: any; mode: "own
         />
         <button
           onClick={add}
-          style={{ display: "inline-flex", alignItems: "center", gap: 5, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "0 14px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer", flexShrink: 0 }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 5, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "0 14px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", flexShrink: 0 }}
         >
           <Plus size={14} strokeWidth={2.4} />Add
         </button>
       </div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: error ? "FEED_THEY_LEAD" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: error ? "FEED_THEY_LEAD" : FEED_TEXT_MID, marginTop: 6, lineHeight: 1.4 }}>
         {failure || error || (mode === "estimate"
           ? "Your estimate, because they have an account and have set no level. It counts in this club only, never on the global table, and it stops counting the moment they set their own."
           : "Effective from — it runs until the next entry starts.")}
@@ -306,7 +306,7 @@ export function LevelRepair({ players, setPlayers, meId, onEstimate, onSetHistor
       {estimated.length > 0 && (
         <>
           <div style={{ ...label, marginBottom: 8 }}>Your estimates</div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginBottom: 10 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginBottom: 10 }}>
             Levels you filled in for people who have an account but have not set
             one. They count in this club, and stop counting the moment that
             person sets their own.
@@ -338,7 +338,7 @@ export function LevelRepair({ players, setPlayers, meId, onEstimate, onSetHistor
       )}
 
       <div style={{ height: 20 }} />
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, background: FEED_CARD, borderRadius: 12, padding: 12 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, background: FEED_CARD, borderRadius: 12, padding: 12 }}>
         Only active players are listed. Anyone with an account who has never
         set a level, a club owner or organiser can estimate for — they can
         overwrite it any time, it counts in this club only, and it never

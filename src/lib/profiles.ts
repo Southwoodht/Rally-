@@ -259,7 +259,7 @@ export interface PublicPlayerCard {
   cardStale: boolean;
 }
 
-export async function getPublicPlayerCard(authId: string): Promise<PublicPlayerCard | null> {
+async function loadPublicPlayerCard(authId: string): Promise<PublicPlayerCard | null> {
   if (!supabase) return null;
   const row = await run(supabase.from("profiles").select("*").eq("id", authId).maybeSingle(), "loading that profile");
   if (!row) return null;
@@ -384,7 +384,7 @@ export interface LeagueSnapshot {
   reason: SnapshotReason;
 }
 
-export async function getPublicLeagueSnapshot(authId: string): Promise<LeagueSnapshot> {
+async function loadPublicLeagueSnapshot(authId: string): Promise<LeagueSnapshot> {
   if (!supabase) return { snapshot: null, reason: "failed" };
   try {
     const res: any = await withSupabaseTimeout(supabase.rpc("public_league_snapshot", { p_auth_id: authId }), FAILED as any);
@@ -459,4 +459,39 @@ export async function themeFromProfile(): Promise<string | null> {
     if (!res || res.error) return null;
     return res.data?.theme || null;
   } catch { return null; }
+}
+
+
+/**
+ * A profile from outside your clubs, cached for 30 seconds (2026-10-31), so
+ * prefetchPublicProfile — called as a finger lands on a search result — has
+ * the card on its way before the tap finishes and the profile opens filled
+ * rather than on a skeleton. A failed load is not cached.
+ */
+const PROFILE_TTL_MS = 30_000;
+const cardCache = new Map<string, { at: number; p: Promise<PublicPlayerCard | null> }>();
+const snapCache = new Map<string, { at: number; p: Promise<LeagueSnapshot> }>();
+
+function cached<T>(m: Map<string, { at: number; p: Promise<T> }>, key: string, load: () => Promise<T>): Promise<T> {
+  const hit = m.get(key);
+  if (hit && Date.now() - hit.at < PROFILE_TTL_MS) return hit.p;
+  const p = load();
+  m.set(key, { at: Date.now(), p });
+  p.catch(() => m.delete(key));
+  return p;
+}
+
+export function getPublicPlayerCard(authId: string): Promise<PublicPlayerCard | null> {
+  return cached(cardCache, authId, () => loadPublicPlayerCard(authId));
+}
+
+export function getPublicLeagueSnapshot(authId: string): Promise<LeagueSnapshot> {
+  return cached(snapCache, authId, () => loadPublicLeagueSnapshot(authId));
+}
+
+/** Start loading an account's public profile; harmless to call often. */
+export function prefetchPublicProfile(authId: string): void {
+  if (!/^[0-9a-f-]{36}$/i.test(authId)) return;
+  void getPublicPlayerCard(authId).catch(() => {});
+  void getPublicLeagueSnapshot(authId).catch(() => {});
 }

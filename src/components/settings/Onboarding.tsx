@@ -47,7 +47,7 @@ export function Onboarding({ me, onFinish }: any) {
             <Field label="When did you start playing?"><input value={startYear} onChange={(e) => setStartYear(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="e.g. 2016" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
             {utrReady && <>
             <Field label="Do you have a UTR? (optional)"><input value={utrText} onChange={(e) => setUtrText(e.target.value)} inputMode="decimal" placeholder="e.g. 3.2" style={{ ...input, boxSizing: "border-box" as const }} /></Field>
-            <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, margin: "-4px 0 14px", lineHeight: 1.5 }}>
+            <div style={{ fontFamily: body, fontSize: 12, color: MUTED, margin: "-4px 0 14px", lineHeight: 1.5 }}>
               {utrBad
                 ? "A UTR is a number from 1 to 16.5."
                 : utr != null
@@ -62,8 +62,8 @@ export function Onboarding({ me, onFinish }: any) {
         {step === 1 && (
           <div style={card}>
             <div style={{ fontFamily: body, fontSize: 14, color: CHALK, marginBottom: 6 }}>Map how your level changed over the years?</div>
-            <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>Recommended — it makes old results fair, so beating a strong player counts more than beating a beginner. Takes a minute. Skip and we'll just assume you started as a Beginner.</div>
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginBottom: 6 }}>Block size</div>
+            <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 16, lineHeight: 1.5 }}>Recommended — it makes old results fair, so beating a strong player counts more than beating a beginner. Takes a minute. Skip and we'll just assume you started as a Beginner.</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, marginBottom: 6 }}>Block size</div>
             <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
               {[1, 3, 5].map((g) => <Toggle key={g} on={gap === g} onClick={() => setGap(g)} label={"Every " + g + " yr"} />)}
             </div>
@@ -79,7 +79,7 @@ export function Onboarding({ me, onFinish }: any) {
           <div style={card}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
               <span style={{ fontFamily: body, fontSize: 13, color: MUTED }}>What level were you in each block?</span>
-              <button onClick={() => setGuide(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "5px 9px", cursor: "pointer" }}>What's my level?</button>
+              <button onClick={() => setGuide(true)} style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: BALL, background: "transparent", border: "none", borderRadius: 10, padding: "5px 9px", cursor: "pointer" }}>What's my level?</button>
             </div>
             {blocks.map((b, i) => (
               <div key={i} style={{ padding: "10px 0", borderTop: "none" }}>
@@ -107,7 +107,7 @@ export function Onboarding({ me, onFinish }: any) {
                 <input value={losses} onChange={(e) => setLosses(Number(e.target.value.replace(/[^0-9]/g, "")) || 0)} placeholder="Losses" inputMode="numeric" style={{ ...miniInput, flex: 1 }} />
               </div>
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, marginBottom: 6 }}>Starting rating (ELO)</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, marginBottom: 6 }}>Starting rating (ELO)</div>
                 <input value={initialElo} onChange={(e) => setInitialElo(Number(e.target.value.replace(/[^0-9]/g, "")) || START_ELO)} inputMode="numeric" style={{ ...input, width: 140 }} />
               </div>
               <div style={{ display: "flex", gap: 8 }}>

@@ -64,7 +64,7 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
 
   const pill = (on: boolean): React.CSSProperties => ({
     background: on ? FEED_LIME : FEED_RAISED, color: on ? FEED_LIME_INK : FEED_TEXT_HI, border: "none", borderRadius: 999,
-    padding: "9px 14px", fontFamily: body, fontSize: 14.5, cursor: "pointer",
+    padding: "9px 14px", fontFamily: body, fontSize: 14, cursor: "pointer",
   });
   const stepBtn: React.CSSProperties = { width: 34, height: 34, borderRadius: 10, border: "none", background: FEED_RAISED, color: FEED_TEXT_HI, display: "grid", placeItems: "center", cursor: "pointer" };
   const note: React.CSSProperties = { fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 };
@@ -72,7 +72,7 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <span style={{ ...note, flex: 1, fontSize: 15, color: FEED_TEXT_HI }}>{labelText}</span>
       <button aria-label={"Fewer " + labelText.toLowerCase()} disabled={value <= min} onClick={() => onChange(value - 1)} style={{ ...stepBtn, opacity: value <= min ? 0.4 : 1 }}><Minus size={16} /></button>
-      <span style={{ ...tabular, fontFamily: body, fontSize: 17, color: FEED_TEXT_HI, minWidth: 22, textAlign: "center" }}>{value}</span>
+      <span style={{ ...tabular, fontFamily: body, fontSize: 18, color: FEED_TEXT_HI, minWidth: 22, textAlign: "center" }}>{value}</span>
       <button aria-label={"More " + labelText.toLowerCase()} disabled={value >= max} onClick={() => onChange(value + 1)} style={{ ...stepBtn, opacity: value >= max ? 0.4 : 1 }}><Plus size={16} /></button>
     </div>
   );
@@ -168,9 +168,9 @@ export function Mixer({ leagueId, players, rating, onLog, onBack }: {
               return (
                 <div key={ci} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderTop: ci ? "0.5px solid " + FEED_HAIRLINE : "none" }}>
                   <span style={{ ...note, width: 52, flexShrink: 0, color: FEED_TEXT_LOW }}>Court {ci + 1}</span>
-                  <div style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, lineHeight: 1.35 }}>
+                  <div style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, lineHeight: 1.35 }}>
                     <div>{short(c.a[0])} &amp; {short(c.a[1])}</div>
-                    <div style={{ color: FEED_TEXT_MID, fontSize: 12.5 }}>v</div>
+                    <div style={{ color: FEED_TEXT_MID, fontSize: 12 }}>v</div>
                     <div>{short(c.b[0])} &amp; {short(c.b[1])}</div>
                   </div>
                   {done ? (

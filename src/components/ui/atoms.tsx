@@ -9,7 +9,7 @@ export function Stat({ n, label, c, onClick, active, big }: any) {
   const content = (
     <>
       <div style={{ fontFamily: body, fontSize: big ? 34 : 24, fontWeight: 700, color: c, lineHeight: 1.05 }}>{n}</div>
-      <div style={{ fontFamily: body, fontWeight: 700, fontSize: big ? 12 : 11, letterSpacing: 0.2, color: MUTED, marginTop: 3 }}>{label}{onClick ? <span style={{ color: BALL }}> {active ? "▾" : "›"}</span> : null}</div>
+      <div style={{ fontFamily: body, fontWeight: 700, fontSize: 12, letterSpacing: 0.2, color: MUTED, marginTop: 3 }}>{label}{onClick ? <span style={{ color: BALL }}> {active ? "▾" : "›"}</span> : null}</div>
     </>
   );
   if (onClick) return <button onClick={onClick} style={{ ...style, cursor: "pointer" }}>{content}</button>;
@@ -17,13 +17,13 @@ export function Stat({ n, label, c, onClick, active, big }: any) {
 }
 
 export function StreakTile({ n, label, c, active, onClick }: any) {
-  return <button onClick={onClick} style={{ flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none", cursor: "pointer" }}><div style={{ fontFamily: body, fontSize: 24, fontWeight: 700, color: c }}>{n}</div><div style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: MUTED, marginTop: 2 }}>{label} <span style={{ color: BALL }}>{active ? "▾" : "›"}</span></div></button>;
+  return <button onClick={onClick} style={{ flex: 1, background: active ? PANEL2 : PANEL, borderRadius: RADIUS_SM, padding: "13px 8px", textAlign: "center", boxShadow: active ? "0 0 0 1.5px " + BALL + " inset" : "none", cursor: "pointer" }}><div style={{ fontFamily: body, fontSize: 24, fontWeight: 700, color: c }}>{n}</div><div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, marginTop: 2 }}>{label} <span style={{ color: BALL }}>{active ? "▾" : "›"}</span></div></button>;
 }
 
 // A segment inside an iOS-style recessed track (see theme.segmentTrack) — also
 // used standalone as a soft filled/outline toggle where there's no shared track.
 export function Toggle({ on, onClick, label, icon, emphasize, big }: any) {
-  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: body, fontSize: big ? 13.5 : 13, padding: big ? "10px 8px" : "9px 8px", borderRadius: RADIUS_SM - 2, cursor: "pointer", border: "none", background: on ? `var(--seg-on, ${FEED_HERO})` : `var(--seg-off, ${FEED_MUTED_FILL})`, boxShadow: on ? "var(--seg-shadow, none)" : "none", color: on ? FEED_ON_HERO : emphasize ? BALL : MUTED, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "background 0.15s ease, color 0.15s ease" }}>{icon ? icon + " " : ""}{label}</button>;
+  return <button onClick={onClick} style={{ flex: big ? 1.3 : 1, fontFamily: body, fontSize: big ? 14 : 13, padding: big ? "10px 8px" : "9px 8px", borderRadius: RADIUS_SM - 2, cursor: "pointer", border: "none", background: on ? `var(--seg-on, ${FEED_HERO})` : `var(--seg-off, ${FEED_MUTED_FILL})`, boxShadow: on ? "var(--seg-shadow, none)" : "none", color: on ? FEED_ON_HERO : emphasize ? BALL : MUTED, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "background 0.15s ease, color 0.15s ease" }}>{icon ? icon + " " : ""}{label}</button>;
 }
 
 export function Tally({ name, n, lead }: any) {

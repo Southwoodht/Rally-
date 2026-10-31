@@ -131,7 +131,7 @@ export function PeopleYouMayKnow({
             <Avatar player={{ id: p.authId, name: p.name, avatarUrl: p.avatarUrl }} size={40} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name}</div>
-              <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>{p.reason}</div>
+              <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>{p.reason}</div>
             </div>
             {addButton(p.authId, p.name)}
           </div>
@@ -155,10 +155,10 @@ export function PeopleYouMayKnow({
             <Avatar player={{ id: p.authId, name: p.name, avatarUrl: p.avatarUrl }} size={52} />
             {/* Two lines for the name rather than an ellipsis: "Samuel Hen…"
                 is the one part of the card you needed. */}
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13.5, color: FEED_TEXT_HI, textAlign: "center", lineHeight: 1.25, width: "100%", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: 34 }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_HI, textAlign: "center", lineHeight: 1.25, width: "100%", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: 34 }}>
               {p.name}
             </div>
-            <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_MID, textAlign: "center", lineHeight: 1.25, minHeight: 29 }}>{p.reason}</div>
+            <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, textAlign: "center", lineHeight: 1.25, minHeight: 29 }}>{p.reason}</div>
             {addButton(p.authId, p.name, true)}
           </div>
         ))}

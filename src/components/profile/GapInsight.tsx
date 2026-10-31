@@ -24,7 +24,7 @@ export function GapInsight({ headline, advice }: GapInsightProps) {
     <div style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: FEED_RADIUS, padding: "20px 18px" }}>
       <div style={{ fontFamily: display, fontWeight: 700, fontSize: 20, letterSpacing: "-0.3px", color: FEED_ON_HERO, lineHeight: 1.3 }}>{headline}</div>
       {advice && (
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 8 }}>{advice}</div>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME_INK_2, lineHeight: 1.45, marginTop: 8 }}>{advice}</div>
       )}
     </div>
   );

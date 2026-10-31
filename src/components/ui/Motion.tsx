@@ -56,11 +56,11 @@ export function MotionLayer() {
       const el = pressed;
       if (!el) return;
       pressed = null;
-      // A quick tap still shows: hold the press for at least 90ms.
-      const wait = Math.max(0, 90 - (performance.now() - since));
+      // A quick tap still shows: hold the press for at least 80ms.
+      const wait = Math.max(0, 80 - (performance.now() - since));
       window.setTimeout(() => {
         el.classList.remove("sw-pressed");
-        window.setTimeout(() => { if (el !== pressed) el.classList.remove("sw-press"); }, 260);
+        window.setTimeout(() => { if (el !== pressed) el.classList.remove("sw-press"); }, 170);
       }, wait);
     };
     const down = (e: PointerEvent) => {
@@ -68,7 +68,10 @@ export function MotionLayer() {
       const el = pressable(e.target as Element);
       if (!el || el.closest("[data-no-press]")) return;
       const r = el.getBoundingClientRect();
-      el.style.setProperty("--sw-press", r.width > 240 ? "0.985" : r.width > 120 ? "0.97" : "0.94");
+      // ~0.97 for buttons, cards and tabs (Sam, 2026-10-31). Only a row
+      // wider than most phones' half-screen sinks less, or a full-width row
+      // visibly pulls in from both edges.
+      el.style.setProperty("--sw-press", r.width > 300 ? "0.985" : "0.97");
       el.classList.add("sw-press", "sw-pressed");
       pressed = el;
       since = performance.now();
@@ -82,7 +85,18 @@ export function MotionLayer() {
       if (!(node instanceof HTMLElement)) return;
       for (const el of [node, node.firstElementChild]) {
         if (!(el instanceof HTMLElement)) continue;
-        if (getComputedStyle(el).position !== "fixed") continue;
+        const cs = getComputedStyle(el);
+        if (cs.position !== "fixed") continue;
+        // A bottom sheet — a full-screen backdrop holding its panel at the
+        // foot (align-items: flex-end) — slides the panel up over a fading
+        // backdrop, the iOS way. Everything else rises and fades in place.
+        const panel = el.firstElementChild;
+        if (cs.alignItems === "flex-end" && panel instanceof HTMLElement) {
+          el.classList.remove("sw-fade-in"); panel.classList.remove("sw-sheet-in");
+          void el.offsetWidth;
+          el.classList.add("sw-fade-in"); panel.classList.add("sw-sheet-in");
+          return;
+        }
         el.classList.remove("sw-arrive");
         void el.offsetWidth;
         el.classList.add("sw-arrive");

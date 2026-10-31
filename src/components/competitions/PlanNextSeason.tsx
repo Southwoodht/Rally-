@@ -67,7 +67,7 @@ export function PlanNextSeason({ divisions, labelOf, seasons, currentSeasonIds, 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {plan.map((d, di) => (
           <SurfaceCard key={d.name} radius={16} pad="12px 14px">
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI, marginBottom: 4 }}>{d.name}</div>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, marginBottom: 4 }}>{d.name}</div>
             {d.players.map((id, i) => {
               const up = d.up.includes(id), down = d.down.includes(id);
               return (
@@ -100,7 +100,7 @@ export function PlanNextSeason({ divisions, labelOf, seasons, currentSeasonIds, 
                 try { await onConfirm(plan, seasonId); } catch (e: any) { setErr(e?.message || "That didn't save. Try again."); }
                 setBusy(false);
               }}
-              style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "13px 16px", fontFamily: body, fontWeight: 600, fontSize: 15.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
+              style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 999, padding: "13px 16px", fontFamily: body, fontWeight: 600, fontSize: 15, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1 }}
             >
               {busy ? "Creating…" : `Create ${plan.length} divisions and draw the matches`}
             </button>

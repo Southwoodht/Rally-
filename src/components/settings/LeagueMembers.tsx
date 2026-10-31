@@ -110,11 +110,11 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
       {members.map((m) => (
         <div key={m.userId} style={{ padding: "9px 0", borderTop: "0.5px solid " + FEED_RAISED }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {m.name}{m.isMe ? " (you)" : ""}
             </span>
             {iAmStaff && !m.isMe && (m.role !== "owner" || iAmOwner) && renaming !== m.userId && (
-              <button onClick={() => { setRenaming(m.userId); setNewName(m.name || ""); setFailed(null); }} style={{ flexShrink: 0, background: "none", border: "none", padding: "4px 6px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 12.5, color: FEED_TEXT_MID }}>
+              <button onClick={() => { setRenaming(m.userId); setNewName(m.name || ""); setFailed(null); }} style={{ flexShrink: 0, background: "none", border: "none", padding: "4px 6px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_TEXT_MID }}>
                 Rename
               </button>
             )}
@@ -123,7 +123,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                 onClick={() => setOpen(open === m.userId ? null : m.userId)}
                 disabled={busy === m.userId}
                 style={{
-                  flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 12.5, padding: "5px 11px",
+                  flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 12, padding: "5px 11px",
                   borderRadius: 999, border: "none", cursor: "pointer",
                   background: m.role === "member" ? FEED_RAISED : FEED_LIME,
                   color: m.role === "member" ? FEED_TEXT_MID : FEED_LIME_INK,
@@ -132,7 +132,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                 {m.role === "owner" ? "Owner" : m.role === "editor" ? "Editor" : "Member"}
               </button>
             ) : (
-              <span style={{ flexShrink: 0, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: m.role === "member" ? FEED_TEXT_LOW : FEED_LIME }}>
+              <span style={{ flexShrink: 0, fontFamily: body, fontWeight: 500, fontSize: 12, color: m.role === "member" ? FEED_TEXT_LOW : FEED_LIME }}>
                 {m.role === "owner" ? "Owner" : m.role === "editor" ? "Editor" : "Member"}
               </span>
             )}
@@ -141,9 +141,9 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
           {renaming === m.userId && (
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Their real name" autoFocus maxLength={60}
-                style={{ flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "9px 11px", fontFamily: body, fontSize: 14.5 }} />
-              <button onClick={() => rename(m)} disabled={busy === m.userId || !newName.trim()} style={{ flexShrink: 0, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "9px 12px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer", opacity: newName.trim() ? 1 : 0.5 }}>{busy === m.userId ? "Saving…" : "Save"}</button>
-              <button onClick={() => { setRenaming(null); setFailed(null); }} style={{ flexShrink: 0, background: "none", border: "none", padding: "9px 4px", fontFamily: body, fontSize: 13.5, color: FEED_TEXT_MID, cursor: "pointer" }}>Cancel</button>
+                style={{ flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "9px 11px", fontFamily: body, fontSize: 14 }} />
+              <button onClick={() => rename(m)} disabled={busy === m.userId || !newName.trim()} style={{ flexShrink: 0, background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "9px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", opacity: newName.trim() ? 1 : 0.5 }}>{busy === m.userId ? "Saving…" : "Save"}</button>
+              <button onClick={() => { setRenaming(null); setFailed(null); }} style={{ flexShrink: 0, background: "none", border: "none", padding: "9px 4px", fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, cursor: "pointer" }}>Cancel</button>
             </div>
           )}
 
@@ -158,7 +158,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                     border: "none", padding: "8px 0", cursor: "pointer",
                   }}
                 >
-                  <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13.5, color: r.value === m.role ? FEED_LIME : FEED_TEXT_HI }}>
+                  <span style={{ fontFamily: body, fontWeight: 600, fontSize: 13, color: r.value === m.role ? FEED_LIME : FEED_TEXT_HI }}>
                     {r.label}{r.value === m.role ? " · current" : ""}
                   </span>
                   <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 1 }}>
@@ -170,7 +170,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
               {!m.isMe && m.role !== "owner" && (
                 confirmRemove === m.userId ? (
                   <div style={{ marginTop: 6, padding: 12, borderRadius: 12, background: FEED_RAISED }}>
-                    <div style={{ fontFamily: body, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>
+                    <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.45, marginBottom: 10 }}>
                       Remove {m.name} from {leagueName || "the club"}? Their results stay, so nobody&apos;s rating changes, and they come off the Table. They can only come back with the join code.
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
@@ -179,7 +179,7 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setConfirmRemove(m.userId)} style={{ display: "block", background: "none", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: body, fontSize: 13.5, color: DOT_LOSS }}>
+                  <button onClick={() => setConfirmRemove(m.userId)} style={{ display: "block", background: "none", border: "none", padding: "8px 0", cursor: "pointer", fontFamily: body, fontSize: 13, color: DOT_LOSS }}>
                     Remove from the club
                   </button>
                 )
@@ -190,14 +190,14 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
           {/* On the row that produced it, not at the foot of the screen —
               §4's "eight hundred pixels below the tap". */}
           {failed?.id === m.userId && (
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: DOT_LOSS, lineHeight: 1.45, marginTop: 6 }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: DOT_LOSS, lineHeight: 1.45, marginTop: 6 }}>
               {failed.message}
             </div>
           )}
         </div>
       ))}
 
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 12 }}>
         {iAmOwner
           ? "A club always needs an owner, so you cannot step down until somebody else is one. Make them an owner first, then change yourself to editor or member."
           : "Only an owner can change these."}

@@ -58,7 +58,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
                 screenshot, 2026-10-23). */}
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>None yet</div>
             {action && (
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1 }}>
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1 }}>
                 {onGive ? "Record one when they win something at the club." : "Won something at the club? Claim it and an organiser checks it."}
               </div>
             )}
@@ -88,7 +88,7 @@ export function VerifiedTrophiesRow({ trophies = [], onClaim, onGive, onRemove }
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {t.result ? t.result + " — " + t.competition : t.competition}
             </div>
-            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {[t.clubName || "Club", t.format === "doubles" ? "Doubles" : null, (t.wonOn && trophyDateLabel({ id: t.id, won_on: t.wonOn })) || t.season || null, t.recorded ? "recorded by the club" : "verified"].filter(Boolean).join(" · ")}
             </div>
           </div>
@@ -157,7 +157,7 @@ export function SettingsList({ rows }: { rows: SettingsRow[] }) {
             <span style={{ flex: 1, minWidth: 0 }}>
               <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_HI }}>{r.label}</span>
               {r.detail && (
-                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</span>
+                <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.detail}</span>
               )}
             </span>
             {typeof r.count === "number" && (

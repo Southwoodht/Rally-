@@ -143,7 +143,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
       )}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <div style={lbl}>Level</div>
-        <button onClick={() => setGuide(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12.5, cursor: "pointer", padding: 0 }}>What do the levels mean?</button>
+        <button onClick={() => setGuide(true)} style={{ background: "none", border: "none", color: FEED_LIME, fontFamily: body, fontSize: 12, cursor: "pointer", padding: 0 }}>What do the levels mean?</button>
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
         <select value={p.level?.cat || ""} onChange={(e) => setLevel(e.target.value, p.level?.sub)} style={{ ...fld, flex: 2 }}>
@@ -179,7 +179,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
           <Avatar player={p} size={44} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(p) || "New player"}</div>
-            <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
+            <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
               {played} played{p.auth_id ? " · has an account" : " · no account yet"}
             </div>
           </div>
@@ -190,7 +190,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
           <div style={{ background: FEED_CARD, borderRadius: 14, padding: 14, fontFamily: body, fontSize: 14, color: FEED_TEXT_MID, lineHeight: 1.55, marginBottom: 14 }}>
             <div style={{ color: FEED_TEXT_HI }}>{[p.last, p.age ? p.age + " yrs" : null, p.home].filter(Boolean).join(" · ") || "No extra details set"}</div>
             {lvl && <div>{lvl.cat} · {lvl.sub}{levelIsEstimated(p) ? " — your estimate" : ""}</div>}
-            <div style={{ marginTop: 8, fontSize: 12.5 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their name, level and starting record, which you can set" : ""}.</div>
+            <div style={{ marginTop: 8, fontSize: 12 }}>They have an account, so their details are theirs to change{onSetLevel ? " — except their name, level and starting record, which you can set" : ""}.</div>
           </div>
         ) : (
           <>
@@ -200,7 +200,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
               <label style={{ flex: 1 }}><div style={lbl}>Surname</div>
                 <input value={p.last || ""} onChange={(e) => typeName({ last: e.target.value })} style={fld} /></label>
             </div>
-            {nameErr && <div style={{ fontFamily: body, fontSize: 12.5, color: DOT_LOSS, margin: "-4px 0 12px" }}>{nameErr}</div>}
+            {nameErr && <div style={{ fontFamily: body, fontSize: 12, color: DOT_LOSS, margin: "-4px 0 12px" }}>{nameErr}</div>}
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <label style={{ flex: 1 }}><div style={lbl}>Age</div>
                 <input value={p.age || ""} inputMode="numeric" onChange={(e) => onChange({ age: e.target.value.replace(/[^0-9]/g, "") })} style={fld} /></label>
@@ -229,7 +229,7 @@ export function PlayerEditSheet({ player: p, played, locked, onChange, onRemove,
               <label style={{ flex: 1 }}><div style={lbl}>Surname</div>
                 <input value={surname} onChange={(e) => { setSurname(e.target.value); setNameErr(""); }} style={fld} /></label>
             </div>
-            {nameErr && <div style={{ fontFamily: body, fontSize: 12.5, color: DOT_LOSS, marginBottom: 8 }}>{nameErr}</div>}
+            {nameErr && <div style={{ fontFamily: body, fontSize: 12, color: DOT_LOSS, marginBottom: 8 }}>{nameErr}</div>}
             {nameChanged && (
               <button onClick={saveName} disabled={savingName} style={{ width: "100%", background: FEED_LIME, color: FEED_LIME_INK, border: "none", borderRadius: 10, padding: "11px 8px", fontFamily: body, fontSize: 14, cursor: "pointer", opacity: savingName ? 0.6 : 1 }}>
                 {savingName ? "Saving…" : "Save name"}

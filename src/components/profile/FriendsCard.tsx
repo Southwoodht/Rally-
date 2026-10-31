@@ -68,7 +68,7 @@ export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
         <span style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_LOW, letterSpacing: 0 }}>
           Friends
         </span>
-        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID }}>
+        <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID }}>
           {/* The count of mutuals rather than of friends, on somebody else's
               profile — it is the number you opened the card for. On your own
               there is no such thing as a mutual, so it says the total. */}
@@ -98,7 +98,7 @@ export function FriendsCard({ authId, isMe, onOpenProfile, style }: {
                 split one person's circle into two lists and make you read
                 both to answer "do I know anybody here". */}
             {!isMe && f.isMutual && (
-              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 10.5, color: FEED_LIME, lineHeight: 1 }}>
+              <span style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_LIME, lineHeight: 1 }}>
                 you both know
               </span>
             )}

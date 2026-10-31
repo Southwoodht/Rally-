@@ -168,7 +168,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submitLegacy("draw")} color={MUTED}>Draw</BigBtn>
             <BigBtn onClick={() => submitLegacy("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
             One per year, before Southwood. Shown under the head-to-head, never in the record or any rating. It shows as claimed until the other player confirms it.
           </div>
         </>
@@ -184,7 +184,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <div style={{ display: "grid", gridTemplateColumns: `minmax(0,1fr) repeat(${sets.length}, 46px)`, gap: 6, alignItems: "center" }}>
               <span />
               {sets.map((_, i) => (
-                <span key={"h" + i} style={{ fontFamily: body, fontSize: 11, fontWeight: 500, color: FEED_TEXT_MID, textAlign: "center" }}>{to11 ? "Game" : "Set"} {i + 1}</span>
+                <span key={"h" + i} style={{ fontFamily: body, fontSize: 12, fontWeight: 500, color: FEED_TEXT_MID, textAlign: "center" }}>{to11 ? "Game" : "Set"} {i + 1}</span>
               ))}
               {([["a", n1], ["b", n2]] as const).map(([side, label]) => (
                 <React.Fragment key={side}>
@@ -209,7 +209,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                 screen and it is optional guidance on an optional field — on a
                 phone it pushed "Who won?", the only thing you MUST answer,
                 below the fold. */}
-            <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>
+            <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>
               Optional — but it makes the predictions sharper.
             </div>
           </Field>
@@ -241,7 +241,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
             <BigBtn onClick={() => submit("draw")} color={MUTED}>Draw</BigBtn>
             <BigBtn onClick={() => submit("p2")} disabled={!p2} color={BALL}>{n2}</BigBtn>
           </div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.45 }}>
             {short ? "Short matches show in the feed and head-to-head, labelled, and count towards nothing — no rating, no table." : needsConfirm ? "Your opponent has 48 hours to agree or dispute it — after that it's confirmed automatically. They'll see it under Games." : opponent ? "They don't have a Southwood account, so this counts straight away — nobody else can confirm it for them." : "Pick both players to see how this gets confirmed."}
           </div>
         </>
@@ -253,7 +253,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
                 You already have <strong style={{ color: CLAY }}>{existingBetween.length}</strong> match{existingBetween.length === 1 ? "" : "es"} logged between {n1} and {n2}. Adding more stacks on top of these — to redo part or all of this record, clear it first.
               </div>
               {existingYears.length > 1 && (
-                <select value={String(clearYear)} onChange={(e) => setClearYear(e.target.value === "all" ? "all" : Number(e.target.value))} style={{ ...input, fontFamily: body, fontSize: 11, padding: "7px 8px", marginBottom: 8, boxSizing: "border-box" as const }}>
+                <select value={String(clearYear)} onChange={(e) => setClearYear(e.target.value === "all" ? "all" : Number(e.target.value))} style={{ ...input, fontFamily: body, fontSize: 12, padding: "7px 8px", marginBottom: 8, boxSizing: "border-box" as const }}>
                   <option value="all">All years ({existingBetween.length})</option>
                   {existingYears.map((y) => <option key={y} value={String(y)}>{y} only ({existingBetween.filter((m) => new Date(m.date).getFullYear() === y).length})</option>)}
                 </select>

@@ -67,7 +67,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
     setPlayers(players.map((p) => p.id === meId ? { ...p, level } : p));
   };
   const mayPick = friendly || canSetLevels || !me.level;
-  const L = ({ children }: any) => <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
+  const L = ({ children }: any) => <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, margin: "14px 0 5px" }}>{children}</div>;
   const onPickPhoto = async (file: File) => {
     try {
       const dataUrl = await readPhotoAsDataUrl(file, PHOTO_SIZE);
@@ -81,7 +81,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
         <Avatar player={me} size={44} enlargeable />
         <div>
-          <div style={{ fontFamily: body, fontSize: 19, fontWeight: 800, color: CHALK }}>{me.name}{me.nick ? " \u201C" + me.nick + "\u201D" : ""}{me.last ? " " + me.last : ""}</div>
+          <div style={{ fontFamily: body, fontSize: 20, fontWeight: 700, color: CHALK }}>{me.name}{me.nick ? " \u201C" + me.nick + "\u201D" : ""}{me.last ? " " + me.last : ""}</div>
           <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>This is how you appear to everyone.</div>
         </div>
       </div>
@@ -120,7 +120,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
       </div>
       )}
       {mayPick && !me.level && !canSetLevels && !friendly && (
-        <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>Pick carefully: after this, only the organisers can change it.</div>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>Pick carefully: after this, only the organisers can change it.</div>
       )}
       {!friendly && utrReady && (
         <>
@@ -129,7 +129,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
             // Yours once; after that it is the organisers', like the level.
             <div style={{ fontFamily: body, fontSize: 15, color: CHALK, lineHeight: 1.5 }}>
               {utrLabel(me.utr)}
-              <div style={{ fontSize: 12.5, color: MUTED }}>Set. Ask an organiser if it changes.</div>
+              <div style={{ fontSize: 12, color: MUTED }}>Set. Ask an organiser if it changes.</div>
             </div>
           ) : (() => {
             const u = parseUtr(utrText);
@@ -150,7 +150,7 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
                   <input value={utrText} onChange={(e) => setUtrText(e.target.value)} inputMode="decimal" placeholder={me.utr != null ? utrLabel(me.utr) : "e.g. 3.2"} style={{ ...miniInput, flex: 1, boxSizing: "border-box" as const }} />
                   <button onClick={save} disabled={u == null} style={{ ...miniInput, cursor: "pointer", flex: "0 0 auto", padding: "8px 14px", color: BALL, opacity: u == null ? 0.4 : 1, boxSizing: "border-box" as const }}>Save</button>
                 </div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, marginTop: 6 }}>
                   {bad ? "A UTR is a number from 1 to 16.5."
                     : canSetLevels && onSetUtr ? "Your Universal Tennis Rating, if you have one. Saving it sets your stars from it."
                     : me.level ? "Your Universal Tennis Rating, if you have one. It shows beside your stars; the organisers can match your stars to it. You can set it once."
@@ -172,11 +172,11 @@ export function MyProfile({ players, meId, setPlayers, flash, canSetLevels, onSe
         // so it is the organisers' to set. Shown, so nobody wonders where it went.
         <div style={{ fontFamily: body, fontSize: 15, color: CHALK, lineHeight: 1.5 }}>
           {startSummary(me) || "None carried in."}
-          <div style={{ fontSize: 12.5, color: MUTED }}>Set by the organisers. Ask one if it&apos;s wrong.</div>
+          <div style={{ fontSize: 12, color: MUTED }}>Set by the organisers. Ask one if it&apos;s wrong.</div>
         </div>
       )}
       {!friendly && <EmailsToggle flash={flash} />}
-      <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only club owners can edit other players or club settings.</div>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 16, lineHeight: 1.4 }}>Changes save straight away. Only club owners can edit other players or club settings.</div>
       <DeleteAccount played={played} />
     </div>
   );

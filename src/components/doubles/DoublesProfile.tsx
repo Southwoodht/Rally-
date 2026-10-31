@@ -122,7 +122,7 @@ export function DoublesProfile({ players, matches, playerId, leagueName, onOpenP
   const row = (label: string, value: React.ReactNode, accent?: boolean) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", gap: 10 }}>
       <span style={{ fontFamily: body, fontSize: 15, color: FEED_TEXT_MID }}>{label}</span>
-      <span style={{ fontFamily: display, fontSize: 19, fontWeight: 700, color: accent ? FEED_LIME : FEED_TEXT_HI, ...tabular }}>{value}</span>
+      <span style={{ fontFamily: display, fontSize: 20, fontWeight: 700, color: accent ? FEED_LIME : FEED_TEXT_HI, ...tabular }}>{value}</span>
     </div>
   );
 

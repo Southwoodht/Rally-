@@ -117,7 +117,7 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
                   <button key={p.id} onClick={() => pick(p.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none", borderTop: "none", padding: "10px 2px", cursor: "pointer", textAlign: "left" }}>
                     <Avatar player={p} size={32} />
                     <span style={{ flex: 1, fontFamily: body, fontSize: 15, color: CHALK }}>{p.name}{p.last ? " " + p.last : ""}</span>
-                    <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: MUTED }}>{p.auth_id ? "Account" : "Shell"}</span>
+                    <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED }}>{p.auth_id ? "Account" : "Shell"}</span>
                   </button>
                 ))}
               </>
@@ -127,12 +127,12 @@ export function PlayerPicker({ players, value, onChange, onCreatePlayer, exclude
                   <input value={newName} onChange={(e) => { setNewName(e.target.value); setCollision(null); }} placeholder="First name" style={{ ...input, flex: 1, boxSizing: "border-box" as const }} />
                   <input value={newLast} onChange={(e) => { setNewLast(e.target.value); setCollision(null); }} placeholder="Surname (optional)" style={{ ...input, flex: 1, boxSizing: "border-box" as const }} />
                 </div>
-                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12.5, color: MUTED, margin: "10px 0 6px" }}>Player type</div>
+                <div style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: MUTED, margin: "10px 0 6px" }}>Player type</div>
                 <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                   <button onClick={() => setNewIsAccount(false)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: !newIsAccount ? BALL : PANEL2, color: !newIsAccount ? COURT : MUTED, fontWeight: 600 }}>Shell player</button>
                   <button onClick={() => setNewIsAccount(true)} style={{ flex: 1, fontFamily: body, fontSize: 13, padding: "10px 6px", borderRadius: 12, cursor: "pointer", border: "none", background: newIsAccount ? FEED_HERO : PANEL2, color: newIsAccount ? FEED_ON_HERO : MUTED, fontWeight: 600 }}>Has a Southwood account</button>
                 </div>
-                <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginBottom: 14, lineHeight: 1.4 }}>
                   {newIsAccount
                     ? "They'll need to sign in and use “Is this you?” themselves to link their real account and inherit this history — nothing here logs them in automatically."
                     : "No account needed. Their record stays exactly like this until (and unless) they sign in and claim it."}

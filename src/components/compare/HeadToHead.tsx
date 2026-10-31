@@ -30,7 +30,7 @@ function FilterChip({ active, onClick, children }: any) {
       style={{
         background: active ? FEED_HERO : FEED_CARD, border: "none", borderRadius: 999,
         padding: "7px 14px", cursor: "pointer", fontFamily: body, fontWeight: active ? 500 : 400,
-        fontSize: 12.5, color: active ? FEED_ON_HERO : FEED_TEXT_MID, whiteSpace: "nowrap",
+        fontSize: 12, color: active ? FEED_ON_HERO : FEED_TEXT_MID, whiteSpace: "nowrap",
       }}
     >
       {children}
@@ -213,7 +213,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
         </button>
       </div>
       {explainerOpen && (
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 14 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5, marginBottom: 14 }}>
           Pick any two players — this works even if they have never played each other.
         </div>
       )}
@@ -235,7 +235,7 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
           style={{
             display: "inline-flex", alignItems: "center", gap: 5, background: FEED_CARD, border: "none",
             borderRadius: 999, padding: "7px 12px", cursor: a || b ? "pointer" : "default",
-            fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, opacity: a || b ? 1 : 0.5,
+            fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, opacity: a || b ? 1 : 0.5,
           }}
         >
           <ArrowLeftRight size={13} strokeWidth={2} />Swap
@@ -302,11 +302,11 @@ export function HeadToHead({ players, matches, elo, wdl, nameOf, onOpen, onCreat
             {(explanation || venue) && (
               <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 14, paddingTop: 12 }}>
                 {venue && (
-                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, lineHeight: 1.5, marginBottom: explanation ? 6 : 0 }}>
+                  <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: venuePrediction?.confident ? FEED_LIME : FEED_TEXT_MID, lineHeight: 1.5, marginBottom: explanation ? 6 : 0 }}>
                     {venuePrediction?.confident ? `Factoring in results at ${venue}.` : `Not enough games at ${venue} yet to say — showing the overall prediction.`}
                   </div>
                 )}
-                {explanation && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{explanation}</div>}
+                {explanation && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 }}>{explanation}</div>}
               </div>
             )}
           </SurfaceCard>

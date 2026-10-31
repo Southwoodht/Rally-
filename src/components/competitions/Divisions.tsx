@@ -50,8 +50,8 @@ function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Compet
     try { const r = await f(); if (r) setMsg(r); } catch (e: any) { setMsg(e?.message || "That didn't save. Try again."); }
     setBusy(false); setConfirm(null);
   };
-  const pill = (fill: string, ink: string): React.CSSProperties => ({ background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, flexShrink: 0 });
-  const note: React.CSSProperties = { fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 };
+  const pill = (fill: string, ink: string): React.CSSProperties => ({ background: fill, color: ink, border: "none", borderRadius: 999, padding: "8px 14px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1, flexShrink: 0 });
+  const note: React.CSSProperties = { fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 };
   const dateBox: React.CSSProperties = { flex: 1, minWidth: 0, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 10, padding: "8px 10px", fontFamily: body, fontSize: 14, colorScheme: "dark" };
   return (
     <div style={{ borderTop: "0.5px solid " + FEED_HAIRLINE, marginTop: 12, paddingTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -125,7 +125,7 @@ function ManagePanel({ c, entries, players, manage, nameOf, dates }: { c: Compet
         <div>
           {confirm === "end"
             ? <button disabled={busy} onClick={() => act(async () => { await manage.onEnd!(c); })} style={pill(FEED_RAISED, FEED_TEXT_HI)}>End {c.name}? Its table and results are kept</button>
-            : <button onClick={() => setConfirm("end")} style={{ background: "none", border: "none", color: FEED_TEXT_HI, fontFamily: body, fontSize: 13.5, cursor: "pointer", padding: 0 }}>End this division</button>}
+            : <button onClick={() => setConfirm("end")} style={{ background: "none", border: "none", color: FEED_TEXT_HI, fontFamily: body, fontSize: 13, cursor: "pointer", padding: 0 }}>End this division</button>}
           <div style={{ ...note, marginTop: 4 }}>It leaves this tab, and matches it still had to play are called off. Nothing that was played is lost.</div>
         </div>
       )}
@@ -242,7 +242,7 @@ export function Divisions({ kind, competitions, entries, players, meId, resultsO
         </GroupCard>
       )}
       {onAdd && (
-        <button onClick={onAdd} style={{ alignSelf: "flex-start", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer" }}>
+        <button onClick={onAdd} style={{ alignSelf: "flex-start", background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 999, padding: "10px 16px", fontFamily: body, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
           + Add a division
         </button>
       )}
@@ -288,7 +288,7 @@ function DivisionPredictions({ ordered, entries, resultsOf, oddsOf, entryName }:
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 4px" }}>
-        <div style={{ flex: 1, fontFamily: body, fontWeight: 700, fontSize: 19, color: FEED_TEXT_HI }}>Who wins each division</div>
+        <div style={{ flex: 1, fontFamily: body, fontWeight: 700, fontSize: 20, color: FEED_TEXT_HI }}>Who wins each division</div>
         <button onClick={copy} style={{ background: FEED_CARD, color: FEED_TEXT_HI, border: "1px solid " + LINE, borderRadius: 999, padding: "6px 12px", fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>{copied ? "Copied" : "Copy"}</button>
       </div>
       <div style={{ fontFamily: body, fontSize: 13, color: FEED_TEXT_MID, padding: "2px 4px 0", marginBottom: 14 }}>Simulated from points so far and ratings</div>

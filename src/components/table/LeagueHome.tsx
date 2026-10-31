@@ -343,7 +343,7 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
             {provisionalRows.length > 0 && (
               <div style={{ marginTop: 18 }}>
                 <div style={{ fontFamily: body, fontSize: 13, color: MUTED, letterSpacing: 0, padding: "0 4px 2px" }}>Provisional</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.45, padding: "0 4px 8px" }}>
+                <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.45, padding: "0 4px 8px" }}>
                   Rated, but the ± is still wide — a few more results and they take a place.
                 </div>
                 <StandingsList
@@ -367,7 +367,7 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
                   aria-expanded={showUnranked}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", padding: "14px 0", cursor: "pointer", textAlign: "left" }}
                 >
-                  <span style={{ flex: 1, fontFamily: body, fontSize: 14.5, color: CHALK }}>
+                  <span style={{ flex: 1, fontFamily: body, fontSize: 14, color: CHALK }}>
                     {unrankedRows.length === 1 ? "1 player needs a few more matches" : `${unrankedRows.length} players need a few more matches`}
                   </span>
                   <ChevronDown size={16} color={MUTED} style={{ transform: showUnranked ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
@@ -380,7 +380,7 @@ export function LeagueHome({ players, matches, group, fixtures, onOpen, onOpenLe
                   return (
                     <div key={pl.id} onClick={() => onOpen(pl.id, "all")} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderTop: "0.5px solid " + PANEL2, cursor: "pointer" }}>
                       <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 15, color: pl.id === meId ? BALL : CHALK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{short || fullNameOf(pl)}</span>
-                      <span style={{ fontFamily: body, fontSize: 12.5, color: MUTED, flexShrink: 0 }}>{left === 1 ? "1 more match" : `${left} more matches`}</span>
+                      <span style={{ fontFamily: body, fontSize: 12, color: MUTED, flexShrink: 0 }}>{left === 1 ? "1 more match" : `${left} more matches`}</span>
                     </div>
                   );
                 })}

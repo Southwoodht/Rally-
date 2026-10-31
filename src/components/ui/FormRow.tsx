@@ -7,8 +7,8 @@ import { BALL, CLAY, COURT, MUTED, body } from "@/lib/theme";
 // are what tell you whether they were against anyone. Callers that don't pass
 // it get exactly the old row.
 export function FormRow({ items, small, colors }: any) {
-  const sz = small ? 13 : 15;
-  const cell = (s: string) => ({ width: sz, height: sz, borderRadius: 3, fontSize: small ? 8 : 9, fontWeight: 800, display: "grid", placeItems: "center", fontFamily: body, color: COURT, background: s === "W" ? BALL : s === "L" ? CLAY : MUTED } as const);
+  const sz = small ? 16 : 18;
+  const cell = (s: string) => ({ width: sz, height: sz, borderRadius: 3, fontSize: 12, fontWeight: 700, display: "grid", placeItems: "center", fontFamily: body, color: COURT, background: s === "W" ? BALL : s === "L" ? CLAY : MUTED } as const);
   return (
     <span style={{ display: "flex", gap: 3 }}>
       {items.map((s: string, i: number) => (

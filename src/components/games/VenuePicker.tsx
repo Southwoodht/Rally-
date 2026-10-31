@@ -1,6 +1,7 @@
 "use client";
+import { Skel } from "@/components/ui/Skeleton";
 import React, { useState } from "react";
-import { Loader2, MapPin, Search as SearchIcon } from "lucide-react";
+import { MapPin, Search as SearchIcon } from "lucide-react";
 import { currentSpot, distanceLabel } from "@/lib/place";
 import { findTown, venueLabel, venuesNear, type Venue, type VenueHit } from "@/lib/venues";
 import {
@@ -45,7 +46,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
   const openSheet = () => { setOpen(true); if (!hits) void lookNear(); };
   const pick = (v: Venue | null) => { onChange(v); setOpen(false); };
 
-  const chip: React.CSSProperties = { background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", color: FEED_TEXT_HI, fontFamily: body, fontWeight: 600, fontSize: 13.5, cursor: "pointer" };
+  const chip: React.CSSProperties = { background: FEED_RAISED, border: "none", borderRadius: 999, padding: "8px 14px", color: FEED_TEXT_HI, fontFamily: body, fontWeight: 600, fontSize: 13, cursor: "pointer" };
   const fld: React.CSSProperties = { ...miniInput, fontFamily: body, fontSize: 15, background: FEED_RAISED, color: FEED_TEXT_HI, padding: "10px 12px", boxSizing: "border-box" };
 
   return (
@@ -62,7 +63,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, background: FEED_OVERLAY, display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 130 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: PANEL, width: "100%", maxWidth: 620, maxHeight: "86vh", overflowY: "auto", borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: "18px 16px 34px", boxSizing: "border-box" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: FEED_TEXT_HI }}>Where are you playing?</span>
+              <span style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: FEED_TEXT_HI }}>Where are you playing?</span>
               <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: FEED_TEXT_MID, fontFamily: body, fontSize: 14, cursor: "pointer" }}>Close</button>
             </div>
 
@@ -86,26 +87,25 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
               <button onClick={() => pick(home)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "4px 2px 14px", cursor: "pointer", textAlign: "left" }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{home.name}</span>
-                  <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>{[home.place, "Your club"].filter(Boolean).join(" · ")}</span>
+                  <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>{[home.place, "Your club"].filter(Boolean).join(" · ")}</span>
                 </span>
               </button>
             )}
 
-            {/* Searching is unmistakable: a spinner, the place, and grey rows
+            {/* Searching is unmistakable: the place, and grey rows
                 where the answers will be — never the last answer sitting
                 there looking finished. */}
             {busy ? (
               <div aria-live="polite">
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 2px", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
-                  <Loader2 size={18} color={FEED_TEXT_HI} className="sw-spin" />
-                  <span style={{ fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI }}>
+                  <span style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>
                     Finding courts near {near === "you" ? "you" : near}…
                   </span>
                 </div>
                 {[0, 1, 2].map((k) => (
                   <div key={k} style={{ padding: "12px 2px", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
-                    <div style={{ height: 14, width: ["62%", "48%", "55%"][k], borderRadius: 7, background: FEED_RAISED }} />
-                    <div style={{ height: 10, width: "30%", borderRadius: 5, background: FEED_RAISED, marginTop: 8, opacity: 0.7 }} />
+                    <Skel w={["62%", "48%", "55%"][k]} h={14} />
+                    <Skel w="30%" h={10} style={{ marginTop: 8, opacity: 0.7 }} />
                   </div>
                 ))}
               </div>
@@ -118,7 +118,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
                   <button key={h.name + i} onClick={() => pick({ name: h.name, place: h.place, lat: h.lat, lng: h.lng, url: h.url, club: h.club, members: h.members })} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", borderTop: i ? "0.5px solid " + FEED_HAIRLINE : "none", padding: "12px 2px", cursor: "pointer", textAlign: "left" }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</span>
-                      <span style={{ display: "block", fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2 }}>
+                      <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
                         {[distanceLabel(h.km), h.place, h.club ? "On Southwood" : h.members ? "Members only" : null].filter(Boolean).join(" · ")}
                       </span>
                     </span>
@@ -138,7 +138,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
             {hits && !busy && (
               <div style={{ background: FEED_RAISED, borderRadius: 14, padding: "12px 14px", marginTop: 14 }}>
                 <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>Missing a club?</div>
-                <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 3 }}>
+                <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 3 }}>
                   Type its name in the box above and tap Use. Or find it on the map first:
                 </div>
                 <a href={`https://www.google.com/maps/search/${encodeURIComponent("racket club near " + (near === "you" ? "me" : near))}`} target="_blank" rel="noopener noreferrer" style={{ ...chip, display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, textDecoration: "none", background: PANEL }}>
@@ -146,7 +146,7 @@ export function VenuePicker({ value, onChange, home }: { value: Venue | null; on
                 </a>
               </div>
             )}
-            <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_TEXT_LOW, marginTop: 14, lineHeight: 1.5 }}>
+            <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_LOW, marginTop: 14, lineHeight: 1.5 }}>
               Courts from OpenStreetMap. Your location is only used for this search and isn&apos;t saved.
             </div>
           </div>

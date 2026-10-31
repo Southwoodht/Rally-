@@ -96,19 +96,42 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
     setMatches((prev) => [...prev, saved]);
   }, [leagueId]);
 
+  // Optimistic (2026-10-31): each of these changes the screen first and puts
+  // it back if the write is refused, rethrowing so the caller can say so.
+  // A booking needs the database's id, so it shows under a temporary one
+  // until the row comes back.
   const book = useCallback(async (f: Parameters<UseDoubles["book"]>[0]) => {
-    const saved = await insertDoublesFixture(leagueId, f);
-    setFixtures((prev) => [...prev, saved]);
+    const tmp = { id: "tmp-" + Math.random().toString(36).slice(2), leagueId, teamA: f.teamA, teamB: f.teamB, booked: f.booked, done: false, matchId: null, createdBy: f.createdBy, competitionId: null, round: null, pairA: null, pairB: null } as DoublesFixture;
+    setFixtures((prev) => [...prev, tmp]);
+    try {
+      const saved = await insertDoublesFixture(leagueId, f);
+      setFixtures((prev) => prev.map((x) => (x.id === tmp.id ? saved : x)));
+    } catch (e) {
+      setFixtures((prev) => prev.filter((x) => x.id !== tmp.id));
+      throw e;
+    }
   }, [leagueId]);
 
   const reschedule = useCallback(async (id: string, booked: number | null) => {
-    await updateDoublesFixture(id, { booked });
-    setFixtures((prev) => prev.map((f) => (f.id === id ? { ...f, booked } : f)));
+    let before: number | null = null;
+    setFixtures((prev) => prev.map((f) => (f.id === id ? ((before = f.booked), { ...f, booked }) : f)));
+    try {
+      await updateDoublesFixture(id, { booked });
+    } catch (e) {
+      setFixtures((prev) => prev.map((f) => (f.id === id ? { ...f, booked: before } : f)));
+      throw e;
+    }
   }, []);
 
   const cancel = useCallback(async (id: string) => {
-    await deleteDoublesFixture(id);
-    setFixtures((prev) => prev.filter((f) => f.id !== id));
+    let gone: DoublesFixture | undefined;
+    setFixtures((prev) => { gone = prev.find((f) => f.id === id); return prev.filter((f) => f.id !== id); });
+    try {
+      await deleteDoublesFixture(id);
+    } catch (e) {
+      if (gone) setFixtures((prev) => (prev.some((f) => f.id === id) ? prev : [...prev, gone as DoublesFixture]));
+      throw e;
+    }
   }, []);
 
   /**
@@ -126,7 +149,11 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
    * foreign key. doubles_fixtures.match_id is the link, as the migration says.
    */
   const complete = useCallback(async (f: DoublesFixture, m: { sets: Array<{ a: number; b: number }>; winner: string; enteredBy: string }) => {
-    const saved = await insertDoubles(leagueId, {
+    // Off the list at once; back on it if the match does not save.
+    setFixtures((prev) => prev.map((x) => (x.id === f.id ? { ...x, done: true } : x)));
+    let saved;
+    try {
+      saved = await insertDoubles(leagueId, {
       teamA: f.teamA, teamB: f.teamB, sets: m.sets, winner: m.winner, enteredBy: m.enteredBy,
       // A competition tie records which ENTRIES played, which is what the
       // competition's table counts. Null on an ordinary booking.
@@ -134,11 +161,16 @@ export function useDoubles(leagueId: string, enabled: boolean): UseDoubles {
       // Dated from the booking, as singles does: Saturday's match entered on
       // Monday is still Saturday's, and the rating replays in date order.
       playedAt: f.booked ?? Date.now(),
-    });
+      });
+    } catch (e) {
+      setFixtures((prev) => prev.map((x) => (x.id === f.id ? { ...x, done: false } : x)));
+      throw e;
+    }
     setMatches((prev) => [...prev, saved]);
     try {
       await updateDoublesFixture(f.id, { done: true, matchId: saved.id });
     } catch {
+      setFixtures((prev) => prev.map((x) => (x.id === f.id ? { ...x, done: false } : x)));
       throw new Error("Result saved, but the booking is still showing as unplayed. Cancel it to tidy up.");
     }
     setFixtures((prev) => prev.map((x) => (x.id === f.id ? { ...x, done: true, matchId: saved.id } : x)));

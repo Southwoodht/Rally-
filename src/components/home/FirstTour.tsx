@@ -70,8 +70,8 @@ export function FirstTour({ onTab, onDone }: { onTab: (tab: string) => void; onD
       >
         <div style={{ position: "relative", width: "100%", maxWidth: 596, pointerEvents: "auto" }}>
           <div style={{ background: FEED_HERO, color: FEED_ON_HERO, borderRadius: 22, padding: "18px 18px 14px", boxShadow: "0 12px 32px var(--shadow-strong)" }}>
-            <div style={{ fontFamily: body, fontSize: 11.5, color: FEED_LIME_INK_2 }}>{i + 1} of {STEPS.length}</div>
-            <div style={{ ...tight(21), fontFamily: body, fontWeight: 600, fontSize: 21, marginTop: 4 }}>{step.title}</div>
+            <div style={{ fontFamily: body, fontSize: 12, color: FEED_LIME_INK_2 }}>{i + 1} of {STEPS.length}</div>
+            <div style={{ ...tight(21), fontFamily: body, fontWeight: 600, fontSize: 20, marginTop: 4 }}>{step.title}</div>
             <div style={{ fontFamily: body, fontSize: 15, lineHeight: 1.5, marginTop: 6 }}>{step.text}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
               <div style={{ display: "flex", gap: 6, flex: 1 }}>

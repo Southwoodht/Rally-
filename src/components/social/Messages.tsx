@@ -1,4 +1,5 @@
 "use client";
+import { Skel, SkelRows } from "@/components/ui/Skeleton";
 import React, { useEffect, useRef, useState } from "react";
 import { BigBtn, Empty } from "@/components/ui/atoms";
 import {
@@ -136,7 +137,7 @@ function ThreadRowView({ t, players, onClick, first }: { t: Thread; players?: an
       )}
       <Face t={t} name={name} player={player} size={AVATAR} />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 500, fontSize: 17, letterSpacing: "-0.2px", color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ display: "block", fontFamily: body, fontWeight: unread ? 600 : 500, fontSize: 18, letterSpacing: "-0.2px", color: FEED_TEXT_HI, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {name}
         </span>
         <span style={{ display: "block", fontFamily: body, fontWeight: 500, fontSize: 15, color: FEED_TEXT_LOW, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -283,7 +284,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
 
       {t.isRequestToMe && (
         <div style={{ background: FEED_CARD, borderRadius: 18, padding: 16, marginBottom: 14 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.5, marginBottom: 12 }}>
             <span style={{ fontWeight: 600 }}>{who}</span> wants to message you. You&apos;re not friends, so this is a request — they can&apos;t hear back from you until you accept.
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -295,11 +296,11 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
 
       <div style={{ minHeight: 200 }}>
         {!msgs ? (
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, padding: "24px 0" }}>Loading…</div>
+          <div style={{ padding: "12px 0", display: "flex", flexDirection: "column", gap: 10 }}>{[56, 40, 64].map((w, i) => <Skel key={i} w={w + "%"} h={38} r={18} style={{ alignSelf: i % 2 ? "flex-end" : "flex-start" }} />)}</div>
         ) : !msgs.length ? (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
             <Face t={t} name={who} player={whoPlayer} size={56} />
-            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, marginTop: 12 }}>
+            <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, marginTop: 12 }}>
               {who}
             </div>
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 4 }}>
@@ -423,7 +424,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
         <div ref={endRef} />
       </div>
 
-      {err && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginTop: 8 }}>{err}</div>}
+      {err && <div style={{ fontFamily: body, fontSize: 12, color: CLAY, marginTop: 8 }}>{err}</div>}
 
       {/* The composer is opaque, and it was not. A sticky bar with no
           background is a window: the thread scrolled behind it and so did the
@@ -481,7 +482,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
         </div>
         </div>
       ) : (
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 12, lineHeight: 1.5 }}>
           Accept the request above to reply.
         </div>
       )}
@@ -496,7 +497,7 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
       )}
 
       {t.status === "accepted" && (
-        <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ background: "transparent", border: "none", padding: "18px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW }}>
+        <button onClick={async () => { await deleteThread(t.id); onChanged?.(); onBack(); }} style={{ background: "transparent", border: "none", padding: "18px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW }}>
           Delete this conversation
         </button>
       )}
@@ -541,7 +542,7 @@ export function Messages({ startWith, onStarted, players, onBack, onOpenProfile 
       <div style={{ background: FEED_CARD, borderRadius: 18, padding: 18 }}>
         <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_THEY_LEAD }}>Messages unavailable.</div>
         <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5, marginTop: 6 }}>{err}</div>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
+        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5, marginTop: 8 }}>
           If this says a table or function is missing, the one-off SQL in supabase/schema_messages.sql hasn&apos;t been run yet.
         </div>
       </div>
@@ -552,7 +553,7 @@ export function Messages({ startWith, onStarted, players, onBack, onOpenProfile 
   const open = threads?.find((t) => t.id === openId);
   if (open) return <Conversation thread={open} myId={myId} onBack={() => setOpenId(null)} onChanged={load} players={players} onOpenProfile={onOpenProfile} />;
 
-  if (!threads) return <><MessagesHeader onBack={onBack} /><Empty msg="Loading…" /></>;
+  if (!threads) return <><MessagesHeader onBack={onBack} /><SkelRows n={5} /></>;
 
   const requests = threads.filter((t) => t.isRequestToMe);
   const conversations = threads.filter((t) => !t.isRequestToMe);
@@ -568,26 +569,26 @@ export function Messages({ startWith, onStarted, players, onBack, onOpenProfile 
       {requests.length > 0 && (
         <>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: CHALK }}>Requests</span>
-            <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 10.5, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
+            <span style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: CHALK }}>Requests</span>
+            <span style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_LIME_INK, background: BALL, borderRadius: 999, padding: "1px 7px" }}>{requests.length}</span>
           </div>
           <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden", marginBottom: 18 }}>
             {requests.map((t, i) => <ThreadRowView key={t.id} t={t} players={players} first={i === 0} onClick={() => setOpenId(t.id)} />)}
           </div>
-          <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, lineHeight: 1.45, margin: "-10px 0 18px" }}>
+          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.45, margin: "-10px 0 18px" }}>
             People you aren&apos;t friends with land here first. They can&apos;t see whether you&apos;ve read it, and they can&apos;t hear back until you accept.
           </div>
         </>
       )}
       {conversations.length > 0 && (
         <>
-          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 600, fontSize: 17, color: CHALK, marginBottom: 8 }}>Conversations</div>}
+          {requests.length > 0 && <div style={{ fontFamily: body, fontWeight: 600, fontSize: 18, color: CHALK, marginBottom: 8 }}>Conversations</div>}
           <div style={{ background: FEED_CARD, borderRadius: 20, overflow: "hidden" }}>
             {conversations.map((t, i) => <ThreadRowView key={t.id} t={t} players={players} first={i === 0} onClick={() => setOpenId(t.id)} />)}
           </div>
         </>
       )}
-      {err && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_THEY_LEAD, marginTop: 10 }}>{err}</div>}
+      {err && <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_THEY_LEAD, marginTop: 10 }}>{err}</div>}
     </>
   );
 }

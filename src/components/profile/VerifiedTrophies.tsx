@@ -113,7 +113,7 @@ export function VerifiedTrophies({ player, meId }: any) {
         </div>
       )}
       {approved.some((t) => !t.claimed_by) && unclaimed && (
-        <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 6, lineHeight: 1.45 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 6, lineHeight: 1.45 }}>
           Recorded against this player rather than an account. {name ? name + " keeps" : "They keep"} these the day they claim this player.
         </div>
       )}

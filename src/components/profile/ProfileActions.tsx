@@ -24,7 +24,7 @@ import {
 const btnBase: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
   border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer",
-  fontFamily: body, fontWeight: 600, fontSize: 13.5, flex: 1, minWidth: 0,
+  fontFamily: body, fontWeight: 600, fontSize: 13, flex: 1, minWidth: 0,
 };
 
 const filled: React.CSSProperties = { ...btnBase, background: FEED_LIME, color: FEED_LIME_INK, padding: "12px 14px", fontSize: 15 };
@@ -60,7 +60,7 @@ function FriendMenuItem({ theirAuthId, myAuthId }: { theirAuthId: string; myAuth
 
 const menuItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none",
-  padding: "12px 14px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, textAlign: "left",
+  padding: "12px 14px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI, textAlign: "left",
 };
 
 export interface ProfileActionsProps {
@@ -115,7 +115,7 @@ export function ProfileActions({ theirAuthId, myAuthId, onMessage, onChallenge, 
       </div>
       {!theirAuthId && (
         <SurfaceCard radius={16} style={{ marginTop: 12 }}>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
             They haven&apos;t claimed their profile yet, so there is no account to
             message or add as a friend.
           </div>

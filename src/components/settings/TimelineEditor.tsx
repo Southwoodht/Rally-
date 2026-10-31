@@ -36,7 +36,7 @@ export function TimelineEditor({ player, onAdd, onRemove }: any) {
         <span style={{ color: MUTED, fontFamily: body, fontSize: 12 }}>to</span>
         <input type="month" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Now" style={{ ...miniInput, flex: 1, colorScheme: "dark", boxSizing: "border-box" as const }} />
       </div>
-      <div style={{ fontFamily: body, fontSize: 11, color: MUTED, marginTop: 4, marginBottom: 6 }}>Leave "to" blank if this is their level now.</div>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 4, marginBottom: 6 }}>Leave "to" blank if this is their level now.</div>
       <BigBtn onClick={() => { onAdd({ cat, sub, from: from || null, to: to || null }); setFrom(""); setTo(""); }} color={BALL}>Add period</BigBtn>
     </div>
   );

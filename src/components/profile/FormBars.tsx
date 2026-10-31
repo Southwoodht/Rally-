@@ -46,7 +46,7 @@ function Chip({ item }: { item: FormBarItem }) {
   return (
     <div title={label} aria-label={label} role="img" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 48, minWidth: 0 }}>
       <span style={{ width: 30, height: 30, borderRadius: 9, background: FEED_RAISED, color: colour, display: "grid", placeItems: "center", fontFamily: body, fontWeight: 600, fontSize: 15 }}>{item.outcome}</span>
-      <span style={{ fontFamily: body, fontSize: 10.5, color: FEED_TEXT_MID, maxWidth: 48, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{first}</span>
+      <span style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, maxWidth: 48, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{first}</span>
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function FormBars({ items }: { items: FormBarItem[] }) {
   const shown = items.slice(-5);
   return (
     <div>
-      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 11, color: FEED_TEXT_MID, marginBottom: 8, textAlign: "center" }}>
+      <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginBottom: 8, textAlign: "center" }}>
         {shown.length === 5 ? "Last 5" : "Last " + shown.length} · latest on the right
       </div>
       <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>

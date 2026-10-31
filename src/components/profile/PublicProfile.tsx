@@ -1,4 +1,5 @@
 "use client";
+import { Skel, SkelCard } from "@/components/ui/Skeleton";
 import React, { useEffect, useState } from "react";
 import { hasProfileOpener, openProfile } from "@/lib/openProfile";
 import { ChevronLeft } from "lucide-react";
@@ -171,7 +172,14 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
     </SurfaceCard>
   );
 
-  if (state === "loading") return shell(<div style={{ fontFamily: body, color: FEED_TEXT_MID, padding: 30, textAlign: "center" }}>Loading…</div>);
+  if (state === "loading") return shell(
+    // The profile's shape in grey: photo and name, the buttons, the hero card.
+    <div role="status" aria-label="Loading profile" style={{ paddingTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}><Skel w={70} h={70} r={35} /><div style={{ flex: 1 }}><Skel w="60%" h={22} r={8} /><Skel w="45%" h={12} style={{ marginTop: 10 }} /></div></div>
+      <div style={{ display: "flex", gap: 8, marginTop: 16 }}><Skel h={46} r={12} /><Skel h={46} r={12} /></div>
+      <div style={{ marginTop: 18 }}><SkelCard height={260} /></div>
+    </div>,
+  );
   if (state === "signedOut") return note("Sign in to see profiles", "Southwood profiles are for people with an account.", true);
   if (state === "unclaimed") return note("Not on Southwood yet", "This player has a record in a club but no account, so there is no profile to open. Their results still count wherever they have played.");
   // Deliberately not "no account". We do not know that: the row is in a league
@@ -282,7 +290,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
   const pill = (fill: string, ink: string): React.CSSProperties => ({
     flex: 1, minWidth: 0, background: fill, color: ink, border: "none", borderRadius: 16,
     padding: "12px 10px", cursor: busy ? "default" : "pointer", fontFamily: body,
-    fontWeight: 600, fontSize: 14.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+    fontWeight: 600, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
     textAlign: "center", textDecoration: "none", display: "block",
   });
 
@@ -379,7 +387,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
       />
 
       {summaryNote && (
-        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "11px 13px", marginBottom: 14, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "11px 13px", marginBottom: 14, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
           {summaryNote}
         </div>
       )}
@@ -398,7 +406,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
       )}
 
       {noChallenge && !isMe && (
-        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "12px 14px", margin: "-6px 0 16px", fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
+        <div style={{ background: FEED_CARD, borderRadius: 14, padding: "12px 14px", margin: "-6px 0 16px", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_HI, lineHeight: 1.5 }}>
           You can challenge people in your clubs, and {(asPlayer?.name || "they").split(" ")[0]} isn&apos;t in one of yours yet. Message them to arrange a game, or send them your club&apos;s invite link.
         </div>
       )}
@@ -465,7 +473,7 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
         </>
       ) : (
         <SurfaceCard radius={20} pad="16px">
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13.5, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, lineHeight: 1.5 }}>
             Their record isn&apos;t showing. Everything else on this page works.
           </div>
           {card.statsProblem && (

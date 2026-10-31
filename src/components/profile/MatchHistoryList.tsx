@@ -73,7 +73,7 @@ const signed = (n: number) => (Math.abs(n) < 0.05 ? "0.0" : (n > 0 ? "+" : "−"
 export function PointsSummary({ own, others, total }: { own: number; others: number; total: number }) {
   const [why, setWhy] = useState(false);
   return (
-    <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "10px 4px 0" }}>
+    <div style={{ fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.5, padding: "10px 4px 0" }}>
       <span style={tabular}>Your results {signed(own)} · other people&apos;s results {signed(others)} = {total.toFixed(1)} Official points (all time).</span>{" "}
       <button onClick={() => setWhy(!why)} style={{ background: "none", border: "none", padding: 0, color: FEED_LIME, font: "inherit", cursor: "pointer" }}>{why ? "Hide" : "Why?"}</button>
       {why && (
@@ -180,7 +180,7 @@ export function MatchHistoryList({ items, years, trophies }: {
             )}
             <div style={{ ...tabular, display: "flex", alignItems: "center", gap: 6, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>
               {m.legacy && (
-                <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11, color: FEED_TEXT_HI, background: FEED_RAISED, borderRadius: 999, padding: "1px 8px" }}>Legacy</span>
+                <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_TEXT_HI, background: FEED_RAISED, borderRadius: 999, padding: "1px 8px" }}>Legacy</span>
               )}
               <span>{m.date}{m.score ? " · " + m.score : ""}{m.legacy ? (m.claimed ? " · claimed" : " · not rated") : ""}</span>
             </div>

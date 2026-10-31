@@ -45,7 +45,7 @@ const fmtDate = (ts: number) =>
 function Chip({ grade, faded }: { grade: Grade | null; faded?: boolean }) {
   if (!grade) {
     return (
-      <span style={{ display: "inline-block", fontFamily: body, fontWeight: 500, fontSize: 11.5, color: FEED_TEXT_LOW, border: "1px solid " + FEED_RAISED, borderRadius: 999, padding: "2px 9px" }}>
+      <span style={{ display: "inline-block", fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, border: "1px solid " + FEED_RAISED, borderRadius: 999, padding: "2px 9px" }}>
         {UNGRADED_LABEL}
       </span>
     );
@@ -55,7 +55,7 @@ function Chip({ grade, faded }: { grade: Grade | null; faded?: boolean }) {
   return (
     <span
       style={{
-        display: "inline-block", fontFamily: body, fontWeight: 600, fontSize: 11.5,
+        display: "inline-block", fontFamily: body, fontWeight: 600, fontSize: 12,
         color: lime ? FEED_ON_HERO : testing ? FEED_LIME : FEED_TEXT_MID,
         background: lime ? FEED_HERO : FEED_RAISED,
         borderRadius: 999, padding: "2px 9px",
@@ -112,18 +112,18 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
         }}
       />
       <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-        <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ flex: 1, minWidth: 0, fontFamily: body, fontSize: 14, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           <span style={{ fontWeight: 600 }}>{VERB[row.outcome]}</span>{" "}
           {onOpenPlayer && row.opponent?.id ? (
             <button
               onClick={(e) => { e.stopPropagation(); onOpenPlayer(row.opponent.id); }}
-              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: body, fontSize: 14.5, color: FEED_TEXT_HI }}
+              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: body, fontSize: 14, color: FEED_TEXT_HI }}
             >
               {name}
             </button>
           ) : name}
         </span>
-        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, flexShrink: 0 }}>
+        <span style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, flexShrink: 0 }}>
           {fmtDate(row.date)}
         </span>
       </div>
@@ -142,7 +142,7 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
             but nobody has agreed it yet, and the row should not pretend
             otherwise. Counting a result and flagging it are different jobs. */}
         {row.pending && (
-          <span style={{ fontFamily: body, fontWeight: 600, fontSize: 11.5, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "3px 9px" }}>
+          <span style={{ fontFamily: body, fontWeight: 600, fontSize: 12, color: FEED_TEXT_MID, background: FEED_RAISED, borderRadius: 999, padding: "3px 9px" }}>
             Unconfirmed
           </span>
         )}
@@ -177,7 +177,7 @@ export function UngradedBanner({ ungraded, total, onFix }: { ungraded: number; t
           <div style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 14, color: FEED_TEXT_HI }}>
             {ungraded} of {total} can&apos;t be graded
           </div>
-          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 2 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, lineHeight: 1.45, marginTop: 2 }}>
             Those opponents have no level history
           </div>
         </div>

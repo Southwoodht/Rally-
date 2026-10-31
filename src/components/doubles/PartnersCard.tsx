@@ -65,7 +65,7 @@ export function PartnersCard({ players, matches, playerId, overall, onOpenProfil
               <div style={{ display: "flex", alignItems: "center", fontFamily: body, fontWeight: 600, fontSize: 16, color: FEED_TEXT_HI, minWidth: 0 }}>
                 <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(partner)}</span>
                 {r.best && (
-                  <span style={{ marginLeft: 6, flexShrink: 0, fontFamily: body, fontSize: 11, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "2px 7px" }}>
+                  <span style={{ marginLeft: 6, flexShrink: 0, fontFamily: body, fontSize: 12, fontWeight: 700, color: FEED_LIME_INK, background: FEED_LIME, borderRadius: 8, padding: "2px 7px" }}>
                     Best
                   </span>
                 )}
@@ -91,7 +91,7 @@ export function PartnersCard({ players, matches, playerId, overall, onOpenProfil
               {overall !== undefined && r.played >= BEST_PARTNER_MINIMUM && (() => {
                 const diff = pct - Math.round(overall * 100);
                 return (
-                  <div style={{ fontFamily: body, fontSize: 11, marginTop: 2, whiteSpace: "nowrap", color: diff > 0 ? FEED_LIME : FEED_TEXT_MID, ...tabular }}>
+                  <div style={{ fontFamily: body, fontSize: 12, marginTop: 2, whiteSpace: "nowrap", color: diff > 0 ? FEED_LIME : FEED_TEXT_MID, ...tabular }}>
                     {diff === 0 ? "your avg" : `${diff > 0 ? "+" : "−"}${Math.abs(diff)} vs avg`}
                   </div>
                 );

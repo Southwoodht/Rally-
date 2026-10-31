@@ -35,7 +35,7 @@ export default function UpdatePassword({ onDone }: { onDone: () => void }) {
     <div style={{ minHeight: "100vh", background: COURT, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <div style={{ fontFamily: display, fontSize: "min(54px, 14vw)", fontWeight: 800, color: BALL, textTransform: "uppercase", letterSpacing: -1, lineHeight: 1 }}>Southwood</div>
+          <div style={{ fontFamily: display, fontSize: "min(54px, 14vw)", fontWeight: 700, color: BALL, textTransform: "uppercase", letterSpacing: "-0.5px", lineHeight: 1 }}>Southwood</div>
         </div>
         <div style={{ background: PANEL, border: "none", borderRadius: 16, padding: 20 }}>
           <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, marginBottom: 14 }}>

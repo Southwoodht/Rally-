@@ -46,7 +46,7 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
     return (
       <div style={{ margin: "20px 16px 0", padding: "22px 18px", borderRadius: FEED_RADIUS, background: FEED_HERO, color: FEED_ON_HERO, display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ fontFamily: body, fontSize: 14, fontWeight: 600 }}>{leagueName} · Doubles</div>
-        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 30, lineHeight: 1.05, ...tight(30) }}>No doubles yet</div>
+        <div style={{ fontFamily: display, fontWeight: 700, fontSize: 28, lineHeight: 1.05, ...tight(30) }}>No doubles yet</div>
         {onLogDoubles && (
           <button
             onClick={onLogDoubles}
@@ -91,7 +91,7 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 10 }}>
         <div style={{ fontFamily: display, fontWeight: 700, fontSize: 64, lineHeight: 1, ...tight(64), ...tabular }}>
           {provisional ? "–" : place}
-          {!provisional && <span style={{ fontSize: 26, letterSpacing: 0 }}>{ordinalSuffix(place)}</span>}
+          {!provisional && <span style={{ fontSize: 24, letterSpacing: 0 }}>{ordinalSuffix(place)}</span>}
           {/* Same wording and treatment as the singles card, so the two pages
               of the carousel read as one card. */}
           {movement !== null && (
@@ -109,7 +109,7 @@ export function DoublesRankCard({ players, matches, meId, leagueName, onLogDoubl
           <div style={{ fontFamily: display, fontSize: 34, fontWeight: 700, lineHeight: 1, ...tabular }}>
             {Math.round(stats.elo[meId] ?? 0).toLocaleString()}
           </div>
-          <div style={{ fontFamily: body, fontSize: 11, letterSpacing: 1.6, marginTop: 6, fontWeight: 600 }}>
+          <div style={{ fontFamily: body, fontSize: 12, letterSpacing: 1.6, marginTop: 6, fontWeight: 600 }}>
             DOUBLES ELO · ALL TIME
           </div>
         </div>

@@ -1,4 +1,5 @@
 "use client";
+import { SkelRows } from "@/components/ui/Skeleton";
 import React, { useEffect, useState } from "react";
 import { BigBtn, Field } from "@/components/ui/atoms";
 import { Club, createClub, joinClubByCode, listMyClubs } from "@/lib/clubs";
@@ -84,14 +85,14 @@ export function ClubAdminReview() {
     setBusy(false);
   };
 
-  if (loading) return <div style={{ fontFamily: body, fontSize: 14, color: MUTED, padding: "20px 0" }}>Loading…</div>;
+  if (loading) return <div style={{ padding: "12px 0" }}><SkelRows n={3} avatar={false} /></div>;
 
   const adminClubs = clubs.filter((c) => c.role === "admin");
   const memberClubs = clubs.filter((c) => c.role !== "admin");
 
   return (
     <div>
-      <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 18 }}>
+      <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 18 }}>
         A club is who vouches for a trophy. Its administrator approves what players claim, and can give a trophy
         to anyone in their league: open the winner's profile and tap Give a trophy under Verified trophies.
       </div>
@@ -99,7 +100,7 @@ export function ClubAdminReview() {
       {adminClubs.length === 0 && (
         <div style={{ background: PANEL, borderRadius: 14, padding: "14px", marginBottom: 20 }}>
           <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: BALL, marginBottom: 8 }}>Set up trophies for your club</div>
-          <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
+          <div style={{ fontFamily: body, fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 12 }}>
             You don't administer a club yet, so there's nobody to verify a trophy. Creating one makes you its
             administrator — you'll be able to approve claims and give trophies straight away.
           </div>
@@ -117,7 +118,7 @@ export function ClubAdminReview() {
               <div key={c.id} style={{ background: PANEL, borderRadius: 14, padding: "12px 14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: body, fontSize: 14.5, color: CHALK, fontWeight: 700 }}>{c.name}</div>
+                    <div style={{ fontFamily: body, fontSize: 14, color: CHALK, fontWeight: 700 }}>{c.name}</div>
                     {c.location && <div style={{ fontFamily: body, fontSize: 12, color: MUTED }}>{c.location}</div>}
                   </div>
                   <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: c.role === "admin" ? BALL : MUTED, flexShrink: 0 }}>
@@ -142,14 +143,14 @@ export function ClubAdminReview() {
           <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="e.g. K7P2Q9" maxLength={12} style={{ ...input, boxSizing: "border-box" as const, flex: 1, fontFamily: body, letterSpacing: 2 }} />
           <BigBtn onClick={join} disabled={busy} color={BALL} grow={false}>Join</BigBtn>
         </div>
-        <div style={{ fontFamily: body, fontSize: 11.5, color: MUTED, marginTop: 8, lineHeight: 1.45 }}>
+        <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 8, lineHeight: 1.45 }}>
           Joining makes you a member, never an administrator — so a code that gets passed around can't become a way
           to approve your own claims.
         </div>
       </div>
 
-      {error && <div style={{ fontFamily: body, fontSize: 12.5, color: CLAY, marginBottom: 12 }}>{error}</div>}
-      {note && <div style={{ fontFamily: body, fontSize: 12.5, color: BALL, marginBottom: 12 }}>{note}</div>}
+      {error && <div style={{ fontFamily: body, fontSize: 12, color: CLAY, marginBottom: 12 }}>{error}</div>}
+      {note && <div style={{ fontFamily: body, fontSize: 12, color: BALL, marginBottom: 12 }}>{note}</div>}
 
       {adminClubs.length > 0 && (
         <div style={{ fontFamily: body, fontSize: 13, letterSpacing: 0, color: MUTED, marginBottom: 8 }}>Claims to review</div>
@@ -172,7 +173,7 @@ export function ClubAdminReview() {
                     <div style={{ fontFamily: body, fontSize: 13, color: MUTED, letterSpacing: 0, marginTop: 2 }}>
                       {t.claimant_name || "Unnamed player"}{t.season ? " · " + t.season : ""}
                     </div>
-                    {t.notes && <div style={{ fontFamily: body, fontSize: 12.5, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>{t.notes}</div>}
+                    {t.notes && <div style={{ fontFamily: body, fontSize: 12, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>{t.notes}</div>}
                     <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                       <button disabled={busyId === t.id} onClick={() => act(t.id, approveTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 13, fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "none", background: BALL, color: "var(--bg-page)" }}>Approve</button>
                       <button disabled={busyId === t.id} onClick={() => act(t.id, rejectTrophy)} style={{ flex: 1, fontFamily: body, fontSize: 13, fontWeight: 700, padding: "8px 10px", borderRadius: 10, cursor: "pointer", border: "1px solid " + CLAY, background: "transparent", color: CLAY }}>Reject</button>
