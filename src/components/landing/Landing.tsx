@@ -13,7 +13,9 @@ import {
  * Always the Southwood theme (cream, brass, ink), whatever the device last
  * picked: data-theme="rally" on the wrapper re-scopes every token. The
  * screenshots in /public/landing are the app's own components photographed
- * with invented players — never real members' names on a public page.
+ * with invented players — never real members' names on a public page. The
+ * names are Sam's (2026-10-31): Dexter W, Russell J (the "you"), Buddy T,
+ * Stanley S, Jamie V, Alfie M, Freddie C, Harry A, at "Riverside RC".
  *
  * The contact address is CONTACT_EMAIL. southwood.app has no inbox of its
  * own (Resend only sends), so it needs email forwarding set up at Porkbun
@@ -53,7 +55,7 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
           </div>
           <div className="lp-phone" aria-hidden="true">
             <div className="lp-phone-screen">
-              <img src="/landing/phone-profile.png" width={780} height={1688} alt="" />
+              <img src="/landing/phone-home.png" width={780} height={1688} alt="" />
             </div>
           </div>
         </section>
@@ -83,7 +85,7 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
           </>}
           shots={[
             { src: "/landing/division.png", w: 860, h: 946, alt: "A division table with promotion and relegation places" },
-            { src: "/landing/sheet.png", w: 860, h: 1060, alt: "A printable division share sheet with a QR code" },
+            { src: "/landing/sheet.png", w: 860, h: 1060, alt: "A share sheet for the club chat: still to play, latest results and a QR code" },
           ]}
         />
 
@@ -97,8 +99,8 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
             club straight from their profile, with the time and the court.
           </>}
           shots={[
-            { src: "/landing/h2h-lists.png", w: 780, h: 1252, alt: "Who a player is behind and ahead of, with each head-to-head record" },
-            { src: "/landing/h2h-rivals.png", w: 860, h: 770, alt: "Two rivalry cards with head-to-head records" },
+            { src: "/landing/h2h-lists.png", w: 780, h: 1120, alt: "Who a player is behind and ahead of, with each head-to-head record" },
+            { src: "/landing/h2h-rivals.png", w: 860, h: 774, alt: "Two rivalry cards with head-to-head records" },
           ]}
         />
 
