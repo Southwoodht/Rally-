@@ -83,6 +83,8 @@ export function MotionLayer() {
 
     const arrive = (node: Node) => {
       if (!(node instanceof HTMLElement)) return;
+      // Something that animates itself (the splash lifting off) is left alone.
+      if (node.hasAttribute("data-no-arrive")) return;
       for (const el of [node, node.firstElementChild]) {
         if (!(el instanceof HTMLElement)) continue;
         const cs = getComputedStyle(el);

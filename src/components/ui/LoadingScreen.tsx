@@ -64,6 +64,65 @@ const useBeforePaint = typeof window !== "undefined" ? useLayoutEffect : useEffe
 let clockStart: number | null = null;
 /** Whether the arrival fade has already been seen this page load. */
 let arrived = false;
+/** Loading screens on the page right now (the cold open hands between three). */
+let mountedCount = 0;
+/** Whether the splash has lifted off the app once this page load. After
+ *  that, a club switch shows the skeleton instead of the splash. */
+let revealed = false;
+export const splashHasLifted = () => revealed;
+
+const REDUCED = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * THE LIFT (Sam, 2026-10-31: "a cool fade in… smooth and clean and rich").
+ *
+ * When the last loading screen of a cold open unmounts, the app is already
+ * underneath it. A copy of the splash is left on top, on the same bounce
+ * clock so the ball does not jump, and it dissolves: a soft scale up, a
+ * little blur, 520ms. At the same moment the app's own content rises in, a
+ * row at a time (`sw-reveal` on <html>, rules in globals.css). If another
+ * loading screen mounts in the meantime — a hand-off, not the end — the
+ * copy is removed before it is ever seen to move.
+ */
+function liftSplash(from: HTMLElement) {
+  // Hidden (signed-out visitors: the landing page is showing, not this) —
+  // nothing to lift.
+  if (!from.getClientRects().length) { revealed = true; return; }
+  const copy = from.cloneNode(true) as HTMLElement;
+  copy.removeAttribute("data-on-clock");
+  Object.assign(copy.style, { position: "fixed", inset: "0", zIndex: "9999", pointerEvents: "none", minHeight: "0" });
+  copy.setAttribute("aria-hidden", "true");
+  copy.setAttribute("data-no-arrive", "");
+  // A copy would replay its entrance; it is leaving, not arriving.
+  copy.querySelectorAll(".rally-arrive, .rally-arrive-mark, .rally-arrive-late").forEach((n) => n.classList.remove("rally-arrive", "rally-arrive-mark", "rally-arrive-late"));
+  document.body.appendChild(copy);
+  // A cloned node restarts its animations; put it back on the shared clock.
+  const now = (document.timeline?.currentTime as number | null) ?? performance.now();
+  const elapsed = clockStart === null ? 0 : now - clockStart;
+  copy.querySelectorAll<HTMLElement>("[data-cycle]").forEach((node) => {
+    node.style.animationDelay = `-${elapsed % Number(node.dataset.cycle)}ms`;
+  });
+  requestAnimationFrame(() => {
+    // Another loading screen took over (a hand-off, or React's development
+    // double mount): this was not the end of the wait.
+    if (mountedCount > 0) { copy.remove(); return; }
+    revealed = true;
+    if (REDUCED()) { copy.remove(); return; }
+    const html = document.documentElement;
+    html.classList.add("sw-reveal");
+    window.setTimeout(() => html.classList.remove("sw-reveal"), 1100);
+    const anim = copy.animate(
+      [
+        { opacity: 1, transform: "scale(1)", filter: "blur(0px)" },
+        { opacity: 0, transform: "scale(1.06)", filter: "blur(6px)" },
+      ],
+      { duration: 520, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+    );
+    anim.onfinish = () => copy.remove();
+    // Belt and braces: never leave a splash over the app.
+    window.setTimeout(() => copy.remove(), 1500);
+  });
+}
 
 const CSS = `
   @keyframes rally-bounce {
@@ -78,15 +137,22 @@ const CSS = `
     100% { transform: scaleX(1);   opacity: .5; }
   }
   @keyframes rally-arrive { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes rally-arrive-mark {
+    from { opacity: 0; transform: scale(.92); filter: blur(8px); }
+    to   { opacity: 1; transform: scale(1);   filter: blur(0); }
+  }
 
   .rally-hop    { animation: rally-bounce ${CYCLE_MS}ms infinite; will-change: transform; }
   .rally-roll   { animation: rally-roll ${SPIN_MS}ms linear infinite; transform-origin: 50% 50%; }
   .rally-shadow { animation: rally-shadow ${CYCLE_MS}ms infinite; transform-origin: 50% 50%; }
   .rally-arrive { animation: rally-arrive 450ms ease-out both; }
+  .rally-arrive-mark { animation: rally-arrive-mark 700ms cubic-bezier(.2, .8, .2, 1) both; }
+  .rally-arrive-late { animation: rally-arrive 500ms ease-out 260ms both; }
 
   @media (prefers-reduced-motion: reduce) {
     .rally-hop, .rally-roll, .rally-shadow { animation: none; }
     .rally-shadow { opacity: .4; }
+    .rally-arrive-mark, .rally-arrive-late { animation: rally-arrive 300ms ease-out both; }
   }
 `;
 
@@ -100,6 +166,16 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
   // Before the first paint of this mount: join the shared clock. A negative
   // delay starts an animation part-way through, so a remount carries on from
   // the phase the last one reached instead of starting the bounce over.
+  // Counted, and lifted off on the way out (see liftSplash).
+  useBeforePaint(() => {
+    mountedCount += 1;
+    const el = root.current;
+    return () => {
+      mountedCount -= 1;
+      if (el && mountedCount === 0) liftSplash(el);
+    };
+  }, []);
+
   useBeforePaint(() => {
     arrived = true;
     const el = root.current;
@@ -139,7 +215,7 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
     <div ref={root} style={{ minHeight: "100vh", background: SPLASH_BG, display: "grid", placeItems: "center", padding: 24 }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      <div className={firstRef.current ? "rally-arrive" : undefined} style={{ textAlign: "center" }}>
+      <div className={firstRef.current ? "rally-arrive-mark" : undefined} style={{ textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
           <svg width="74" height="102" viewBox="20 21 46 63" aria-hidden="true" style={{ display: "block" }}>
             <path fill={SPLASH_INK} d="M44.28 82.84L44.28 82.84Q40.59 82.84 38.19 81.75Q35.80 80.66 34.45 79.56Q33.11 78.47 32.60 78.47L32.60 78.47Q32.23 78.47 31.45 79.17Q30.67 79.86 29.73 80.78Q28.78 81.71 27.96 82.40Q27.14 83.09 26.68 83.09L26.68 83.09Q26.43 83.09 26.09 82.86Q25.76 82.63 25.67 82.25L25.67 82.25L22.69 62.76Q22.65 62.47 22.69 62.30Q22.73 62.13 22.82 62.09L22.82 62.09Q22.95 62.01 23.09 62.11Q23.24 62.22 23.36 62.43L23.36 62.43Q27.44 70.32 30.88 74.55Q34.33 78.77 37.31 80.36Q40.29 81.96 43.06 81.96L43.06 81.96Q47.35 81.96 49.89 79.69Q52.43 77.42 52.43 72.80L52.43 72.80Q52.43 69.86 51.27 67.49Q50.12 65.12 47.39 63.18Q44.66 61.25 39.91 59.61L39.91 59.61Q33.11 57.26 29.01 54.34Q24.92 51.42 23.09 47.83Q21.26 44.24 21.26 39.79L21.26 39.79Q21.26 34.62 23.93 30.70Q26.60 26.77 31.32 24.56Q36.05 22.36 42.27 22.36L42.27 22.36Q45.50 22.36 47.64 23.12Q49.78 23.87 51.11 24.63Q52.43 25.38 53.10 25.38L53.10 25.38Q53.77 25.38 55.14 24.56Q56.50 23.75 57.81 22.93Q59.11 22.11 59.70 22.11L59.70 22.11Q59.91 22.11 60.14 22.25Q60.37 22.40 60.41 22.78L60.41 22.78L65.03 41.72Q65.07 42.06 65.03 42.18Q64.99 42.31 64.86 42.39L64.86 42.39Q64.78 42.44 64.61 42.35Q64.44 42.27 64.36 42.10L64.36 42.10Q59.86 34.54 56.27 30.45Q52.68 26.35 49.51 24.82Q46.34 23.28 43.19 23.28L43.19 23.28Q39.28 23.28 36.78 25.91Q34.28 28.53 34.28 33.03L34.28 33.03Q34.28 36.09 35.38 38.53Q36.47 40.97 39.03 42.94Q41.59 44.91 46.05 46.47L46.05 46.47Q53.19 48.99 57.32 51.84Q61.46 54.70 63.20 58.10Q64.95 61.50 64.95 65.70L64.95 65.70Q64.95 70.49 62.49 74.38Q60.03 78.26 55.41 80.55Q50.79 82.84 44.28 82.84Z" />
@@ -162,7 +238,7 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
           </div>
         </div>
         {/* The one thing that changes between the three screens. */}
-        <div key={label} className="rally-arrive" style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: SPLASH_MUTED, marginTop: 18 }}>
+        <div key={label} className={firstRef.current ? "rally-arrive-late" : "rally-arrive"} style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: SPLASH_MUTED, marginTop: 18 }}>
           {label}
         </div>
       </div>

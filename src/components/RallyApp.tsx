@@ -107,7 +107,7 @@ import { FRIENDLY_LEAGUE_ID, isFriendlyLeague } from "@/lib/leagueData";
 /** Kept in step with the id Dashboard mounts for ?__dev_auto=1. */
 const DEV_LEAGUE_ID = "g_debug";
 const DEV_SEED_KEY = "g_main";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { LoadingScreen, splashHasLifted } from "@/components/ui/LoadingScreen";
 import { WhatsNew } from "@/components/home/WhatsNew";
 import { RELEASE } from "@/lib/whatsNew";
 import { predictProb } from "@/core/predict";
@@ -1395,7 +1395,10 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   );
   // Opening a club: Home's shape in grey (2026-10-31), not a splash — the
   // branded splash is for the app starting, this is just the club arriving.
-  if (loading) return <AppSkeleton />;
+  // A cold open keeps the splash up until the club is ready, so it lifts
+  // straight off the real screen (LoadingScreen's liftSplash); a club switch
+  // later on shows the skeleton.
+  if (loading) return splashHasLifted() ? <AppSkeleton /> : <LoadingScreen label="Loading your club" />;
 
   if (claimUI) {
     const showSuggestion = claimUI.candidate && !declinedCandidate;
