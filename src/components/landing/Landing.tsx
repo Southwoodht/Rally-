@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import {
-  FEED_CARD, FEED_HAIRLINE, FEED_PAGE, FEED_TEXT_HI, FEED_TEXT_MID, body, display, tabular,
+  FEED_CARD, FEED_HAIRLINE, FEED_PAGE, FEED_TEXT_HI, FEED_TEXT_MID, body, display,
 } from "@/lib/theme";
 
 /**
@@ -26,7 +26,7 @@ const SPORTS = "tennis, padel, racketball, squash and pickleball";
 export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; onJoin: () => void }) {
   return (
     <div data-theme="rally" className="lp" style={{ minHeight: "100vh", background: FEED_PAGE, color: FEED_TEXT_HI, fontFamily: body }}>
-      <style>{CSS}</style>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <header className="lp-bar">
         <a href="/" className="lp-brand" aria-label="Southwood home">
@@ -38,21 +38,28 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
 
       <main>
         <section className="lp-hero">
-          <h1 style={{ fontFamily: display }}>
-            Southwood <span className="lp-dot">·</span> Rankings, leagues and fixtures for racket clubs
-          </h1>
-          <p className="lp-lead">
-            Log a result in seconds, see a fair table of who&apos;s really on top, and run your
-            club&apos;s box leagues from your phone. Built for {SPORTS} clubs.
-          </p>
-          <div className="lp-ctas">
-            <button onClick={onJoin} className="lp-btn lp-filled">Join your club</button>
-            <button onClick={onSignIn} className="lp-btn lp-ghost">Sign in</button>
+          <div className="lp-hero-copy">
+            <h1 style={{ fontFamily: display }}>
+              Southwood <span className="lp-dot">·</span> Rankings, leagues and fixtures for racket clubs
+            </h1>
+            <p className="lp-lead">
+              Log a result in seconds, see a fair table of who&apos;s really on top, and run your
+              club&apos;s box leagues from your phone. Built for {SPORTS} clubs.
+            </p>
+            <div className="lp-ctas">
+              <button onClick={onJoin} className="lp-btn lp-filled">Join your club</button>
+              <button onClick={onSignIn} className="lp-btn lp-ghost">Sign in</button>
+            </div>
+          </div>
+          <div className="lp-phone" aria-hidden="true">
+            <div className="lp-phone-screen">
+              <img src="/landing/phone-profile.png" width={780} height={1688} alt="" />
+            </div>
           </div>
         </section>
 
         <Feature
-          kicker="Club tables and ratings"
+          kicker="Club tables"
           title="A table everyone trusts"
           text={<>
             Every confirmed result moves a rating that weighs who you beat, not just how often you
@@ -65,11 +72,12 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
 
         <Feature
           flip
-          kicker="Box leagues and round-robins"
+          kicker="Leagues and fixtures"
           title="Divisions that run themselves"
           text={<>
-            Set up divisions and round-robins, and the app draws the fixtures, keeps the table,
-            marks who goes up and who drops, and plans next season&apos;s boxes. One tap makes a
+            Box leagues, divisions and round-robins: the app draws the fixtures, sets the play-by
+            dates, keeps the table, marks who goes up and who drops, and plans next season&apos;s
+            boxes. Book a match with a time and a court, and everyone gets the email. One tap makes a
             share sheet for the club WhatsApp or the noticeboard: an A4 page or pictures, with a QR
             code back to the live table.
           </>}
@@ -80,15 +88,16 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
         />
 
         <Feature
-          kicker="Head-to-heads and rivalries"
+          kicker="Head-to-heads"
           title="Settle the argument"
           text={<>
             Every player gets a head-to-head record: who they&apos;re ahead of, who&apos;s ahead of
-            them, their nemesis, their biggest rivalries and their best wins. Challenge anyone in the
+            them, their nemesis, their biggest rivalries and their best wins. The hero of every
+            profile, and the line under every name in the table. Challenge anyone in the
             club straight from their profile, with the time and the court.
           </>}
           shots={[
-            { src: "/landing/h2h-record.png", w: 860, h: 975, alt: "A player's head-to-head record: ahead of 7, level with 1, behind 3" },
+            { src: "/landing/h2h-lists.png", w: 780, h: 1252, alt: "Who a player is behind and ahead of, with each head-to-head record" },
             { src: "/landing/h2h-rivals.png", w: 860, h: 770, alt: "Two rivalry cards with head-to-head records" },
           ]}
         />
@@ -102,12 +111,12 @@ export default function Landing({ onSignIn, onJoin }: { onSignIn: () => void; on
               board, and a say over who joins. Whether you run {SPORTS}, we&apos;d love to set your
               club up.
             </p>
-            <div className="lp-ctas">
-              <a className="lp-btn lp-filled" href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Setting up our club on Southwood")}`}>Get in touch</a>
-              <button onClick={onJoin} className="lp-btn lp-ghost">Join your club</button>
+            <div className="lp-email">
+              <span style={{ color: FEED_TEXT_MID }}>Email us at</span>{" "}
+              <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Setting up our club on Southwood")}`}>{CONTACT_EMAIL}</a>
             </div>
-            <div style={{ ...tabular, fontSize: 14, color: FEED_TEXT_MID, marginTop: 14 }}>
-              Or email <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: FEED_TEXT_HI }}>{CONTACT_EMAIL}</a>
+            <div className="lp-ctas">
+              <button onClick={onJoin} className="lp-btn lp-ghost">Join your club</button>
             </div>
           </div>
         </section>
@@ -150,7 +159,14 @@ const CSS = `
 .lp-bar { display: flex; align-items: center; justify-content: space-between; max-width: 1120px; margin: 0 auto;
   padding: calc(14px + env(safe-area-inset-top)) 20px 14px; }
 .lp-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.lp-hero { max-width: 820px; margin: 0 auto; padding: 40px 20px 28px; text-align: center; }
+.lp-hero { max-width: 1120px; margin: 0 auto; padding: 32px 20px 28px; text-align: center; display: grid; gap: 40px; justify-items: center; }
+.lp-hero-copy { max-width: 640px; }
+.lp-phone { width: 290px; border-radius: 46px; padding: 11px; background: #2A2118; box-shadow: 0 30px 70px rgba(42,33,24,0.28), inset 0 0 0 2px #4A3D2E; position: relative; }
+.lp-phone::before { content: ""; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 84px; height: 24px; border-radius: 14px; background: #2A2118; z-index: 2; }
+.lp-phone-screen { border-radius: 36px; overflow: hidden; background: #F8F4EB; aspect-ratio: 780 / 1688; }
+.lp-phone-screen img { width: 100%; height: auto; display: block; }
+.lp-email { font-size: 19px; font-weight: 600; margin-top: 22px; word-break: break-word; }
+.lp-email a { color: var(--lp-ink); text-decoration: underline; text-decoration-color: #B8955A; text-underline-offset: 4px; }
 .lp-hero h1 { font-size: clamp(34px, 7vw, 60px); line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
 .lp-dot { color: #B8955A; }
 .lp-lead { font-size: clamp(17px, 2.4vw, 20px); line-height: 1.5; color: var(--lp-mid); margin: 20px auto 0; max-width: 640px; font-weight: 500; }
@@ -174,7 +190,10 @@ const CSS = `
 .lp-foot a { text-decoration: none; }
 .lp-link { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
 @media (min-width: 900px) {
-  .lp-hero { padding-top: 72px; }
+  .lp-hero { grid-template-columns: 1.15fr 0.85fr; text-align: left; align-items: center; padding-top: 56px; gap: 56px; }
+  .lp-hero .lp-ctas { justify-content: flex-start; }
+  .lp-hero .lp-lead { margin-left: 0; }
+  .lp-phone { width: 320px; }
   .lp-feature { grid-template-columns: 1fr 1fr; gap: 64px; padding: 64px 32px; }
   .lp-flip .lp-copy { order: 2; }
   .lp-shots img { max-width: 400px; }
