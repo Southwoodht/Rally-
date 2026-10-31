@@ -754,8 +754,10 @@ function SettingsPage({ group, updateGroup, isCreator, doublesEnabled, competiti
     catch (e: any) { flash(e?.message || "Couldn't save that."); }
   };
   const flipOpen = async () => {
-    try { await onSetOpen(!open); setOpen(!open); flash(!open ? "Open to new players nearby" : "Invite only"); }
-    catch (e: any) { flash(e?.message || "Couldn't change that."); }
+    const next = !open;
+    setOpen(next);
+    try { await onSetOpen(next); flash(next ? "Open to new players nearby" : "Invite only"); }
+    catch (e: any) { setOpen(!next); flash(e?.message || "Couldn't change that."); }
   };
   const [busy, setBusy] = useState(false);
   const [logo, setLogo] = useState<string | null>(clubLogo ?? null);

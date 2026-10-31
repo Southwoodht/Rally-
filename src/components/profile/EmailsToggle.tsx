@@ -16,9 +16,10 @@ export function EmailsToggle({ flash }: { flash?: (m: string) => void }) {
   if (on === null) return null;
   const flip = async () => {
     const next = !on;
-    setBusy(true);
-    try { await saveEmailsOn(next); setOn(next); flash?.(next ? "Emails on" : "Emails off"); }
-    catch (e: any) { flash?.(e?.message || "Couldn't save that."); }
+    // Optimistic: the switch moves at once and moves back if the save fails.
+    setOn(next); setBusy(true);
+    try { await saveEmailsOn(next); flash?.(next ? "Emails on" : "Emails off"); }
+    catch (e: any) { setOn(!next); flash?.(e?.message || "Couldn't save that."); }
     setBusy(false);
   };
   return (
@@ -27,8 +28,8 @@ export function EmailsToggle({ flash }: { flash?: (m: string) => void }) {
         <span style={{ display: "block", fontFamily: body, fontSize: 15, color: CHALK }}>Emails</span>
         <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>Challenges, bookings, result reminders and deadlines.</span>
       </span>
-      <span style={{ width: 44, height: 26, borderRadius: 13, background: on ? BALL : MUTED, position: "relative", flexShrink: 0, marginLeft: 10, opacity: busy ? 0.6 : 1 }}>
-        <span style={{ position: "absolute", top: 3, left: on ? 21 : 3, width: 20, height: 20, borderRadius: 10, background: on ? FEED_LIME_INK : CHALK }} />
+      <span style={{ width: 44, height: 26, borderRadius: 13, background: on ? BALL : MUTED, position: "relative", flexShrink: 0, marginLeft: 10, transition: "background-color 150ms ease-out" }}>
+        <span style={{ position: "absolute", top: 3, left: on ? 21 : 3, transition: "left 180ms cubic-bezier(0.25, 1.1, 0.4, 1.15)", width: 20, height: 20, borderRadius: 10, background: on ? FEED_LIME_INK : CHALK }} />
       </span>
     </button>
   );

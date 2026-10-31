@@ -1541,48 +1541,51 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   const setLevelFor = async (id: string, level: { cat: string; sub: string } | null) => {
     const p = players.find((x) => x.id === id);
     const history = withLevelChange(p?.levelHistory, level, thisMonth());
+    // Optimistic (2026-10-31), like every save below: the screen changes
+    // first, and a refusal puts the old values back with the reason.
+    patchPlayerLocal(id, { level, levelHistory: history });
     try {
       await setPlayerLevel(id, level, history);
-      patchPlayerLocal(id, { level, levelHistory: history });
       flash("Level saved for " + fullNameOf(p));
-    } catch (e: any) { flash(e?.message || "Couldn't save that level."); throw e; }
+    } catch (e: any) { patchPlayerLocal(id, { level: p?.level, levelHistory: p?.levelHistory }); flash(e?.message || "Couldn't save that level."); throw e; }
   };
   const setHistoryFor = async (id: string, periods: any[]) => {
     const p = players.find((x) => x.id === id);
     const sealed = sealTimeline(periods);
     const open = sealed.length && sealed[sealed.length - 1].to == null ? sealed[sealed.length - 1] : null;
     const level = open ? { cat: open.cat, sub: open.sub } : (p?.level ?? null);
+    patchPlayerLocal(id, { level, levelHistory: sealed });
     try {
       await setPlayerLevel(id, level, sealed);
-      patchPlayerLocal(id, { level, levelHistory: sealed });
-    } catch (e: any) { flash(e?.message || "Couldn't save that history."); throw e; }
+    } catch (e: any) { patchPlayerLocal(id, { level: p?.level, levelHistory: p?.levelHistory }); flash(e?.message || "Couldn't save that history."); throw e; }
   };
   // Renaming anybody in the club, signed up or not (Sam, 2026-10-24).
   const setNameFor = async (id: string, name: string, last: string) => {
+    const p = players.find((x) => x.id === id);
+    patchPlayerLocal(id, { name: name.trim(), last: last.trim() || undefined });
     try {
       await setPlayerName(id, name, last);
-      patchPlayerLocal(id, { name: name.trim(), last: last.trim() || undefined });
       flash("Name saved");
-    } catch (e: any) { flash(e?.message || "Couldn't save that name."); throw e; }
+    } catch (e: any) { patchPlayerLocal(id, { name: p?.name, last: p?.last }); flash(e?.message || "Couldn't save that name."); throw e; }
   };
   // Starting rating and record: the same organiser door (Sam, 2026-10-21).
   const setStartFor = async (id: string, elo: number | null, record: { w: number; d: number; l: number } | null) => {
     const p = players.find((x) => x.id === id);
+    patchPlayerLocal(id, { initialElo: elo ?? undefined, initialRecord: record ?? undefined });
     try {
       await setPlayerStart(id, elo, record);
-      patchPlayerLocal(id, { initialElo: elo ?? undefined, initialRecord: record ?? undefined });
       flash("Starting record saved for " + fullNameOf(p));
-    } catch (e: any) { flash(e?.message || "Couldn't save that."); throw e; }
+    } catch (e: any) { patchPlayerLocal(id, { initialElo: p?.initialElo, initialRecord: p?.initialRecord }); flash(e?.message || "Couldn't save that."); throw e; }
   };
   // A UTR (schema_player_utr.sql): saved through the organiser door, then the
   // stars follow from it through setLevelFor, so the level history dates the
   // change like any other. Clearing a UTR leaves the stars where they are.
   const setUtrFor = async (id: string, utr: number | null) => {
     const p = players.find((x) => x.id === id);
+    patchPlayerLocal(id, { utr: utr ?? undefined });
     try {
       await setPlayerUtr(id, utr);
-      patchPlayerLocal(id, { utr: utr ?? undefined });
-    } catch (e: any) { flash(e?.message || "Couldn't save that UTR."); throw e; }
+    } catch (e: any) { patchPlayerLocal(id, { utr: p?.utr }); flash(e?.message || "Couldn't save that UTR."); throw e; }
     if (utr != null) await setLevelFor(id, levelForUtr(utr));
     else flash("UTR cleared for " + fullNameOf(p));
   };
@@ -2762,11 +2765,20 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             isCreator={!!myAuthId && !!leagueCreatedBy && myAuthId === leagueCreatedBy}
             doublesEnabled={!!doublesEnabled} competitionsEnabled={!!competitionsEnabled}
             hasCompetition={comps.competitions.length > 0}
-            onSetFlags={async (patch: any) => { await setLeagueFlags(leagueId, patch); onLeagueFlags?.(patch); }}
+            onSetFlags={async (patch: any) => {
+              // Optimistic: the switch flips first; every flag is a boolean
+              // flipped from its current value, so undoing is flipping back.
+              onLeagueFlags?.(patch);
+              try { await setLeagueFlags(leagueId, patch); }
+              catch (e) { onLeagueFlags?.(Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, typeof v === "boolean" ? !v : v]))); throw e; }
+            }}
             clubLogo={clubLogo}
             clubPlace={clubPlace}
             onSetPlace={async (location: string, spot: { lat: number; lng: number } | null) => { await setLeaguePlace(leagueId, location, spot); onLeagueFlags?.({ location: location.trim() || null, lat: spot?.lat ?? null, lng: spot?.lng ?? null }); }}
-            onSetOpen={async (open: boolean) => { await setLeagueOpen(leagueId, open); onLeagueFlags?.({ open_to_join: open }); }}
+            onSetOpen={async (open: boolean) => {
+              onLeagueFlags?.({ open_to_join: open });
+              try { await setLeagueOpen(leagueId, open); } catch (e) { onLeagueFlags?.({ open_to_join: !open }); throw e; }
+            }}
             onSetLogo={async (logo: string | null) => { await setLeagueLogo(leagueId, logo); onLeagueFlags?.({ logo_url: logo }); }}
             isOwner={leagueRole === "owner"}
             levelRequests={canSetLevels ? levelRequests : null}

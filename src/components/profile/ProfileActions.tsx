@@ -43,19 +43,22 @@ function FriendMenuItem({ theirAuthId, myAuthId }: { theirAuthId: string; myAuth
   };
   useEffect(load, [theirAuthId, myAuthId]);
 
-  const act = async (fn: () => Promise<unknown>) => {
+  // Optimistic: the item shows what the tap will leave behind straight
+  // away (`next`), then re-reads, which puts the truth back if it failed.
+  const act = async (fn: () => Promise<unknown>, next: FriendRow | null) => {
     if (busy) return;
-    setBusy(true);
+    setBusy(true); setRow(next);
     try { await fn(); } catch { /* the row re-reads either way */ }
     setBusy(false);
-    load();
+    getFriendshipWith(theirAuthId).then(setRow).catch(() => setRow(null));
   };
+  const asked: FriendRow = { id: "tmp", status: "pending", requester_id: myAuthId, addressee_id: theirAuthId, created_at: new Date().toISOString() };
 
   if (row === "loading") return <div style={{ ...menuItem, color: FEED_TEXT_LOW, cursor: "default" }}>Friends…</div>;
-  if (!row) return <button style={menuItem} disabled={busy} onClick={() => act(() => sendFriendRequest(theirAuthId))}><UserPlus size={16} strokeWidth={2} />Add friend</button>;
-  if (row.status === "accepted") return <button style={menuItem} disabled={busy} onClick={() => act(() => removeFriendship(row.id))}><UserX size={16} strokeWidth={2} />Remove friend</button>;
-  if (row.requester_id === myAuthId) return <button style={menuItem} disabled={busy} onClick={() => act(() => removeFriendship(row.id))}><UserX size={16} strokeWidth={2} />Cancel friend request</button>;
-  return <button style={menuItem} disabled={busy} onClick={() => act(() => acceptFriendRequest(row.id))}><Check size={16} strokeWidth={2.4} />Accept friend request</button>;
+  if (!row) return <button style={menuItem} disabled={busy} onClick={() => act(() => sendFriendRequest(theirAuthId), asked)}><UserPlus size={16} strokeWidth={2} />Add friend</button>;
+  if (row.status === "accepted") return <button style={menuItem} disabled={busy} onClick={() => act(() => removeFriendship(row.id), null)}><UserX size={16} strokeWidth={2} />Remove friend</button>;
+  if (row.requester_id === myAuthId) return <button style={menuItem} disabled={busy} onClick={() => act(() => removeFriendship(row.id), null)}><UserX size={16} strokeWidth={2} />Cancel friend request</button>;
+  return <button style={menuItem} disabled={busy} onClick={() => act(() => acceptFriendRequest(row.id), { ...row, status: "accepted" })}><Check size={16} strokeWidth={2.4} />Accept friend request</button>;
 }
 
 const menuItem: React.CSSProperties = {

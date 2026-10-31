@@ -53,24 +53,32 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
     const name = newName.trim().replace(/\s+/g, " ");
     if (!name) return;
     if (isOffensiveName(name)) { setFailed({ id: m.userId, message: OFFENSIVE_NAME_MESSAGE }); return; }
+    // Optimistic (2026-10-31): the new name shows and the box closes at
+    // once; a refusal puts the old name back and reopens the box.
+    const before = members;
+    setMembers((cur) => cur && cur.map((x) => x.userId === m.userId ? { ...x, name } : x));
+    setRenaming(null); setNewName("");
     setBusy(m.userId); setFailed(null);
     try {
       await setMemberName(leagueId, m.userId, name);
-      setRenaming(null); setNewName("");
       await load();
       onRemoved?.();
     } catch (e: any) {
+      setMembers(before); setRenaming(m.userId); setNewName(name);
       setFailed({ id: m.userId, message: e?.message || "Couldn't rename them." });
     }
     setBusy(null);
   };
 
   const change = async (m: LeagueMember, role: "owner" | "editor" | "member") => {
+    const before = members;
+    setMembers((cur) => cur && cur.map((x) => x.userId === m.userId ? { ...x, role } : x));
     setBusy(m.userId); setFailed(null); setOpen(null);
     try {
       await setLeagueRole(leagueId, m.userId, role);
       await load();
     } catch (e: any) {
+      setMembers(before);
       setFailed({ id: m.userId, message: e?.message || "Couldn't change that role." });
     }
     setBusy(null);
@@ -80,13 +88,18 @@ export function LeagueMembers({ leagueId, leagueName, onRemoved }: { leagueId: s
   // yourself. Their results stay on their player record, which is hidden from
   // the Table, so nobody's rating moves.
   const remove = async (m: LeagueMember) => {
+    // Already confirmed in two steps, so the row goes at once; a refusal
+    // brings it back with the reason.
+    const before = members;
+    setMembers((cur) => cur && cur.filter((x) => x.userId !== m.userId));
+    setConfirmRemove(null); setOpen(null);
     setBusy(m.userId); setFailed(null);
     try {
       await removeLeagueMember(leagueId, m.userId);
-      setConfirmRemove(null); setOpen(null);
       await load();
       onRemoved?.();
     } catch (e: any) {
+      setMembers(before);
       setFailed({ id: m.userId, message: e?.message || "Couldn't remove them." });
     }
     setBusy(null);

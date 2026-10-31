@@ -238,9 +238,19 @@ function Conversation({ thread, myId, onBack, onChanged, players, onOpenProfile 
     const v = text.trim();
     // A picture on its own is a message; only both being empty is nothing.
     if ((!v && !pending) || busy) return;
+    // Optimistic (2026-10-31): the bubble appears and the box clears at
+    // once; a failed send takes the bubble back out and puts the words back.
+    const img = pending;
+    const temp: MessageRow = { id: "tmp-" + Date.now(), thread_id: t.id, sender_id: myId, body: v, image_url: img, created_at: new Date().toISOString(), read_at: null };
+    setMsgs((cur) => [...(cur || []), temp]);
+    setText(""); setPending(null); setErr(null);
     setBusy(true);
-    try { await sendMessage(t.id, v, pending); setText(""); setPending(null); await load(); onChanged?.(); }
-    catch (e: any) { setErr(e?.message || "Couldn't send that."); }
+    try { await sendMessage(t.id, v, img); await load(); onChanged?.(); }
+    catch (e: any) {
+      setMsgs((cur) => (cur || []).filter((x) => x.id !== temp.id));
+      setText((cur) => cur || v); setPending((cur) => cur || img);
+      setErr(e?.message || "Couldn't send that.");
+    }
     finally { setBusy(false); }
   };
 

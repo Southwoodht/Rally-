@@ -300,12 +300,16 @@ export function PublicProfile({ id, onBack }: { id: string; /** Inside the app: 
 
   const onFriend = async () => {
     if (!authId || busy) return;
+    // Optimistic: the button says Requested / Friends at once, and goes
+    // back to what it said if the database refuses.
+    const was = friendState;
     setBusy(true);
     try {
-      if (friendState === "none") { await sendFriendRequest(authId); setFriendState("requested"); }
-      else if (friendState === "incoming" && friendRowId) { await acceptFriendRequest(friendRowId); setFriendState("friends"); }
+      if (friendState === "none") { setFriendState("requested"); await sendFriendRequest(authId); }
+      else if (friendState === "incoming" && friendRowId) { setFriendState("friends"); await acceptFriendRequest(friendRowId); }
     } catch (e) {
       console.error("Friend action failed", e);
+      setFriendState(was);
     } finally {
       setBusy(false);
     }
