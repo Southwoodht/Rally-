@@ -138,16 +138,17 @@ const BOOT_SCRIPT = `try{var a=0;for(var i=0;i<localStorage.length;i++){var k=lo
 /**
  * THE COVER (Sam, 2026-10-31): the launch picture, again, as the first thing
  * in the page — so the hand-off from iOS's image to the page is the same
- * picture. It stays up at least 400ms and at most 1.5s from the tap, then
- * fades out (300ms ease-out, the S growing to 1.04) when LoadingScreen says
- * the data is ready (window.__swSplashOut), or at 1.5s into the loading
- * screen behind it, which draws the mark in exactly the same spot.
+ * picture. Sam chose "S, then slow dissolve" (his third look at it): the S
+ * holds still at least 1.5s from the tap, then the whole screen dissolves
+ * into Home over 1s (the S easing up to 1.04) once LoadingScreen says the
+ * data is ready (window.__swSplashOut) — or at 3s regardless, into the
+ * loading screen behind it, which draws the mark in exactly the same spot.
  */
 // Never removes the cover: it belongs to React's tree, and taking a node out
 // before hydration makes React re-render the whole page (seen in the
 // preview). It only steps <html data-splash> on: "out" fades it, "done" hides
 // it — attributes on <html> React ignores (suppressHydrationWarning).
-const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0;function out(){if(gone)return;gone=1;window.__swSplashOut=null;var w=400-performance.now();setTimeout(function(){d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},340)},w>0?w:0)}window.__swSplashOut=out;setTimeout(out,Math.max(0,1500-performance.now()))})();`;
+const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0;function out(){if(gone)return;gone=1;window.__swSplashOut=null;var w=1500-performance.now();setTimeout(function(){d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},1050)},w>0?w:0)}window.__swSplashOut=out;setTimeout(out,Math.max(0,3000-performance.now()))})();`;
 const SPLASH_MARK = markSvg(`class="sw-splash-mark" aria-hidden="true" style="width:${MARK_WIDTH};height:auto;display:block"`);
 
 export default function RootLayout({ children }: { children: ReactNode }) {

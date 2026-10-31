@@ -78,9 +78,9 @@ const REDUCED = () => typeof window !== "undefined" && !!window.matchMedia?.("(p
  * THE HAND-OFF TO HOME (Sam, 2026-10-31, launch screen brief). When the last
  * loading screen of an open unmounts, the app is already underneath.
  *  - If the launch cover (#sw-splash, layout.tsx) is still up, it is told to
- *    go: it fades 300ms ease-out with the S growing to 1.04, never before
- *    400ms from the tap.
- *  - If the cover already went at its 1.5s limit, this screen was showing
+ *    go: a 1s dissolve with the S easing up to 1.04, never before 1.5s
+ *    from the tap (Sam's pick: "S, then slow dissolve").
+ *  - If the cover already went at its 3s limit, this screen was showing
  *    instead; a copy of it is left on top and leaves the same way.
  *  - Warm opens and reduce motion (data-splash="off") just cut.
  * If another loading screen mounts in the meantime — a hand-off, not the end
@@ -115,10 +115,12 @@ function liftSplash(from: HTMLElement) {
     const off = document.documentElement.getAttribute("data-splash") === "off";
     if (!copy || cover || off || REDUCED()) { copy?.remove(); return; }
     const mark = copy.querySelector<HTMLElement>(".sw-mark");
-    copy.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease-out", fill: "forwards" }).onfinish = () => copy.remove();
-    mark?.animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }], { duration: 300, easing: "ease-out", fill: "forwards" });
+    // The same slow dissolve as the cover (1s), Sam's pick.
+    const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
+    copy.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, easing: ease, fill: "forwards" }).onfinish = () => copy.remove();
+    mark?.animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }], { duration: 1000, easing: ease, fill: "forwards" });
     // Belt and braces: never leave a splash over the app.
-    window.setTimeout(() => copy.remove(), 800);
+    window.setTimeout(() => copy.remove(), 1600);
   });
 }
 

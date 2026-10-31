@@ -259,6 +259,6 @@ html[data-boot="app"] .sw-boot-loading { display: block; }
   background: #F8F4EB; place-items: center;
 }
 html[data-boot="app"]:not([data-splash="off"]):not([data-splash="done"]) #sw-splash { display: grid; }
-#sw-splash .sw-splash-mark { transition: transform 300ms ease-out; }
-html[data-splash="out"] #sw-splash { opacity: 0; pointer-events: none; transition: opacity 300ms ease-out; }
+#sw-splash .sw-splash-mark { transition: transform 1000ms cubic-bezier(0.4, 0, 0.2, 1); }
+html[data-splash="out"] #sw-splash { opacity: 0; pointer-events: none; transition: opacity 1000ms cubic-bezier(0.4, 0, 0.2, 1); }
 html[data-splash="out"] #sw-splash .sw-splash-mark { transform: scale(1.04); }
