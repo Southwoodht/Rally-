@@ -237,7 +237,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
         </div>
       )}
       {scope === "fixtures" ? (
-        <FixturesPanel onMessage={onMessage} fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId} onResolve={onResolveFixture} onBook={onBookFixture} onAddFixture={onAddFixture} onRemoveFixture={onRemoveFixture} onCreatePlayer={onCreatePlayer} canManage={canEditMatches} challengeWith={challengeWith} labelFor={fixtureLabel} noDraw={fixtureNoDraw} homeVenue={homeVenue} />
+        <FixturesPanel view={mode === "fixtures" ? "mine" : undefined} onOpenMatch={onOpenMatch} onMessage={onMessage} fixtures={fixtures || []} players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId} onResolve={onResolveFixture} onBook={onBookFixture} onAddFixture={onAddFixture} onRemoveFixture={onRemoveFixture} onCreatePlayer={onCreatePlayer} canManage={canEditMatches} challengeWith={challengeWith} labelFor={fixtureLabel} noDraw={fixtureNoDraw} homeVenue={homeVenue} />
       ) : (
         <div>
           {/* The week that just ended, above the feed of individual results.

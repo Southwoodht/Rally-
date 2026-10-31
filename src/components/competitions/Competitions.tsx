@@ -195,19 +195,28 @@ export function Competitions(props: Props) {
   const finished = competitions.filter((c) => c.status === "finished");
   if (!competitions.length && !canManage) return <>{props.children}</>;
 
+  // One row a competition (Sam, 2026-10-31): name, type, "X of Y played"
+  // with a thin bar, and the chevron. Tapping opens its page.
   const row = (c: Competition) => {
     const ce = entriesOf(c.id);
-    let sub = `${c.format === "league" ? "League" : "Knockout"} · ${ce.length} ${unit(kind, ce.length)}`;
+    const k = props.countsOf(c);
+    const total = k.played + k.unplayed;
+    let sub = `${c.format === "league" ? "League" : c.format === "knockout" ? "Knockout" : "Ladder"} · ${total ? `${k.played} of ${total} played` : `${ce.length} ${unit(kind, ce.length)}`}`;
     if (c.format === "knockout") {
       const champ = champion(knockoutBracket(ce, props.tiesOf(c)));
-      if (champ) sub = `Won by ${entryName(champ)}`;
+      if (champ) sub = `Knockout · won by ${entryName(champ)}`;
     }
     return (
       <button key={c.id} onClick={() => setOpenId(c.id)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "transparent", border: "none", padding: "11px 0", cursor: "pointer", textAlign: "left", borderTop: "0.5px solid " + FEED_HAIRLINE }}>
         <Trophy size={18} color={c.status === "running" ? FEED_LIME : FEED_TEXT_MID} strokeWidth={2} style={{ flexShrink: 0 }} />
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: "block", fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</span>
-          <span style={{ display: "block", fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>{sub}</span>
+          <span style={{ display: "block", ...tabular, fontFamily: body, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2 }}>{sub}</span>
+          {total > 0 && (
+            <span style={{ display: "block", height: 4, borderRadius: 2, background: FEED_RAISED, overflow: "hidden", marginTop: 6 }}>
+              <span style={{ display: "block", width: (k.played / total) * 100 + "%", height: "100%", background: FEED_LIME }} />
+            </span>
+          )}
         </span>
         <ChevronRight size={16} color={FEED_LIME} strokeWidth={2} style={{ flexShrink: 0 }} />
       </button>
@@ -216,10 +225,14 @@ export function Competitions(props: Props) {
 
   // sw-fix does nothing on a phone (the card, then the fixtures under it).
   // On a wide laptop (the foot of globals.css) it puts the two side by side.
+  // Your matches (the children) first, then the competitions (Sam,
+  // 2026-10-31). sw-fix does nothing on a phone; on a wide laptop (the foot
+  // of globals.css) it puts the two side by side.
   return (
     <div className="sw-fix">
+      <div className="sw-fix-main">{props.children}</div>
       <div className="sw-fix-side">
-      <SurfaceCard radius={16} pad="14px 14px 6px" style={{ marginBottom: 14 }}>
+      <SurfaceCard radius={16} pad="14px 14px 6px" style={{ marginTop: 18 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
           <span style={{ fontFamily: body, fontWeight: 600, fontSize: 15, color: FEED_TEXT_HI }}>Competitions</span>
           {canManage && (
@@ -238,7 +251,6 @@ export function Competitions(props: Props) {
         {finished.map(row)}
       </SurfaceCard>
       </div>
-      <div className="sw-fix-main">{props.children}</div>
     </div>
   );
 }
@@ -546,7 +558,7 @@ function Detail(props: Props & {
         />
       )}
 
-      <div style={{ ...label, marginBottom: 8 }}>Matches to play</div>
+      <div style={{ ...label, marginBottom: 8 }}>Matches</div>
       {props.renderFixtures(
         c,
         (round) => competitionLabel(c, n, round),

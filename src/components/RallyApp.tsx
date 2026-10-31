@@ -2609,7 +2609,9 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId}
                   onResolve={resolveFixture} onBook={bookFixture} onRemoveFixture={removeFixture}
                   canManage={canManageMatches} hideBooking emptyText={emptyText}
-                  labelFor={(f: any) => label(f.round ?? null) + playByNote(f)} noDraw={() => knockout}
+                  labelFor={(f: any) => playByNote(f).replace(/^ · /, "")} noDraw={() => knockout}
+                  view="rounds" onOpenMatch={setMatchDetailId}
+                  roundTitle={(r: number) => { const t = label(r).split(" · "); return t[t.length - 1]; }}
                 />
               )}
             >
