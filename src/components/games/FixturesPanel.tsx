@@ -10,8 +10,8 @@ import { Empty } from "@/components/ui/atoms";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { predictProb } from "@/core/predict";
-import { formatMatchDateTime, fullNameOf } from "@/lib/format";
-import { londonDay } from "@/core/seasons";
+import { formatMatchDate, formatMatchDateTime, fullNameOf } from "@/lib/format";
+import { londonDay, londonDayStart } from "@/core/seasons";
 import {
   DOT_LOSS, FORM_LOSS, FORM_WIN, FEED_CARD, FEED_HAIRLINE, FEED_LIME, FEED_LIME_INK, FEED_RAISED,
   FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body, miniInput, tabular,
@@ -353,7 +353,10 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
     const p1 = prob(f.p1, f.p2);
     const chance = mine && f.p2 === meId ? 100 - p1 : p1;
     const bookedAt = timeOf(f.booked);
-    const sub = [labelFor?.(f), bookedAt != null ? formatMatchDateTime(f.booked) : null, f.venue?.name ? venueLabel(f.venue) : null].filter(Boolean).join(" · ");
+    // Booked: the time it's booked for. Not booked: the day it must be
+    // played by (Sam, 2026-10-31).
+    const when = bookedAt != null ? formatMatchDateTime(f.booked) : f.playBy ? "play by " + formatMatchDate(londonDayStart(f.playBy)) : null;
+    const sub = [labelFor?.(f), when, f.venue?.name ? venueLabel(f.venue) : null].filter(Boolean).join(" · ");
     const action = bookedAt == null ? "Book" : bookedAt < Date.now() ? "Result" : "Booked";
     const overdue = isOverdue(f);
     return (

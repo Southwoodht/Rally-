@@ -2609,7 +2609,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                   players={players} elo={elo} matches={matches} nameOf={nameOf} meId={meId}
                   onResolve={resolveFixture} onBook={bookFixture} onRemoveFixture={removeFixture}
                   canManage={canManageMatches} hideBooking emptyText={emptyText}
-                  labelFor={(f: any) => playByNote(f).replace(/^ · /, "")} noDraw={() => knockout}
+                  noDraw={() => knockout}
                   view="rounds" onOpenMatch={setMatchDetailId}
                   roundTitle={(r: number) => { const t = label(r).split(" · "); return t[t.length - 1]; }}
                 />
@@ -2683,14 +2683,16 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
               renderFixtures={(c, label, knockout, emptyText) => (
                 <DoublesFixtures
                   players={players}
-                  fixtures={doublesCompetitionView(c.id, doubles.fixtures, doubles.matches).unplayed as any}
+                  // Every tie, played or not: the rounds view lists both.
+                  fixtures={doubles.fixtures.filter((f) => f.competitionId === c.id)}
                   stats={doubles.stats}
                   meId={meId}
                   canManage={!!canManageMatches}
                   unavailable={false}
                   hideBooking
                   emptyText={emptyText}
-                  labelFor={(f) => label(f.round) + playByNote(f)}
+                  view="rounds" matches={doubles.matches} onOpenMatch={setEditDoublesId}
+                  roundTitle={(r: number) => { const t = label(r).split(" · "); return t[t.length - 1]; }}
                   noDraw={() => knockout}
                   onCreatePlayer={addPlayer}
                   onBook={async () => { /* hidden inside a competition */ }}
@@ -2714,6 +2716,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
                 onComplete={async (f, m) => { await doubles.complete(f, { ...m, enteredBy: meId }); flash("Logged"); }}
                 labelFor={compLabelFor}
                 noDraw={compNoDraw}
+                view="mine"
               />
             </Competitions>
           </div>
