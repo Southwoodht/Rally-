@@ -4,6 +4,8 @@ import {
   Bricolage_Grotesque, Cormorant_Garamond, DM_Sans, Fraunces, Sora, Space_Grotesk,
 } from "next/font/google";
 import { THEME_BOOT_SCRIPT } from "@/lib/themes";
+import { MARK_WIDTH, markSvg } from "@/lib/splashMark";
+import SPLASH_DEVICES from "@/lib/splashDevices.json";
 import "./globals.css";
 import { MotionLayer } from "@/components/ui/Motion";
 
@@ -98,6 +100,14 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Southwood",
+    // The home-screen launch picture iOS shows between the tap and the first
+    // paint (Sam, 2026-10-31): cream, the S mark centred at 22% width, one per
+    // iPhone size. Made by scripts/build-splash.cjs; the cover below picks up
+    // in exactly the same place, so nothing flashes white or black.
+    startupImage: SPLASH_DEVICES.map((d) => ({
+      url: `/splash/splash-${d.w * d.r}x${d.h * d.r}.png`,
+      media: `(device-width: ${d.w}px) and (device-height: ${d.h}px) and (-webkit-device-pixel-ratio: ${d.r}) and (orientation: portrait)`,
+    })),
   },
 };
 
@@ -119,7 +129,26 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const BOOT_SCRIPT = `try{var a=0;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||"";if(/^sb-.*-auth-token$/.test(k)){a=1;break}}if(/[?&](join|club)=/.test(location.search)||/access_token|type=recovery/.test(location.hash))a=1;if(a)document.documentElement.setAttribute("data-boot","app")}catch(e){}`;
+// The cover: who gets it. Only an app open (a saved session, an invite or
+// sheet link — the same test as data-boot), never a signed-out visitor or a
+// crawler; and not on a warm open (this tab has already shown it once, so a
+// reload or coming back to the app) or under reduce motion, which just cut.
+const BOOT_SCRIPT = `try{var a=0;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||"";if(/^sb-.*-auth-token$/.test(k)){a=1;break}}if(/[?&](join|club)=/.test(location.search)||/access_token|type=recovery/.test(location.hash))a=1;if(a)document.documentElement.setAttribute("data-boot","app");var w=0;try{w=sessionStorage.getItem("sw.splash")}catch(e){}if(!a||w||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.setAttribute("data-splash","off")}catch(e){}`;
+
+/**
+ * THE COVER (Sam, 2026-10-31): the launch picture, again, as the first thing
+ * in the page — so the hand-off from iOS's image to the page is the same
+ * picture. It stays up at least 400ms and at most 1.5s from the tap, then
+ * fades out (300ms ease-out, the S growing to 1.04) when LoadingScreen says
+ * the data is ready (window.__swSplashOut), or at 1.5s into the loading
+ * screen behind it, which draws the mark in exactly the same spot.
+ */
+// Never removes the cover: it belongs to React's tree, and taking a node out
+// before hydration makes React re-render the whole page (seen in the
+// preview). It only steps <html data-splash> on: "out" fades it, "done" hides
+// it — attributes on <html> React ignores (suppressHydrationWarning).
+const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0;function out(){if(gone)return;gone=1;window.__swSplashOut=null;var w=400-performance.now();setTimeout(function(){d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},340)},w>0?w:0)}window.__swSplashOut=out;setTimeout(out,Math.max(0,1500-performance.now()))})();`;
+const SPLASH_MARK = markSvg(`class="sw-splash-mark" aria-hidden="true" style="width:${MARK_WIDTH};height:auto;display:block"`);
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -147,7 +176,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             it checks). globals.css reads data-boot. */}
         <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
-      <body>{children}<MotionLayer /></body>
+      <body>
+        <div id="sw-splash" aria-hidden="true" dangerouslySetInnerHTML={{ __html: SPLASH_MARK }} />
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
+        {children}<MotionLayer />
+      </body>
     </html>
   );
 }

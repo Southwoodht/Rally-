@@ -250,3 +250,15 @@ body {
 .sw-boot-loading { display: none; }
 html[data-boot="app"] .sw-boot-landing { display: none; }
 html[data-boot="app"] .sw-boot-loading { display: block; }
+
+/* The launch cover (layout.tsx): the cream screen with the S mark, exactly
+ * where iOS's launch image and LoadingScreen put it. Hidden unless the boot
+ * script says this is an app open; the script removes it otherwise. */
+#sw-splash {
+  display: none; position: fixed; inset: 0; z-index: 10000;
+  background: #F8F4EB; place-items: center;
+}
+html[data-boot="app"]:not([data-splash="off"]):not([data-splash="done"]) #sw-splash { display: grid; }
+#sw-splash .sw-splash-mark { transition: transform 300ms ease-out; }
+html[data-splash="out"] #sw-splash { opacity: 0; pointer-events: none; transition: opacity 300ms ease-out; }
+html[data-splash="out"] #sw-splash .sw-splash-mark { transform: scale(1.04); }

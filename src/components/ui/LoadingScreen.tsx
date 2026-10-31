@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { body } from "@/lib/theme";
+import { BALL_DEFS, BALL_SVG, MARK_BG, MARK_INK, MARK_VIEWBOX, MARK_WIDTH, S_PATH } from "@/lib/splashMark";
 
 /**
  * The first thing anybody sees.
@@ -50,7 +51,7 @@ const CYCLE_MS = 1200;
 /** One full turn of the ball: two bounces, so it rolls, not spins. */
 const SPIN_MS = CYCLE_MS * 2;
 /** How high it goes. */
-const HEIGHT = 34;
+const HEIGHT = 14; // in the drawing's units (about 18px on a phone)
 
 /** The icon's own colours (public/icon.svg). */
 const SPLASH_BG = "#F8F4EB";
@@ -74,50 +75,50 @@ export const splashHasLifted = () => revealed;
 const REDUCED = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * THE LIFT (Sam, 2026-10-31: "a slow welcome kind of fade in"). When the
- * last loading screen of an open unmounts, the app is already underneath it.
- * A copy of the splash is left on top, on the same bounce clock so the ball
- * does not jump, and it fades away slowly, 1.1s, with nothing moving. If
- * another loading screen mounts in the meantime — a hand-off, not the end —
- * the copy is removed before it is ever seen to change.
+ * THE HAND-OFF TO HOME (Sam, 2026-10-31, launch screen brief). When the last
+ * loading screen of an open unmounts, the app is already underneath.
+ *  - If the launch cover (#sw-splash, layout.tsx) is still up, it is told to
+ *    go: it fades 300ms ease-out with the S growing to 1.04, never before
+ *    400ms from the tap.
+ *  - If the cover already went at its 1.5s limit, this screen was showing
+ *    instead; a copy of it is left on top and leaves the same way.
+ *  - Warm opens and reduce motion (data-splash="off") just cut.
+ * If another loading screen mounts in the meantime — a hand-off, not the end
+ * — nothing happens.
  */
 function liftSplash(from: HTMLElement) {
-  // Hidden (signed-out visitors: the landing page is showing, not this):
-  // nothing to lift. Not lifted, so not "shown" either: after signing in, the next wait must
-  // still get the splash, not the skeleton. (It did, and logging in went
-  // splash → grey skeleton → app: Sam, "quite glitchy logging in".)
-  if (!from.getClientRects().length) return;
-  const copy = from.cloneNode(true) as HTMLElement;
-  copy.removeAttribute("data-on-clock");
-  Object.assign(copy.style, { position: "fixed", inset: "0", zIndex: "9999", pointerEvents: "none", minHeight: "0" });
-  copy.setAttribute("aria-hidden", "true");
-  copy.setAttribute("data-no-arrive", "");
-  // A copy would replay its entrance; it is leaving, not arriving.
-  copy.querySelectorAll(".rally-arrive, .rally-arrive-mark, .rally-arrive-late").forEach((n) => n.classList.remove("rally-arrive", "rally-arrive-mark", "rally-arrive-late"));
-  document.body.appendChild(copy);
-  // A cloned node restarts its animations; put it back on the shared clock.
-  const now = (document.timeline?.currentTime as number | null) ?? performance.now();
-  const elapsed = clockStart === null ? 0 : now - clockStart;
-  copy.querySelectorAll<HTMLElement>("[data-cycle]").forEach((node) => {
-    node.style.animationDelay = `-${elapsed % Number(node.dataset.cycle)}ms`;
-  });
+  // Hidden (signed out: the landing page is showing, not this): nothing to
+  // lift, and not "shown" either, so the wait after signing in still gets
+  // this screen rather than the skeleton.
+  const visible = !!from.getClientRects().length;
+  const copy = visible ? (from.cloneNode(true) as HTMLElement) : null;
+  if (copy) {
+    copy.removeAttribute("data-on-clock");
+    Object.assign(copy.style, { zIndex: "9999", pointerEvents: "none" });
+    copy.setAttribute("aria-hidden", "true");
+    copy.setAttribute("data-no-arrive", "");
+    copy.querySelectorAll(".rally-arrive").forEach((n) => n.classList.remove("rally-arrive"));
+    document.body.appendChild(copy);
+    // A cloned node restarts its animations; put it back on the shared clock.
+    const now = (document.timeline?.currentTime as number | null) ?? performance.now();
+    const elapsed = clockStart === null ? 0 : now - clockStart;
+    copy.querySelectorAll<HTMLElement>("[data-cycle]").forEach((node) => {
+      node.style.animationDelay = `-${elapsed % Number(node.dataset.cycle)}ms`;
+    });
+  }
   requestAnimationFrame(() => {
-    // Another loading screen took over (a hand-off, or React's development
-    // double mount): this was not the end of the wait.
-    if (mountedCount > 0) { copy.remove(); return; }
+    if (mountedCount > 0) { copy?.remove(); return; }
+    const cover = (window as any).__swSplashOut as (() => void) | null | undefined;
+    if (cover) cover();
+    if (!visible) return;
     revealed = true;
-    if (REDUCED()) { copy.remove(); return; }
-    // A slow, still dissolve (Sam, 2026-10-31: "a slow welcome kind of fade
-    // in"): nothing moves, scales or blurs; the cream simply gives way to
-    // the app over most of a second. The first try scaled and blurred the
-    // splash and rose the page in a row at a time, and read as glitchy.
-    const anim = copy.animate(
-      [{ opacity: 1 }, { opacity: 1, offset: 0.15 }, { opacity: 0 }],
-      { duration: 1100, easing: "cubic-bezier(0.45, 0, 0.25, 1)", fill: "forwards" },
-    );
-    anim.onfinish = () => copy.remove();
+    const off = document.documentElement.getAttribute("data-splash") === "off";
+    if (!copy || cover || off || REDUCED()) { copy?.remove(); return; }
+    const mark = copy.querySelector<HTMLElement>(".sw-mark");
+    copy.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: "ease-out", fill: "forwards" }).onfinish = () => copy.remove();
+    mark?.animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }], { duration: 300, easing: "ease-out", fill: "forwards" });
     // Belt and braces: never leave a splash over the app.
-    window.setTimeout(() => copy.remove(), 2000);
+    window.setTimeout(() => copy.remove(), 800);
   });
 }
 
@@ -134,22 +135,15 @@ const CSS = `
     100% { transform: scaleX(1);   opacity: .5; }
   }
   @keyframes rally-arrive { from { opacity: 0 } to { opacity: 1 } }
-  @keyframes rally-arrive-mark {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
 
-  .rally-hop    { animation: rally-bounce ${CYCLE_MS}ms infinite; will-change: transform; }
-  .rally-roll   { animation: rally-roll ${SPIN_MS}ms linear infinite; transform-origin: 50% 50%; }
-  .rally-shadow { animation: rally-shadow ${CYCLE_MS}ms infinite; transform-origin: 50% 50%; }
+  .rally-hop    { animation: rally-bounce ${CYCLE_MS}ms infinite; }
+  .rally-roll   { animation: rally-roll ${SPIN_MS}ms linear infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+  .rally-shadow { animation: rally-shadow ${CYCLE_MS}ms infinite; transform-box: fill-box; transform-origin: 50% 50%; }
   .rally-arrive { animation: rally-arrive 450ms ease-out both; }
-  .rally-arrive-mark { animation: rally-arrive-mark 900ms cubic-bezier(.45, 0, .25, 1) both; }
-  .rally-arrive-late { animation: rally-arrive 700ms ease-out 350ms both; }
 
   @media (prefers-reduced-motion: reduce) {
     .rally-hop, .rally-roll, .rally-shadow { animation: none; }
     .rally-shadow { opacity: .4; }
-    .rally-arrive-mark, .rally-arrive-late { animation: rally-arrive 300ms ease-out both; }
   }
 `;
 
@@ -207,42 +201,30 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
     });
   }, []);
 
-  // The icon on its own cream (Sam, 2026-10-24: the splash should match the
-  // home-screen icon): the S still, the gold ball beside it doing the
-  // bouncing, on the shared clock as before. Fixed colours rather than theme
-  // tokens, because this is the icon and the icon is the same in every theme.
+  // The mark exactly where the launch picture and the cover put it
+  // (lib/splashMark.ts): one drawing, centred on the whole screen at
+  // MARK_WIDTH, so nothing jumps between them. Only the ball moves here — it
+  // bounces and rolls in the drawing's own units — and the words sit below,
+  // outside the centring, so they never push the mark off its spot.
   return (
-    <div ref={root} style={{ minHeight: "100vh", background: SPLASH_BG, display: "grid", placeItems: "center", padding: 24 }}>
+    <div ref={root} data-no-arrive="" style={{ position: "fixed", inset: 0, background: MARK_BG, display: "grid", placeItems: "center", zIndex: 1 }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-
-      <div className={firstRef.current ? "rally-arrive-mark" : undefined} style={{ textAlign: "center" }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4 }}>
-          <svg width="74" height="102" viewBox="20 21 46 63" aria-hidden="true" style={{ display: "block" }}>
-            <path fill={SPLASH_INK} d="M44.28 82.84L44.28 82.84Q40.59 82.84 38.19 81.75Q35.80 80.66 34.45 79.56Q33.11 78.47 32.60 78.47L32.60 78.47Q32.23 78.47 31.45 79.17Q30.67 79.86 29.73 80.78Q28.78 81.71 27.96 82.40Q27.14 83.09 26.68 83.09L26.68 83.09Q26.43 83.09 26.09 82.86Q25.76 82.63 25.67 82.25L25.67 82.25L22.69 62.76Q22.65 62.47 22.69 62.30Q22.73 62.13 22.82 62.09L22.82 62.09Q22.95 62.01 23.09 62.11Q23.24 62.22 23.36 62.43L23.36 62.43Q27.44 70.32 30.88 74.55Q34.33 78.77 37.31 80.36Q40.29 81.96 43.06 81.96L43.06 81.96Q47.35 81.96 49.89 79.69Q52.43 77.42 52.43 72.80L52.43 72.80Q52.43 69.86 51.27 67.49Q50.12 65.12 47.39 63.18Q44.66 61.25 39.91 59.61L39.91 59.61Q33.11 57.26 29.01 54.34Q24.92 51.42 23.09 47.83Q21.26 44.24 21.26 39.79L21.26 39.79Q21.26 34.62 23.93 30.70Q26.60 26.77 31.32 24.56Q36.05 22.36 42.27 22.36L42.27 22.36Q45.50 22.36 47.64 23.12Q49.78 23.87 51.11 24.63Q52.43 25.38 53.10 25.38L53.10 25.38Q53.77 25.38 55.14 24.56Q56.50 23.75 57.81 22.93Q59.11 22.11 59.70 22.11L59.70 22.11Q59.91 22.11 60.14 22.25Q60.37 22.40 60.41 22.78L60.41 22.78L65.03 41.72Q65.07 42.06 65.03 42.18Q64.99 42.31 64.86 42.39L64.86 42.39Q64.78 42.44 64.61 42.35Q64.44 42.27 64.36 42.10L64.36 42.10Q59.86 34.54 56.27 30.45Q52.68 26.35 49.51 24.82Q46.34 23.28 43.19 23.28L43.19 23.28Q39.28 23.28 36.78 25.91Q34.28 28.53 34.28 33.03L34.28 33.03Q34.28 36.09 35.38 38.53Q36.47 40.97 39.03 42.94Q41.59 44.91 46.05 46.47L46.05 46.47Q53.19 48.99 57.32 51.84Q61.46 54.70 63.20 58.10Q64.95 61.50 64.95 65.70L64.95 65.70Q64.95 70.49 62.49 74.38Q60.03 78.26 55.41 80.55Q50.79 82.84 44.28 82.84Z" />
-          </svg>
-          <div style={{ height: 30 + HEIGHT, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", marginBottom: 2 }}>
-            <div className="rally-hop" data-cycle={CYCLE_MS}>
-              <svg className="rally-roll" data-cycle={SPIN_MS} width="28" height="28" viewBox="70.5 64.5 17 17" aria-hidden="true" style={{ display: "block" }}>
-                <defs>
-                  <radialGradient id="rally-loader-gold" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stopColor="#E2C98E" /><stop offset="1" stopColor="#B8955A" /></radialGradient>
-                  <clipPath id="rally-loader-ball"><circle cx="79" cy="73" r="8.5" /></clipPath>
-                </defs>
-                <circle cx="79" cy="73" r="8.5" fill="url(#rally-loader-gold)" />
-                <g clipPath="url(#rally-loader-ball)" fill="none" stroke="#FFFFFF" strokeWidth="1.3" strokeLinecap="round">
-                  <path d="M70.5 66.6 Q77.7 73 70.5 79.4" />
-                  <path d="M87.5 66.6 Q80.3 73 87.5 79.4" />
-                </g>
-              </svg>
-            </div>
-            <div className="rally-shadow" data-cycle={CYCLE_MS} style={{ width: 22, height: 5, borderRadius: "50%", background: "#CDBF9F", marginTop: 4 }} />
-          </div>
-        </div>
-        {/* The one thing that changes between the three screens. */}
-        <div key={label} className={firstRef.current ? "rally-arrive-late" : "rally-arrive"} style={{ fontFamily: body, fontWeight: 600, fontSize: 14, color: SPLASH_MUTED, marginTop: 18 }}>
+      <div className="sw-mark" style={{ position: "relative", width: MARK_WIDTH }}>
+        <svg viewBox={MARK_VIEWBOX} aria-hidden="true" style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}>
+          {/* Own ids: the cover's copies of these may be display:none, and a
+              gradient inside a hidden element paints nothing. */}
+          <defs dangerouslySetInnerHTML={{ __html: BALL_DEFS.replace(/sw-mark-/g, "sw-load-") }} />
+          <ellipse className="rally-shadow" data-cycle={CYCLE_MS} cx="79" cy="83.4" rx="6" ry="1.1" fill="#CDBF9F" />
+          <path fill={MARK_INK} d={S_PATH} />
+          <g className="rally-hop" data-cycle={CYCLE_MS}>
+            <g className="rally-roll" data-cycle={SPIN_MS} dangerouslySetInnerHTML={{ __html: BALL_SVG.replace(/sw-mark-/g, "sw-load-") }} />
+          </g>
+        </svg>
+        {/* The one thing that changes between the loading screens. */}
+        <div key={label} className="rally-arrive" style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontFamily: body, fontWeight: 600, fontSize: 14, color: SPLASH_MUTED, marginTop: 22 }}>
           {label}
         </div>
       </div>
     </div>
-
   );
 }
