@@ -1,11 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Check, MessageSquare, UserPlus, UserX } from "lucide-react";
+import { Check, MessageSquare, MoreHorizontal, Share, UserPlus, UserX } from "lucide-react";
 import { CrossedRackets } from "@/components/ui/CrossedRackets";
 import { SurfaceCard } from "@/components/ui/Surfaces";
 import { acceptFriendRequest, getFriendshipWith, removeFriendship, sendFriendRequest, type FriendRow } from "@/lib/friends";
 import {
-  FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, body,
+  FEED_CARD, FEED_LIME, FEED_LIME_INK, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, body,
 } from "@/lib/theme";
 
 // Message them, and add them as a friend.
@@ -27,10 +27,13 @@ const btnBase: React.CSSProperties = {
   fontFamily: body, fontWeight: 600, fontSize: 13.5, flex: 1, minWidth: 0,
 };
 
-const lime: React.CSSProperties = { ...btnBase, background: FEED_LIME, color: FEED_LIME_INK };
-const quiet: React.CSSProperties = { ...btnBase, background: FEED_RAISED, color: FEED_TEXT_HI };
+const filled: React.CSSProperties = { ...btnBase, background: FEED_LIME, color: FEED_LIME_INK, padding: "12px 14px", fontSize: 15 };
+const outline: React.CSSProperties = { ...btnBase, background: "transparent", color: FEED_TEXT_HI, boxShadow: "inset 0 0 0 1.5px " + FEED_TEXT_HI, padding: "12px 14px", fontSize: 15 };
+const dots: React.CSSProperties = { ...btnBase, flex: "0 0 auto", width: 46, padding: 0, background: "transparent", color: FEED_TEXT_HI, boxShadow: "inset 0 0 0 1.5px " + FEED_TEXT_HI };
 
-function FriendButton({ theirAuthId, myAuthId }: { theirAuthId: string; myAuthId: string }) {
+/** The friend action, as one row of the ⋯ menu (Sam, 2026-10-31: Friends
+ *  moved off the button row). Re-reads after every tap. */
+function FriendMenuItem({ theirAuthId, myAuthId }: { theirAuthId: string; myAuthId: string }) {
   const [row, setRow] = useState<FriendRow | null | "loading">("loading");
   const [busy, setBusy] = useState(false);
 
@@ -40,46 +43,25 @@ function FriendButton({ theirAuthId, myAuthId }: { theirAuthId: string; myAuthId
   };
   useEffect(load, [theirAuthId, myAuthId]);
 
-  // Nothing rather than a flicker of the wrong state: "Add friend" appearing
-  // for a moment on somebody you are already friends with is worse than a
-  // gap that fills in.
-  if (row === "loading") return null;
-
   const act = async (fn: () => Promise<unknown>) => {
     if (busy) return;
     setBusy(true);
-    try { await fn(); } catch { /* the button re-reads either way */ }
+    try { await fn(); } catch { /* the row re-reads either way */ }
     setBusy(false);
     load();
   };
 
-  if (!row) {
-    return (
-      <button style={quiet} disabled={busy} onClick={() => act(() => sendFriendRequest(theirAuthId))}>
-        <UserPlus size={15} strokeWidth={2} color={FEED_LIME} />Add friend
-      </button>
-    );
-  }
-  if (row.status === "accepted") {
-    return (
-      <button style={quiet} disabled={busy} onClick={() => act(() => removeFriendship(row.id))}>
-        <Check size={15} strokeWidth={2.4} color={FEED_LIME} />Friends
-      </button>
-    );
-  }
-  if (row.requester_id === myAuthId) {
-    return (
-      <button style={{ ...quiet, color: FEED_TEXT_MID }} disabled={busy} onClick={() => act(() => removeFriendship(row.id))}>
-        <UserX size={15} strokeWidth={2} />Request sent
-      </button>
-    );
-  }
-  return (
-    <button style={lime} disabled={busy} onClick={() => act(() => acceptFriendRequest(row.id))}>
-      <Check size={15} strokeWidth={2.4} />Accept request
-    </button>
-  );
+  if (row === "loading") return <div style={{ ...menuItem, color: FEED_TEXT_LOW, cursor: "default" }}>Friends…</div>;
+  if (!row) return <button style={menuItem} disabled={busy} onClick={() => act(() => sendFriendRequest(theirAuthId))}><UserPlus size={16} strokeWidth={2} />Add friend</button>;
+  if (row.status === "accepted") return <button style={menuItem} disabled={busy} onClick={() => act(() => removeFriendship(row.id))}><UserX size={16} strokeWidth={2} />Remove friend</button>;
+  if (row.requester_id === myAuthId) return <button style={menuItem} disabled={busy} onClick={() => act(() => removeFriendship(row.id))}><UserX size={16} strokeWidth={2} />Cancel friend request</button>;
+  return <button style={menuItem} disabled={busy} onClick={() => act(() => acceptFriendRequest(row.id))}><Check size={16} strokeWidth={2.4} />Accept friend request</button>;
 }
+
+const menuItem: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, width: "100%", background: "transparent", border: "none",
+  padding: "12px 14px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, textAlign: "left",
+};
 
 export interface ProfileActionsProps {
   /** Their account. Null when they have never claimed their profile. */
@@ -88,43 +70,57 @@ export interface ProfileActionsProps {
   onMessage?: (authId: string) => void;
   /** Book a match against them: Fixtures, form open, them already chosen. */
   onChallenge?: () => void;
+  /** "Share their card", in the ⋯ menu. */
+  onShare?: () => void;
 }
 
-export function ProfileActions({ theirAuthId, myAuthId, onMessage, onChallenge }: ProfileActionsProps) {
+export function ProfileActions({ theirAuthId, myAuthId, onMessage, onChallenge, onShare }: ProfileActionsProps) {
+  const [menu, setMenu] = useState(false);
   if (!myAuthId) return null;
   if (theirAuthId && theirAuthId === myAuthId) return null;
 
-  // Challenge first, for everybody in the club — somebody without an
-  // account can still be booked; the result just needs no agreement.
-  const challenge = onChallenge && (
-    <button style={lime} onClick={onChallenge}>
-      <CrossedRackets size={16} />Challenge
-    </button>
-  );
-
-  if (!theirAuthId) {
-    return (
-      <>
-      {challenge && <div style={{ display: "flex", gap: 8, marginTop: 12 }}>{challenge}</div>}
-      <SurfaceCard radius={16} style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
-          They haven&apos;t claimed their profile yet, so there is no account to
-          message or add as a friend.
-        </div>
-      </SurfaceCard>
-      </>
-    );
-  }
-
+  // Challenge filled, Message outlined, everything else behind ⋯ (Sam,
+  // 2026-10-31). Challenge is there for everybody in the club — somebody
+  // without an account can still be booked; the result needs no agreement.
+  // sw-filled keeps it filled on Southwood, whose stylesheet otherwise turns
+  // every accent button into an outline.
+  const hasMenu = !!theirAuthId || !!onShare;
   return (
-    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-      {challenge}
-      {onMessage && (
-        <button style={challenge ? quiet : lime} onClick={() => onMessage(theirAuthId)}>
-          <MessageSquare size={15} strokeWidth={2} />Message
-        </button>
+    <>
+      <div style={{ display: "flex", gap: 8, marginTop: 14, position: "relative" }}>
+        {onChallenge && (
+          <button className="sw-filled" style={filled} onClick={onChallenge}>
+            <CrossedRackets size={16} />Challenge
+          </button>
+        )}
+        {theirAuthId && onMessage && (
+          <button style={outline} onClick={() => onMessage(theirAuthId)}>
+            <MessageSquare size={15} strokeWidth={2} />Message
+          </button>
+        )}
+        {hasMenu && (
+          <button aria-label="More" aria-expanded={menu} style={dots} onClick={() => setMenu(!menu)}>
+            <MoreHorizontal size={18} strokeWidth={2.2} />
+          </button>
+        )}
+        {menu && (
+          <>
+            <div onClick={() => setMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 60 }} />
+            <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 61, minWidth: 220, background: FEED_CARD, borderRadius: 14, boxShadow: "0 8px 28px rgba(0,0,0,0.18)", overflow: "hidden" }}>
+              {theirAuthId && <FriendMenuItem theirAuthId={theirAuthId} myAuthId={myAuthId} />}
+              {onShare && <button style={{ ...menuItem, borderTop: theirAuthId ? "1px solid " + FEED_RAISED : "none" }} onClick={() => { setMenu(false); onShare(); }}><Share size={16} strokeWidth={2} />Share their card</button>}
+            </div>
+          </>
+        )}
+      </div>
+      {!theirAuthId && (
+        <SurfaceCard radius={16} style={{ marginTop: 12 }}>
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_LOW, lineHeight: 1.5 }}>
+            They haven&apos;t claimed their profile yet, so there is no account to
+            message or add as a friend.
+          </div>
+        </SurfaceCard>
       )}
-      <FriendButton theirAuthId={theirAuthId} myAuthId={myAuthId} />
-    </div>
+    </>
   );
 }

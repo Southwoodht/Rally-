@@ -69,8 +69,9 @@ select:focus {
  * So the safe-area strip is painted with --status-bg in every theme — clay on
  * paris, green on sw19, blue on melbourne — and white icons always have
  * something strong underneath. It is fixed rather than a body border so it
- * survives scrolling, and it sits below every overlay (z-index 40 against the
- * nav's 55 and the sheets' 90+) so it can never cover a sheet.
+ * survives scrolling. It sits above full-screen views and below the
+ * profile-level sheets (see z-index below); a sheet tall enough to reach the
+ * clock loses only the strip-high top of its backdrop.
  *
  * Zero height when there is no inset, which is every browser that is not an
  * installed iOS app, so nothing changes for anybody else.
@@ -83,7 +84,11 @@ body::before {
   right: 0;
   height: env(safe-area-inset-top);
   background: var(--status-bg);
-  z-index: 40;
+  /* 124: above the full-screen views — a profile (120/121) and Find a
+   * player (119) — which used to scroll their content under the clock
+   * (Sam, 2026-10-31), and below the sheets (125+), whose dimmed backdrop
+   * may cover it. */
+  z-index: 124;
   pointer-events: none;
 }
 

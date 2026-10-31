@@ -10,12 +10,13 @@ import { RatingLine } from "@/components/profile/RatingLine";
 import type { Achievement, AchievementIcon } from "@/components/profile/Achievements";
 import { computeAchievements } from "@/core/achievements";
 import { levelAt, levelNow } from "@/core/levels";
+import { utrLabel } from "@/core/utr";
 import { buildMatchQuality, shareSentence } from "@/core/matchQuality";
 import { officialTimeline } from "@/core/officialTimeline";
 import { glickoStandings } from "@/core/glicko";
 import { opponentStrength } from "@/core/official";
 import { PROVISIONAL_GAMES } from "@/lib/globalTable";
-import { topRivalries } from "@/core/rivalries";
+import { mostPlayedRivalries } from "@/core/rivalries";
 import { FriendsCard } from "@/components/profile/FriendsCard";
 import { PeopleYouMayKnow } from "@/components/social/PeopleYouMayKnow";
 import { TIER_HEIGHTS } from "@/core/stars";
@@ -219,7 +220,7 @@ export function ProfileContainer({
     const levelList = faced.filter((o) => side(o).w === side(o).l).map(oppRec);
     const levelWith = levelList.length;
 
-    const rivalries = topRivalries(pid, matches || [], 3)
+    const rivalries = mostPlayedRivalries(pid, matches || [], 2)
       .filter((v: any) => byId[v.oid])
       .map((v: any) => ({
         me: player, them: byId[v.oid],
@@ -229,30 +230,36 @@ export function ProfileContainer({
       }));
 
     const { strength: strengthOf } = opponentStrength(players || [], matches || []);
-    const bestWins = played
-      .filter((m: any) => outcome(m) === "W")
-      .map((m: any) => {
-        const oid = m.p1 === pid ? m.p2 : m.p1;
-        const lv = levelAt(byId[oid], m.date);
-        // Ranked on how strong the opponent was — everything they have
-        // ever played, blended with their level on the day — the same
-        // measure Official points use (core/official.ts opponentStrength).
-        // Tried and dropped the same day: Glicko as it stood going into the
-        // match. Sam's own pick was Charlie Henry and Adrian 2019; that put
-        // up Charlie Easey and George, because in 2019 the app had barely
-        // seen Adrian and George has no level to anchor him.
-        return {
-          matchId: m.id,
-          opponent: byId[oid],
-          rating: (() => { const v = strengthOf(oid, m.date); return Number.isFinite(v) ? v : -Infinity; })(),
-          date: m.date,
-          subtitle: (lv?.cat || "Level not recorded") + " · " + new Date(m.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }),
-        };
-      })
-      .filter((w: any) => w.opponent)
-      .sort((a: any, b: any) => b.rating - a.rating || b.date - a.date)
+    // One row per PERSON beaten (Sam, 2026-10-31): "Zaach Rodriguez ·
+    // beaten 9 times · best 17 Sep 2026 (Advanced)". People are ranked by
+    // their best win — how strong the opponent was that day, everything
+    // they have ever played blended with their level on the day, the same
+    // measure Official points use (core/official.ts opponentStrength) —
+    // and that best win is the match the row opens.
+    const winsBy: Record<string, { count: number; best: any; bestRating: number }> = {};
+    for (const m of played) {
+      if (outcome(m) !== "W") continue;
+      const oid = m.p1 === pid ? m.p2 : m.p1;
+      if (!byId[oid]) continue;
+      const v = strengthOf(oid, m.date);
+      const rating = Number.isFinite(v) ? v : -Infinity;
+      const g = (winsBy[oid] = winsBy[oid] || { count: 0, best: null, bestRating: -Infinity });
+      g.count++;
+      if (!g.best || rating > g.bestRating || (rating === g.bestRating && m.date > g.best.date)) { g.best = m; g.bestRating = rating; }
+    }
+    const bestWins = Object.keys(winsBy)
+      .sort((x, y) => winsBy[y].bestRating - winsBy[x].bestRating || winsBy[y].count - winsBy[x].count)
       .slice(0, 3)
-      .map(({ matchId, opponent, subtitle }: any) => ({ matchId, opponent, subtitle }));
+      .map((oid) => {
+        const g = winsBy[oid];
+        const lv = levelAt(byId[oid], g.best.date);
+        const when = new Date(g.best.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
+        return {
+          matchId: g.best.id,
+          opponent: byId[oid],
+          subtitle: "beaten " + (g.count === 1 ? "once" : g.count + " times") + " · best " + when + (lv?.cat ? " (" + lv.cat + ")" : ""),
+        };
+      });
 
     // The gap to whoever is directly above, which is the only rank change
     // within reach. A gap to the leader is a fact; a gap to the person one
@@ -260,39 +267,30 @@ export function ProfileContainer({
     const placedOrder = Object.keys(st.place).sort((a, b) => st.place[a] - st.place[b]);
     const above = st.place[pid] ? byId[placedOrder.filter((id) => st.place[id] < st.place[pid]).pop() as string] ?? null : null;
 
-    let gap: { headline: string; advice: string } | null = null;
-    if (isSelf && above) {
-      const places = st.place[pid] - st.place[above.id];
-      gap = {
-        headline: places === 1
-          ? "One place behind " + fullNameOf(above) + "."
-          : places + " places behind " + fullNameOf(above) + ".",
-        advice: "Beating higher-level players is the fastest way to close it.",
-      };
-    } else if (!isSelf && meId) {
-      // Somebody else's profile answers the question you actually have about
-      // them, which is how you do against them — not how far they are from
-      // the player above them, which is their business.
-      //
-      // Read from the VIEWER's book, not the owner's. `h` above is this
-      // profile's own record, so h[meId] is what they have done to you — and
-      // reading that as yours printed every head-to-head backwards: two
-      // losses to Zaach came out as "You lead Zaach 2–0". It is the same
-      // function the matches screen uses, so the orientation is fixed in one
-      // tested place rather than flipped by hand here.
-      const versus = buildMatchQuality(meId, players, matches).opponents
+    // On somebody else's profile: a slim "You vs Charlie" strip (Sam,
+    // 2026-10-31), replacing the "You lead X" card. Read from the VIEWER's
+    // book, not the owner's — `h` above is this profile's own record, and
+    // reading h[meId] as yours printed every head-to-head backwards once
+    // ("You lead Zaach 2–0" off two losses). buildMatchQuality fixes the
+    // orientation in one tested place.
+    let versus: { name: string; w: number; d: number; l: number; last: string | null } | null = null;
+    if (!isSelf && meId) {
+      const vq = buildMatchQuality(meId, players, matches).opponents
         .find((o: any) => o.player?.id === pid);
-      const x = versus?.record;
+      const x = vq?.record;
       if (x && x.w + x.d + x.l > 0) {
-        const meetings = x.w + x.d + x.l;
-        gap = {
-          headline: x.w === x.l ? "You are level with " + fullNameOf(player) + ", " + x.w + "–" + x.d + "–" + x.l + "."
-            : x.w > x.l ? "You lead " + fullNameOf(player) + " " + x.w + "–" + x.d + "–" + x.l + "."
-            : fullNameOf(player) + " leads you " + x.l + "–" + x.d + "–" + x.w + ".",
-          advice: "Across " + meetings + (meetings === 1 ? " meeting." : " meetings."),
+        const lastTs = (matches || [])
+          .filter((m: any) => countsAsPlayed(m) && ((m.p1 === meId && m.p2 === pid) || (m.p2 === meId && m.p1 === pid)))
+          .reduce((t: number, m: any) => Math.max(t, m.date || 0), 0);
+        versus = {
+          name: String(player?.name || fullNameOf(player) || "them").split(" ")[0],
+          w: x.w, d: x.d, l: x.l,
+          last: lastTs ? new Date(lastTs).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }) : null,
         };
       }
     }
+    const gap = null;
+    void above;
 
     const wins = r.w;
     const gp = played.length;
@@ -343,10 +341,13 @@ export function ProfileContainer({
     const started = player?.levelHistory?.[0]?.from;
     const startYear = started == null ? null : typeof started === "number" ? started : parseInt(String(started).split("-")[0], 10);
     const years = startYear ? new Date().getFullYear() - startYear : null;
+    void years;
+    // "age · club · level" on one line (Sam, 2026-10-31) — the stars went.
+    const lvNow = levelNow(player);
     const meta = [
       player?.age || null,
       group?.name || null,
-      years && years > 0 ? years + (years === 1 ? " year playing" : " years playing") : null,
+      lvNow ? lvNow.cat + " · " + lvNow.sub + (player?.utr != null ? " · " + utrLabel(player.utr) : "") : "No level set",
     ].filter(Boolean).join(" · ");
 
     // The verdict on who they have been playing. The same function the
@@ -359,7 +360,7 @@ export function ProfileContainer({
 
     return {
       record: { record: { w: r.w, d: r.d, l: r.l }, form: formBars, winRate: r.gp ? Math.round((r.w / r.gp) * 100) : 0, unbeatenRate: r.gp ? Math.round(((r.w + r.d) / r.gp) * 100) : undefined, currentStreak, bestStreak, rankings: period === "all" ? rankings : [] },
-      gap, playingStyle, rivalries, bestWins, opponents: { lead, behind, level: levelWith, levelList }, achievements, history,
+      gap, versus, playingStyle, rivalries, bestWins, opponents: { lead, behind, level: levelWith, levelList }, achievements, history,
       // The head-to-head hero's small row (Sam, 2026-10-30): club place as
       // "2nd of 7", and the rating with its ± (the Table's own numbers).
       standing: {
@@ -411,6 +412,7 @@ export function ProfileContainer({
       }}
       record={data.record}
       gap={data.gap}
+      versus={data.versus}
       ratingLine={
         <RatingLine
           player={player}

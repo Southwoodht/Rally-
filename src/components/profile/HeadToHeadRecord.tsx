@@ -97,13 +97,18 @@ const played = (r: OpponentRecord) => r.w + r.d + r.l;
 function Row({ r, first, note, onOpen }: { r: OpponentRecord; first: boolean; note?: string; onOpen?: (id: string) => void }) {
   const legacy = r.legacyRecord ? legacyLine(r.legacyRecord) : null;
   const go = onOpen && r.player?.id ? () => onOpen(r.player.id) : undefined;
-  const sub = note || r.levelLabel;
+  // Muted line: the note (Nemesis), their level, and how many you've played.
+  const sub = [note, r.levelLabel, played(r) ? played(r) + " played" : null].filter(Boolean).join(" · ");
   return (
     <div role={go ? "button" : undefined} onClick={go} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderTop: first ? "none" : "1px solid " + LINE, cursor: go ? "pointer" : "default" }}>
       <Avatar player={r.player} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fullNameOf(r.player)}</div>
-        {sub && <div style={{ fontFamily: body, fontWeight: note ? 600 : 500, fontSize: 13, color: note ? FEED_LOST : FEED_TEXT_MID, marginTop: 1 }}>{sub}</div>}
+        {sub && (
+          <div style={{ fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_TEXT_MID, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {note ? <><span style={{ fontWeight: 600, color: FEED_LOST }}>{note}</span>{sub.slice(note.length)}</> : sub}
+          </div>
+        )}
         {legacy && <div style={{ marginTop: 2 }}><LegacyNote text={legacy.charAt(0).toLowerCase() + legacy.slice(1)} /></div>}
       </div>
       {played(r) > 0 && (
@@ -136,9 +141,10 @@ function List({ id, title, hint, items, notes, visible, onOpen, onAll }: {
 }
 
 /**
- * Behind first — the targets, worst first, the nemesis named — then anyone
- * level, then Ahead, most played first, five and "See all". Every row opens
- * the head-to-head with that player.
+ * Behind first — the targets, worst first, the nemesis named — then Ahead,
+ * most played first, five and "See all" (Sam's order, 2026-10-31). Anyone
+ * level is one tap away on the hero's "level" count. Every row opens the
+ * head-to-head with that player.
  */
 const worstFirstOf = (behind: OpponentRecord[]) => [...behind].sort((a, b) => (b.l - b.w) - (a.l - a.w) || played(b) - played(a));
 const mostPlayedOf = (lead: OpponentRecord[]) => [...lead].sort((a, b) => played(b) - played(a) || (b.w - b.l) - (a.w - a.l));
@@ -196,7 +202,6 @@ export function HeadToHeadLists({ lead, behind, level, self, showAllAhead, onAll
   return (
     <>
       <List id="h2h-behind" title="Behind" hint={self ? "your targets" : undefined} items={worstFirst} notes={notes} onOpen={onOpen} />
-      <List id="h2h-level" title="Level" items={level} onOpen={onOpen} />
       <List id="h2h-ahead" title="Ahead" items={mostPlayed} visible={showAllAhead ? undefined : 5} onOpen={onOpen} onAll={onAllAhead} />
     </>
   );

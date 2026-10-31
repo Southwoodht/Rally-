@@ -69,8 +69,9 @@ export function LevelStars({ level, label }: { level: any; label?: string }) {
 export interface ProfileHeaderProps {
   leagueName: string;
   player: any;
-  /** "27 · Seacourt · 9 years playing" — assembled by the caller, who knows
-   *  which parts are actually known. */
+  /** "27 · Seacourt · Intermediate · Low" — age · club · level, assembled
+   *  by the caller, who knows which parts are actually known. The star row
+   *  under it went on 2026-10-31 (Sam); LevelStars stays for other screens. */
   meta?: string;
   /** "Intermediate · Medium", or undefined when they've never set one. */
   levelLabel?: string;
@@ -131,12 +132,6 @@ export function ProfileHeader({
           {meta && (
             <div style={{ fontFamily: body, fontWeight: 500, fontSize: 14, color: FEED_TEXT_MID, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meta}</div>
           )}
-          <div style={{ marginTop: 6 }}>
-            {/* A UTR, when they have one, sits beside the stars it set
-                (core/utr.ts) — a number people who know UTR trust, and
-                nothing at all for everyone else. */}
-            <LevelStars level={player?.level} label={[levelLabel, player?.utr != null ? utrLabel(player.utr) : null].filter(Boolean).join(" · ") || undefined} />
-          </div>
         </div>
       </div>
     </div>

@@ -118,6 +118,20 @@ export function topRivalries(
   return out.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
+/**
+ * The most-played rivalries, most matches first, the closer record on a tie
+ * — the profile's "Biggest rivalries" (Sam, 2026-10-31). No recency cut:
+ * the profile asks who you have played most, not who you play now, which
+ * is topRivalries' question. Same minimum meetings.
+ */
+export function mostPlayedRivalries(playerId: string, matches: any[], limit = 2): RivalryScore[] {
+  return computeRivalries(playerId, matches)
+    .filter((h) => h.total >= RIVALRY_MIN_MEETINGS)
+    .sort((a, b) => b.total - a.total || Math.abs(a.w - a.l) - Math.abs(b.w - b.l))
+    .slice(0, limit)
+    .map((h) => ({ ...h, score: h.total, recent: recentOutcomes(playerId, h.oid, matches, 5) }));
+}
+
 function recentOutcomes(playerId: string, oppId: string, matches: any[], n: number): Array<"W" | "D" | "L"> {
   return matches
     .filter((m) => countsAsPlayed(m) && ((m.p1 === playerId && m.p2 === oppId) || (m.p1 === oppId && m.p2 === playerId)))

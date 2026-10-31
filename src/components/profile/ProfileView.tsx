@@ -18,7 +18,8 @@ import { fullNameOf } from "@/lib/format";
 import { utrLabel } from "@/core/utr";
 import { shareProfileCard } from "@/lib/shareCard";
 import { FilterChips, type FilterDef } from "@/components/table/FilterChips";
-import { FEED_LIME, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, body } from "@/lib/theme";
+import { FEED_CARD, FEED_LIME, FEED_LOST, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_MID, FORM_LOSS, FORM_WIN, body, display, tabular } from "@/lib/theme";
+import { levelNow } from "@/core/levels";
 
 // The whole profile, in one order, taking finished props.
 //
@@ -38,6 +39,8 @@ export interface ProfileViewProps {
    *  your head-to-head against them — the same slot answering the question
    *  you actually have about the person you are looking at. */
   gap?: GapInsightProps | null;
+  /** Somebody else's profile: your record against them, for the strip. */
+  versus?: { name: string; w: number; d: number; l: number; last: string | null } | null;
   playingStyle?: PlayingStyleProps | null;
   /** The career line. A node rather than props, because it is one self-
    *  contained card and threading its four maps through here would put the
@@ -115,13 +118,19 @@ export function ProfileView(p: ProfileViewProps) {
   const forViewer = (list: MatchHistoryItem[]) =>
     isSelf ? list : list.map((m) => ({ ...m, onEdit: undefined }));
 
+  const share = useShareCard(p);
+  const total = p.historyTotal ?? history.length;
+
+  // Sam's order, 2026-10-31 — each thing once:
+  //   header + buttons · the head-to-head hero (place, rating, record, last
+  //   five) · on someone else's profile, You vs them · biggest rivalries ·
+  //   Behind then Ahead · best wins by person · achievements, trophies ·
+  //   the rating line · All matches.
   return (
     <div>
       <ProfileHeader {...p.header} viewer={p.viewer} />
-
-      {/* Directly under the header, because the reason you are on somebody
-          else's profile is usually that you want to talk to them. */}
-      {!isSelf && p.actions && <ProfileActions {...p.actions} />}
+      {!isSelf && p.actions && <ProfileActions {...p.actions} onShare={share.go} />}
+      {!isSelf && share.note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 8 }}>{share.note}</div>}
 
       {p.period && (
         <div style={{ marginTop: 18 }}>
@@ -129,22 +138,28 @@ export function ProfileView(p: ProfileViewProps) {
         </div>
       )}
 
-      {/* The head-to-head record is the profile's main record (Sam,
-          2026-10-30): who they are ahead of, level with and behind. */}
-      <HeadToHeadHero
-        ahead={p.opponents?.lead.length || 0} level={p.opponents?.levelList?.length || 0} behind={p.opponents?.behind.length || 0}
-        self={isSelf} record={p.record.record} standing={p.standing}
-        form={p.record.form}
-        rates={{ winRate: p.record.winRate, unbeatenRate: p.record.unbeatenRate, currentStreak: p.record.currentStreak, bestStreak: p.record.bestStreak }}
-        onShow={setH2hSheet}
-      />
+      <div style={{ marginTop: p.period ? 0 : 18 }}>
+        <HeadToHeadHero
+          ahead={p.opponents?.lead.length || 0} level={p.opponents?.levelList?.length || 0} behind={p.opponents?.behind.length || 0}
+          self={isSelf} record={p.record.record} standing={p.standing}
+          form={p.record.form}
+          rates={{ winRate: p.record.winRate, unbeatenRate: p.record.unbeatenRate, currentStreak: p.record.currentStreak, bestStreak: p.record.bestStreak }}
+          onShow={setH2hSheet}
+        />
+      </div>
       {h2hSheet && p.opponents && (
         <HeadToHeadSheet
           group={h2hSheet} lead={p.opponents.lead} behind={p.opponents.behind} level={p.opponents.levelList || []} self={isSelf}
           onClose={() => setH2hSheet(null)} onOpen={p.onOpenH2H || p.onOpenPlayer}
         />
       )}
-      <ShareCardButton p={p} isSelf={isSelf} />
+
+      {!isSelf && p.versus && <VersusStrip {...p.versus} />}
+
+      {p.rivalries && p.rivalries.length > 0 && (
+        <Section title="Biggest rivalries"><Rivalries items={p.rivalries.slice(0, 2)} self={isSelf} /></Section>
+      )}
+
       {p.opponents && (
         <HeadToHeadLists
           lead={p.opponents.lead} behind={p.opponents.behind} level={p.opponents.levelList || []} self={isSelf}
@@ -152,28 +167,10 @@ export function ProfileView(p: ProfileViewProps) {
           onOpen={p.onOpenH2H || p.onOpenPlayer}
         />
       )}
-      {p.gap && <div style={{ marginTop: 12 }}><GapInsight {...p.gap} /></div>}
-
-      {/* Directly under the record, because it is the same fact over time and
-          the number above it is where the line ends. */}
-      {p.ratingLine && <div style={{ marginTop: 12 }}>{p.ratingLine}</div>}
-
-      {p.playingStyle && (
-        <Section title="Playing style"><PlayingStyle {...p.playingStyle} /></Section>
-      )}
-
-      {/* Above Rivalries: who somebody knows places them, and a rivalry only
-          means something once you know who they are. */}
-      {p.friends}
-
-      {p.rivalries && p.rivalries.length > 0 && (
-        <Section title="Rivalries"><Rivalries items={p.rivalries} self={isSelf} /></Section>
-      )}
 
       {p.bestWins && p.bestWins.length > 0 && (
         <Section title="Best wins"><BestWins wins={p.bestWins} onOpenMatch={p.onOpenMatch} /></Section>
       )}
-
 
       {p.achievements && p.achievements.length > 0 && (
         <div style={{ marginTop: 22 }}><Achievements items={p.achievements} /></div>
@@ -185,33 +182,33 @@ export function ProfileView(p: ProfileViewProps) {
         </Section>
       )}
 
-      {history.length > 0 && (
-        <Section
-          title="Match history"
-          right={
-            allHistory
-              ? <Link label="Show fewer" onClick={() => setAllHistory(false)} arrow={false} />
-              : history.length > HISTORY_PREVIEW
-                ? <Link label={`All ${p.historyTotal ?? history.length}`} onClick={() => setAllHistory(true)} />
-                : undefined
-          }
+      {p.ratingLine && <div style={{ marginTop: 22 }}>{p.ratingLine}</div>}
+
+      {/* One row for the whole history (Sam: "All matches · N ›"). It opens
+          Your matches; where that screen isn't on offer (a profile read from
+          outside the club), the list opens here instead. */}
+      {total > 0 && (
+        <button
+          onClick={p.onAllHistory || (() => setAllHistory(!allHistory))}
+          style={{ display: "flex", alignItems: "center", width: "100%", marginTop: 22, background: FEED_CARD, border: "none", borderRadius: 14, padding: "15px 16px", cursor: "pointer", fontFamily: body, fontWeight: 600, fontSize: 15.5, color: FEED_TEXT_HI, textAlign: "left" }}
         >
-          {/* Editing is an action on your own result, so it does not travel
-              with the list when somebody else is reading it. */}
-          <MatchHistoryList items={forViewer(shownHistory)} years={years} trophies={historyTrophies} />
-          {p.pointsSummary && <PointsSummary {...p.pointsSummary} />}
-          {/* The graded version is a different question — how good were these
-              results, not what were they — so it is a separate destination
-              rather than what "All 44" now means. */}
-          {p.onAllHistory && (
-            <button
-              onClick={p.onAllHistory}
-              style={{ display: "flex", alignItems: "center", gap: 4, background: "transparent", border: "none", padding: "12px 0 0", cursor: "pointer", fontFamily: body, fontWeight: 500, fontSize: 13, color: FEED_LIME }}
-            >
-              Every match, graded <ChevronRight size={14} strokeWidth={2} />
-            </button>
-          )}
-        </Section>
+          <span style={{ flex: 1, ...tabular }}>All matches · {total}</span>
+          <ChevronRight size={18} strokeWidth={2} color={FEED_TEXT_MID} style={{ transform: !p.onAllHistory && allHistory ? "rotate(90deg)" : undefined }} />
+        </button>
+      )}
+      {!p.onAllHistory && allHistory && (
+        <div style={{ marginTop: 10 }}>
+          <MatchHistoryList items={forViewer(history)} years={years} trophies={historyTrophies} />
+        </div>
+      )}
+
+      {isSelf && (
+        <div style={{ marginTop: 12 }}>
+          <button onClick={share.go} disabled={share.busy} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 14, padding: "12px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer", opacity: share.busy ? 0.55 : 1 }}>
+            <Share size={16} strokeWidth={2} />{share.busy ? "Making the card…" : "Share my card"}
+          </button>
+          {share.note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 6, textAlign: "center" }}>{share.note}</div>}
+        </div>
       )}
 
       {isSelf && p.settings && p.settings.length > 0 && (
@@ -221,11 +218,32 @@ export function ProfileView(p: ProfileViewProps) {
   );
 }
 
+/** "You vs Charlie": your record against them, who leads, how many and
+ *  when last (Sam, 2026-10-31). Replaces the "You lead X" card. */
+function VersusStrip({ name, w, d, l, last }: { name: string; w: number; d: number; l: number; last: string | null }) {
+  const n = w + d + l;
+  const lead = w > l ? "You lead" : l > w ? name + " leads" : "Level";
+  const colour = w > l ? FORM_WIN : l > w ? FORM_LOSS : FEED_TEXT_MID;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, background: FEED_CARD, borderRadius: 14, padding: "12px 16px" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: body, fontWeight: 600, fontSize: 14.5, color: FEED_TEXT_HI, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>You vs {name}</div>
+        <div style={{ ...tabular, fontFamily: body, fontWeight: 500, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ color: colour, fontWeight: 600 }}>{lead}</span> · {n} played{last ? " · last " + last : ""}
+        </div>
+      </div>
+      <span style={{ ...tabular, fontFamily: display, fontWeight: 700, fontSize: 24, color: FEED_TEXT_HI, flexShrink: 0 }}>{w}–{d}–{l}</span>
+    </div>
+  );
+}
+
 /**
  * Share card (lib/shareCard.ts): this profile as one picture, from exactly
- * what the screen above shows.
+ * what the screen above shows. A hook now, because the button lives in two
+ * places: at the foot of your own profile, and in the ⋯ menu on anyone
+ * else's.
  */
-function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }) {
+function useShareCard(p: ProfileViewProps) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const player = p.header.player;
@@ -233,7 +251,7 @@ function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }
     if (busy) return;
     setBusy(true); setNote("");
     try {
-      const level = [p.header.levelLabel, player?.utr != null ? utrLabel(player.utr) : null].filter(Boolean).join(" · ");
+      const level = [levelNowLabel(player), player?.utr != null ? utrLabel(player.utr) : null].filter(Boolean).join(" · ");
       const r = await shareProfileCard({
         name: fullNameOf(player) || "Player",
         photo: player?.avatarUrl || null,
@@ -257,12 +275,10 @@ function ShareCardButton({ p, isSelf }: { p: ProfileViewProps; isSelf: boolean }
     }
     setBusy(false);
   };
-  return (
-    <div style={{ marginTop: 12 }}>
-      <button onClick={go} disabled={busy} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: FEED_RAISED, color: FEED_TEXT_HI, border: "none", borderRadius: 14, padding: "12px", fontFamily: body, fontWeight: 600, fontSize: 14.5, cursor: "pointer", opacity: busy ? 0.55 : 1 }}>
-        <Share size={16} strokeWidth={2} />{busy ? "Making the card…" : isSelf ? "Share my card" : "Share their card"}
-      </button>
-      {note && <div style={{ fontFamily: body, fontSize: 12.5, color: FEED_TEXT_MID, marginTop: 6, textAlign: "center" }}>{note}</div>}
-    </div>
-  );
+  return { go, busy, note };
+}
+
+function levelNowLabel(player: any): string | null {
+  const lv = levelNow(player);
+  return lv ? lv.cat + " · " + lv.sub : null;
 }
