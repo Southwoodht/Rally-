@@ -6,8 +6,8 @@ import { BALL, CHALK, CLAY, COURT, LINE, MUTED, PANEL, PANEL2, body, display } f
 
 type Mode = "welcome" | "signup" | "login" | "reset";
 
-export default function Welcome() {
-  const [mode, setMode] = useState<Mode>("welcome");
+export default function Welcome({ initialMode = "welcome", onBack }: { initialMode?: Mode; onBack?: () => void } = {}) {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -128,7 +128,7 @@ export default function Welcome() {
               </button>
               <button
                 style={{ ...secondary, background: "transparent", border: "none", color: MUTED, fontSize: 12, marginTop: 0 }}
-                onClick={() => { reset(); setMode("welcome"); }}
+                onClick={() => { reset(); if (onBack) onBack(); else setMode("welcome"); }}
               >
                 Back
               </button>

@@ -58,8 +58,25 @@ const FONT_VARS = [bricolage, dmSans, fraunces, cormorant, spaceGrotesk, sora]
   .join(" ");
 
 export const metadata: Metadata = {
-  title: "Southwood",
-  description: "Head-to-head rankings for racket sports.",
+  metadataBase: new URL("https://southwood.app"),
+  title: "Southwood · Club rankings, leagues and fixtures",
+  description: "Rankings, box leagues and fixtures for racket clubs: fair club tables, divisions and round-robins with share sheets, and head-to-heads for tennis, padel, racketball, squash and pickleball.",
+  applicationName: "Southwood",
+  openGraph: {
+    type: "website",
+    url: "https://southwood.app",
+    siteName: "Southwood",
+    title: "Southwood · Club rankings, leagues and fixtures",
+    description: "Rankings, box leagues and fixtures for tennis, padel, racketball, squash and pickleball clubs.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Southwood — rankings, leagues and fixtures for racket clubs" }],
+    locale: "en_GB",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Southwood · Club rankings, leagues and fixtures",
+    description: "Rankings, box leagues and fixtures for tennis, padel, racketball, squash and pickleball clubs.",
+    images: ["/og.png"],
+  },
   manifest: "/manifest.json",
   icons: {
     // The .ico first and unsized, because a browser asks for /favicon.ico
@@ -102,6 +119,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const BOOT_SCRIPT = `try{var a=0;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i)||"";if(/^sb-.*-auth-token$/.test(k)){a=1;break}}if(/[?&](join|club)=/.test(location.search)||/access_token|type=recovery/.test(location.hash))a=1;if(a)document.documentElement.setAttribute("data-boot","app")}catch(e){}`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // data-theme is what themes.css keys on. "rally" is also the :root
@@ -122,6 +141,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Inline and synchronous on purpose: anything deferred runs after
             the paint this exists to beat. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        {/* Before the first paint: a saved session on this device, or an
+            invite / sheet / password link, means the loading screen, never
+            a flash of the public landing page (AuthGate renders both while
+            it checks). globals.css reads data-boot. */}
+        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
       <body>{children}<MotionLayer /></body>
     </html>

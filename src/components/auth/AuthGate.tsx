@@ -7,6 +7,7 @@ import { supabase, isSupabaseConfigured, withSupabaseTimeout } from "@/lib/supab
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { FEED_OVERLAY, BALL, CHALK, COURT, LINE, MUTED, PANEL, body, display } from "@/lib/theme";
 import Welcome from "@/components/auth/Welcome";
+import Landing from "@/components/landing/Landing";
 import UpdatePassword from "@/components/auth/UpdatePassword";
 import Dashboard from "@/components/dashboard/Dashboard";
 import { readCompParam } from "@/lib/compLink";
@@ -14,13 +15,16 @@ import { readCompParam } from "@/lib/compLink";
 /**
  * Decides what the app shows:
  *   not configured  -> setup instructions
- *   no session      -> Welcome (create account / log in)
+ *   no session      -> the public landing page, or Welcome once they tap
+ *                      Sign in / Join (or arrive on an invite / sheet link)
  *   session         -> Dashboard
  */
 export default function AuthGate() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [recovery, setRecovery] = useState(false);
+  // Signed out: the landing page until they ask to sign in or join.
+  const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
 
   // A scanned coach sheet (lib/compLink.ts) is read here, before sign-in or
   // sign-up can take the address bar with it, and opened once the club loads.
@@ -87,16 +91,26 @@ export default function AuthGate() {
   if (!isSupabaseConfigured) return <SetupNeeded />;
 
   if (loading) {
+    // Both are rendered and the boot attribute (layout.tsx) picks one before
+    // the first paint: a device holding a saved session — or arriving on an
+    // invite, sheet or password link — sees the loading screen; anybody else,
+    // and every search engine, gets the landing page in the server's HTML.
     return (
       <>
-        <LoadingScreen label="Signing you in" />
+        <div className="sw-boot-landing"><Landing onSignIn={() => setAuthMode("login")} onJoin={() => setAuthMode("signup")} /></div>
+        <div className="sw-boot-loading"><LoadingScreen label="Signing you in" /></div>
       </>
     );
   }
 
   if (recovery) return <UpdatePassword onDone={() => setRecovery(false)} />;
+  if (session) return <Dashboard session={session} />;
 
-  return session ? <Dashboard session={session} /> : <Welcome />;
+  // An invite or a scanned sheet goes straight to the sign-in screen: they
+  // came to join something, not to read about it.
+  const arrivedWithLink = typeof window !== "undefined" && /[?&](join|club)=/.test(window.location.search);
+  if (authMode || arrivedWithLink) return <Welcome initialMode={authMode || "welcome"} onBack={arrivedWithLink ? undefined : () => setAuthMode(null)} />;
+  return <Landing onSignIn={() => setAuthMode("login")} onJoin={() => setAuthMode("signup")} />;
 }
 
 function SetupNeeded() {
