@@ -1398,7 +1398,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
   // A cold open keeps the splash up until the club is ready, so it lifts
   // straight off the real screen (LoadingScreen's liftSplash); a club switch
   // later on shows the skeleton.
-  if (loading) return splashHasLifted() ? <AppSkeleton /> : <LoadingScreen label="Loading your club" />;
+  if (loading) {
+    if (splashHasLifted()) return <AppSkeleton />;
+    const first = String(displayName || "").trim().split(/\s+/)[0];
+    return <LoadingScreen label={first ? `Welcome back, ${first}` : "Loading your club"} />;
+  }
 
   if (claimUI) {
     const showSuggestion = claimUI.candidate && !declinedCandidate;

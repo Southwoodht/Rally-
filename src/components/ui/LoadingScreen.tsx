@@ -74,20 +74,19 @@ export const splashHasLifted = () => revealed;
 const REDUCED = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * THE LIFT (Sam, 2026-10-31: "a cool fade in… smooth and clean and rich").
- *
- * When the last loading screen of a cold open unmounts, the app is already
- * underneath it. A copy of the splash is left on top, on the same bounce
- * clock so the ball does not jump, and it dissolves: a soft scale up, a
- * little blur, 520ms. At the same moment the app's own content rises in, a
- * row at a time (`sw-reveal` on <html>, rules in globals.css). If another
- * loading screen mounts in the meantime — a hand-off, not the end — the
- * copy is removed before it is ever seen to move.
+ * THE LIFT (Sam, 2026-10-31: "a slow welcome kind of fade in"). When the
+ * last loading screen of an open unmounts, the app is already underneath it.
+ * A copy of the splash is left on top, on the same bounce clock so the ball
+ * does not jump, and it fades away slowly, 1.1s, with nothing moving. If
+ * another loading screen mounts in the meantime — a hand-off, not the end —
+ * the copy is removed before it is ever seen to change.
  */
 function liftSplash(from: HTMLElement) {
-  // Hidden (signed-out visitors: the landing page is showing, not this) —
-  // nothing to lift.
-  if (!from.getClientRects().length) { revealed = true; return; }
+  // Hidden (signed-out visitors: the landing page is showing, not this):
+  // nothing to lift. Not lifted, so not "shown" either: after signing in, the next wait must
+  // still get the splash, not the skeleton. (It did, and logging in went
+  // splash → grey skeleton → app: Sam, "quite glitchy logging in".)
+  if (!from.getClientRects().length) return;
   const copy = from.cloneNode(true) as HTMLElement;
   copy.removeAttribute("data-on-clock");
   Object.assign(copy.style, { position: "fixed", inset: "0", zIndex: "9999", pointerEvents: "none", minHeight: "0" });
@@ -108,19 +107,17 @@ function liftSplash(from: HTMLElement) {
     if (mountedCount > 0) { copy.remove(); return; }
     revealed = true;
     if (REDUCED()) { copy.remove(); return; }
-    const html = document.documentElement;
-    html.classList.add("sw-reveal");
-    window.setTimeout(() => html.classList.remove("sw-reveal"), 1100);
+    // A slow, still dissolve (Sam, 2026-10-31: "a slow welcome kind of fade
+    // in"): nothing moves, scales or blurs; the cream simply gives way to
+    // the app over most of a second. The first try scaled and blurred the
+    // splash and rose the page in a row at a time, and read as glitchy.
     const anim = copy.animate(
-      [
-        { opacity: 1, transform: "scale(1)", filter: "blur(0px)" },
-        { opacity: 0, transform: "scale(1.06)", filter: "blur(6px)" },
-      ],
-      { duration: 520, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+      [{ opacity: 1 }, { opacity: 1, offset: 0.15 }, { opacity: 0 }],
+      { duration: 1100, easing: "cubic-bezier(0.45, 0, 0.25, 1)", fill: "forwards" },
     );
     anim.onfinish = () => copy.remove();
     // Belt and braces: never leave a splash over the app.
-    window.setTimeout(() => copy.remove(), 1500);
+    window.setTimeout(() => copy.remove(), 2000);
   });
 }
 
@@ -138,16 +135,16 @@ const CSS = `
   }
   @keyframes rally-arrive { from { opacity: 0 } to { opacity: 1 } }
   @keyframes rally-arrive-mark {
-    from { opacity: 0; transform: scale(.92); filter: blur(8px); }
-    to   { opacity: 1; transform: scale(1);   filter: blur(0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 
   .rally-hop    { animation: rally-bounce ${CYCLE_MS}ms infinite; will-change: transform; }
   .rally-roll   { animation: rally-roll ${SPIN_MS}ms linear infinite; transform-origin: 50% 50%; }
   .rally-shadow { animation: rally-shadow ${CYCLE_MS}ms infinite; transform-origin: 50% 50%; }
   .rally-arrive { animation: rally-arrive 450ms ease-out both; }
-  .rally-arrive-mark { animation: rally-arrive-mark 700ms cubic-bezier(.2, .8, .2, 1) both; }
-  .rally-arrive-late { animation: rally-arrive 500ms ease-out 260ms both; }
+  .rally-arrive-mark { animation: rally-arrive-mark 900ms cubic-bezier(.45, 0, .25, 1) both; }
+  .rally-arrive-late { animation: rally-arrive 700ms ease-out 350ms both; }
 
   @media (prefers-reduced-motion: reduce) {
     .rally-hop, .rally-roll, .rally-shadow { animation: none; }
@@ -177,8 +174,11 @@ export function LoadingScreen({ label = "Loading your club" }: { label?: string 
   }, []);
 
   useBeforePaint(() => {
-    arrived = true;
     const el = root.current;
+    // Only a splash somebody SAW counts as arrived: the one hidden behind the
+    // landing page must not stop the first visible one (after signing in)
+    // fading in — it used to pop up at full strength.
+    if (el && el.getClientRects().length) arrived = true;
     // Once per screen. Re-setting a running animation's delay shifts it by
     // the new amount on top of the time it has already run, so a second pass
     // (React runs effects twice in development) would knock this screen out
