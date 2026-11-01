@@ -154,7 +154,30 @@ const BOOT_SCRIPT = `try{var a=0;for(var i=0;i<localStorage.length;i++){var k=lo
 // rest and push things down — by watching .sw-main's size until it has been
 // still for 350ms. A ResizeObserver, not layout-shift entries, because
 // Safari has no layout-shift. 3s from the tap is still the hard limit.
-const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0,asked=0,quiet=null,ro=null;function go(){if(gone)return;gone=1;window.__swSplashOut=null;if(ro)ro.disconnect();clearTimeout(quiet);d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},1050)}function settle(){clearTimeout(quiet);quiet=setTimeout(go,350)}function out(){if(asked)return;asked=1;var w=1500-performance.now();setTimeout(function(){var el=document.querySelector(".sw-main")||document.body;settle();try{ro=new ResizeObserver(settle);ro.observe(el)}catch(e){}},w>0?w:0)}window.__swSplashOut=out;setTimeout(go,Math.max(0,3000-performance.now()))})();`;
+const SPLASH_SCRIPT = `(function(){var d=document.documentElement;if(d.getAttribute("data-boot")!=="app"||d.getAttribute("data-splash")==="off")return;try{sessionStorage.setItem("sw.splash","1")}catch(e){}var gone=0,asked=0,quiet=null,ro=null;function go(){if(gone)return;gone=1;window.__swSplashOut=null;if(ro)ro.disconnect();clearTimeout(quiet);d.setAttribute("data-splash","out");setTimeout(function(){d.setAttribute("data-splash","done")},700)}function settle(){clearTimeout(quiet);quiet=setTimeout(go,250)}function out(){if(asked)return;asked=1;var w=1000-performance.now();setTimeout(function(){var el=document.querySelector(".sw-main")||document.body;settle();try{ro=new ResizeObserver(settle);ro.observe(el)}catch(e){}},w>0?w:0)}window.__swSplashOut=out;setTimeout(go,Math.max(0,6000-performance.now()))})();`;
+/**
+ * LAUNCH TIMING (Sam, 2026-11-01, from a screen recording: "tap icon → cream
+ * S → Home in about 1.5 seconds", no skeleton, no ghost S). Above: the cover
+ * holds at least 1.0s from the tap, then waits for the data and for Home to
+ * be still for 250ms, and stays up as long as Home's data takes (6s limit,
+ * after which the identical loading screen is under it). Below: on the way
+ * out the S goes FIRST (250ms, easing to 1.04) and only then does the cream
+ * go (450ms), so no half-faded S ever sits over Home.
+ *
+ * THE CRITICAL STYLE is inline, not in globals.css: the page background and
+ * the cover's own rules have to be there on the very first paint, before the
+ * stylesheet arrives — that gap was a white frame between iOS's launch
+ * picture and the cover. The quotes in it are why it uses
+ * dangerouslySetInnerHTML (React escapes them in a <style> child).
+ */
+// :where() gives the cream no specificity, so once globals.css arrives the
+// theme's own page colour (New York's navy, Paris's cream) takes over.
+const CRITICAL_CSS = `:where(html,body){background:#F8F4EB}
+#sw-splash{display:none;position:fixed;inset:0;z-index:10000;background:#F8F4EB;place-items:center}
+html[data-boot="app"]:not([data-splash="off"]):not([data-splash="done"]) #sw-splash{display:grid}
+#sw-splash .sw-splash-mark{transition:opacity 250ms ease-out,transform 250ms ease-out}
+html[data-splash="out"] #sw-splash{opacity:0;pointer-events:none;transition:opacity 450ms ease-out 250ms}
+html[data-splash="out"] #sw-splash .sw-splash-mark{opacity:0;transform:scale(1.04)}`;
 const SPLASH_MARK = markSvg(`class="sw-splash-mark" aria-hidden="true" style="width:${MARK_WIDTH};height:auto;display:block"`);
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -182,6 +205,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             a flash of the public landing page (AuthGate renders both while
             it checks). globals.css reads data-boot. */}
         <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
+        <style dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
       </head>
       <body>
         <div id="sw-splash" aria-hidden="true" dangerouslySetInnerHTML={{ __html: SPLASH_MARK }} />

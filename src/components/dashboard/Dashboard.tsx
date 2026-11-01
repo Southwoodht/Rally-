@@ -18,10 +18,22 @@ import { RallyMark } from "@/components/ui/RallyMark";
 
 type View = "loading" | "empty" | "create" | "join" | "picker" | "app";
 
+const LAST_CLUB_KEY = "rally.lastClub";
+function readLastClub(): string | null {
+  try { return localStorage.getItem(LAST_CLUB_KEY); } catch { return null; }
+}
+
 export default function Dashboard({ session }: { session: Session }) {
   const [view, setView] = useState<View>("loading");
   const [leagues, setLeagues] = useState<League[]>([]);
   const [active, setActive] = useState<League | null>(null);
+  // Remember the club in use, for the next launch (localStorage: a fact
+  // about this device, and a failed read just means the first club).
+  useEffect(() => {
+    if (active?.id && active.id !== FRIENDLY_LEAGUE_ID) {
+      try { localStorage.setItem(LAST_CLUB_KEY, active.id); } catch { /* next launch opens the first club */ }
+    }
+  }, [active?.id]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
@@ -96,8 +108,15 @@ export default function Dashboard({ session }: { session: Session }) {
         if (hit) { setActive(hit); setView("app"); return; }
         clearPendingComp();
       }
-      if (mine.length === 1) { setActive(mine[0]); setView("app"); }
-      else if (mine.length > 1) setView("picker");
+      // Straight into the club used last (Sam, 2026-11-01: "go straight to
+      // Home of the last-used club; don't show Your clubs on launch"). The
+      // picker is only for having no club, or the club switcher. Falls back
+      // to the first club when the remembered one has gone (left, removed).
+      if (mine.length) {
+        const last = readLastClub();
+        setActive(mine.find((l) => l.id === last) || mine[0]);
+        setView("app");
+      }
       else setView("empty");
     } catch (e: any) {
       setError(e.message || "Couldn't load your clubs.");

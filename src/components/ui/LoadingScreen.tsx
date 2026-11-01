@@ -115,12 +115,12 @@ function liftSplash(from: HTMLElement) {
     const off = document.documentElement.getAttribute("data-splash") === "off";
     if (!copy || cover || off || REDUCED()) { copy?.remove(); return; }
     const mark = copy.querySelector<HTMLElement>(".sw-mark");
-    // The same slow dissolve as the cover (1s), Sam's pick.
-    const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
-    copy.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, easing: ease, fill: "forwards" }).onfinish = () => copy.remove();
-    mark?.animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }], { duration: 1000, easing: ease, fill: "forwards" });
+    // The same exit as the cover: the S goes first, then the cream, so no
+    // half-faded S sits over Home (Sam, 2026-11-01).
+    mark?.animate([{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(1.04)" }], { duration: 250, easing: "ease-out", fill: "forwards" });
+    copy.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, delay: 250, easing: "ease-out", fill: "forwards" }).onfinish = () => copy.remove();
     // Belt and braces: never leave a splash over the app.
-    window.setTimeout(() => copy.remove(), 1600);
+    window.setTimeout(() => copy.remove(), 1200);
   });
 }
 

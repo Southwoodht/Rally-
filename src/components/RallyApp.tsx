@@ -2434,7 +2434,11 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             modeSwitch={!!doublesEnabled && !personal ? <ModeSwitch mode={sport} onMode={setSport} /> : undefined}
             header={{
               leagueName: personal ? "Everyone I've played" : (group?.name || "Club"),
-              greeting: greetingFor(players.find((p) => p.id === meId)?.name || displayName || ""),
+              // One name for every greeting (Sam, 2026-11-01: "Samuel" on the
+              // clubs page, "Sam" on Home): the account's display name, the
+              // one the clubs page and the splash use; the club's player row
+              // only if the account has none.
+              greeting: greetingFor(displayName || players.find((p) => p.id === meId)?.name || ""),
               onPickLeague: () => setGroupSheet(true),
               topRow: <></>,
             }}
