@@ -1,4 +1,5 @@
 "use client";
+import { FavouriteChance } from "@/components/ui/FavouriteChance";
 import React, { useMemo, useState } from "react";
 import { Calendar, Plus, Search } from "lucide-react";
 import { PlayerPicker } from "@/components/ui/PlayerPicker";
@@ -373,7 +374,6 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
    *  chance, and Book / Booked / Result. Tap for the controls. */
   const compactRow = (f: DoublesFixture, first: boolean) => {
     const pA = Math.round(predictDoubles(f.teamA, f.teamB, stats) * 100);
-    const chance = f.teamB.includes(meId) ? 100 - pA : pA;
     const sub = [labelFor?.(f), whenNote(f)].filter(Boolean).join(" · ");
     const action = f.booked == null ? "Book" : f.booked < Date.now() ? "Result" : "Booked";
     const overdue = isOverdue(f);
@@ -387,12 +387,12 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
               <span style={{ fontWeight: 500, color: FEED_TEXT_LOW, fontSize: 13 }}>v</span> {shortPair(f.teamB)}
             </div>
             {(sub || overdue) && (
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {overdue && <span style={{ color: DOT_LOSS, fontWeight: 600 }}>Overdue{sub ? " · " : ""}</span>}{sub}
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, lineHeight: 1.35, color: FEED_TEXT_MID, marginTop: 2 }}>
+                {overdue && <span style={{ color: DOT_LOSS, fontWeight: 600 }}>Overdue{sub ? " · " : ""}</span>}{unbroken(sub)}
               </div>
             )}
           </div>
-          <span title="Win chance" style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0 }}>{chance}%</span>
+          <FavouriteChance chanceA={pA} nameA="Top pair" nameB="Bottom pair" you={f.teamA.includes(meId) ? "A" : f.teamB.includes(meId) ? "B" : null} />
           <button
             onClick={(e) => { e.stopPropagation(); if (open !== f.id) openRow(f); }}
             style={{ flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer", background: action === "Book" ? FEED_LIME : FEED_RAISED, color: action === "Book" ? FEED_LIME_INK : FEED_TEXT_HI }}
@@ -589,4 +589,14 @@ export function DoublesFixtures({ players, fixtures, stats, meId, canManage, una
       )}
     </div>
   );
+}
+
+/** "Division 2 · Round 2 · play by 10 Nov 2026" may wrap onto a second line
+ *  now the favourite sits beside it, but only BETWEEN its pieces — never
+ *  "play by 10" / "Nov 2026". */
+function unbroken(sub: string) {
+  const parts = sub ? sub.split(" · ") : [];
+  return parts.map((t, i) => (
+    <span key={i}><span style={{ whiteSpace: "nowrap" }}>{t}{i < parts.length - 1 ? " ·" : ""}</span>{i < parts.length - 1 ? " " : ""}</span>
+  ));
 }

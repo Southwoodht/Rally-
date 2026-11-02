@@ -1,4 +1,5 @@
 "use client";
+import { FavouriteChance } from "@/components/ui/FavouriteChance";
 import React, { useEffect, useMemo, useState } from "react";
 import { scoreProblem } from "@/core/sets";
 import { DEFAULT_DURATION_MINUTES, DURATION_CHOICES } from "@/core/booking";
@@ -354,7 +355,6 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
   const compactRow = (f: any, first: boolean) => {
     const mine = f.p1 === meId || f.p2 === meId;
     const p1 = prob(f.p1, f.p2);
-    const chance = mine && f.p2 === meId ? 100 - p1 : p1;
     const bookedAt = timeOf(f.booked);
     // Booked: the time it's booked for. Not booked: the day it must be
     // played by (Sam, 2026-10-31).
@@ -370,12 +370,12 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
               {short(f.p1)} <span style={{ fontWeight: 500, color: FEED_TEXT_LOW, fontSize: 13 }}>v</span> {short(f.p2)}
             </div>
             {(sub || overdue) && (
-              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, color: FEED_TEXT_MID, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {overdue && <span style={{ color: DOT_LOSS, fontWeight: 600 }}>Overdue{sub ? " · " : ""}</span>}{sub}
+              <div style={{ fontFamily: body, fontWeight: 500, fontSize: 12, lineHeight: 1.35, color: FEED_TEXT_MID, marginTop: 2 }}>
+                {overdue && <span style={{ color: DOT_LOSS, fontWeight: 600 }}>Overdue{sub ? " · " : ""}</span>}{unbroken(sub)}
               </div>
             )}
           </div>
-          <span title="Win chance" style={{ ...tabular, fontFamily: body, fontWeight: 600, fontSize: 13, color: FEED_TEXT_MID, flexShrink: 0 }}>{chance}%</span>
+          <FavouriteChance chanceA={p1} nameA={short(f.p1)} nameB={short(f.p2)} you={f.p1 === meId ? "A" : f.p2 === meId ? "B" : null} />
           <button
             onClick={(e) => { e.stopPropagation(); if (open !== f.id) openRow(f); }}
             style={{ flexShrink: 0, fontFamily: body, fontWeight: 600, fontSize: 13, padding: "7px 13px", borderRadius: 999, border: "none", cursor: "pointer", background: action === "Book" ? FEED_LIME : FEED_RAISED, color: action === "Book" ? FEED_LIME_INK : FEED_TEXT_HI }}
@@ -637,4 +637,14 @@ export function FixturesPanel({ fixtures, players, elo, matches, nameOf, meId, c
       </div>
     </div>
   );
+}
+
+/** "Division 2 · Round 2 · play by 10 Nov 2026" may wrap onto a second line
+ *  now the favourite sits beside it, but only BETWEEN its pieces — never
+ *  "play by 10" / "Nov 2026". */
+function unbroken(sub: string) {
+  const parts = sub ? sub.split(" · ") : [];
+  return parts.map((t, i) => (
+    <span key={i}><span style={{ whiteSpace: "nowrap" }}>{t}{i < parts.length - 1 ? " ·" : ""}</span>{i < parts.length - 1 ? " " : ""}</span>
+  ));
 }
