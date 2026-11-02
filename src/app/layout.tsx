@@ -8,6 +8,7 @@ import { MARK_WIDTH, markSvg } from "@/lib/splashMark";
 import SPLASH_DEVICES from "@/lib/splashDevices.json";
 import "./globals.css";
 import { MotionLayer } from "@/components/ui/Motion";
+import { SwipeBack } from "@/components/ui/SwipeBack";
 
 // The two faces, loaded once, here.
 //
@@ -210,7 +211,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <div id="sw-splash" aria-hidden="true" dangerouslySetInnerHTML={{ __html: SPLASH_MARK }} />
         <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
-        {children}<MotionLayer />
+        {children}<MotionLayer /><SwipeBack />
       </body>
     </html>
   );
