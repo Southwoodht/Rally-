@@ -2,6 +2,7 @@
 import { clearPendingComp, pendingClub, readCompParam } from "@/lib/compLink";
 import React, { useEffect, useState } from "react";
 import { ClubMark } from "@/components/ui/ClubMark";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { BAD_INVITE, readJoinParam, stashPendingJoin, takePendingJoin } from "@/lib/invite";
@@ -243,6 +244,7 @@ export default function Dashboard({ session }: { session: Session }) {
       // bar. It is the page colour now rather than PANEL, since there is no
       // longer a bar for the strip to be an extension of.
       <div style={{ background: COURT, paddingTop: "env(safe-area-inset-top)" }}>
+        <ErrorBoundary>
         <RallyApp
           // A fresh app per club: switching from the club sheet changes the
           // league under it, and everything inside reads its league on mount.
@@ -277,6 +279,7 @@ export default function Dashboard({ session }: { session: Session }) {
           doublesEnabled={!!(active as any).doubles_enabled}
           competitionsEnabled={!!(active as any).competitions_enabled}
         />
+        </ErrorBoundary>
       </div>
     );
   }
