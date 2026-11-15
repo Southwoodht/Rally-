@@ -1459,10 +1459,11 @@ WhatsApp (1080 wide, as tall as it needs) or an A4 PDF (1240x1754 pages, one
 JPEG per page, hand-built PDF, no dependency), drawn in the CURRENT theme by
 reading its CSS variables, with the icon and "Southwood" small at the foot.
 Competition rows are "A v B" by round with the outcome or play-by date;
-mixer rows are "Court N" per round with who sits out. Log a result has
-**Sets | Games to 11** (localStorage `rally.scoreFormat`): Game N labels and
-`gameTo11Problem` in core/sets.ts (11 with the other on 9 or less, or two
-clear past 10-10; tested). Same score string, so nothing else changes.
+mixer rows are "Court N" per round with who sits out. Log a result had
+**Sets | Games to 11** until 2026-11-15, when Sam removed it ("bit
+confusing" — every club is tennis); `gameTo11Problem` in core/sets.ts (11
+with the other on 9 or less, or two clear past 10-10) is kept, tested and
+unused, for a squash club behind a club setting if ever asked.
 Wording: the Maps fallback searches "racket club near"; a short match is "a
 game that stopped early". UTR keeps its name, and OSM courts found by
 sport=tennis are still called "Tennis courts", because they are.
