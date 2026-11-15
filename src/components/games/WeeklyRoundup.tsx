@@ -114,7 +114,7 @@ export function WeeklyRoundup({ players, matches, elo, wdl, meId, leagueId }: an
     const scoreOf = (m: any): string | null => {
       const parsed = parseSets(m.score);
       if (!parsed) return m.score || null;   // free text we cannot read: as written
-      const oriented = orientToWinner(parsed, m.winner);
+      const oriented = orientToWinner(parsed, m.winner, { short: m.status === "short" });
       return oriented ? formatSets(oriented) : null;
     };
 

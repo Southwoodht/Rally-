@@ -39,19 +39,52 @@ export function gameTotals(sets: SetScore[]): { a: number; b: number } {
 }
 
 /**
+ * Who a score says won (Sam, 2026-11-15: "it's deciding the winner by total
+ * games" — 3-6, 6-4 could not be saved as a draw).
+ *
+ * SETS decide a match. Total games decide it only where there is nothing
+ * else to count: a single set, and a short match (a game that stopped early,
+ * which is a handful of games, not a match of sets). Games to 11 needs no
+ * case of its own: each "set" there is a game, so counting them is counting
+ * games won.
+ *
+ *  - "a" / "b": that side won more sets (or more games, where games decide).
+ *  - "split": the sets are level, e.g. one each with no decider. Nobody won
+ *    on the score as written, so a draw is fine — and so is a winner,
+ *    because a deciding tie-break is often played and not written down.
+ *  - "level": a single set or short match with the games level (6-6). A
+ *    winner needs the tie-break written in (7-6), so only a draw fits.
+ */
+export type ScoreLead = "a" | "b" | "split" | "level";
+export function scoreLead(sets: SetScore[], opts: { short?: boolean } = {}): ScoreLead {
+  if (opts.short || sets.length === 1) {
+    const t = gameTotals(sets);
+    return t.a > t.b ? "a" : t.b > t.a ? "b" : "level";
+  }
+  let a = 0, b = 0;
+  for (const s of sets) { if (s.a > s.b) a++; else if (s.b > s.a) b++; }
+  return a > b ? "a" : b > a ? "b" : "split";
+}
+
+/**
  * Sets oriented so `a` is p1, using the recorded winner to resolve which way
  * round a legacy score was written. Returns null when the two can't be
  * reconciled — a 6-4, 6-4 on a drawn match, say — because a score that
  * disagrees with the result is more likely mistyped than meaningful, and
  * guessing at it would quietly put a wrong number into someone's record.
+ *
+ * Decided by scoreLead, so by sets. A split score ("3-6, 6-4") says nothing
+ * about direction, so it is returned as written: drawn, or won on a
+ * tie-break nobody recorded. The app writes p1 first, which is what "as
+ * written" means for anything logged since the score grid.
  */
-export function orientToWinner(sets: SetScore[], winner: "p1" | "p2" | "draw"): SetScore[] | null {
-  const t = gameTotals(sets);
-  if (winner === "draw") return t.a === t.b ? sets : null;
-  if (t.a === t.b) return null;
-  const p1Ahead = t.a > t.b;
-  if (winner === "p1") return p1Ahead ? sets : sets.map((s) => ({ a: s.b, b: s.a }));
-  return p1Ahead ? sets.map((s) => ({ a: s.b, b: s.a })) : sets;
+export function orientToWinner(sets: SetScore[], winner: "p1" | "p2" | "draw", opts: { short?: boolean } = {}): SetScore[] | null {
+  const lead = scoreLead(sets, opts);
+  if (lead === "split") return sets;
+  if (lead === "level") return winner === "draw" ? sets : null;
+  if (winner === "draw") return null;
+  const flip = (lead === "a") !== (winner === "p1");
+  return flip ? sets.map((s) => ({ a: s.b, b: s.a })) : sets;
 }
 
 /**
@@ -96,7 +129,7 @@ export function shareForResult(score: string | null | undefined, result: number)
 export function shareForPlayer(match: any, playerId: string): number | null {
   const raw = parseSets(match?.score);
   if (!raw) return null;
-  const oriented = orientToWinner(raw, match.winner);
+  const oriented = orientToWinner(raw, match.winner, { short: match.status === "short" });
   if (!oriented) return null;
   if (match.p1 === playerId) return gamesShare(oriented, true);
   if (match.p2 === playerId) return gamesShare(oriented, false);
@@ -108,9 +141,11 @@ export function shareForPlayer(match: any, playerId: string): number | null {
  * nothing is (Sam, 2026-10-22, after "Lost to Zaach 6-6" was saved: the app
  * had never checked that a score and the winner agree).
  *
- * Sets decide a match, so sets are read first; games only when the sets are
- * level (one each and an unfinished third, a single unfinished set). A score
- * that is level on both can only be a draw.
+ * The winner is read by scoreLead: sets won, with total games only for a
+ * single set or a short match (`short`). Sets level (one each, no decider)
+ * allow a draw OR a winner, since an unrecorded tie-break is common. Until
+ * 2026-11-15 level sets fell back to total games, which refused 3-6, 6-4 as
+ * a draw and forced a winner on it.
  *
  * `oriented` is true where the score is known to be written p1-first — Log a
  * result's grid is. A free-text box has no such convention (see parseSets),
@@ -119,15 +154,13 @@ export function shareForPlayer(match: any, playerId: string): number | null {
  *
  * No score is never a problem: the box is optional.
  */
-export function scoreProblem(score: string | null | undefined, winner: "p1" | "p2" | "draw", oriented: boolean): string | null {
+export function scoreProblem(score: string | null | undefined, winner: "p1" | "p2" | "draw", oriented: boolean, opts: { short?: boolean } = {}): string | null {
   if (!score || !score.trim()) return null;
   const sets = parseSets(score);
   if (!sets) return "That score can't be read. Write it like 6-4, 3-6, 7-5.";
-  let setsA = 0, setsB = 0;
-  for (const s of sets) { if (s.a > s.b) setsA++; else if (s.b > s.a) setsB++; }
-  const t = gameTotals(sets);
-  const lead = setsA !== setsB ? (setsA > setsB ? "a" : "b") : t.a !== t.b ? (t.a > t.b ? "a" : "b") : null;
-  if (!lead) {
+  const lead = scoreLead(sets, opts);
+  if (lead === "split") return null;
+  if (lead === "level") {
     return winner === "draw" ? null : "That score is level, so nobody won it. If there was a tie-break, add it (e.g. 7-6). Otherwise choose Draw.";
   }
   if (winner === "draw") return "That score has a winner, so it can't be a draw. Check the score or pick who won.";

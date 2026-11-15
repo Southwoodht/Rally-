@@ -92,7 +92,7 @@ export function LogResult({ players, matches, elo, meId, onSave, onSaveMany, onC
     if (!p1 || !p2) return setErr("Pick both players.");
     if (p1 === p2) return setErr("Pick two different players.");
     // The grid is written Player 1 first, so the check knows direction.
-    const problem = scoreProblem(scoreStr, winner, true);
+    const problem = scoreProblem(scoreStr, winner, true, { short });
     if (problem) return setErr(problem);
     if (to11) {
       for (const g of filledSets) {

@@ -145,7 +145,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   const saveEdit = () => {
     if (!draft) return;
     const winner = draft.result === "D" ? "draw" : draft.result === "W1" ? "p1" : "p2";
-    const problem = scoreProblem(draft.score, winner, false);
+    const problem = scoreProblem(draft.score, winner, false, { short: match.status === "short" });
     if (problem) { setEditErr(problem); return; }
     setEditErr(null);
     const patch = { date: draft.date ? new Date(draft.date).getTime() : match.date, score: draft.score.trim(), winner };
@@ -190,7 +190,7 @@ export function MatchDetail({ match, players, matches, nameOf, onClose, onOpenPr
   const winnerId = match.winner === "p2" ? match.p2 : match.p1;
   const loserId = match.winner === "p2" ? match.p1 : match.p2;
   const rawSets = parseSets(match.score);
-  const oriented = rawSets ? orientToWinner(rawSets, match.winner) : null;
+  const oriented = rawSets ? orientToWinner(rawSets, match.winner, { short: match.status === "short" }) : null;
   const winnerIsP1 = winnerId === match.p1;
   const winnerSide = {
     player: players.find((x: any) => x.id === winnerId) || { id: winnerId, name: nameOf(winnerId) },

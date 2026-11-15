@@ -80,7 +80,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
     const winnerId = m.winner === "p2" ? m.p2 : m.p1;
     const loserId = m.winner === "p2" ? m.p1 : m.p2;
     const raw = parseSets(m.score);
-    const oriented = raw ? orientToWinner(raw, m.winner) : null;
+    const oriented = raw ? orientToWinner(raw, m.winner, { short: m.status === "short" }) : null;
     let winSets: number[] | undefined;
     let loseSets: number[] | undefined;
     if (oriented) {
@@ -100,7 +100,7 @@ export function History({ posts, onPost, onRemovePost, matches, players, elo, na
   const saveEdit = (m: any) => {
     if (!editDraft || !onEditMatch) return;
     // Same rule as logging a new result (core/sets.ts scoreProblem).
-    const problem = scoreProblem(editDraft.score, editDraft.winner, false);
+    const problem = scoreProblem(editDraft.score, editDraft.winner, false, { short: m.status === "short" });
     if (problem) { setEditErr(problem); return; }
     setEditErr(null);
     const patch = { date: editDraft.date ? new Date(editDraft.date).getTime() : m.date, p1: editDraft.p1, p2: editDraft.p2, winner: editDraft.winner, score: editDraft.score.trim() };
