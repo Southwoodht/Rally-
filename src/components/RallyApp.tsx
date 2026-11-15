@@ -2819,6 +2819,7 @@ export default function RallyApp({ leagueId, leagueName, leagueRole, leagueJoinC
             meId={meId}
             players={players}
             matches={matches}
+            glicko={glickoAll}
             mode={matchesMode}
             onMode={setMatchesMode}
             onOpenPlayer={openProfile}

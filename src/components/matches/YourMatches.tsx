@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { HistoryMode } from "@/components/matches/HistoryMode";
 import { QualityMode } from "@/components/matches/QualityMode";
 import { buildMatchQuality, type Voice } from "@/core/matchQuality";
+import type { GlickoTable } from "@/core/glicko";
 import { shortNameOf } from "@/lib/format";
 import { onSide } from "@/core/trophyTimeline";
 import { listApprovedTrophiesForPlayer, type Trophy } from "@/lib/trophies";
@@ -18,7 +19,7 @@ import { segmentOption, segmentTrack } from "@/lib/theme";
 export type MatchesMode = "quality" | "history";
 
 export function YourMatches({
-  viewerId, meId, players, matches, mode, onMode, onOpenPlayer, onOpenMatch, onFixLevels,
+  viewerId, meId, players, matches, glicko, mode, onMode, onOpenPlayer, onOpenMatch, onFixLevels,
 }: {
   /** Whose matches these are. Not necessarily the reader's. */
   viewerId: string;
@@ -26,6 +27,8 @@ export function YourMatches({
   meId?: string;
   players: any[];
   matches: any[];
+  /** The Table's all-time rating, for what each match earned or cost. */
+  glicko?: GlickoTable;
   mode: MatchesMode;
   onMode: (m: MatchesMode) => void;
   onOpenPlayer?: (playerId: string) => void;
@@ -42,6 +45,18 @@ export function YourMatches({
     return { self, name: self ? "" : shortNameOf(p) };
   }, [viewerId, meId, players]);
   const q = useMemo(() => buildMatchQuality(viewerId, players, matches, v), [viewerId, players, matches, v]);
+  // What each match did to their rating — the number the Table ranks on
+  // (Sam, 2026-11-15: "show how many points people earnt or lost"). Only
+  // counted matches have one; a short, disputed or legacy result has none.
+  const change = useMemo(() => {
+    const out: Record<string, number> = {};
+    if (!glicko) return out;
+    for (const id of Object.keys(glicko.after)) {
+      const a = glicko.after[id][viewerId], b = glicko.before[id]?.[viewerId];
+      if (a && b) out[id] = a.rating - b.rating;
+    }
+    return out;
+  }, [glicko, viewerId]);
   // Their trophies, for History. The one fetch on this screen: trophies are
   // not league data, so nothing above holds them. A failed read leaves the
   // history as it was without them rather than in an error state.
@@ -66,7 +81,7 @@ export function YourMatches({
 
       {mode === "quality"
         ? <QualityMode q={q} v={v} onOpenPlayer={onOpenPlayer} />
-        : <HistoryMode q={q} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} onFixLevels={onFixLevels} trophies={historyTrophies} />}
+        : <HistoryMode q={q} change={change} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} onFixLevels={onFixLevels} trophies={historyTrophies} />}
     </div>
   );
 }

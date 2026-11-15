@@ -119,6 +119,12 @@ export interface GlickoTable {
    *  before[matchId][playerId]. Best wins are ranked on it, so a win is
    *  judged on who the opponent was then, on the Table's own rating. */
   before: Record<string, Record<string, { rating: number; rd: number }>>;
+  /** The same, walking off: after[matchId][playerId]. after − before is
+   *  what that one match did to the rating the Table prints (Sam,
+   *  2026-11-15: show what people earned or lost in each match). Time away
+   *  only widens the ±, never moves the rating, so the difference is the
+   *  match and nothing else. */
+  after: Record<string, Record<string, { rating: number; rd: number }>>;
 }
 
 /**
@@ -163,15 +169,17 @@ export function computeGlicko(players: any[], matches: any[], now: number = Date
   };
 
   const before: GlickoTable["before"] = {};
+  const after: GlickoTable["after"] = {};
   for (const m of counted) {
     const a = at(m.p1, m.date), b = at(m.p2, m.date);
     before[m.id] = { [m.p1]: { rating: a.rating, rd: a.rd }, [m.p2]: { rating: b.rating, rd: b.rd } };
     const s1 = m.winner === "draw" ? 0.5 : m.winner === "p1" ? 1 : 0;
     state[m.p1] = { ...glickoUpdate(a, [{ opp: b, score: s1 }]), at: m.date };
     state[m.p2] = { ...glickoUpdate(b, [{ opp: a, score: 1 - s1 }]), at: m.date };
+    after[m.id] = { [m.p1]: { rating: state[m.p1].rating, rd: state[m.p1].rd }, [m.p2]: { rating: state[m.p2].rating, rd: state[m.p2].rd } };
   }
 
-  const out: GlickoTable = { rating: {}, rd: {}, provisional: {}, before };
+  const out: GlickoTable = { rating: {}, rd: {}, provisional: {}, before, after };
   for (const id of Object.keys(state)) {
     const s = aged(state[id], now - state[id].at);
     out.rating[id] = s.rating;

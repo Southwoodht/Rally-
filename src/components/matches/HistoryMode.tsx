@@ -9,7 +9,7 @@ import { TrophyMoment } from "@/components/ui/TrophyMoment";
 import { YearHeader } from "@/components/ui/YearHeader";
 import { honoursByYear, trophyDateLabel, trophyTitle, trophyTs, type TrophyLike } from "@/core/trophyTimeline";
 import { recordsByYear, yearOf } from "@/core/yearRecord";
-import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
+import { FEED_CARD, FEED_HERO, FEED_LIME, FEED_LIME_INK, FEED_ON_HERO, FEED_RAISED, FEED_TEXT_HI, FEED_TEXT_LOW, FEED_TEXT_MID, FORM_LOSS, FORM_WIN, OUTCOME_RAIL, body, tabular } from "@/lib/theme";
 
 // Every match, graded, newest first.
 //
@@ -89,8 +89,27 @@ function Ageing({ row }: { row: GradedRow }) {
   );
 }
 
-function Row({ row, onOpenMatch, onOpenPlayer }: {
+/**
+ * What the match did to their rating, the number the Table ranks on: "+12"
+ * in the win colour, "−8" in the loss colour, "±0" grey. Whole points, as
+ * the Table prints them. The size of it depends on how sure the rating is
+ * (a new player's moves more) as well as on who they played, so it says
+ * "rating" beside it rather than pretending to be a score.
+ */
+function RatingChange({ delta }: { delta: number }) {
+  const r = Math.round(delta);
+  const colour = r > 0 ? FORM_WIN : r < 0 ? FORM_LOSS : FEED_TEXT_MID;
+  return (
+    <span title="Change to their rating from this match" style={{ flexShrink: 0, fontFamily: body, whiteSpace: "nowrap" }}>
+      <span style={{ ...tabular, fontWeight: 700, fontSize: 15, color: colour }}>{r > 0 ? "+" + r : r < 0 ? "\u2212" + -r : "\u00b10"}</span>
+      <span style={{ fontWeight: 500, fontSize: 12, color: FEED_TEXT_LOW, marginLeft: 4 }}>rating</span>
+    </span>
+  );
+}
+
+function Row({ row, delta, onOpenMatch, onOpenPlayer }: {
   row: GradedRow;
+  delta?: number;
   onOpenMatch?: (matchId: string) => void;
   onOpenPlayer?: (playerId: string) => void;
 }) {
@@ -153,6 +172,9 @@ function Row({ row, onOpenMatch, onOpenPlayer }: {
             <Chip grade={g.now} faded />
           </>
         )}
+        {/* On the chip row, which every match has: the grade says how good
+            the result was, this says what it did to the rating. */}
+        {delta != null && <span style={{ marginLeft: "auto" }}><RatingChange delta={delta} /></span>}
       </div>
 
       {!g.then && (
@@ -194,8 +216,10 @@ export function UngradedBanner({ ungraded, total, onFix }: { ungraded: number; t
   );
 }
 
-export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels, trophies }: {
+export function HistoryMode({ q, change, onOpenMatch, onOpenPlayer, onFixLevels, trophies }: {
   q: MatchQuality;
+  /** Rating change per match id, from YourMatches. */
+  change?: Record<string, number>;
   /** Their trophies: dated ones placed among the matches, every one with a
    *  year under its header — the same rules as the Profile's match history. */
   trophies?: Array<TrophyLike & { clubName?: string | null }>;
@@ -245,7 +269,7 @@ export function HistoryMode({ q, onOpenMatch, onOpenPlayer, onFixLevels, trophie
           return (
             <React.Fragment key={row.matchId}>
               {header}
-              <Row row={row} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} />
+              <Row row={row} delta={change?.[row.matchId]} onOpenMatch={onOpenMatch} onOpenPlayer={onOpenPlayer} />
             </React.Fragment>
           );
         })}

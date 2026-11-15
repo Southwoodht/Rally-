@@ -117,6 +117,10 @@ const match = (id: string, p1: string, p2: string, winner: string, day: number, 
   const t = computeGlicko(ps, ms, t0 + 2 * 86400000);
   ok(t.before.m1.b.rating === 1500 && t.before.m1.b.rd === 350, "before the first match b is the unlevelled seed");
   ok(t.before.m2.b.rating < 1500 && t.before.m2.a.rating > 1500, "before the second, the first result has moved both");
+  // Per-match change (Sam, 2026-11-15): after − before is that match alone.
+  ok(t.after.m1.a.rating > t.before.m1.a.rating && t.after.m1.b.rating < t.before.m1.b.rating, "the winner gains, the loser drops");
+  ok(Math.abs(t.after.m1.a.rating - t.before.m2.a.rating) < 1e-9, "a day off moves the ±, never the rating: after m1 is before m2");
+  ok(Math.abs(t.after.m2.a.rating - t.rating.a) < 1e-9, "after the last match is the rating the Table prints");
 }
 
 if (failures) { console.error(`\nFAILED — ${failures} of ${checks} checks`); process.exit(1); }
